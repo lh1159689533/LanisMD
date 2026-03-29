@@ -60,9 +60,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tauriScript: pnpm tauri
           tagName: v__VERSION__
-          releaseName: 'MyTypora v__VERSION__'
+          releaseName: 'LanisMD v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
