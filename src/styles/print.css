@@ -1,0 +1,66 @@
+/* Print Styles for PDF Export */
+@media print {
+  .titlebar,
+  .tabbar,
+  .sidebar,
+  .statusbar,
+  .milkdown-tooltip,
+  .milkdown-slash {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+    padding: 20mm !important;
+  }
+
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .editor-wrapper {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .milkdown-editor-root .ProseMirror {
+    min-height: auto !important;
+  }
+
+  .milkdown-editor-root .ProseMirror pre {
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+  }
+
+  .milkdown-editor-root .ProseMirror pre code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+  }
+
+  .milkdown-editor-root .ProseMirror img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  .milkdown-editor-root .ProseMirror table {
+    page-break-inside: avoid !important;
+  }
+
+  .milkdown-editor-root .ProseMirror h1,
+  .milkdown-editor-root .ProseMirror h2,
+  .milkdown-editor-root .ProseMirror h3 {
+    page-break-after: avoid !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #64748b;
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "lanismd",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@milkdown/kit": "^7.19.2",
+    "@milkdown/plugin-slash": "^7.19.2",
+    "@milkdown/plugin-upload": "^7.19.2",
+    "@milkdown/react": "^7.19.2",
+    "@milkdown/theme-nord": "^7.19.2",
+    "@milkdown/utils": "^7.19.2",
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-fs": "^2.2.0",
+    "@tauri-apps/plugin-notification": "^2.2.0",
+    "@tauri-apps/plugin-os": "^2.2.0",
+    "@tauri-apps/plugin-shell": "^2.2.0",
+    "@tauri-apps/plugin-store": "^2.2.0",
+    "clsx": "^2.1.1",
+    "katex": "^0.16.44",
+    "lucide-react": "^0.468.0",
+    "mermaid": "^11.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.4.0",
+    "tailwind-merge": "^2.5.5",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
+    "@tauri-apps/cli": "^2.2.0",
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.0",
+    "tailwindcss": "3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.11"
+  }
+}
