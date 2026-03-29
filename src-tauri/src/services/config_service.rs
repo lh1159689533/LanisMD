@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use serde_json::Value;
+use std::path::PathBuf;
 
 use crate::error::{AppError, AppResult};
 use crate::models::RecentFile;
@@ -118,16 +118,15 @@ impl ConfigService {
             return self.default_config();
         }
         let content = std::fs::read_to_string(&self.config_path).unwrap_or_default();
-        let user_config: Value = serde_json::from_str(&content)
-            .unwrap_or_else(|_| Value::Object(Default::default()));
+        let user_config: Value =
+            serde_json::from_str(&content).unwrap_or_else(|_| Value::Object(Default::default()));
         self.merge(self.default_config(), user_config)
     }
 
     fn save_config(&self, config: &Value) -> AppResult<()> {
-        let content = serde_json::to_string_pretty(config)
-            .map_err(|e| AppError::Config(e.to_string()))?;
-        std::fs::write(&self.config_path, content)
-            .map_err(|e| AppError::Config(e.to_string()))?;
+        let content =
+            serde_json::to_string_pretty(config).map_err(|e| AppError::Config(e.to_string()))?;
+        std::fs::write(&self.config_path, content).map_err(|e| AppError::Config(e.to_string()))?;
         Ok(())
     }
 

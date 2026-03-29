@@ -1,7 +1,9 @@
 {
   "identifier": "default",
   "description": "Default capabilities for LanisMD",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "fs:default",
