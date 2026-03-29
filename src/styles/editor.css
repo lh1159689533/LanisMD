@@ -1,0 +1,393 @@
+/* Milkdown Editor Styles - Typora Inspired */
+
+.milkdown-editor-root {
+  min-height: 100%;
+  outline: none;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--editor-text);
+  caret-color: var(--accent);
+}
+
+.milkdown-editor-root:focus {
+  outline: none;
+}
+
+/* ProseMirror Overrides */
+.milkdown-editor-root .ProseMirror {
+  min-height: calc(100vh - 200px);
+  outline: none;
+  padding: 4px 0;
+}
+
+.milkdown-editor-root .ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+.milkdown-editor-root .ProseMirror > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Headings */
+.milkdown-editor-root .ProseMirror h1,
+.milkdown-editor-root .ProseMirror h2,
+.milkdown-editor-root .ProseMirror h3,
+.milkdown-editor-root .ProseMirror h4,
+.milkdown-editor-root .ProseMirror h5,
+.milkdown-editor-root .ProseMirror h6 {
+  color: var(--editor-text);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.milkdown-editor-root .ProseMirror h1 {
+  font-size: 1.875rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror h2 {
+  font-size: 1.5rem;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror h3 {
+  font-size: 1.25rem;
+}
+
+.milkdown-editor-root .ProseMirror h4 {
+  font-size: 1.125rem;
+}
+
+/* Paragraph */
+.milkdown-editor-root .ProseMirror p {
+  margin-bottom: 0.75em;
+}
+
+/* Links */
+.milkdown-editor-root .ProseMirror a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.milkdown-editor-root .ProseMirror a:hover {
+  color: var(--accent-hover);
+}
+
+/* Bold & Italic */
+.milkdown-editor-root .ProseMirror strong {
+  font-weight: 600;
+}
+
+.milkdown-editor-root .ProseMirror em {
+  font-style: italic;
+}
+
+.milkdown-editor-root .ProseMirror del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Inline Code */
+.milkdown-editor-root .ProseMirror code {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--accent);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-size: 0.875em;
+}
+
+.dark .milkdown-editor-root .ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Code Blocks */
+.milkdown-editor-root .ProseMirror pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 1em 0;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.dark .milkdown-editor-root .ProseMirror pre {
+  background-color: #0f172a;
+}
+
+.milkdown-editor-root .ProseMirror pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* Blockquote */
+.milkdown-editor-root .ProseMirror blockquote {
+  border-left: 4px solid var(--accent);
+  padding-left: 16px;
+  margin: 1em 0;
+  color: var(--sidebar-text);
+  font-style: italic;
+}
+
+/* Horizontal Rule */
+.milkdown-editor-root .ProseMirror hr {
+  border: none;
+  border-top: 2px solid var(--editor-border);
+  margin: 2em 0;
+}
+
+/* Lists */
+.milkdown-editor-root .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.75em;
+  margin: 0.5em 0;
+}
+
+.milkdown-editor-root .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.75em;
+  margin: 0.5em 0;
+}
+
+.milkdown-editor-root .ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.milkdown-editor-root .ProseMirror li > p {
+  margin-bottom: 0.25em;
+}
+
+/* Task List */
+.milkdown-editor-root .ProseMirror ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.milkdown-editor-root .ProseMirror .task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.milkdown-editor-root .ProseMirror input[type='checkbox'] {
+  margin-top: 6px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Tables */
+.milkdown-editor-root .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror th {
+  background-color: var(--sidebar-bg);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror tr:last-child td {
+  border-bottom: none;
+}
+
+.milkdown-editor-root .ProseMirror th:last-child,
+.milkdown-editor-root .ProseMirror td:last-child {
+  border-right: none;
+}
+
+.milkdown-editor-root .ProseMirror .selectedCell {
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+/* Images */
+.milkdown-editor-root .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.75em 0;
+  cursor: pointer;
+}
+
+.milkdown-editor-root .ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Selection */
+/* .milkdown-editor-root .ProseMirror ::selection {
+  background-color: var(--accent);
+  color: white;
+} */
+
+/* Placeholder */
+.milkdown-editor-root .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--sidebar-text);
+  pointer-events: none;
+  height: 0;
+  opacity: 0.5;
+}
+
+/* Slash Command Menu */
+.milkdown-slash {
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.dark .milkdown-slash {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.milkdown-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--editor-text);
+  transition: background-color 0.15s;
+}
+
+.milkdown-slash-item:hover,
+.milkdown-slash-item[data-active='true'] {
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+/* Tooltip / Floating Toolbar */
+.milkdown-tooltip {
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+  z-index: 50;
+}
+
+.dark .milkdown-tooltip {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.milkdown-tooltip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--editor-text);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.15s;
+}
+
+.milkdown-tooltip button:hover {
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+/* Editor wrapper */
+.editor-wrapper {
+  animation: editorFadeIn 0.3s ease-out;
+}
+
+@keyframes editorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* KaTeX Math Styles */
+.milkdown-editor-root .katex-display {
+  margin: 1em 0;
+  padding: 12px 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.milkdown-editor-root .katex {
+  font-size: 1.05em;
+}
+
+.milkdown-editor-root .math-inline {
+  display: inline;
+}
+
+.milkdown-editor-root .math-block {
+  display: block;
+  text-align: center;
+  padding: 8px 0;
+  margin: 0.75em 0;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+.dark .milkdown-editor-root .math-block {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Mermaid Diagram Styles */
+.milkdown-editor-root .mermaid-container {
+  margin: 1em 0;
+  padding: 16px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.milkdown-editor-root .mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Math delimiter highlighting in source mode */
+.milkdown-editor-root .math-delimiter {
+  color: var(--accent);
+  opacity: 0.7;
+}

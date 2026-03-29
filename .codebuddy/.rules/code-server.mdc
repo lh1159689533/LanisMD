@@ -1,0 +1,51 @@
+---
+description: 注释规则
+globs: *
+alwaysApply: true
+---
+# 项目背景信息
+
+当前项目是开源项目 code-server 的定制版本，其在 lib/vscode 目录中集成了开源版本的 vscode，并将其改造成了可以在浏览器运行的版本。我们(WEDATA)会在这个基础之上通过插件开发定做能力。
+
+## 修改原则
+
+### 源码侵入约定
+
+为了尽量低侵入社区开源版本，使未来与社区新版本同步时，diff更少，升级流程更加方便，特约定以下原则
+
+#### 原则
+
+1. 函数级别变更，尽量以 import 方式引入，避免对原文件做多行变更
+2. 所有侵入变更，都需要留下特定标记与注释，详见下方
+3. WEDATA 新增的文件，统一放在最近的contrib目录同层的 WeData 目录下，如果不存在则新建
+
+#### 单行变更
+
+```js
+// WEDATA_INJECT_NEXT_LINE: 解释改动原因
+our code
+```
+
+#### 多行变更
+
+变更开始和结束均需留下标记
+
+```js
+// WEDATA_INJECT_BEGIN: 解释改动原因
+// 原代码（可选）
+
+// 侵入代码
+... our code
+// WEDATA_INJECT_END
+
+```
+
+#### 文件变更
+
+```js
+... 原 import 语句
+
+// WEDATA_INJECT_FILES：解释引入原因
+import foo from 'file/path/1';
+import bar from 'file/path/2';
+```

@@ -1,0 +1,277 @@
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { RiListOrdered, RiSearchLine, RiSideBarLine, RiFolderLine, RiSettings3Line } from "react-icons/ri";
+import { useUIStore } from "@/stores/ui-store";
+import { useFileStore } from "@/stores/file-store";
+import { parseOutline } from "@/utils/toc";
+import { FileTree } from "./FileTree";
+import type { OutlineItem } from "@/types";
+
+function scrollToHeading(item: OutlineItem) {
+  const editorRoot = document.querySelector('.milkdown-editor-root .ProseMirror');
+  if (!editorRoot) return;
+
+  const headings = editorRoot.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  for (const heading of headings) {
+    if (
+      heading.textContent?.trim() === item.text &&
+      heading.tagName === `H${item.level}`
+    ) {
+      heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      break;
+    }
+  }
+}
+
+function OutlineTree({ items, depth = 0 }: { items: OutlineItem[]; depth?: number }) {
+  if (!items.length) return null;
+
+  return (
+    <div style={{ marginLeft: depth > 0 ? 12 : 0 }}>
+      {items.map((item) => (
+        <div key={item.id}>
+          <button
+            className="w-full text-left text-xs text-[var(--sidebar-text)] hover:text-[var(--accent)] hover:bg-black/5 dark:hover:bg-white/5 rounded px-2 py-1 truncate transition-colors"
+            title={item.text}
+            onClick={() => scrollToHeading(item)}
+          >
+            {item.text}
+          </button>
+          {item.children.length > 0 && (
+            <OutlineTree items={item.children} depth={depth + 1} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const MIN_SIDEBAR_WIDTH = 150;
+const MAX_SIDEBAR_WIDTH = 500;
+
+export function Sidebar() {
+  const {
+    sidebarOpen,
+    sidebarPanel,
+    sidebarWidth,
+    toggleSidebar,
+    collapseSidebar,
+    expandSidebar,
+    setSidebarPanel,
+    setSidebarWidth,
+  } = useUIStore();
+  const openSettings = useUIStore((s) => s.openSettings);
+  const currentFile = useFileStore((s) => s.currentFile);
+
+  const isResizing = useRef(false);
+  const widthRef = useRef(sidebarWidth);
+  const contentPanelRef = useRef<HTMLDivElement>(null);
+  const innerPanelRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  /** Track whether content is visually collapsed during drag (snap behaviour) */
+  const snapCollapsedRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [searchText, setSearchText] = useState("");
+
+  const outline = useMemo(() => {
+    if (!currentFile?.content) return [];
+    return parseOutline(currentFile.content);
+  }, [currentFile?.content]);
+
+  // Sync width ref when store changes (e.g. sidebar toggled back open)
+  useEffect(() => {
+    widthRef.current = sidebarWidth;
+  }, [sidebarWidth]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    snapCollapsedRef.current = !sidebarOpen; // start collapsed if sidebar was already closed
+    setIsDragging(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    // Get the icon bar width to use as offset
+    const iconBarWidth = contentPanelRef.current?.parentElement?.querySelector('.sidebar-icon-bar')?.getBoundingClientRect().width ?? 36;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isResizing.current) return;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const rawWidth = ev.clientX - iconBarWidth;
+        const clampedRaw = Math.max(0, Math.min(MAX_SIDEBAR_WIDTH, rawWidth));
+        widthRef.current = clampedRaw;
+
+        if (clampedRaw < MIN_SIDEBAR_WIDTH) {
+          // --- snap collapse: instantly hide content panel ---
+          if (!snapCollapsedRef.current) {
+            snapCollapsedRef.current = true;
+          }
+          if (contentPanelRef.current) {
+            contentPanelRef.current.style.width = "0px";
+          }
+        } else {
+          // --- above threshold: show content panel at current width ---
+          if (snapCollapsedRef.current) {
+            snapCollapsedRef.current = false;
+          }
+          const displayWidth = Math.max(MIN_SIDEBAR_WIDTH, clampedRaw);
+          if (contentPanelRef.current) {
+            contentPanelRef.current.style.width = `${clampedRaw}px`;
+          }
+          if (innerPanelRef.current) {
+            innerPanelRef.current.style.width = `${displayWidth}px`;
+          }
+        }
+      });
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      cancelAnimationFrame(rafRef.current);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+
+      const finalWidth = widthRef.current;
+
+      if (finalWidth < MIN_SIDEBAR_WIDTH) {
+        // Collapse: keep inline width at 0 and keep transition disabled (isDragging stays true)
+        if (contentPanelRef.current) {
+          contentPanelRef.current.style.width = "0px";
+        }
+        if (sidebarOpen) {
+          collapseSidebar(MIN_SIDEBAR_WIDTH);
+        }
+        setIsDragging(false);
+      } else {
+        const clampedWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
+        widthRef.current = clampedWidth;
+        if (!sidebarOpen) {
+          expandSidebar(clampedWidth);
+        } else {
+          setSidebarWidth(clampedWidth);
+        }
+        if (contentPanelRef.current) {
+          contentPanelRef.current.style.width = "";
+        }
+        if (innerPanelRef.current) {
+          innerPanelRef.current.style.width = "";
+        }
+        setIsDragging(false);
+      }
+
+      snapCollapsedRef.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, [setSidebarWidth, sidebarOpen, collapseSidebar, expandSidebar]);
+
+  const contentWidth = sidebarOpen ? sidebarWidth : 0;
+
+  return (
+    <div className="flex shrink-0 h-full">
+      {/* 图标栏 - 带过渡动画 */}
+      <div
+        className={`sidebar-icon-bar flex flex-col items-center py-2 px-1 gap-1 border-r border-[var(--sidebar-border)] transition-opacity duration-300 ease-in-out ${sidebarOpen ? "opacity-100" : "opacity-70"
+          }`}
+      >
+        <button
+          onClick={() => setSidebarPanel("files")}
+          className={`p-1.5 rounded-md transition-all duration-200 ${sidebarPanel === "files" ? "bg-[var(--accent)] text-white scale-105" : "hover:bg-black/5 dark:hover:bg-white/10 text-[var(--sidebar-text)] hover:scale-105"}`}
+          title="文件树"
+        >
+          <RiFolderLine size={16} />
+        </button>
+        <button
+          onClick={() => setSidebarPanel("outline")}
+          className={`p-1.5 rounded-md transition-all duration-200 ${sidebarPanel === "outline" ? "bg-[var(--accent)] text-white scale-105" : "hover:bg-black/5 dark:hover:bg-white/10 text-[var(--sidebar-text)] hover:scale-105"}`}
+          title="大纲"
+        >
+          <RiListOrdered size={16} />
+        </button>
+        <button
+          onClick={() => setSidebarPanel("search")}
+          className={`p-1.5 rounded-md transition-all duration-200 ${sidebarPanel === "search" ? "bg-[var(--accent)] text-white scale-105" : "hover:bg-black/5 dark:hover:bg-white/10 text-[var(--sidebar-text)] hover:scale-105"}`}
+          title="搜索"
+        >
+          <RiSearchLine size={16} />
+        </button>
+
+        {/* 切换按钮 - 置底 */}
+        <button
+          onClick={toggleSidebar}
+          className={`mt-auto p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-200 hover:scale-105 ${!sidebarOpen ? "text-[var(--accent)]" : ""
+            }`}
+          title="切换侧边栏"
+        >
+          <RiSideBarLine size={16} className={sidebarOpen ? "text-[var(--sidebar-text)]" : "text-[var(--accent)]"} />
+        </button>
+        {/* 设置 */}
+        <button
+          onClick={() => openSettings("general")}
+          className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-200 hover:scale-105"
+          title="设置"
+        >
+          <RiSettings3Line size={16} className="text-[var(--sidebar-text)]" />
+        </button>
+      </div>
+
+      {/* 内容面板 - 带过渡动画（拖拽时禁用 CSS transition 避免延迟） */}
+      <div
+        ref={contentPanelRef}
+        className={`overflow-hidden ${isDragging ? "" : "transition-[width] duration-300 ease-in-out"} bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)]`}
+        style={{ width: `${contentWidth}px` }}
+      >
+        <div
+          ref={innerPanelRef}
+          className={`h-full ${sidebarPanel === "files" ? "overflow-hidden" : "overflow-auto"} p-3`}
+          style={{ width: `${sidebarWidth}px` }}
+        >
+          {sidebarPanel === "outline" && (
+            <div className="text-xs text-[var(--sidebar-text)]">
+              <p className="font-medium mb-2">大纲</p>
+              {outline.length > 0 ? (
+                <OutlineTree items={outline} />
+              ) : (
+                <p className="text-[10px] opacity-60">{currentFile ? "未找到标题" : "打开文件以查看大纲"}</p>
+              )}
+            </div>
+          )}
+          {sidebarPanel === "files" && (
+            <div className="h-full -m-3">
+              <FileTree />
+            </div>
+          )}
+          {sidebarPanel === "search" && (
+            <div className="text-xs text-[var(--sidebar-text)]">
+              <p className="font-medium mb-2">搜索</p>
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="在文件中搜索..."
+                className="w-full px-2 py-1.5 text-xs bg-white dark:bg-[#1a1b26] border border-[var(--editor-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 拖拽调整宽度 - 增强视觉反馈（始终渲染，折叠时也可拖拽展开） */}
+      <div
+        className={`group w-[6px] cursor-col-resize flex items-center justify-center transition-colors ${isDragging ? "bg-[var(--accent)]/20" : "hover:bg-[var(--accent)]/10"
+          }`}
+        onMouseDown={handleMouseDown}
+      >
+        <div
+          className={`w-[2px] h-8 rounded-full transition-all duration-150 ${isDragging
+            ? "bg-[var(--accent)] opacity-60 h-12"
+            : "bg-[var(--sidebar-text)] opacity-0 group-hover:opacity-25 group-hover:h-10"
+            }`}
+        />
+      </div>
+    </div>
+  );
+}
