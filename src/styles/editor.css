@@ -256,37 +256,188 @@
   opacity: 0.5;
 }
 
-/* Slash Command Menu */
+/* ===== Block Handle ===== */
+.milkdown-block-handle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: auto;
+  z-index: 40;
+}
+
+/* Show handle when hovering or when it is active */
+.milkdown-block-handle:hover,
+.milkdown-block-handle.active {
+  opacity: 1;
+}
+
+/* ProseMirror block hover detection */
+.milkdown-editor-root .ProseMirror > *:hover ~ .milkdown-block-handle,
+.milkdown-block-handle:hover {
+  opacity: 1;
+}
+
+/* Make handle visible when block provider is active */
+.milkdown-block-handle {
+  opacity: 0;
+}
+
+.editor-wrapper:hover .milkdown-block-handle {
+  opacity: 0.4;
+}
+
+.editor-wrapper:hover .milkdown-block-handle:hover {
+  opacity: 1;
+}
+
+.milkdown-block-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--sidebar-text);
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.milkdown-block-btn:hover {
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--editor-text);
+}
+
+.milkdown-block-add:hover {
+  color: var(--accent);
+}
+
+.milkdown-block-drag {
+  cursor: grab;
+}
+
+.milkdown-block-drag:active {
+  cursor: grabbing;
+}
+
+.milkdown-block-handle.dragging .milkdown-block-drag {
+  cursor: grabbing;
+  color: var(--accent);
+}
+
+/* Block dragging visual feedback */
+.milkdown-block-dragging {
+  opacity: 0.4;
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Drop indicator line */
+.ProseMirror-drop-target::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  margin: -1px 0;
+}
+
+/* ===== Slash Command Menu ===== */
 .milkdown-slash {
+  display: none;
+  position: absolute;
   background: var(--editor-bg);
   border: 1px solid var(--editor-border);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   padding: 4px;
-  max-height: 240px;
+  min-width: 200px;
+  max-height: 280px;
   overflow-y: auto;
   z-index: 50;
+}
+
+/* SlashProvider 通过 data-show 属性控制显示/隐藏 */
+.milkdown-slash[data-show='true'] {
+  display: block;
 }
 
 .dark .milkdown-slash {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
+/* Scrollbar */
+.milkdown-slash::-webkit-scrollbar {
+  width: 4px;
+}
+
+.milkdown-slash::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.milkdown-slash::-webkit-scrollbar-thumb {
+  background: var(--editor-border);
+  border-radius: 2px;
+}
+
 .milkdown-slash-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   color: var(--editor-text);
   transition: background-color 0.15s;
+  user-select: none;
 }
 
 .milkdown-slash-item:hover,
 .milkdown-slash-item[data-active='true'] {
   background-color: rgba(37, 99, 235, 0.08);
+}
+
+.milkdown-slash-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.dark .milkdown-slash-icon {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.milkdown-slash-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.milkdown-slash-shortcut {
+  font-size: 11px;
+  color: var(--sidebar-text);
+  opacity: 0.6;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+}
+
+.milkdown-slash-empty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--sidebar-text);
+  text-align: center;
+  opacity: 0.6;
 }
 
 /* Tooltip / Floating Toolbar */

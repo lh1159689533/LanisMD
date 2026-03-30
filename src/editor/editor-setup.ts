@@ -8,11 +8,11 @@ import { cursor } from '@milkdown/kit/plugin/cursor';
 import { indent } from '@milkdown/kit/plugin/indent';
 import { trailing } from '@milkdown/kit/plugin/trailing';
 import { upload } from '@milkdown/plugin-upload';
-import { slashFactory } from '@milkdown/plugin-slash';
 import { tooltipFactory } from '@milkdown/kit/plugin/tooltip';
+import { slash, configureSlash } from './plugins/slash-menu';
+import { block, configureBlock } from './plugins/block-handle';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
-const slash = slashFactory('slash');
 const tooltip = tooltipFactory('tooltip');
 
 export type EditorListener = {
@@ -27,9 +27,10 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .config((ctx) => {
       ctx.set(rootCtx, root);
       ctx.set(defaultValueCtx, defaultValue);
-      ctx.set(slash.key, {});
       ctx.set(tooltip.key, {});
     })
+    .config(configureSlash)
+    .config(configureBlock)
     .use(commonmark)
     .use(gfm)
     .use(history)
@@ -40,6 +41,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(trailing)
     .use(upload)
     .use(slash)
+    .use(block)
     .use(tooltip);
 }
 
