@@ -1,25 +1,25 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { ThemeMode, AppConfig } from "@/types";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { ThemeMode, AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
-  theme: "system",
-  language: "system",
+  theme: 'system',
+  language: 'system',
   editor: {
     fontSize: 16,
-    fontFamily: "system",
+    fontFamily: 'system',
     maxWidth: 800,
     lineHeight: 1.75,
-    wordWrap: "soft",
+    wordWrap: 'soft',
     showLineNumbers: true,
   },
   recentFiles: { maxCount: 20 },
   recentFolders: { closeOnClickOutside: true },
   restoreSession: false,
-  sidebar: { position: "left", width: 280 },
+  sidebar: { position: 'left', width: 280 },
   image: {
-    insertAction: "copy-to-assets",
-    assetsFolderName: "assets",
+    insertAction: 'copy-to-assets',
+    assetsFolderName: 'assets',
   },
 };
 
@@ -43,7 +43,7 @@ export const useSettingsStore = create<SettingsState>()(
       setNestedConfig: (path, value) =>
         set((state) => {
           const newConfig = JSON.parse(JSON.stringify(state.config));
-          const keys = path.split(".");
+          const keys = path.split('.');
           let current: Record<string, unknown> = newConfig;
           for (let i = 0; i < keys.length - 1; i++) {
             if (current[keys[i]] === undefined) {
@@ -58,8 +58,8 @@ export const useSettingsStore = create<SettingsState>()(
       resetToDefaults: () => set({ config: DEFAULT_CONFIG }),
     }),
     {
-      name: "settings-store",
+      name: 'settings-store',
       partialize: (state) => ({ config: state.config }),
-    }
-  )
+    },
+  ),
 );

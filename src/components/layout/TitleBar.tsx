@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
-import { RiCloseLine, RiSubtractLine, RiFullscreenLine, RiFullscreenExitLine, RiCheckLine, RiLoader4Line } from "react-icons/ri";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { platform } from "@tauri-apps/plugin-os";
-import { useFileStore } from "@/stores/file-store";
+import { useCallback, useEffect, useState } from 'react';
+import {
+  RiCloseLine,
+  RiSubtractLine,
+  RiFullscreenLine,
+  RiFullscreenExitLine,
+  RiCheckLine,
+  RiLoader4Line,
+} from 'react-icons/ri';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { platform } from '@tauri-apps/plugin-os';
+import { useFileStore } from '@/stores/file-store';
 
 interface TitleBarProps {
   onNewFile?: () => void;
@@ -19,7 +26,7 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
     // Detect platform
     try {
       const os = platform();
-      setIsMac(os === "macos");
+      setIsMac(os === 'macos');
     } catch {
       setIsMac(false);
     }
@@ -78,21 +85,21 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
     if (!currentFile) return null;
 
     switch (saveStatus) {
-      case "saving":
+      case 'saving':
         return (
-          <span className="ml-2 text-slate-400 animate-spin inline-block" title="保存中...">
+          <span className="ml-2 inline-block animate-spin text-slate-400" title="保存中...">
             <RiLoader4Line size={12} />
           </span>
         );
-      case "saved":
+      case 'saved':
         return (
           <span className="ml-2 text-green-500" title="已保存">
             <RiCheckLine size={12} />
           </span>
         );
-      case "error":
+      case 'error':
         return (
-          <span className="ml-2 text-red-500 text-[10px]" title="保存失败">
+          <span className="ml-2 text-[10px] text-red-500" title="保存失败">
             ✗
           </span>
         );
@@ -107,36 +114,34 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
 
   return (
     <div
-      className="flex items-center h-9 px-3 bg-[var(--titlebar-bg)] text-[var(--titlebar-text)] select-none border-b border-[var(--editor-border)] shrink-0"
+      className="flex h-9 shrink-0 select-none items-center border-b border-[var(--editor-border)] bg-[var(--titlebar-bg)] px-3 text-[var(--titlebar-text)]"
       data-tauri-drag-region
       onDoubleClick={handleDoubleClick}
     >
       {/* macOS: space for native traffic light buttons */}
-      {isMac && (
-        <div className="w-[68px] flex-shrink-0 mr-2" data-tauri-drag-region />
-      )}
+      {isMac && <div className="mr-2 w-[68px] flex-shrink-0" data-tauri-drag-region />}
 
       {/* Non-macOS: custom window control buttons on the left */}
       {!isMac && (
-        <div className="flex items-center gap-0.5 mr-3 flex-shrink-0">
+        <div className="mr-3 flex flex-shrink-0 items-center gap-0.5">
           <button
             onClick={handleClose}
-            className="w-[30px] h-[30px] flex items-center justify-center rounded-md hover:bg-red-500/20 hover:text-red-500 transition-colors"
+            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-red-500/20 hover:text-red-500"
             title="关闭"
           >
             <RiCloseLine size={16} />
           </button>
           <button
             onClick={handleMinimize}
-            className="w-[30px] h-[30px] flex items-center justify-center rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/10"
             title="最小化"
           >
             <RiSubtractLine size={14} />
           </button>
           <button
             onClick={handleMaximize}
-            className="w-[30px] h-[30px] flex items-center justify-center rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            title={isMaximized ? "还原" : "最大化"}
+            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+            title={isMaximized ? '还原' : '最大化'}
           >
             {isMaximized ? <RiFullscreenExitLine size={13} /> : <RiFullscreenLine size={13} />}
           </button>
@@ -144,10 +149,11 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
       )}
 
       {/* File title + save status */}
-      <div className="flex-1 flex items-center justify-center text-sm font-medium truncate" data-tauri-drag-region>
-        <span className="truncate">
-          {currentFile ? currentFile.fileName : "LanisMD"}
-        </span>
+      <div
+        className="flex flex-1 items-center justify-center truncate text-sm font-medium"
+        data-tauri-drag-region
+      >
+        <span className="truncate">{currentFile ? currentFile.fileName : 'LanisMD'}</span>
         {renderSaveStatus()}
       </div>
 

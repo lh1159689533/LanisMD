@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import {
   RiFolderOpenLine,
   RiFolderLine,
@@ -7,7 +7,6 @@ import {
   RiArrowRightSLine,
   RiArrowDownSLine,
   RiFolderAddLine,
-  RiAddLine,
   RiFileAddLine,
   RiListUnordered,
   RiNodeTree,
@@ -17,19 +16,19 @@ import {
   RiClipboardLine,
   RiFolderOpenFill,
   RiHistoryLine,
-} from "react-icons/ri";
-import { open as tauriOpen } from "@tauri-apps/plugin-dialog";
-import { save as tauriSave } from "@tauri-apps/plugin-dialog";
-import { useFileTreeStore } from "@/stores/file-tree-store";
-import { useFileStore } from "@/stores/file-store";
-import { useRecentFoldersStore } from "@/stores/recent-folders-store";
-import { fileService } from "@/services/tauri";
-import { showConfirmDialog } from "@/services/tauri/dialog-service";
-import { timeAgo } from "@/utils/time";
-import { ContextMenu } from "@/components/common/ContextMenu";
-import type { ContextMenuGroup } from "@/components/common/ContextMenu";
-import { RecentFoldersPanel } from "./RecentFolders";
-import type { FileTreeNode } from "@/types";
+} from 'react-icons/ri';
+import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
+import { save as tauriSave } from '@tauri-apps/plugin-dialog';
+import { useFileTreeStore } from '@/stores/file-tree-store';
+import { useFileStore } from '@/stores/file-store';
+import { useRecentFoldersStore } from '@/stores/recent-folders-store';
+import { fileService } from '@/services/tauri';
+import { showConfirmDialog } from '@/services/tauri/dialog-service';
+import { timeAgo } from '@/utils/time';
+import { ContextMenu } from '@/components/common/ContextMenu';
+import type { ContextMenuGroup } from '@/components/common/ContextMenu';
+import { RecentFoldersPanel } from './RecentFolders';
+import type { FileTreeNode } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -42,8 +41,8 @@ async function handleUnsavedChanges(): Promise<boolean> {
   if (!current?.isDirty) return true;
 
   const shouldSave = await showConfirmDialog(
-    "Unsaved Changes",
-    `"${current.fileName}" has unsaved changes. Do you want to save before opening a new file?`
+    'Unsaved Changes',
+    `"${current.fileName}" has unsaved changes. Do you want to save before opening a new file?`,
   );
 
   if (shouldSave) {
@@ -56,7 +55,7 @@ async function handleUnsavedChanges(): Promise<boolean> {
         });
         useFileStore.getState().markSaved();
       } catch (err) {
-        console.error("Failed to save before switching file:", err);
+        console.error('Failed to save before switching file:', err);
       }
     }
   }
@@ -69,11 +68,11 @@ async function copyToClipboard(text: string) {
     await navigator.clipboard.writeText(text);
   } catch {
     // fallback
-    const ta = document.createElement("textarea");
+    const ta = document.createElement('textarea');
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    document.execCommand("copy");
+    document.execCommand('copy');
     document.body.removeChild(ta);
   }
 }
@@ -84,7 +83,7 @@ interface ContextMenuState {
   x: number;
   y: number;
   /** "file" | "dir" | "blank" */
-  targetType: "file" | "dir" | "blank";
+  targetType: 'file' | 'dir' | 'blank';
   /** Path of the target (file/dir path, or rootPath for blank) */
   targetPath: string;
   /** Name of the target */
@@ -99,7 +98,7 @@ interface InlineEditState {
   /** Current input value */
   value: string;
   /** "rename" | "new-file" | "new-folder" */
-  mode: "rename" | "new-file" | "new-folder";
+  mode: 'rename' | 'new-file' | 'new-folder';
   /** Original name (for rename) */
   originalName?: string;
 }
@@ -127,7 +126,7 @@ function InlineEditInput({
     if (!input) return;
     input.focus();
     // Select the name part without extension
-    const dotIndex = inputValue.lastIndexOf(".");
+    const dotIndex = inputValue.lastIndexOf('.');
     if (dotIndex > 0) {
       input.setSelectionRange(0, dotIndex);
     } else {
@@ -136,7 +135,7 @@ function InlineEditInput({
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       const trimmed = inputValue.trim();
       if (trimmed && trimmed !== value) {
@@ -144,7 +143,7 @@ function InlineEditInput({
       } else if (trimmed === value) {
         onCancel();
       }
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       onCancel();
     }
   };
@@ -170,7 +169,7 @@ function InlineEditInput({
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className="flex-1 min-w-0 text-xs px-1 py-0.5 rounded border border-[var(--accent)] bg-[var(--editor-bg)] text-[var(--editor-text)] outline-none"
+        className="min-w-0 flex-1 rounded border border-[var(--accent)] bg-[var(--editor-bg)] px-1 py-0.5 text-xs text-[var(--editor-text)] outline-none"
         spellCheck={false}
       />
     </div>
@@ -203,13 +202,12 @@ function FileTreeItem({
 
   const isExpanded = expandedDirs.has(node.path);
   const isSelected = selectedFile === node.path;
-  const isBeingRenamed =
-    inlineEdit?.mode === "rename" && inlineEdit.path === node.path;
+  const isBeingRenamed = inlineEdit?.mode === 'rename' && inlineEdit.path === node.path;
 
   // Check if a new entry is being created in THIS directory
   const isNewEntryParent =
     inlineEdit &&
-    (inlineEdit.mode === "new-file" || inlineEdit.mode === "new-folder") &&
+    (inlineEdit.mode === 'new-file' || inlineEdit.mode === 'new-folder') &&
     inlineEdit.path === node.path;
 
   const handleClick = useCallback(async () => {
@@ -224,11 +222,11 @@ function FileTreeItem({
       try {
         const result = await fileService.readFile({
           path: node.path,
-          encoding: "utf-8",
+          encoding: 'utf-8',
         });
-        openFile(node.path, result.content, result.encoding ?? "utf-8", node.name);
+        openFile(node.path, result.content, result.encoding ?? 'utf-8', node.name);
       } catch (err) {
-        console.error("Failed to open file from tree:", err);
+        console.error('Failed to open file from tree:', err);
       }
     }
   }, [node, toggleDir, selectFile, openFile]);
@@ -245,17 +243,17 @@ function FileTreeItem({
           useFileStore.getState().updateFilePath(newPath, newName);
         }
       } catch (err) {
-        console.error("Failed to rename:", err);
+        console.error('Failed to rename:', err);
       }
       onFinishInlineEdit();
     },
-    [node.path, refreshTree, onFinishInlineEdit]
+    [node.path, refreshTree, onFinishInlineEdit],
   );
 
   const handleNewEntryConfirm = useCallback(
     async (name: string) => {
       if (!inlineEdit) return;
-      const isDir = inlineEdit.mode === "new-folder";
+      const isDir = inlineEdit.mode === 'new-folder';
       try {
         useFileTreeStore.getState().notifyUserOp();
         const result = await fileService.createEntry({
@@ -275,14 +273,14 @@ function FileTreeItem({
         // If file, auto-open
         if (!isDir) {
           useFileTreeStore.getState().selectFile(result.path);
-          openFile(result.path, "", "utf-8", result.name);
+          openFile(result.path, '', 'utf-8', result.name);
         }
       } catch (err) {
-        console.error("Failed to create entry:", err);
+        console.error('Failed to create entry:', err);
       }
       onFinishInlineEdit();
     },
-    [inlineEdit, node.path, refreshTree, openFile, onFinishInlineEdit]
+    [inlineEdit, node.path, refreshTree, openFile, onFinishInlineEdit],
   );
 
   const handleContextMenu = useCallback(
@@ -291,7 +289,7 @@ function FileTreeItem({
       e.stopPropagation();
       onContextMenu(e, node);
     },
-    [node, onContextMenu]
+    [node, onContextMenu],
   );
 
   if (isBeingRenamed) {
@@ -334,11 +332,11 @@ function FileTreeItem({
       <button
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        className={`w-full flex items-center gap-1 px-2 py-1 text-xs text-left rounded-md transition-colors truncate
-          ${isSelected && !node.isDir
-            ? "bg-[var(--accent)]/15 text-[var(--accent)]"
-            : "text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5"
-          }`}
+        className={`flex w-full items-center gap-1 truncate rounded-md px-2 py-1 text-left text-xs transition-colors ${
+          isSelected && !node.isDir
+            ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+            : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5'
+        }`}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         title={node.path}
       >
@@ -372,7 +370,7 @@ function FileTreeItem({
           onCancel={onFinishInlineEdit}
           depth={depth + 1}
           icon={
-            inlineEdit!.mode === "new-folder" ? (
+            inlineEdit!.mode === 'new-folder' ? (
               <RiFolderLine size={14} className="text-amber-500" />
             ) : (
               <RiFileTextLine size={14} className="text-blue-400" />
@@ -402,7 +400,7 @@ function FileTreeItem({
 
 // ─── Types ────────────────────────────────────────────────
 
-type ViewMode = "tree" | "list";
+type ViewMode = 'tree' | 'list';
 
 /** Flat file entry used by the list view */
 interface FlatFileEntry {
@@ -428,25 +426,25 @@ function flattenFiles(nodes: FileTreeNode[], rootPath: string): FlatFileEntry[] 
       } else {
         const dirPath = node.path.substring(0, node.path.length - node.name.length - 1);
         const rootName =
-          rootPath.split("/").filter(Boolean).pop() ??
-          rootPath.split("\\").filter(Boolean).pop() ??
+          rootPath.split('/').filter(Boolean).pop() ??
+          rootPath.split('\\').filter(Boolean).pop() ??
           rootPath;
         let subDir = dirPath.startsWith(rootPath) ? dirPath.slice(rootPath.length) : dirPath;
-        if (subDir.startsWith("/") || subDir.startsWith("\\")) {
+        if (subDir.startsWith('/') || subDir.startsWith('\\')) {
           subDir = subDir.slice(1);
         }
         const relativeDir = subDir ? `${rootName}/${subDir}` : rootName;
 
-        const dotIndex = node.name.lastIndexOf(".");
+        const dotIndex = node.name.lastIndexOf('.');
         const stem = dotIndex > 0 ? node.name.slice(0, dotIndex) : node.name;
-        const ext = dotIndex > 0 ? node.name.slice(dotIndex) : "";
+        const ext = dotIndex > 0 ? node.name.slice(dotIndex) : '';
 
         result.push({
           name: node.name,
           path: node.path,
           stem,
           ext,
-          relativeDir: relativeDir || "",
+          relativeDir: relativeDir || '',
           modifiedTime: node.modifiedTime ?? null,
         });
       }
@@ -487,11 +485,11 @@ function FileListItem({
     try {
       const result = await fileService.readFile({
         path: entry.path,
-        encoding: "utf-8",
+        encoding: 'utf-8',
       });
-      openFile(entry.path, result.content, result.encoding ?? "utf-8", entry.name);
+      openFile(entry.path, result.content, result.encoding ?? 'utf-8', entry.name);
     } catch (err) {
-      console.error("Failed to open file from list:", err);
+      console.error('Failed to open file from list:', err);
     }
   }, [entry, selectFile, openFile]);
 
@@ -501,14 +499,14 @@ function FileListItem({
       e.stopPropagation();
       onContextMenu(e, entry);
     },
-    [entry, onContextMenu]
+    [entry, onContextMenu],
   );
 
   if (isBeingRenamed) {
     return (
       <div className="px-3 py-2">
-        <div className="flex items-center justify-between gap-2 mb-0.5">
-          <span className="text-[10px] text-[var(--sidebar-text)] opacity-50 truncate">
+        <div className="mb-0.5 flex items-center justify-between gap-2">
+          <span className="truncate text-[10px] text-[var(--sidebar-text)] opacity-50">
             {entry.relativeDir}
           </span>
         </div>
@@ -526,32 +524,31 @@ function FileListItem({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`w-full text-left px-3 py-2 rounded-md transition-colors
-        ${isSelected ? "bg-[var(--accent)]/15" : "hover:bg-black/5 dark:hover:bg-white/5"}`}
+      className={`w-full rounded-md px-3 py-2 text-left transition-colors ${isSelected ? 'bg-[var(--accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
       title={entry.path}
     >
       {/* Row 1: folder path + modified time */}
-      <div className="flex items-center justify-between gap-2 mb-0.5">
-        <span className="text-[10px] text-[var(--sidebar-text)] opacity-50 truncate">
+      <div className="mb-0.5 flex items-center justify-between gap-2">
+        <span className="truncate text-[10px] text-[var(--sidebar-text)] opacity-50">
           {entry.relativeDir}
         </span>
-        <span className="text-[10px] text-[var(--sidebar-text)] opacity-40 shrink-0 whitespace-nowrap">
+        <span className="shrink-0 whitespace-nowrap text-[10px] text-[var(--sidebar-text)] opacity-40">
           {timeAgo(entry.modifiedTime)}
         </span>
       </div>
       {/* Row 2: file name with .md dimmed */}
       <div className="leading-tight">
         <span
-          className={`text-sm font-semibold ${isSelected ? "text-[var(--accent)]" : "text-[var(--sidebar-text)]"
-            }`}
+          className={`text-sm font-semibold ${
+            isSelected ? 'text-[var(--accent)]' : 'text-[var(--sidebar-text)]'
+          }`}
         >
           {entry.stem}
         </span>
         <span
-          className={`text-xs ${isSelected
-            ? "text-[var(--accent)] opacity-50"
-            : "text-[var(--sidebar-text)] opacity-40"
-            }`}
+          className={`text-xs ${
+            isSelected ? 'text-[var(--accent)] opacity-50' : 'text-[var(--sidebar-text)] opacity-40'
+          }`}
         >
           {entry.ext}
         </span>
@@ -568,11 +565,10 @@ export function FileTree() {
   const isLoading = useFileTreeStore((s) => s.isLoading);
   const openFolder = useFileTreeStore((s) => s.openFolder);
   const refreshTree = useFileTreeStore((s) => s.refreshTree);
-  const selectedDir = useFileTreeStore((s) => s.selectedDir);
   const { openFile } = useFileStore();
 
   const [showMenu, setShowMenu] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("tree");
+  const [viewMode, setViewMode] = useState<ViewMode>('tree');
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const fileTreeRootRef = useRef<HTMLDivElement>(null);
@@ -613,8 +609,8 @@ export function FileTree() {
         setShowMenu(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
 
   // ─── Folder open ──────────────────────────────────────
@@ -623,15 +619,15 @@ export function FileTree() {
     const selected = await tauriOpen({
       multiple: false,
       directory: true,
-      title: "打开文件夹",
+      title: '打开文件夹',
     });
 
     if (!selected) return;
 
     const folderPath =
-      typeof selected === "string"
+      typeof selected === 'string'
         ? selected
-        : selected && typeof selected === "object" && "path" in selected
+        : selected && typeof selected === 'object' && 'path' in selected
           ? (selected as { path: string }).path
           : null;
 
@@ -658,14 +654,14 @@ export function FileTree() {
         });
         useFileStore.getState().markSaved();
       } catch (err) {
-        console.error("Failed to auto-save before switching folder:", err);
+        console.error('Failed to auto-save before switching folder:', err);
       }
     } else {
       // Untitled with changes → prompt Save As
-      const { save: tauriSaveDialog } = await import("@tauri-apps/plugin-dialog");
+      const { save: tauriSaveDialog } = await import('@tauri-apps/plugin-dialog');
       const savePath = await tauriSaveDialog({
         defaultPath: `${current.fileName}.md`,
-        filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
+        filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
       });
 
       if (savePath) {
@@ -676,7 +672,7 @@ export function FileTree() {
             encoding: current.encoding,
           });
         } catch (err) {
-          console.error("Failed to save untitled file:", err);
+          console.error('Failed to save untitled file:', err);
         }
       }
     }
@@ -692,43 +688,7 @@ export function FileTree() {
       await openFolder(folderPath);
       addRecentFolder(folderPath);
     },
-    [rootPath, openFolder, addRecentFolder, handleUnsavedBeforeSwitchFolder]
-  );
-
-  // ─── Create entry from toolbar ────────────────────────
-
-  const handleCreateEntry = useCallback(
-    async (isDir: boolean) => {
-      setShowMenu(false);
-      if (!rootPath) return;
-
-      const parentDir = selectedDir ?? rootPath;
-      const baseName = isDir ? "未命名文件夹" : "未命名.md";
-
-      try {
-        useFileTreeStore.getState().notifyUserOp();
-        const result = await fileService.createEntry({
-          parentDir,
-          baseName,
-          isDir,
-        });
-
-        const { expandedDirs, toggleDir } = useFileTreeStore.getState();
-        if (!expandedDirs.has(parentDir) && parentDir !== rootPath) {
-          toggleDir(parentDir);
-        }
-
-        await refreshTree();
-
-        if (!isDir) {
-          useFileTreeStore.getState().selectFile(result.path);
-          openFile(result.path, "", "utf-8", result.name);
-        }
-      } catch (err) {
-        console.error("Failed to create entry:", err);
-      }
-    },
-    [rootPath, selectedDir, refreshTree, openFile]
+    [rootPath, openFolder, addRecentFolder, handleUnsavedBeforeSwitchFolder],
   );
 
   // ─── Context menu actions ─────────────────────────────
@@ -736,15 +696,12 @@ export function FileTree() {
   const closeCtxMenu = useCallback(() => setCtxMenu(null), []);
 
   /** Get the parent dir of a file path */
-  const getParentDir = useCallback(
-    (filePath: string) => {
-      const sep = filePath.includes("/") ? "/" : "\\";
-      const parts = filePath.split(sep);
-      parts.pop();
-      return parts.join(sep);
-    },
-    []
-  );
+  const getParentDir = useCallback((filePath: string) => {
+    const sep = filePath.includes('/') ? '/' : '\\';
+    const parts = filePath.split(sep);
+    parts.pop();
+    return parts.join(sep);
+  }, []);
 
   // -- New file (tree view: inline edit)
   const handleNewFile = useCallback(
@@ -756,11 +713,11 @@ export function FileTree() {
       }
       setInlineEdit({
         path: parentDir,
-        value: "未命名.md",
-        mode: "new-file",
+        value: '未命名.md',
+        mode: 'new-file',
       });
     },
-    [rootPath]
+    [rootPath],
   );
 
   // -- New file (list view: system save dialog)
@@ -768,9 +725,9 @@ export function FileTree() {
     if (!rootPath) return;
     try {
       const savePath = await tauriSave({
-        title: "新建文件",
+        title: '新建文件',
         defaultPath: `${rootPath}/未命名.md`,
-        filters: [{ name: "Markdown", extensions: ["md"] }],
+        filters: [{ name: 'Markdown', extensions: ['md'] }],
       });
       if (!savePath) return;
 
@@ -778,19 +735,19 @@ export function FileTree() {
       useFileTreeStore.getState().notifyUserOp();
       await fileService.writeFile({
         path: savePath,
-        content: "",
-        encoding: "utf-8",
+        content: '',
+        encoding: 'utf-8',
         createParents: true,
       });
 
       await refreshTree();
 
       // Extract name from path
-      const fileName = savePath.split("/").pop() ?? savePath.split("\\").pop() ?? "未命名.md";
+      const fileName = savePath.split('/').pop() ?? savePath.split('\\').pop() ?? '未命名.md';
       useFileTreeStore.getState().selectFile(savePath);
-      openFile(savePath, "", "utf-8", fileName);
+      openFile(savePath, '', 'utf-8', fileName);
     } catch (err) {
-      console.error("Failed to create file via save dialog:", err);
+      console.error('Failed to create file via save dialog:', err);
     }
   }, [rootPath, refreshTree, openFile]);
 
@@ -803,11 +760,11 @@ export function FileTree() {
       }
       setInlineEdit({
         path: parentDir,
-        value: "未命名文件夹",
-        mode: "new-folder",
+        value: '未命名文件夹',
+        mode: 'new-folder',
       });
     },
-    [rootPath]
+    [rootPath],
   );
 
   // -- Rename (start inline edit)
@@ -815,7 +772,7 @@ export function FileTree() {
     setInlineEdit({
       path: targetPath,
       value: targetName,
-      mode: "rename",
+      mode: 'rename',
       originalName: targetName,
     });
   }, []);
@@ -832,11 +789,11 @@ export function FileTree() {
           useFileStore.getState().updateFilePath(newPath, newName);
         }
       } catch (err) {
-        console.error("Failed to rename:", err);
+        console.error('Failed to rename:', err);
       }
       setInlineEdit(null);
     },
-    [refreshTree]
+    [refreshTree],
   );
 
   // -- Duplicate file
@@ -848,29 +805,29 @@ export function FileTree() {
         await refreshTree();
 
         // Extract the file name from the new path
-        const sep = newPath.includes("/") ? "/" : "\\";
+        const sep = newPath.includes('/') ? '/' : '\\';
         const newName = newPath.split(sep).pop() ?? newPath;
 
         // Automatically enter inline rename state for the duplicated file
         setInlineEdit({
           path: newPath,
           value: newName,
-          mode: "rename",
+          mode: 'rename',
           originalName: newName,
         });
       } catch (err) {
-        console.error("Failed to duplicate:", err);
+        console.error('Failed to duplicate:', err);
       }
     },
-    [refreshTree]
+    [refreshTree],
   );
 
   // -- Move to trash
   const handleMoveToTrash = useCallback(
     async (targetPath: string, targetName: string) => {
       const confirmed = await showConfirmDialog(
-        "移至回收站",
-        `确定要将"${targetName}"移至回收站吗？`
+        '移至回收站',
+        `确定要将"${targetName}"移至回收站吗？`,
       );
       if (!confirmed) return;
 
@@ -885,10 +842,10 @@ export function FileTree() {
           useFileStore.getState().closeFile();
         }
       } catch (err) {
-        console.error("Failed to move to trash:", err);
+        console.error('Failed to move to trash:', err);
       }
     },
-    [refreshTree]
+    [refreshTree],
   );
 
   // -- Copy file path
@@ -901,7 +858,7 @@ export function FileTree() {
     try {
       await fileService.revealInFinder(targetPath);
     } catch (err) {
-      console.error("Failed to reveal in finder:", err);
+      console.error('Failed to reveal in finder:', err);
     }
   }, []);
 
@@ -911,17 +868,17 @@ export function FileTree() {
     (ctx: ContextMenuState): ContextMenuGroup[] => {
       const groups: ContextMenuGroup[] = [];
 
-      if (ctx.targetType === "dir") {
+      if (ctx.targetType === 'dir') {
         // Folder context menu
         groups.push({
           items: [
             {
-              label: "新建文件",
+              label: '新建文件',
               icon: <RiFileAddLine size={14} />,
               onClick: () => handleNewFile(ctx.targetPath),
             },
             {
-              label: "新建文件夹",
+              label: '新建文件夹',
               icon: <RiFolderAddLine size={14} />,
               onClick: () => handleNewFolder(ctx.targetPath),
             },
@@ -930,7 +887,7 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "重命名",
+              label: '重命名',
               icon: <RiPencilLine size={14} />,
               onClick: () => handleStartRename(ctx.targetPath, ctx.targetName),
             },
@@ -939,24 +896,24 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "移至回收站",
+              label: '移至回收站',
               icon: <RiDeleteBinLine size={14} />,
               onClick: () => handleMoveToTrash(ctx.targetPath, ctx.targetName),
             },
           ],
         });
-      } else if (ctx.targetType === "file") {
+      } else if (ctx.targetType === 'file') {
         // File context menu
         const parentDir = getParentDir(ctx.targetPath);
         groups.push({
           items: [
             {
-              label: "新建文件",
+              label: '新建文件',
               icon: <RiFileAddLine size={14} />,
               onClick: () => handleNewFile(parentDir),
             },
             {
-              label: "新建文件夹",
+              label: '新建文件夹',
               icon: <RiFolderAddLine size={14} />,
               onClick: () => handleNewFolder(parentDir),
             },
@@ -965,12 +922,12 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "创建副本",
+              label: '创建副本',
               icon: <RiFileCopyLine size={14} />,
               onClick: () => handleDuplicate(ctx.targetPath),
             },
             {
-              label: "重命名",
+              label: '重命名',
               icon: <RiPencilLine size={14} />,
               onClick: () => handleStartRename(ctx.targetPath, ctx.targetName),
             },
@@ -979,7 +936,7 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "移至回收站",
+              label: '移至回收站',
               icon: <RiDeleteBinLine size={14} />,
               onClick: () => handleMoveToTrash(ctx.targetPath, ctx.targetName),
             },
@@ -990,12 +947,12 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "新建文件",
+              label: '新建文件',
               icon: <RiFileAddLine size={14} />,
               onClick: () => handleNewFile(rootPath!),
             },
             {
-              label: "新建文件夹",
+              label: '新建文件夹',
               icon: <RiFolderAddLine size={14} />,
               onClick: () => handleNewFolder(rootPath!),
             },
@@ -1007,12 +964,12 @@ export function FileTree() {
       groups.push({
         items: [
           {
-            label: "复制文件路径",
+            label: '复制文件路径',
             icon: <RiClipboardLine size={14} />,
             onClick: () => handleCopyPath(ctx.targetPath),
           },
           {
-            label: "打开文件位置",
+            label: '打开文件位置',
             icon: <RiFolderOpenFill size={14} />,
             onClick: () => handleRevealInFinder(ctx.targetPath),
           },
@@ -1031,18 +988,18 @@ export function FileTree() {
       handleCopyPath,
       handleRevealInFinder,
       getParentDir,
-    ]
+    ],
   );
 
   const buildListContextMenuGroups = useCallback(
     (ctx: ContextMenuState): ContextMenuGroup[] => {
       const groups: ContextMenuGroup[] = [];
 
-      if (ctx.targetType === "file") {
+      if (ctx.targetType === 'file') {
         groups.push({
           items: [
             {
-              label: "新建文件",
+              label: '新建文件',
               icon: <RiFileAddLine size={14} />,
               onClick: () => handleNewFileListView(),
             },
@@ -1051,12 +1008,12 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "创建副本",
+              label: '创建副本',
               icon: <RiFileCopyLine size={14} />,
               onClick: () => handleDuplicate(ctx.targetPath),
             },
             {
-              label: "重命名",
+              label: '重命名',
               icon: <RiPencilLine size={14} />,
               onClick: () => handleStartRename(ctx.targetPath, ctx.targetName),
             },
@@ -1065,7 +1022,7 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "移至回收站",
+              label: '移至回收站',
               icon: <RiDeleteBinLine size={14} />,
               onClick: () => handleMoveToTrash(ctx.targetPath, ctx.targetName),
             },
@@ -1076,7 +1033,7 @@ export function FileTree() {
         groups.push({
           items: [
             {
-              label: "新建文件",
+              label: '新建文件',
               icon: <RiFileAddLine size={14} />,
               onClick: () => handleNewFileListView(),
             },
@@ -1088,12 +1045,12 @@ export function FileTree() {
       groups.push({
         items: [
           {
-            label: "复制文件路径",
+            label: '复制文件路径',
             icon: <RiClipboardLine size={14} />,
             onClick: () => handleCopyPath(ctx.targetPath),
           },
           {
-            label: "打开文件位置",
+            label: '打开文件位置',
             icon: <RiFolderOpenFill size={14} />,
             onClick: () => handleRevealInFinder(ctx.targetPath),
           },
@@ -1109,42 +1066,36 @@ export function FileTree() {
       handleMoveToTrash,
       handleCopyPath,
       handleRevealInFinder,
-    ]
+    ],
   );
 
   // ─── Context menu event handlers ──────────────────────
 
   /** Tree view: right-click on a node */
-  const handleTreeNodeContextMenu = useCallback(
-    (e: React.MouseEvent, node: FileTreeNode) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setCtxMenu({
-        x: e.clientX,
-        y: e.clientY,
-        targetType: node.isDir ? "dir" : "file",
-        targetPath: node.path,
-        targetName: node.name,
-      });
-    },
-    []
-  );
+  const handleTreeNodeContextMenu = useCallback((e: React.MouseEvent, node: FileTreeNode) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({
+      x: e.clientX,
+      y: e.clientY,
+      targetType: node.isDir ? 'dir' : 'file',
+      targetPath: node.path,
+      targetName: node.name,
+    });
+  }, []);
 
   /** List view: right-click on a file entry */
-  const handleListItemContextMenu = useCallback(
-    (e: React.MouseEvent, entry: FlatFileEntry) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setCtxMenu({
-        x: e.clientX,
-        y: e.clientY,
-        targetType: "file",
-        targetPath: entry.path,
-        targetName: entry.name,
-      });
-    },
-    []
-  );
+  const handleListItemContextMenu = useCallback((e: React.MouseEvent, entry: FlatFileEntry) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({
+      x: e.clientX,
+      y: e.clientY,
+      targetType: 'file',
+      targetPath: entry.path,
+      targetName: entry.name,
+    });
+  }, []);
 
   /** Right-click on blank area */
   const handleBlankContextMenu = useCallback(
@@ -1154,12 +1105,12 @@ export function FileTree() {
       setCtxMenu({
         x: e.clientX,
         y: e.clientY,
-        targetType: "blank",
+        targetType: 'blank',
         targetPath: rootPath,
-        targetName: rootPath.split("/").pop() ?? rootPath,
+        targetName: rootPath.split('/').pop() ?? rootPath,
       });
     },
-    [rootPath]
+    [rootPath],
   );
 
   // ─── Inline edit finish ───────────────────────────────
@@ -1173,7 +1124,7 @@ export function FileTree() {
   const handleNewEntryFromRootConfirm = useCallback(
     async (name: string) => {
       if (!inlineEdit || !rootPath) return;
-      const isDir = inlineEdit.mode === "new-folder";
+      const isDir = inlineEdit.mode === 'new-folder';
       try {
         useFileTreeStore.getState().notifyUserOp();
         const result = await fileService.createEntry({
@@ -1184,28 +1135,28 @@ export function FileTree() {
         await refreshTree();
         if (!isDir) {
           useFileTreeStore.getState().selectFile(result.path);
-          openFile(result.path, "", "utf-8", result.name);
+          openFile(result.path, '', 'utf-8', result.name);
         }
       } catch (err) {
-        console.error("Failed to create entry:", err);
+        console.error('Failed to create entry:', err);
       }
       setInlineEdit(null);
     },
-    [inlineEdit, rootPath, refreshTree, openFile]
+    [inlineEdit, rootPath, refreshTree, openFile],
   );
 
   // ─── Empty state ──────────────────────────────────────
 
   if (!rootPath) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
         <RiFolderAddLine size={32} className="text-[var(--sidebar-text)] opacity-40" />
-        <p className="text-xs text-[var(--sidebar-text)] opacity-60 text-center select-none">
+        <p className="select-none text-center text-xs text-[var(--sidebar-text)] opacity-60">
           打开文件夹以浏览 Markdown 文件
         </p>
         <button
           onClick={handleOpenFolder}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-[var(--editor-border)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[var(--sidebar-text)] select-none"
+          className="flex select-none items-center gap-1.5 rounded-md border border-[var(--editor-border)] px-3 py-1.5 text-xs text-[var(--sidebar-text)] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
         >
           <RiFolderOpenLine size={14} />
           打开文件夹
@@ -1214,124 +1165,90 @@ export function FileTree() {
     );
   }
 
-  const folderName = rootPath.split("/").pop() ?? rootPath.split("\\").pop() ?? rootPath;
+  const folderName = rootPath.split('/').pop() ?? rootPath.split('\\').pop() ?? rootPath;
 
   // Check if the inline edit is for the root path (blank area new entry)
   const isRootNewEntry =
     inlineEdit &&
-    (inlineEdit.mode === "new-file" || inlineEdit.mode === "new-folder") &&
+    (inlineEdit.mode === 'new-file' || inlineEdit.mode === 'new-folder') &&
     inlineEdit.path === rootPath;
 
   return (
-    <div ref={fileTreeRootRef} className="relative flex flex-col h-full text-xs text-[var(--sidebar-text)]">
+    <div
+      ref={fileTreeRootRef}
+      className="relative flex h-full flex-col text-xs text-[var(--sidebar-text)]"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-[var(--sidebar-border)]">
-        <span className="font-medium truncate" title={rootPath}>
+      <div className="flex items-center justify-between border-b border-[var(--sidebar-border)] px-2 py-1.5">
+        <span className="truncate font-medium" title={rootPath}>
           {folderName}
         </span>
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-0.5">
           <button
             ref={recentFoldersBtnRef}
             onClick={() => setShowRecentFolders((v) => !v)}
-            className={`p-1 rounded transition-colors ${showRecentFolders
-              ? "bg-black/10 dark:bg-white/15 text-[var(--accent)]"
-              : "hover:bg-black/5 dark:hover:bg-white/10"
-              }`}
+            className={`rounded p-1 transition-colors ${
+              showRecentFolders
+                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                : 'hover:bg-black/5 dark:hover:bg-white/10'
+            }`}
             title="最近打开的文件夹"
           >
             <RiHistoryLine size={13} />
           </button>
 
-          <span className="w-px h-3 bg-[var(--sidebar-border)] mx-0.5" />
+          <span className="mx-0.5 h-3 w-px bg-[var(--sidebar-border)]" />
 
           {/* View mode toggle */}
           <button
-            onClick={() => setViewMode("tree")}
-            className={`p-1 rounded transition-colors ${viewMode === "tree"
-              ? "bg-black/10 dark:bg-white/15 text-[var(--accent)]"
-              : "hover:bg-black/5 dark:hover:bg-white/10"
-              }`}
+            onClick={() => setViewMode('tree')}
+            className={`rounded p-1 transition-colors ${
+              viewMode === 'tree'
+                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                : 'hover:bg-black/5 dark:hover:bg-white/10'
+            }`}
             title="树视图"
           >
             <RiNodeTree size={13} />
           </button>
           <button
-            onClick={() => setViewMode("list")}
-            className={`p-1 rounded transition-colors ${viewMode === "list"
-              ? "bg-black/10 dark:bg-white/15 text-[var(--accent)]"
-              : "hover:bg-black/5 dark:hover:bg-white/10"
-              }`}
+            onClick={() => setViewMode('list')}
+            className={`rounded p-1 transition-colors ${
+              viewMode === 'list'
+                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                : 'hover:bg-black/5 dark:hover:bg-white/10'
+            }`}
             title="列表视图"
           >
             <RiListUnordered size={13} />
           </button>
 
-          <span className="w-px h-3 bg-[var(--sidebar-border)] mx-0.5" />
+          <span className="mx-0.5 h-3 w-px bg-[var(--sidebar-border)]" />
 
           <button
             onClick={handleOpenFolder}
-            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
             title="打开其他文件夹"
           >
             <RiFolderOpenLine size={13} />
           </button>
           <button
             onClick={refreshTree}
-            className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
             title="刷新"
           >
             <RiRefreshLine size={13} />
           </button>
-
-          {/* New entry button with dropdown */}
-          <div className="relative">
-            <button
-              ref={btnRef}
-              onClick={() => setShowMenu((v) => !v)}
-              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-              title="新建"
-            >
-              <RiAddLine size={13} />
-            </button>
-            {showMenu && (
-              <div
-                ref={menuRef}
-                className="absolute right-0 top-full mt-1 z-50 min-w-[140px] py-1 bg-[var(--sidebar-bg)] border border-[var(--sidebar-border)] rounded-md shadow-lg"
-              >
-                <button
-                  onClick={() => handleCreateEntry(false)}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                >
-                  <RiFileAddLine size={14} className="text-blue-400" />
-                  新建文件
-                </button>
-                <button
-                  onClick={() => handleCreateEntry(true)}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                >
-                  <RiFolderAddLine size={14} className="text-amber-500" />
-                  新建文件夹
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
       {/* Content area */}
-      <div
-        className="flex-1 overflow-auto py-1"
-        onContextMenu={handleBlankContextMenu}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <span className="text-[10px] opacity-60">加载中...</span>
-          </div>
-        ) : tree.length === 0 ? (
+      <div className="flex-1 overflow-auto py-1" onContextMenu={handleBlankContextMenu}>
+        {tree.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <span className="text-[10px] opacity-60">未找到 Markdown 文件</span>
           </div>
-        ) : viewMode === "tree" ? (
+        ) : viewMode === 'tree' ? (
           <>
             {/* Root-level new entry inline edit */}
             {isRootNewEntry && (
@@ -1341,7 +1258,7 @@ export function FileTree() {
                 onCancel={handleFinishInlineEdit}
                 depth={0}
                 icon={
-                  inlineEdit!.mode === "new-folder" ? (
+                  inlineEdit!.mode === 'new-folder' ? (
                     <RiFolderLine size={14} className="text-amber-500" />
                   ) : (
                     <RiFileTextLine size={14} className="text-blue-400" />
@@ -1371,13 +1288,9 @@ export function FileTree() {
               <FileListItem
                 key={entry.path}
                 entry={entry}
-                isBeingRenamed={
-                  inlineEdit?.mode === "rename" && inlineEdit.path === entry.path
-                }
+                isBeingRenamed={inlineEdit?.mode === 'rename' && inlineEdit.path === entry.path}
                 onContextMenu={handleListItemContextMenu}
-                onRenameConfirm={(newName) =>
-                  handleListRenameConfirm(entry.path, newName)
-                }
+                onRenameConfirm={(newName) => handleListRenameConfirm(entry.path, newName)}
                 onRenameCancel={handleFinishInlineEdit}
               />
             ))}
@@ -1401,7 +1314,7 @@ export function FileTree() {
           x={ctxMenu.x}
           y={ctxMenu.y}
           groups={
-            viewMode === "tree"
+            viewMode === 'tree'
               ? buildTreeContextMenuGroups(ctxMenu)
               : buildListContextMenuGroups(ctxMenu)
           }

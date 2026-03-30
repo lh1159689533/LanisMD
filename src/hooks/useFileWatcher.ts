@@ -82,7 +82,10 @@ export function useFileWatcher() {
             if (!isRelevantChange(event)) return;
 
             // --- 1. Debounced tree refresh (skip if within suppress window) ---
-            if (Date.now() - useFileTreeStore.getState().lastUserOpTimestamp < TREE_REFRESH_SUPPRESS_COOLDOWN) {
+            if (
+              Date.now() - useFileTreeStore.getState().lastUserOpTimestamp <
+              TREE_REFRESH_SUPPRESS_COOLDOWN
+            ) {
               // Frontend just did a file operation and already refreshed the tree;
               // skip the watcher-triggered refresh to avoid flicker.
             } else {
@@ -119,7 +122,7 @@ export function useFileWatcher() {
           {
             recursive: true,
             delayMs: 300,
-          }
+          },
         );
 
         if (!cancelled) {
@@ -160,7 +163,7 @@ async function handleCurrentFileChanged(filePath: string, isDirty: boolean): Pro
     // File has unsaved local changes → ask user
     const shouldReload = await showConfirmDialog(
       '文件已被外部修改',
-      '当前文件已在外部被修改。是否重新加载磁盘上的最新内容？\n（选择"是"将丢弃未保存的更改）'
+      '当前文件已在外部被修改。是否重新加载磁盘上的最新内容？\n（选择"是"将丢弃未保存的更改）',
     );
     if (!shouldReload) return;
   }

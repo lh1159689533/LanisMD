@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import type { Toast } from "@/types";
+import { create } from 'zustand';
+import type { Toast } from '@/types';
 
 function generateToastId(): string {
   return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -7,7 +7,7 @@ function generateToastId(): string {
 
 interface UIState {
   sidebarOpen: boolean;
-  sidebarPanel: "outline" | "files" | "search";
+  sidebarPanel: 'outline' | 'files' | 'search';
   sidebarWidth: number;
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
@@ -19,23 +19,23 @@ interface UIState {
   collapseSidebar: (nextWidth: number) => void;
   /** Atomically open sidebar with a given width */
   expandSidebar: (width: number) => void;
-  setSidebarPanel: (panel: "outline" | "files" | "search") => void;
+  setSidebarPanel: (panel: 'outline' | 'files' | 'search') => void;
   setSidebarWidth: (width: number) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   openSettings: (section?: string) => void;
   closeSettings: () => void;
-  addToast: (toast: Omit<Toast, "id">) => void;
+  addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({
   sidebarOpen: true,
-  sidebarPanel: "files",
+  sidebarPanel: 'files',
   sidebarWidth: 280,
   commandPaletteOpen: false,
   settingsOpen: false,
-  settingsActiveSection: "general",
+  settingsActiveSection: 'general',
   toasts: [],
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -48,7 +48,7 @@ export const useUIStore = create<UIState>()((set) => ({
   openSettings: (section) =>
     set({
       settingsOpen: true,
-      settingsActiveSection: section ?? "general",
+      settingsActiveSection: section ?? 'general',
     }),
   closeSettings: () => set({ settingsOpen: false }),
   addToast: (toast) =>

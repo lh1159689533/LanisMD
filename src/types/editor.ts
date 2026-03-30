@@ -7,7 +7,7 @@ export interface OutlineItem {
 }
 
 export interface EditorState {
-  mode: "wysiwyg" | "source";
+  mode: 'wysiwyg' | 'source';
   focusMode: boolean;
   typewriterMode: boolean;
   wordCount: number;

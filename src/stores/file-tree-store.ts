@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import type { FileTreeNode } from "@/types";
-import { fileService } from "@/services/tauri";
+import { create } from 'zustand';
+import type { FileTreeNode } from '@/types';
+import { fileService } from '@/services/tauri';
 
 interface FileTreeState {
   /** Root folder path */
@@ -57,7 +57,7 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
         isLoading: false,
       });
     } catch (err) {
-      console.error("Failed to open folder:", err);
+      console.error('Failed to open folder:', err);
       set({ isLoading: false });
     }
   },
@@ -71,7 +71,7 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
       const tree = await fileService.listDirectory(rootPath);
       set({ tree, isLoading: false });
     } catch (err) {
-      console.error("Failed to refresh tree:", err);
+      console.error('Failed to refresh tree:', err);
       set({ isLoading: false });
     }
   },

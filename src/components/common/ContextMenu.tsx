@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from 'react';
 
 export interface ContextMenuItem {
   label: string;
@@ -54,38 +54,33 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
       }
     };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
     // Use capture to ensure we catch the event before anything else
-    document.addEventListener("mousedown", handleClick, true);
-    document.addEventListener("keydown", handleKey);
+    document.addEventListener('mousedown', handleClick, true);
+    document.addEventListener('keydown', handleKey);
     return () => {
-      document.removeEventListener("mousedown", handleClick, true);
-      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener('mousedown', handleClick, true);
+      document.removeEventListener('keydown', handleKey);
     };
   }, [onClose]);
 
   // Prevent browser's default context menu on the component itself
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    []
-  );
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
   return (
     <div
       ref={menuRef}
       onContextMenu={handleContextMenu}
-      className="fixed z-[9999] min-w-[180px] py-1 rounded-lg border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-xl backdrop-blur-sm"
+      className="fixed z-[9999] min-w-[180px] rounded-lg border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] py-1 shadow-xl backdrop-blur-sm"
       style={{ left: x, top: y }}
     >
       {groups.map((group, gi) => (
         <div key={gi}>
-          {gi > 0 && (
-            <div className="my-1 mx-2 h-px bg-[var(--sidebar-border)]" />
-          )}
+          {gi > 0 && <div className="mx-2 my-1 h-px bg-[var(--sidebar-border)]" />}
           {group.items.map((item, ii) => (
             <button
               key={ii}
@@ -96,14 +91,14 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
                 }
               }}
               disabled={item.disabled}
-              className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-left transition-colors
-                ${item.disabled
-                  ? "opacity-40 cursor-not-allowed"
-                  : "text-[var(--sidebar-text)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]"
-                }`}
+              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors ${
+                item.disabled
+                  ? 'cursor-not-allowed opacity-40'
+                  : 'hover:bg-[var(--accent)]/10 text-[var(--sidebar-text)] hover:text-[var(--accent)]'
+              }`}
             >
               {item.icon && (
-                <span className="shrink-0 w-4 h-4 flex items-center justify-center opacity-70">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center opacity-70">
                   {item.icon}
                 </span>
               )}

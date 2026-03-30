@@ -1,8 +1,8 @@
-import { create } from "zustand";
-import type { OutlineItem } from "@/types";
+import { create } from 'zustand';
+import type { OutlineItem } from '@/types';
 
 interface EditorState {
-  mode: "wysiwyg" | "source";
+  mode: 'wysiwyg' | 'source';
   focusMode: boolean;
   typewriterMode: boolean;
   wordCount: number;
@@ -13,7 +13,7 @@ interface EditorState {
   cursorLine: number;
   cursorColumn: number;
 
-  setMode: (mode: "wysiwyg" | "source") => void;
+  setMode: (mode: 'wysiwyg' | 'source') => void;
   toggleFocusMode: () => void;
   toggleTypewriterMode: () => void;
   updateStats: (content: string) => void;
@@ -22,7 +22,7 @@ interface EditorState {
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
-  mode: "wysiwyg",
+  mode: 'wysiwyg',
   focusMode: false,
   typewriterMode: false,
   wordCount: 0,
@@ -41,11 +41,11 @@ export const useEditorStore = create<EditorState>()((set) => ({
     const charCount = content.length; // 含空格的总字符数
     const chineseChars = (content.match(/[\u4e00-\u9fff]/g) || []).length;
     const englishWords = content
-      .replace(/[\u4e00-\u9fff]/g, " ")
+      .replace(/[\u4e00-\u9fff]/g, ' ')
       .split(/\s+/)
       .filter(Boolean).length;
     const wordCount = chineseChars + englishWords;
-    const lineCount = content.split("\n").length;
+    const lineCount = content.split('\n').length;
     const readingTime = Math.max(1, Math.ceil(wordCount / 300));
     set({ charCount, wordCount, lineCount, readingTime });
   },

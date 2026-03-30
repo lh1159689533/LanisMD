@@ -18,13 +18,13 @@ export interface EditorTab {
   isDirty: boolean;
   cursorPosition: { line: number; column: number };
   scrollPosition: number;
-  editorMode: "wysiwyg" | "source";
+  editorMode: 'wysiwyg' | 'source';
   isReadOnly: boolean;
   createdAt: number;
 }
 
 /** Save status for the auto-save indicator */
-export type SaveStatus = "idle" | "saving" | "saved" | "error";
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface RecentFile {
   path: string;

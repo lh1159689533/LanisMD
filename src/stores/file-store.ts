@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import type { EditorTab, SaveStatus } from "@/types";
+import { create } from 'zustand';
+import type { EditorTab, SaveStatus } from '@/types';
 
 function generateId(): string {
   return `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -38,7 +38,7 @@ interface FileState {
 
 export const useFileStore = create<FileState>()((set, get) => ({
   currentFile: null,
-  saveStatus: "idle" as SaveStatus,
+  saveStatus: 'idle' as SaveStatus,
 
   openFile: (path, content, encoding, fileName) => {
     // If the same file is already open, do nothing
@@ -55,14 +55,14 @@ export const useFileStore = create<FileState>()((set, get) => ({
       isDirty: false,
       cursorPosition: { line: 1, column: 1 },
       scrollPosition: 0,
-      editorMode: "wysiwyg",
+      editorMode: 'wysiwyg',
       isReadOnly: false,
       createdAt: Date.now(),
     };
 
     set({
       currentFile: newFile,
-      saveStatus: "idle",
+      saveStatus: 'idle',
     });
   },
 
@@ -70,21 +70,21 @@ export const useFileStore = create<FileState>()((set, get) => ({
     const newFile: EditorTab = {
       id: generateId(),
       filePath: null,
-      fileName: "未命名",
-      content: "",
-      lastSavedContent: "",
-      encoding: "utf-8",
+      fileName: '未命名',
+      content: '',
+      lastSavedContent: '',
+      encoding: 'utf-8',
       isDirty: false,
       cursorPosition: { line: 1, column: 1 },
       scrollPosition: 0,
-      editorMode: "wysiwyg",
+      editorMode: 'wysiwyg',
       isReadOnly: false,
       createdAt: Date.now(),
     };
 
     set({
       currentFile: newFile,
-      saveStatus: "idle",
+      saveStatus: 'idle',
     });
   },
 
@@ -129,13 +129,13 @@ export const useFileStore = create<FileState>()((set, get) => ({
         lastSavedContent: current.content,
         isDirty: false,
       },
-      saveStatus: "saved",
+      saveStatus: 'saved',
     });
 
     // Reset save status to idle after 2 seconds
     setTimeout(() => {
-      if (get().saveStatus === "saved") {
-        set({ saveStatus: "idle" });
+      if (get().saveStatus === 'saved') {
+        set({ saveStatus: 'idle' });
       }
     }, 2000);
   },
@@ -145,7 +145,7 @@ export const useFileStore = create<FileState>()((set, get) => ({
   },
 
   closeFile: () => {
-    set({ currentFile: null, saveStatus: "idle" });
+    set({ currentFile: null, saveStatus: 'idle' });
   },
 
   updateFilePath: (newPath: string, newName: string) => {

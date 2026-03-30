@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 
 export interface DialogFilter {
   name: string;
@@ -16,17 +16,15 @@ export interface OpenDialogResult {
   paths: string[];
 }
 
-export async function openFileDialog(
-  params?: OpenDialogParams
-): Promise<OpenDialogResult | null> {
+export async function openFileDialog(params?: OpenDialogParams): Promise<OpenDialogResult | null> {
   const defaultFilters: DialogFilter[] = [
-    { name: "Markdown", extensions: ["md", "markdown", "txt"] },
+    { name: 'Markdown', extensions: ['md', 'markdown', 'txt'] },
   ];
 
   try {
-    const result = await invoke<string[] | null>("plugin:dialog|open", {
+    const result = await invoke<string[] | null>('plugin:dialog|open', {
       options: {
-        title: params?.title ?? "打开文件",
+        title: params?.title ?? '打开文件',
         filters: params?.filters ?? defaultFilters,
         multiple: params?.multiple ?? true,
         directory: params?.directory ?? false,
@@ -40,15 +38,13 @@ export async function openFileDialog(
   }
 }
 
-export async function saveFileDialog(
-  defaultName?: string
-): Promise<string | null> {
+export async function saveFileDialog(defaultName?: string): Promise<string | null> {
   try {
-    const result = await invoke<string | null>("plugin:dialog|save", {
+    const result = await invoke<string | null>('plugin:dialog|save', {
       options: {
-        title: "Save File",
-        defaultPath: defaultName ?? "untitled.md",
-        filters: [{ name: "Markdown", extensions: ["md"] }],
+        title: 'Save File',
+        defaultPath: defaultName ?? 'untitled.md',
+        filters: [{ name: 'Markdown', extensions: ['md'] }],
       },
     });
     return result;
@@ -57,32 +53,26 @@ export async function saveFileDialog(
   }
 }
 
-export async function showMessage(
-  title: string,
-  message: string
-): Promise<void> {
+export async function showMessage(title: string, message: string): Promise<void> {
   try {
-    await invoke("plugin:dialog|message", {
+    await invoke('plugin:dialog|message', {
       message,
       title,
-      kind: "info",
+      kind: 'info',
     });
   } catch {
     // fallback: alert
   }
 }
 
-export async function showConfirmDialog(
-  title: string,
-  message: string
-): Promise<boolean> {
+export async function showConfirmDialog(title: string, message: string): Promise<boolean> {
   try {
-    const answer = await invoke<boolean>("plugin:dialog|ask", {
+    const answer = await invoke<boolean>('plugin:dialog|ask', {
       message,
       title,
-      kind: "info",
-      yesButtonLabel: "是",
-      noButtonLabel: "否",
+      kind: 'info',
+      yesButtonLabel: '是',
+      noButtonLabel: '否',
     });
     return answer;
   } catch {

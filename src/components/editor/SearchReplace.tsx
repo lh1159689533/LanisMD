@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { RiSearchLine, RiCloseLine, RiArrowUpLine, RiArrowDownLine } from "react-icons/ri";
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { RiSearchLine, RiCloseLine, RiArrowUpLine, RiArrowDownLine } from 'react-icons/ri';
 
 interface SearchReplaceProps {
   onClose: () => void;
@@ -9,8 +9,8 @@ interface SearchReplaceProps {
 }
 
 export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: SearchReplaceProps) {
-  const [searchText, setSearchText] = useState("");
-  const [replaceText, setReplaceText] = useState("");
+  const [searchText, setSearchText] = useState('');
+  const [replaceText, setReplaceText] = useState('');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
@@ -29,8 +29,8 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
     }
 
     try {
-      const flags = caseSensitive ? "g" : "gi";
-      const pattern = useRegex ? searchText : searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const flags = caseSensitive ? 'g' : 'gi';
+      const pattern = useRegex ? searchText : searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(pattern, flags);
       const matches = content.match(regex);
       setMatchCount(matches ? matches.length : 0);
@@ -41,34 +41,43 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
     }
   }, [searchText, content, caseSensitive, useRegex]);
 
-  const navigateMatch = useCallback((direction: "next" | "prev") => {
-    setCurrentIndex((prev) => {
-      if (direction === "next") {
-        return prev >= matchCount ? 1 : prev + 1;
-      }
-      return prev <= 1 ? matchCount : prev - 1;
-    });
-  }, [matchCount]);
+  const navigateMatch = useCallback(
+    (direction: 'next' | 'prev') => {
+      setCurrentIndex((prev) => {
+        if (direction === 'next') {
+          return prev >= matchCount ? 1 : prev + 1;
+        }
+        return prev <= 1 ? matchCount : prev - 1;
+      });
+    },
+    [matchCount],
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (e.shiftKey) {
-        navigateMatch("prev");
-      } else {
-        navigateMatch("next");
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          navigateMatch('prev');
+        } else {
+          navigateMatch('next');
+        }
       }
-    }
-    if (e.key === "Escape") {
-      onClose();
-    }
-  }, [navigateMatch, onClose]);
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [navigateMatch, onClose],
+  );
 
   return (
-    <div className="absolute top-12 right-4 z-50 w-80 bg-[var(--editor-bg)] border border-[var(--editor-border)] rounded-lg shadow-lg p-3">
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className="flex-1 relative">
-          <RiSearchLine className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)]" size={13} />
+    <div className="absolute right-4 top-12 z-50 w-80 rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] p-3 shadow-lg">
+      <div className="mb-2 flex items-center gap-1.5">
+        <div className="relative flex-1">
+          <RiSearchLine
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)]"
+            size={13}
+          />
           <input
             ref={inputRef}
             type="text"
@@ -76,50 +85,82 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
             onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="搜索..."
-            className="w-full h-7 pl-7 pr-2 text-xs bg-[var(--sidebar-bg)] border border-[var(--editor-border)] rounded-md outline-none focus:border-[var(--accent)] text-[var(--editor-text)]"
+            className="h-7 w-full rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)] pl-7 pr-2 text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]"
           />
         </div>
-        <span className="text-[10px] text-[var(--sidebar-text)] min-w-[40px] text-center">
-          {matchCount > 0 ? `${currentIndex}/${matchCount}` : "0"}
+        <span className="min-w-[40px] text-center text-[10px] text-[var(--sidebar-text)]">
+          {matchCount > 0 ? `${currentIndex}/${matchCount}` : '0'}
         </span>
-        <button onClick={() => navigateMatch("prev")} disabled={matchCount === 0} className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors">
+        <button
+          onClick={() => navigateMatch('prev')}
+          disabled={matchCount === 0}
+          className="rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+        >
           <RiArrowUpLine size={14} />
         </button>
-        <button onClick={() => navigateMatch("next")} disabled={matchCount === 0} className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors">
+        <button
+          onClick={() => navigateMatch('next')}
+          disabled={matchCount === 0}
+          className="rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+        >
           <RiArrowDownLine size={14} />
         </button>
-        <button onClick={onClose} className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+        <button
+          onClick={onClose}
+          className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+        >
           <RiCloseLine size={14} />
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className="flex-1 relative">
-          <RiSearchLine className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)] opacity-50" size={13} />
+      <div className="mb-2 flex items-center gap-1.5">
+        <div className="relative flex-1">
+          <RiSearchLine
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)] opacity-50"
+            size={13}
+          />
           <input
             type="text"
             value={replaceText}
             onChange={(e) => setReplaceText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="替换..."
-            className="w-full h-7 pl-7 pr-2 text-xs bg-[var(--sidebar-bg)] border border-[var(--editor-border)] rounded-md outline-none focus:border-[var(--accent)] text-[var(--editor-text)]"
+            className="h-7 w-full rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)] pl-7 pr-2 text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]"
           />
         </div>
-        <button onClick={() => onReplace?.(searchText, replaceText)} disabled={matchCount === 0} className="h-7 px-2 text-[10px] rounded-md bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] disabled:opacity-30 transition-colors">
+        <button
+          onClick={() => onReplace?.(searchText, replaceText)}
+          disabled={matchCount === 0}
+          className="h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30"
+        >
           替换
         </button>
-        <button onClick={() => onReplaceAll?.(searchText, replaceText)} disabled={matchCount === 0} className="h-7 px-2 text-[10px] rounded-md bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] disabled:opacity-30 transition-colors">
+        <button
+          onClick={() => onReplaceAll?.(searchText, replaceText)}
+          disabled={matchCount === 0}
+          className="h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30"
+        >
           全部
         </button>
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="flex items-center gap-1 text-[10px] text-[var(--sidebar-text)] cursor-pointer select-none">
-          <input type="checkbox" checked={caseSensitive} onChange={(e) => setCaseSensitive(e.target.checked)} className="w-3 h-3 accent-[var(--accent)]" />
+        <label className="flex cursor-pointer select-none items-center gap-1 text-[10px] text-[var(--sidebar-text)]">
+          <input
+            type="checkbox"
+            checked={caseSensitive}
+            onChange={(e) => setCaseSensitive(e.target.checked)}
+            className="h-3 w-3 accent-[var(--accent)]"
+          />
           区分大小写
         </label>
-        <label className="flex items-center gap-1 text-[10px] text-[var(--sidebar-text)] cursor-pointer select-none">
-          <input type="checkbox" checked={useRegex} onChange={(e) => setUseRegex(e.target.checked)} className="w-3 h-3 accent-[var(--accent)]" />
+        <label className="flex cursor-pointer select-none items-center gap-1 text-[10px] text-[var(--sidebar-text)]">
+          <input
+            type="checkbox"
+            checked={useRegex}
+            onChange={(e) => setUseRegex(e.target.checked)}
+            className="h-3 w-3 accent-[var(--accent)]"
+          />
           正则
         </label>
       </div>

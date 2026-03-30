@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useFileStore } from "@/stores/file-store";
-import { fileService } from "@/services/tauri";
-import { save as tauriSave } from "@tauri-apps/plugin-dialog";
+import { useCallback, useEffect, useRef } from 'react';
+import { useFileStore } from '@/stores/file-store';
+import { fileService } from '@/services/tauri';
+import { save as tauriSave } from '@tauri-apps/plugin-dialog';
 
 const AUTO_SAVE_DELAY = 1000; // 1 second debounce
 
@@ -32,7 +32,7 @@ export function useAutoSave(options?: AutoSaveOptions) {
     isSavingRef.current = true;
 
     try {
-      useFileStore.getState().setSaveStatus("saving");
+      useFileStore.getState().setSaveStatus('saving');
 
       await fileService.writeFile({
         path: file.filePath,
@@ -43,8 +43,8 @@ export function useAutoSave(options?: AutoSaveOptions) {
       useFileStore.getState().markSaved();
       onAfterSaveRef.current?.();
     } catch (err) {
-      console.error("Auto-save failed:", err);
-      useFileStore.getState().setSaveStatus("error");
+      console.error('Auto-save failed:', err);
+      useFileStore.getState().setSaveStatus('error');
     } finally {
       isSavingRef.current = false;
     }
@@ -74,14 +74,14 @@ export function useAutoSave(options?: AutoSaveOptions) {
 
     // If file has no path, trigger "Save As" dialog
     if (!file.filePath) {
-      if (!file.isDirty && file.content === "") return; // Empty untitled, skip
+      if (!file.isDirty && file.content === '') return; // Empty untitled, skip
 
       const filePath = await tauriSave({
         defaultPath: `${file.fileName}.md`,
         filters: [
           {
-            name: "Markdown",
-            extensions: ["md", "markdown"],
+            name: 'Markdown',
+            extensions: ['md', 'markdown'],
           },
         ],
       });
@@ -89,18 +89,18 @@ export function useAutoSave(options?: AutoSaveOptions) {
       if (!filePath) return;
 
       try {
-        useFileStore.getState().setSaveStatus("saving");
+        useFileStore.getState().setSaveStatus('saving');
         await fileService.writeFile({
           path: filePath,
           content: file.content,
           encoding: file.encoding,
         });
-        const fileName = filePath.split("/").pop() ?? filePath.split("\\").pop() ?? "未知";
+        const fileName = filePath.split('/').pop() ?? filePath.split('\\').pop() ?? '未知';
         useFileStore.getState().markSaved(filePath, fileName);
         onAfterSaveRef.current?.();
       } catch (err) {
-        console.error("Save failed:", err);
-        useFileStore.getState().setSaveStatus("error");
+        console.error('Save failed:', err);
+        useFileStore.getState().setSaveStatus('error');
       }
       return;
     }
@@ -138,15 +138,15 @@ export function useAutoSave(options?: AutoSaveOptions) {
       }
     };
 
-    window.addEventListener("blur", handleBlur);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
         handleBlur();
       }
     });
 
     return () => {
-      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener('blur', handleBlur);
     };
   }, [performSave]);
 

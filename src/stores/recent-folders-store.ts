@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 const MAX_RECENT_FOLDERS = 20;
 
@@ -21,29 +21,27 @@ export const useRecentFoldersStore = create<RecentFoldersState>()(
 
       addRecentFolder: (folderPath: string) => {
         const name =
-          folderPath.split("/").filter(Boolean).pop() ??
-          folderPath.split("\\").filter(Boolean).pop() ??
+          folderPath.split('/').filter(Boolean).pop() ??
+          folderPath.split('\\').filter(Boolean).pop() ??
           folderPath;
 
         set(() => {
           // Remove existing entry for this path
-          const filtered = get().recentFolders.filter(
-            (f) => f.path !== folderPath
-          );
+          const filtered = get().recentFolders.filter((f) => f.path !== folderPath);
 
           // Add to front
-          const updated = [
-            { path: folderPath, name, timestamp: Date.now() },
-            ...filtered,
-          ].slice(0, MAX_RECENT_FOLDERS);
+          const updated = [{ path: folderPath, name, timestamp: Date.now() }, ...filtered].slice(
+            0,
+            MAX_RECENT_FOLDERS,
+          );
 
           return { recentFolders: updated };
         });
       },
     }),
     {
-      name: "recent-folders-store",
+      name: 'recent-folders-store',
       partialize: (state) => ({ recentFolders: state.recentFolders }),
-    }
-  )
+    },
+  ),
 );

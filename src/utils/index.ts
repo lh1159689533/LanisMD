@@ -9,7 +9,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function countWords(text: string): number {
-  const cleaned = text.replace(/\s/g, "");
+  const cleaned = text.replace(/\s/g, '');
   return cleaned.length;
 }
 
@@ -19,17 +19,14 @@ export function countChars(text: string): number {
 
 export function countLines(text: string): number {
   if (!text) return 0;
-  return text.split("\n").length;
+  return text.split('\n').length;
 }
 
 export function getReadingTime(wordCount: number): number {
   return Math.max(1, Math.ceil(wordCount / 300));
 }
 
-export function debounce<T extends (...args: unknown[]) => void>(
-  fn: T,
-  delay: number
-): T {
+export function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const debounced = (...args: Parameters<T>) => {
     if (timer) clearTimeout(timer);

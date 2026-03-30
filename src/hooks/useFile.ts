@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { open as tauriOpen, save as tauriSave } from "@tauri-apps/plugin-dialog";
-import { useFileStore } from "@/stores/file-store";
-import { fileService, configService } from "@/services/tauri";
+import { useCallback } from 'react';
+import { open as tauriOpen, save as tauriSave } from '@tauri-apps/plugin-dialog';
+import { useFileStore } from '@/stores/file-store';
+import { fileService, configService } from '@/services/tauri';
 
 export function useFile() {
   const { openFile, createUntitledFile, getCurrentFile } = useFileStore();
@@ -26,15 +26,13 @@ export function useFile() {
           });
           useFileStore.getState().markSaved();
         } catch (err) {
-          console.error("Failed to auto-save before opening:", err);
+          console.error('Failed to auto-save before opening:', err);
         }
       } else {
         // Untitled with changes → prompt Save As
         const savePath = await tauriSave({
           defaultPath: `${current.fileName}.md`,
-          filters: [
-            { name: "Markdown", extensions: ["md", "markdown"] },
-          ],
+          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
         });
 
         if (savePath) {
@@ -45,7 +43,7 @@ export function useFile() {
               encoding: current.encoding,
             });
           } catch (err) {
-            console.error("Failed to save untitled file:", err);
+            console.error('Failed to save untitled file:', err);
           }
         }
         // If user cancels Save As, we still proceed to open the new file
@@ -57,12 +55,12 @@ export function useFile() {
       multiple: false,
       filters: [
         {
-          name: "Markdown",
-          extensions: ["md", "markdown", "mdx", "txt"],
+          name: 'Markdown',
+          extensions: ['md', 'markdown', 'mdx', 'txt'],
         },
         {
-          name: "所有文件",
-          extensions: ["*"],
+          name: '所有文件',
+          extensions: ['*'],
         },
       ],
     });
@@ -71,21 +69,21 @@ export function useFile() {
 
     // Extract path from selection
     let filePath: string | null = null;
-    if (typeof selected === "string") {
+    if (typeof selected === 'string') {
       filePath = selected;
-    } else if (selected && typeof selected === "object" && "path" in selected) {
+    } else if (selected && typeof selected === 'object' && 'path' in selected) {
       filePath = (selected as { path: string }).path;
     }
 
     if (!filePath) return;
 
     try {
-      const result = await fileService.readFile({ path: filePath, encoding: "utf-8" });
-      const fileName = filePath.split("/").pop() ?? filePath.split("\\").pop() ?? "Unknown";
-      openFile(filePath, result.content, result.encoding ?? "utf-8", fileName);
+      const result = await fileService.readFile({ path: filePath, encoding: 'utf-8' });
+      const fileName = filePath.split('/').pop() ?? filePath.split('\\').pop() ?? 'Unknown';
+      openFile(filePath, result.content, result.encoding ?? 'utf-8', fileName);
       await configService.addRecentFile(filePath);
     } catch (err) {
-      console.error("Failed to open file:", err);
+      console.error('Failed to open file:', err);
     }
   }, [openFile, getCurrentFile]);
 
@@ -104,15 +102,13 @@ export function useFile() {
           });
           useFileStore.getState().markSaved();
         } catch (err) {
-          console.error("Failed to auto-save before new file:", err);
+          console.error('Failed to auto-save before new file:', err);
         }
-      } else if (current.content !== "") {
+      } else if (current.content !== '') {
         // Untitled with content → prompt Save As
         const savePath = await tauriSave({
           defaultPath: `${current.fileName}.md`,
-          filters: [
-            { name: "Markdown", extensions: ["md", "markdown"] },
-          ],
+          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
         });
 
         if (savePath) {
@@ -123,7 +119,7 @@ export function useFile() {
               encoding: current.encoding,
             });
           } catch (err) {
-            console.error("Failed to save untitled file:", err);
+            console.error('Failed to save untitled file:', err);
           }
         }
       }

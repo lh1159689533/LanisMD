@@ -1,14 +1,14 @@
-import { RiCloseLine, RiSunLine, RiMoonLine } from "react-icons/ri";
-import { useUIStore } from "@/stores/ui-store";
-import { useSettingsStore } from "@/stores/settings-store";
-import type { ThemeMode } from "@/types";
-import type { AppConfig } from "@/types";
+import { RiCloseLine, RiSunLine, RiMoonLine } from 'react-icons/ri';
+import { useUIStore } from '@/stores/ui-store';
+import { useSettingsStore } from '@/stores/settings-store';
+import type { ThemeMode } from '@/types';
+import type { AppConfig } from '@/types';
 
 const SECTIONS = [
-  { id: "general", label: "通用" },
-  { id: "appearance", label: "外观" },
-  { id: "editor", label: "编辑器" },
-  { id: "shortcuts", label: "快捷键" },
+  { id: 'general', label: '通用' },
+  { id: 'appearance', label: '外观' },
+  { id: 'editor', label: '编辑器' },
+  { id: 'shortcuts', label: '快捷键' },
 ];
 
 export function SettingsDialog() {
@@ -17,19 +17,19 @@ export function SettingsDialog() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="flex w-[600px] max-h-[500px] bg-white dark:bg-[#1f2335] rounded-lg shadow-2xl overflow-hidden">
+      <div className="flex max-h-[500px] w-[600px] overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#1f2335]">
         {/* Navigation */}
-        <div className="w-40 bg-slate-50 dark:bg-[#1a1b26] p-3 border-r border-[var(--editor-border)]">
-          <h2 className="text-sm font-semibold mb-3 px-2">设置</h2>
+        <div className="w-40 border-r border-[var(--editor-border)] bg-slate-50 p-3 dark:bg-[#1a1b26]">
+          <h2 className="mb-3 px-2 text-sm font-semibold">设置</h2>
           <nav className="flex flex-col gap-0.5">
             {SECTIONS.map((section) => (
               <button
                 key={section.id}
                 onClick={() => useUIStore.setState({ settingsActiveSection: section.id })}
-                className={`text-left px-2 py-1.5 text-xs rounded-md transition-colors ${
+                className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
                   settingsActiveSection === section.id
-                    ? "bg-[var(--accent)] text-white"
-                    : "hover:bg-black/5 dark:hover:bg-white/5"
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
                 {section.label}
@@ -39,20 +39,20 @@ export function SettingsDialog() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-5 overflow-auto">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-1 overflow-auto p-5">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold">
               {SECTIONS.find((s) => s.id === settingsActiveSection)?.label}
             </h3>
             <button
               onClick={closeSettings}
-              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
+              className="rounded p-1 hover:bg-black/5 dark:hover:bg-white/10"
             >
               <RiCloseLine size={16} />
             </button>
           </div>
 
-          {settingsActiveSection === "general" && (
+          {settingsActiveSection === 'general' && (
             <div className="space-y-4 text-xs">
               <div className="text-[var(--sidebar-text)]">
                 <p>自动保存始终开启。停止编辑 1 秒后将自动保存更改。</p>
@@ -64,21 +64,19 @@ export function SettingsDialog() {
                 <button
                   onClick={() =>
                     setNestedConfig(
-                      "recentFolders.closeOnClickOutside",
-                      !config.recentFolders?.closeOnClickOutside
+                      'recentFolders.closeOnClickOutside',
+                      !config.recentFolders?.closeOnClickOutside,
                     )
                   }
-                  className={`relative w-9 h-5 rounded-full transition-colors ${
+                  className={`relative h-5 w-9 rounded-full transition-colors ${
                     config.recentFolders?.closeOnClickOutside !== false
-                      ? "bg-[var(--accent)]"
-                      : "bg-gray-300 dark:bg-gray-600"
+                      ? 'bg-[var(--accent)]'
+                      : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                      config.recentFolders?.closeOnClickOutside !== false
-                        ? "translate-x-4"
-                        : ""
+                    className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                      config.recentFolders?.closeOnClickOutside !== false ? 'translate-x-4' : ''
                     }`}
                   />
                 </button>
@@ -86,30 +84,32 @@ export function SettingsDialog() {
             </div>
           )}
 
-          {settingsActiveSection === "appearance" && (
+          {settingsActiveSection === 'appearance' && (
             <div className="space-y-4 text-xs">
               <label className="block">主题</label>
               <div className="flex gap-2">
-                {(["system", "light", "dark"] as ThemeMode[]).map((theme) => (
+                {(['system', 'light', 'dark'] as ThemeMode[]).map((theme) => (
                   <button
                     key={theme}
-                    onClick={() => setConfig("theme", theme)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors ${
+                    onClick={() => setConfig('theme', theme)}
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${
                       config.theme === theme
-                        ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                        : "border-[var(--editor-border)] hover:border-[var(--accent)]/50"
+                        ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
+                        : 'hover:border-[var(--accent)]/50 border-[var(--editor-border)]'
                     }`}
                   >
-                    {theme === "light" && <RiSunLine size={13} />}
-                    {theme === "dark" && <RiMoonLine size={13} />}
-                    <span>{theme === "system" ? "跟随系统" : theme === "light" ? "浅色" : "深色"}</span>
+                    {theme === 'light' && <RiSunLine size={13} />}
+                    {theme === 'dark' && <RiMoonLine size={13} />}
+                    <span>
+                      {theme === 'system' ? '跟随系统' : theme === 'light' ? '浅色' : '深色'}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {settingsActiveSection === "editor" && (
+          {settingsActiveSection === 'editor' && (
             <div className="space-y-4 text-xs">
               <div className="flex items-center justify-between">
                 <label>字体大小</label>
@@ -126,7 +126,7 @@ export function SettingsDialog() {
             </div>
           )}
 
-          {settingsActiveSection === "shortcuts" && (
+          {settingsActiveSection === 'shortcuts' && (
             <div className="text-xs text-[var(--sidebar-text)]">
               <p>快捷键设置将在后续版本中提供。</p>
             </div>

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState } from 'react';
 
 export interface ResizablePanelProps {
   /** Reference to the container element whose height is the basis for ratio calculations */
@@ -50,8 +50,8 @@ export function ResizablePanel({
       isDragging.current = true;
       startY.current = e.clientY;
       startHeight.current = height ?? getContainerHeight() * defaultRatio;
-      document.body.style.cursor = "row-resize";
-      document.body.style.userSelect = "none";
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
 
       const onMouseMove = (ev: MouseEvent) => {
         if (!isDragging.current) return;
@@ -65,10 +65,10 @@ export function ResizablePanel({
         // If dragged below minimum → close
         if (newHeight < minH) {
           isDragging.current = false;
-          document.body.style.cursor = "";
-          document.body.style.userSelect = "";
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
           onCloseByDrag?.();
           return;
         }
@@ -79,37 +79,35 @@ export function ResizablePanel({
 
       const onMouseUp = () => {
         isDragging.current = false;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
       };
 
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     },
-    [height, getContainerHeight, defaultRatio, minRatio, maxRatio, onCloseByDrag]
+    [height, getContainerHeight, defaultRatio, minRatio, maxRatio, onCloseByDrag],
   );
 
   if (height === null) return null;
 
   return (
     <div
-      className="flex flex-col bg-[var(--sidebar-bg)] border-t border-[var(--sidebar-border)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+      className="flex flex-col border-t border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
       style={{ height: `${height}px` }}
     >
       {/* Drag handle */}
       <div
         onMouseDown={handleMouseDown}
-        className="flex items-center justify-center h-[6px] shrink-0 cursor-row-resize group hover:bg-[var(--accent)]/10 transition-colors"
+        className="hover:bg-[var(--accent)]/10 group flex h-[6px] shrink-0 cursor-row-resize items-center justify-center transition-colors"
       >
-        <div className="w-8 h-[3px] rounded-full bg-[var(--sidebar-text)] opacity-20 group-hover:opacity-40 transition-opacity" />
+        <div className="h-[3px] w-8 rounded-full bg-[var(--sidebar-text)] opacity-20 transition-opacity group-hover:opacity-40" />
       </div>
 
       {/* Panel body */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        {children}
-      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }

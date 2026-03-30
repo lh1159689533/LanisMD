@@ -1,10 +1,10 @@
-import type { OutlineItem } from "@/types";
+import type { OutlineItem } from '@/types';
 
 /**
  * Parse markdown text to generate outline items (headings)
  */
 export function parseOutline(markdown: string): OutlineItem[] {
-  const lines = markdown.split("\n");
+  const lines = markdown.split('\n');
   const root: OutlineItem[] = [];
   const stack: OutlineItem[] = [];
 
@@ -15,13 +15,13 @@ export function parseOutline(markdown: string): OutlineItem[] {
     if (!match) continue;
 
     const level = match[1].length;
-    const text = match[2].replace(/[*_`~\[\]]/g, "").trim();
+    const text = match[2].replace(/[*_`~\[\]]/g, '').trim();
     if (!text) continue;
 
     const anchor = text
       .toLowerCase()
-      .replace(/[^\w\s\u4e00-\u9fff-]/g, "")
-      .replace(/\s+/g, "-");
+      .replace(/[^\w\s\u4e00-\u9fff-]/g, '')
+      .replace(/\s+/g, '-');
 
     const item: OutlineItem = {
       id: `heading-${i}`,

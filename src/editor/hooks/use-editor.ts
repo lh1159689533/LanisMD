@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
-import type { Editor } from "@milkdown/kit/core";
-import { createEditor, setupEditorListeners, type EditorListener } from "../editor-setup";
-import { useFileStore } from "@/stores/file-store";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEffect, useRef } from 'react';
+import type { Editor } from '@milkdown/kit/core';
+import { createEditor, setupEditorListeners, type EditorListener } from '../editor-setup';
+import { useFileStore } from '@/stores/file-store';
+import { useEditorStore } from '@/stores/editor-store';
 
 export function useEditor() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,7 @@ export function useEditor() {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          console.error("Failed to create Milkdown editor:", err);
+          console.error('Failed to create Milkdown editor:', err);
         }
       });
 

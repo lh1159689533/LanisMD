@@ -1,6 +1,6 @@
-import { useRef, useEffect } from "react";
-import { useEditor } from "../hooks/use-editor";
-import "@/styles/editor.css";
+import { useRef, useEffect } from 'react';
+import { useEditor } from '../hooks/use-editor';
+import '@/styles/editor.css';
 
 export function EditorCore() {
   const { rootRef } = useEditor();
@@ -22,7 +22,7 @@ export function EditorCore() {
     <div
       ref={containerRef}
       className="editor-wrapper mx-auto px-8 py-6 outline-none"
-      style={{ maxWidth: "var(--editor-max-width, 800px)" }}
+      style={{ maxWidth: 'var(--editor-max-width, 800px)' }}
     >
       <div
         ref={rootRef}

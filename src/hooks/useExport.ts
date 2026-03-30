@@ -1,15 +1,15 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 export function useExport() {
   const exportToPDF = useCallback(async (markdown: string, fileName: string) => {
     const htmlContent = markdownToHtml(markdown, fileName);
 
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, "_blank");
+    const printWindow = window.open(url, '_blank');
 
     if (printWindow) {
-      printWindow.addEventListener("load", () => {
+      printWindow.addEventListener('load', () => {
         printWindow.print();
         URL.revokeObjectURL(url);
       });
@@ -19,9 +19,9 @@ export function useExport() {
   const exportToHTML = useCallback(async (markdown: string, fileName: string) => {
     const htmlContent = markdownToHtml(markdown, fileName, true);
 
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `${fileName}.html`;
     a.click();
@@ -37,10 +37,7 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
   let html = markdown;
 
   // Escape HTML entities (basic)
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // Headings
   html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
@@ -59,7 +56,10 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
 
   // Code blocks
   html = html.replace(/```[\s\S]*?```/g, (match) => {
-    const content = match.replace(/```\w*\n?/, "").replace(/```$/, "").trim();
+    const content = match
+      .replace(/```\w*\n?/, '')
+      .replace(/```$/, '')
+      .trim();
     return `<pre><code>${content}</code></pre>`;
   });
 
