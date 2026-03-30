@@ -9,6 +9,7 @@ import {
 import { useUIStore } from '@/stores/ui-store';
 import { useFileStore } from '@/stores/file-store';
 import { parseOutline } from '@/utils/toc';
+import { cn } from '@/utils/cn';
 import { FileTree } from './FileTree';
 import type { OutlineItem } from '@/types';
 
@@ -33,7 +34,12 @@ function OutlineTree({ items, depth = 0 }: { items: OutlineItem[]; depth?: numbe
       {items.map((item) => (
         <div key={item.id}>
           <button
-            className="w-full truncate rounded px-2 py-1 text-left text-xs text-[var(--sidebar-text)] transition-colors hover:bg-black/5 hover:text-[var(--accent)] dark:hover:bg-white/5"
+            className={cn(
+              'w-full truncate rounded px-2 py-1 text-left text-xs',
+              'text-[var(--sidebar-text)] transition-colors',
+              'hover:bg-black/5 hover:text-[var(--accent)]',
+              'dark:hover:bg-white/5',
+            )}
             title={item.text}
             onClick={() => scrollToHeading(item)}
           >
@@ -178,30 +184,48 @@ export function Sidebar() {
   const contentWidth = sidebarOpen ? sidebarWidth : 0;
 
   return (
-    <div className="sidebar flex h-full shrink-0 bg-[var(--sidebar-bg)]">
+    <div className="sidebar flex h-full shrink-0 bg-[var(--sidebar-bg)] relative">
       {/* 图标栏 - 带过渡动画 */}
       <div
-        className={`sidebar-icon-bar flex flex-col items-center gap-1 border-r border-[var(--sidebar-border)] px-1 py-2 transition-opacity duration-300 ease-in-out ${
-          sidebarOpen ? 'opacity-100' : 'opacity-70'
-        }`}
+        className={cn(
+          'sidebar-icon-bar flex flex-col items-center gap-1',
+          'border-r border-[var(--sidebar-border)] px-1 py-2',
+          'transition-opacity duration-300 ease-in-out',
+          sidebarOpen ? 'opacity-100' : 'opacity-70',
+        )}
       >
         <button
           onClick={() => setSidebarPanel('files')}
-          className={`rounded-md p-1.5 transition-all duration-200 ${sidebarPanel === 'files' ? 'scale-105 bg-[var(--accent)] text-white' : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10'}`}
+          className={cn(
+            'rounded-md p-1.5 transition-all duration-200',
+            sidebarPanel === 'files'
+              ? 'scale-105 bg-[var(--accent)] text-white'
+              : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
+          )}
           title="文件树"
         >
           <RiFolderLine size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('outline')}
-          className={`rounded-md p-1.5 transition-all duration-200 ${sidebarPanel === 'outline' ? 'scale-105 bg-[var(--accent)] text-white' : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10'}`}
+          className={cn(
+            'rounded-md p-1.5 transition-all duration-200',
+            sidebarPanel === 'outline'
+              ? 'scale-105 bg-[var(--accent)] text-white'
+              : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
+          )}
           title="大纲"
         >
           <RiListOrdered size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('search')}
-          className={`rounded-md p-1.5 transition-all duration-200 ${sidebarPanel === 'search' ? 'scale-105 bg-[var(--accent)] text-white' : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10'}`}
+          className={cn(
+            'rounded-md p-1.5 transition-all duration-200',
+            sidebarPanel === 'search'
+              ? 'scale-105 bg-[var(--accent)] text-white'
+              : 'text-[var(--sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
+          )}
           title="搜索"
         >
           <RiSearchLine size={16} />
@@ -210,9 +234,11 @@ export function Sidebar() {
         {/* 切换按钮 - 置底 */}
         <button
           onClick={toggleSidebar}
-          className={`mt-auto rounded-md p-1.5 transition-all duration-200 hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10 ${
-            !sidebarOpen ? 'text-[var(--accent)]' : ''
-          }`}
+          className={cn(
+            'mt-auto rounded-md p-1.5 transition-all duration-200',
+            'hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
+            !sidebarOpen && 'text-[var(--accent)]',
+          )}
           title="切换侧边栏"
         >
           <RiSideBarLine
@@ -223,7 +249,10 @@ export function Sidebar() {
         {/* 设置 */}
         <button
           onClick={() => openSettings('general')}
-          className="rounded-md p-1.5 transition-all duration-200 hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10"
+          className={cn(
+            'rounded-md p-1.5 transition-all duration-200',
+            'hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
+          )}
           title="设置"
         >
           <RiSettings3Line size={16} className="text-[var(--sidebar-text)]" />
@@ -233,12 +262,19 @@ export function Sidebar() {
       {/* 内容面板 - 带过渡动画（拖拽时禁用 CSS transition 避免延迟） */}
       <div
         ref={contentPanelRef}
-        className={`sidebar-content overflow-hidden ${isDragging ? '' : 'transition-[width] duration-300 ease-in-out'} border-r border-[var(--sidebar-border)]`}
+        className={cn(
+          'sidebar-content overflow-hidden',
+          'border-r border-[var(--sidebar-border)]',
+          !isDragging && 'transition-[width] duration-300 ease-in-out',
+        )}
         style={{ width: `${contentWidth}px` }}
       >
         <div
           ref={innerPanelRef}
-          className={`h-full ${sidebarPanel === 'files' ? 'overflow-hidden' : 'overflow-auto'} p-3`}
+          className={cn(
+            'h-full p-3',
+            sidebarPanel === 'files' ? 'overflow-hidden' : 'overflow-auto',
+          )}
           style={{ width: `${sidebarWidth}px` }}
         >
           {sidebarPanel === 'outline' && (
@@ -266,7 +302,11 @@ export function Sidebar() {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="在文件中搜索..."
-                className="w-full rounded-md border border-[var(--editor-border)] bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent)] dark:bg-[#1a1b26]"
+                className={cn(
+                  'w-full rounded-md border border-[var(--editor-border)]',
+                  'bg-white px-2 py-1.5 text-xs dark:bg-[#1a1b26]',
+                  'focus:outline-none focus:ring-1 focus:ring-[var(--accent)]',
+                )}
               />
             </div>
           )}
@@ -275,17 +315,20 @@ export function Sidebar() {
 
       {/* 拖拽调整宽度 - 增强视觉反馈（始终渲染，折叠时也可拖拽展开） */}
       <div
-        className={`sidebar-resizer group absolute -right-3 flex h-full w-[6px] cursor-col-resize items-center justify-center transition-colors ${
-          isDragging ? 'bg-[var(--accent)]/20' : 'hover:bg-[var(--accent)]/10'
-        }`}
+        className={cn(
+          'sidebar-resizer group absolute -right-1 flex h-full w-[6px]',
+          'cursor-col-resize items-center justify-center transition-colors',
+          isDragging ? 'bg-[var(--accent)]/20' : 'hover:bg-[var(--accent)]/10',
+        )}
         onMouseDown={handleMouseDown}
       >
         <div
-          className={`h-8 w-[2px] rounded-full transition-all duration-150 ${
+          className={cn(
+            'h-8 w-[2px] rounded-full transition-all duration-150',
             isDragging
               ? 'h-12 bg-[var(--accent)] opacity-60'
-              : 'bg-[var(--sidebar-text)] opacity-0 group-hover:h-10 group-hover:opacity-25'
-          }`}
+              : 'bg-[var(--sidebar-text)] opacity-0 group-hover:h-10 group-hover:opacity-25',
+          )}
         />
       </div>
     </div>

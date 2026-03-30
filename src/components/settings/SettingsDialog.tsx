@@ -1,8 +1,8 @@
 import { RiCloseLine, RiSunLine, RiMoonLine } from 'react-icons/ri';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { cn } from '@/utils/cn';
 import type { ThemeMode } from '@/types';
-import type { AppConfig } from '@/types';
 
 const SECTIONS = [
   { id: 'general', label: '通用' },
@@ -17,7 +17,12 @@ export function SettingsDialog() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="flex max-h-[500px] w-[600px] overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#1f2335]">
+      <div
+        className={cn(
+          'flex max-h-[500px] w-[600px] overflow-hidden rounded-lg',
+          'bg-white shadow-2xl dark:bg-[#1f2335]',
+        )}
+      >
         {/* Navigation */}
         <div className="w-40 border-r border-[var(--editor-border)] bg-slate-50 p-3 dark:bg-[#1a1b26]">
           <h2 className="mb-3 px-2 text-sm font-semibold">设置</h2>
@@ -26,11 +31,12 @@ export function SettingsDialog() {
               <button
                 key={section.id}
                 onClick={() => useUIStore.setState({ settingsActiveSection: section.id })}
-                className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+                className={cn(
+                  'rounded-md px-2 py-1.5 text-left text-xs transition-colors',
                   settingsActiveSection === section.id
                     ? 'bg-[var(--accent)] text-white'
-                    : 'hover:bg-black/5 dark:hover:bg-white/5'
-                }`}
+                    : 'hover:bg-black/5 dark:hover:bg-white/5',
+                )}
               >
                 {section.label}
               </button>
@@ -68,16 +74,17 @@ export function SettingsDialog() {
                       !config.recentFolders?.closeOnClickOutside,
                     )
                   }
-                  className={`relative h-5 w-9 rounded-full transition-colors ${
-                    config.recentFolders?.closeOnClickOutside !== false
+                  className={`relative h-5 w-9 rounded-full transition-colors ${config.recentFolders?.closeOnClickOutside !== false
                       ? 'bg-[var(--accent)]'
                       : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      config.recentFolders?.closeOnClickOutside !== false ? 'translate-x-4' : ''
-                    }`}
+                    className={cn(
+                      'absolute left-0.5 top-0.5 h-4 w-4',
+                      'rounded-full bg-white shadow transition-transform',
+                      config.recentFolders?.closeOnClickOutside !== false ? 'translate-x-4' : '',
+                    )}
                   />
                 </button>
               </div>
@@ -92,11 +99,10 @@ export function SettingsDialog() {
                   <button
                     key={theme}
                     onClick={() => setConfig('theme', theme)}
-                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${
-                      config.theme === theme
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${config.theme === theme
                         ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
                         : 'hover:border-[var(--accent)]/50 border-[var(--editor-border)]'
-                    }`}
+                      }`}
                   >
                     {theme === 'light' && <RiSunLine size={13} />}
                     {theme === 'dark' && <RiMoonLine size={13} />}

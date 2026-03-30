@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { RiSearchLine, RiCloseLine, RiArrowUpLine, RiArrowDownLine } from 'react-icons/ri';
+import { cn } from '@/utils/cn';
 
 interface SearchReplaceProps {
   onClose: () => void;
@@ -71,7 +72,12 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
   );
 
   return (
-    <div className="absolute right-4 top-12 z-50 w-80 rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] p-3 shadow-lg">
+    <div
+      className={cn(
+        'absolute right-4 top-12 z-50 w-80 p-3',
+        'rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] shadow-lg',
+      )}
+    >
       <div className="mb-2 flex items-center gap-1.5">
         <div className="relative flex-1">
           <RiSearchLine
@@ -85,7 +91,11 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
             onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="搜索..."
-            className="h-7 w-full rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)] pl-7 pr-2 text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]"
+            className={cn(
+              'h-7 w-full pl-7 pr-2',
+              'rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)]',
+              'text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]',
+            )}
           />
         </div>
         <span className="min-w-[40px] text-center text-[10px] text-[var(--sidebar-text)]">
@@ -125,27 +135,42 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
             onChange={(e) => setReplaceText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="替换..."
-            className="h-7 w-full rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)] pl-7 pr-2 text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]"
+            className={cn(
+              'h-7 w-full pl-7 pr-2',
+              'rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)]',
+              'text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]',
+            )}
           />
         </div>
         <button
           onClick={() => onReplace?.(searchText, replaceText)}
           disabled={matchCount === 0}
-          className="h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30"
+          className={cn(
+            'h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white',
+            'transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30',
+          )}
         >
           替换
         </button>
         <button
           onClick={() => onReplaceAll?.(searchText, replaceText)}
           disabled={matchCount === 0}
-          className="h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30"
+          className={cn(
+            'h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white',
+            'transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30',
+          )}
         >
           全部
         </button>
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="flex cursor-pointer select-none items-center gap-1 text-[10px] text-[var(--sidebar-text)]">
+        <label
+          className={cn(
+            'flex cursor-pointer items-center gap-1',
+            'select-none text-[10px] text-[var(--sidebar-text)]',
+          )}
+        >
           <input
             type="checkbox"
             checked={caseSensitive}
@@ -154,7 +179,12 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
           />
           区分大小写
         </label>
-        <label className="flex cursor-pointer select-none items-center gap-1 text-[10px] text-[var(--sidebar-text)]">
+        <label
+          className={cn(
+            'flex cursor-pointer items-center gap-1',
+            'select-none text-[10px] text-[var(--sidebar-text)]',
+          )}
+        >
           <input
             type="checkbox"
             checked={useRegex}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { cn } from '@/utils/cn';
 
 export interface ContextMenuItem {
   label: string;
@@ -75,7 +76,10 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
     <div
       ref={menuRef}
       onContextMenu={handleContextMenu}
-      className="fixed z-[9999] min-w-[180px] rounded-lg border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] py-1 shadow-xl backdrop-blur-sm"
+      className={cn(
+        'fixed z-[9999] min-w-[180px] py-1 shadow-xl backdrop-blur-sm',
+        'rounded-lg border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]',
+      )}
       style={{ left: x, top: y }}
     >
       {groups.map((group, gi) => (
@@ -91,11 +95,13 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
                 }
               }}
               disabled={item.disabled}
-              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors ${
+              className={cn(
+                'flex w-full items-center gap-2.5 px-3 py-1.5',
+                'text-left text-xs transition-colors',
                 item.disabled
                   ? 'cursor-not-allowed opacity-40'
-                  : 'hover:bg-[var(--accent)]/10 text-[var(--sidebar-text)] hover:text-[var(--accent)]'
-              }`}
+                  : 'hover:bg-[var(--accent)]/10 text-[var(--sidebar-text)] hover:text-[var(--accent)]',
+              )}
             >
               {item.icon && (
                 <span className="flex h-4 w-4 shrink-0 items-center justify-center opacity-70">

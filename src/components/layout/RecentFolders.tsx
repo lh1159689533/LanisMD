@@ -3,6 +3,7 @@ import { RiFolderLine, RiCloseLine } from 'react-icons/ri';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { cn } from '@/utils/cn';
 import { ResizablePanel } from '@/components/common/ResizablePanel';
 
 interface RecentFoldersPanelProps {
@@ -82,7 +83,12 @@ export function RecentFoldersPanel({
         maxRatio={0.9}
       >
         {/* Title bar */}
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--sidebar-border)] px-3 py-1.5">
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-between',
+            'border-b border-[var(--sidebar-border)] px-3 py-1.5',
+          )}
+        >
           <span className="text-xs font-medium text-[var(--sidebar-text)]">最近打开的文件夹</span>
           <button
             onClick={onClose}
@@ -108,16 +114,21 @@ export function RecentFoldersPanel({
                 <button
                   key={folder.path}
                   onClick={() => handleClick(folder.path)}
-                  className={`flex w-full items-center gap-2 truncate px-3 py-1.5 text-left text-xs transition-colors ${
+                  className={cn(
+                    'flex w-full items-center gap-2 px-3 py-1.5',
+                    'truncate text-left text-xs transition-colors',
                     isCurrent
                       ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                      : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10'
-                  }`}
+                      : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10',
+                  )}
                   title={folder.path}
                 >
                   <RiFolderLine
                     size={14}
-                    className={`shrink-0 ${isCurrent ? 'text-[var(--accent)]' : 'text-amber-500'}`}
+                    className={cn(
+                      'shrink-0',
+                      isCurrent ? 'text-[var(--accent)]' : 'text-amber-500',
+                    )}
                   />
                   <span className="truncate">{folder.name}</span>
                   {isCurrent && (

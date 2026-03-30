@@ -3,6 +3,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
 import type { ThemeMode } from '@/types';
+import { cn } from '@/utils/cn';
 
 export function StatusBar() {
   const { wordCount, charCount, lineCount, cursorLine, cursorColumn } = useEditorStore();
@@ -25,7 +26,13 @@ export function StatusBar() {
     );
 
   return (
-    <div className="flex h-6 shrink-0 select-none items-center justify-between border-t border-[var(--editor-border)] bg-[var(--titlebar-bg)] px-3 text-[11px] text-[var(--sidebar-text)]">
+    <div
+      className={cn(
+        'flex h-6 shrink-0 select-none items-center justify-between',
+        'border-t border-[var(--editor-border)]',
+        'bg-[var(--titlebar-bg)] px-3 text-[11px] text-[var(--sidebar-text)]',
+      )}
+    >
       <div className="flex items-center gap-3">
         {currentFile && (
           <>

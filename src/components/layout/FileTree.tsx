@@ -25,6 +25,7 @@ import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
 import { timeAgo } from '@/utils/time';
+import { cn } from '@/utils/cn';
 import { ContextMenu } from '@/components/common/ContextMenu';
 import type { ContextMenuGroup } from '@/components/common/ContextMenu';
 import { RecentFoldersPanel } from './RecentFolders';
@@ -169,7 +170,11 @@ function InlineEditInput({
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className="min-w-0 flex-1 rounded border border-[var(--accent)] bg-[var(--editor-bg)] px-1 py-0.5 text-xs text-[var(--editor-text)] outline-none"
+        className={cn(
+          'min-w-0 flex-1 px-1 py-0.5',
+          'rounded border border-[var(--accent)]',
+          'bg-[var(--editor-bg)] text-xs text-[var(--editor-text)] outline-none',
+        )}
         spellCheck={false}
       />
     </div>
@@ -332,11 +337,13 @@ function FileTreeItem({
       <button
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        className={`flex w-full items-center gap-1 truncate rounded-md px-2 py-1 text-left text-xs transition-colors ${
+        className={cn(
+          'flex w-full items-center gap-1 truncate rounded-md px-2 py-1',
+          'text-left text-xs transition-colors',
           isSelected && !node.isDir
             ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-            : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5'
-        }`}
+            : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5',
+        )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         title={node.path}
       >
@@ -524,7 +531,11 @@ function FileListItem({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`w-full rounded-md px-3 py-2 text-left transition-colors ${isSelected ? 'bg-[var(--accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+      className={cn(
+        'w-full rounded-md px-3 py-2',
+        'text-left transition-colors',
+        isSelected ? 'bg-[var(--accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5',
+      )}
       title={entry.path}
     >
       {/* Row 1: folder path + modified time */}
@@ -1156,7 +1167,12 @@ export function FileTree() {
         </p>
         <button
           onClick={handleOpenFolder}
-          className="flex select-none items-center gap-1.5 rounded-md border border-[var(--editor-border)] px-3 py-1.5 text-xs text-[var(--sidebar-text)] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          className={cn(
+            'flex select-none items-center gap-1.5 px-3 py-1.5',
+            'rounded-md border border-[var(--editor-border)]',
+            'text-xs text-[var(--sidebar-text)]',
+            'transition-colors hover:bg-black/5 dark:hover:bg-white/5',
+          )}
         >
           <RiFolderOpenLine size={14} />
           打开文件夹

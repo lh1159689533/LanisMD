@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
+import { cn } from '@/utils/cn';
 
 export interface ResizablePanelProps {
   /** Reference to the container element whose height is the basis for ratio calculations */
@@ -95,15 +96,26 @@ export function ResizablePanel({
 
   return (
     <div
-      className="flex flex-col border-t border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+      className={cn(
+        'flex flex-col border-t border-[var(--sidebar-border)]',
+        'bg-[var(--sidebar-bg)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]',
+      )}
       style={{ height: `${height}px` }}
     >
       {/* Drag handle */}
       <div
         onMouseDown={handleMouseDown}
-        className="hover:bg-[var(--accent)]/10 group flex h-[6px] shrink-0 cursor-row-resize items-center justify-center transition-colors"
+        className={cn(
+          'group cursor-row-resize items-center justify-center transition-colors',
+          'hover:bg-[var(--accent)]/10 flex h-[6px] shrink-0',
+        )}
       >
-        <div className="h-[3px] w-8 rounded-full bg-[var(--sidebar-text)] opacity-20 transition-opacity group-hover:opacity-40" />
+        <div
+          className={cn(
+            'h-[3px] w-8 rounded-full bg-[var(--sidebar-text)]',
+            'opacity-20 transition-opacity group-hover:opacity-40',
+          )}
+        />
       </div>
 
       {/* Panel body */}

@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { EditorCore } from '@/editor/components/EditorCore';
@@ -14,7 +15,12 @@ export function MainLayout() {
           {currentFile ? (
             <EditorCore />
           ) : (
-            <div className="flex h-full select-none items-center justify-center text-sm text-[var(--sidebar-text)] opacity-40">
+            <div
+              className={cn(
+                'flex h-full select-none items-center justify-center',
+                'text-sm text-[var(--sidebar-text)] opacity-40',
+              )}
+            >
               没有打开的文件
             </div>
           )}

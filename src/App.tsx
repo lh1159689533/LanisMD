@@ -9,6 +9,7 @@ import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useFileWatcher } from './hooks/useFileWatcher';
+import { cn } from './utils/cn';
 
 export default function App() {
   const { settingsOpen } = useUIStore();
@@ -28,7 +29,13 @@ export default function App() {
   });
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white text-slate-900 dark:bg-[#1a1b26] dark:text-slate-100">
+    <div
+      className={cn(
+        'flex h-screen flex-col overflow-hidden',
+        'bg-white text-slate-900',
+        'dark:bg-[#1a1b26] dark:text-slate-100',
+      )}
+    >
       <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
       <MainLayout />
       {settingsOpen && <SettingsDialog />}

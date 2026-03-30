@@ -7,6 +7,7 @@ import {
   RiErrorWarningLine,
 } from 'react-icons/ri';
 import { useUIStore } from '@/stores/ui-store';
+import { cn } from '@/utils/cn';
 
 const ICON_MAP = {
   info: RiInformationLine,
@@ -48,7 +49,14 @@ function ToastItem({
   }, [id, duration, removeToast]);
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-[var(--editor-border)] bg-white px-3 py-2 text-xs shadow-lg animate-in slide-in-from-top-2 dark:bg-[#1f2335]">
+    <div
+      className={cn(
+        'flex items-center gap-2 rounded-lg',
+        'border border-[var(--editor-border)]',
+        'bg-white px-3 py-2 text-xs shadow-lg dark:bg-[#1f2335]',
+        'animate-in slide-in-from-top-2',
+      )}
+    >
       <span
         className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${COLOR_MAP[type]}`}
       >

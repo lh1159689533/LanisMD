@@ -10,6 +10,7 @@ import {
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
 import { useFileStore } from '@/stores/file-store';
+import { cn } from '@/utils/cn';
 
 interface TitleBarProps {
   onNewFile?: () => void;
@@ -114,7 +115,11 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
 
   return (
     <div
-      className="flex h-9 shrink-0 select-none items-center border-b border-[var(--editor-border)] bg-[var(--titlebar-bg)] px-3 text-[var(--titlebar-text)]"
+      className={cn(
+        'flex h-9 shrink-0 items-center px-3',
+        'select-none border-b border-[var(--editor-border)]',
+        'bg-[var(--titlebar-bg)] text-[var(--titlebar-text)]',
+      )}
       data-tauri-drag-region
       onDoubleClick={handleDoubleClick}
     >
@@ -126,21 +131,30 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
         <div className="mr-3 flex flex-shrink-0 items-center gap-0.5">
           <button
             onClick={handleClose}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-red-500/20 hover:text-red-500"
+            className={cn(
+              'flex h-[30px] w-[30px] items-center justify-center',
+              'rounded-md transition-colors hover:bg-red-500/20 hover:text-red-500',
+            )}
             title="关闭"
           >
             <RiCloseLine size={16} />
           </button>
           <button
             onClick={handleMinimize}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+            className={cn(
+              'flex h-[30px] w-[30px] items-center justify-center rounded-md',
+              'transition-colors hover:bg-black/10 dark:hover:bg-white/10',
+            )}
             title="最小化"
           >
             <RiSubtractLine size={14} />
           </button>
           <button
             onClick={handleMaximize}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+            className={cn(
+              'flex h-[30px] w-[30px] items-center justify-center',
+              'rounded-md transition-colors hover:bg-black/10 dark:hover:bg-white/10',
+            )}
             title={isMaximized ? '还原' : '最大化'}
           >
             {isMaximized ? <RiFullscreenExitLine size={13} /> : <RiFullscreenLine size={13} />}
