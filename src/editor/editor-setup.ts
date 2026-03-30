@@ -1,19 +1,12 @@
-import { Editor, rootCtx, defaultValueCtx } from '@milkdown/kit/core';
-import { commonmark } from '@milkdown/kit/preset/commonmark';
-import { gfm } from '@milkdown/kit/preset/gfm';
-import { history } from '@milkdown/kit/plugin/history';
-import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
-import { clipboard } from '@milkdown/kit/plugin/clipboard';
-import { cursor } from '@milkdown/kit/plugin/cursor';
-import { indent } from '@milkdown/kit/plugin/indent';
-import { trailing } from '@milkdown/kit/plugin/trailing';
-import { upload } from '@milkdown/plugin-upload';
-import { tooltipFactory } from '@milkdown/kit/plugin/tooltip';
-import { slash, configureSlash } from './plugins/slash-menu';
-import { block, configureBlock } from './plugins/block-handle';
-import '@milkdown/kit/prose/view/style/prosemirror.css';
+/**
+ * Editor Setup - Based on @milkdown/crepe
+ *
+ * 使用 Crepe 预设编辑器，内置 block handle、slash menu、toolbar 等功能。
+ */
 
-const tooltip = tooltipFactory('tooltip');
+import { Crepe } from '@milkdown/crepe';
+import '@milkdown/crepe/theme/common/style.css';
+import '@milkdown/crepe/theme/frame.css';
 
 export type EditorListener = {
   onMarkdownUpdated?: (markdown: string, prevMarkdown: string) => void;
@@ -22,51 +15,50 @@ export type EditorListener = {
   onBlur?: () => void;
 };
 
-export function createEditor(root: HTMLElement, defaultValue: string) {
-  return Editor.make()
-    .config((ctx) => {
-      ctx.set(rootCtx, root);
-      ctx.set(defaultValueCtx, defaultValue);
-      ctx.set(tooltip.key, {});
-    })
-    .config(configureSlash)
-    .config(configureBlock)
-    .use(commonmark)
-    .use(gfm)
-    .use(history)
-    .use(listener)
-    .use(clipboard)
-    .use(cursor)
-    .use(indent)
-    .use(trailing)
-    .use(upload)
-    .use(slash)
-    .use(block)
-    .use(tooltip);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setupEditorListeners(
-  editor: { action: (fn: (ctx: any) => void) => void },
+export function createCrepeEditor(
+  root: HTMLElement,
+  defaultValue: string,
   listeners?: EditorListener,
-) {
-  editor.action((ctx) => {
-    const manager = ctx.get(listenerCtx);
-    if (!manager) return;
-
-    manager
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .markdownUpdated((_ctx: any, markdown: string, prevMarkdown: string) => {
-        listeners?.onMarkdownUpdated?.(markdown, prevMarkdown);
-      })
-      .updated(() => {
-        listeners?.onDocUpdated?.();
-      })
-      .focus(() => {
-        listeners?.onFocus?.();
-      })
-      .blur(() => {
-        listeners?.onBlur?.();
-      });
+): Crepe {
+  const crepe = new Crepe({
+    root,
+    defaultValue,
+    features: {
+      [Crepe.Feature.CodeMirror]: false,
+      [Crepe.Feature.Latex]: false,
+      [Crepe.Feature.TopBar]: false,
+    },
+    featureConfigs: {
+      [Crepe.Feature.Placeholder]: {
+        text: '输入 / 触发命令菜单...',
+      },
+    },
   });
+
+  if (listeners) {
+    crepe.on((listener) => {
+      if (listeners.onMarkdownUpdated) {
+        listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
+          listeners.onMarkdownUpdated!(markdown, prevMarkdown);
+        });
+      }
+      if (listeners.onDocUpdated) {
+        listener.updated(() => {
+          listeners.onDocUpdated!();
+        });
+      }
+      if (listeners.onFocus) {
+        listener.focus(() => {
+          listeners.onFocus!();
+        });
+      }
+      if (listeners.onBlur) {
+        listener.blur(() => {
+          listeners.onBlur!();
+        });
+      }
+    });
+  }
+
+  return crepe;
 }
