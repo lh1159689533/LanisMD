@@ -8,6 +8,9 @@ dependencies:
   '@milkdown/kit':
     specifier: ^7.19.2
     version: 7.19.2(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.40.0)(typescript@5.6.3)
+  '@milkdown/plugin-block':
+    specifier: ^7.19.2
+    version: 7.19.2
   '@milkdown/plugin-slash':
     specifier: ^7.19.2
     version: 7.19.2

@@ -21,7 +21,7 @@ export function EditorCore() {
   return (
     <div
       ref={containerRef}
-      className="editor-wrapper mx-auto px-8 py-6 outline-none"
+      className="editor-wrapper relative mx-auto pl-16 pr-8 py-6 outline-none"
       style={{ maxWidth: 'var(--editor-max-width, 800px)' }}
     >
       <div

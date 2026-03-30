@@ -13,6 +13,20 @@
   outline: none;
 }
 
+.milkdown-editor-root .milkdown {
+  position: relative;
+}
+
+.milkdown .milkdown-block-handle {
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.2s;
+  display: flex;
+  position: absolute;
+}
+
 /* ProseMirror Overrides */
 .milkdown-editor-root .ProseMirror {
   min-height: calc(100vh - 200px);
@@ -267,28 +281,13 @@
   z-index: 40;
 }
 
-/* Show handle when hovering or when it is active */
-.milkdown-block-handle:hover,
-.milkdown-block-handle.active {
-  opacity: 1;
-}
-
-/* ProseMirror block hover detection */
-.milkdown-editor-root .ProseMirror > *:hover ~ .milkdown-block-handle,
-.milkdown-block-handle:hover {
-  opacity: 1;
-}
-
-/* Make handle visible when block provider is active */
-.milkdown-block-handle {
-  opacity: 0;
-}
-
+/* Show handle when hovering over the editor area */
 .editor-wrapper:hover .milkdown-block-handle {
   opacity: 0.4;
 }
 
-.editor-wrapper:hover .milkdown-block-handle:hover {
+.editor-wrapper:hover .milkdown-block-handle:hover,
+.milkdown-block-handle.active {
   opacity: 1;
 }
 
@@ -335,16 +334,52 @@
   outline: 2px dashed var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+  transition: opacity 0.15s ease;
 }
 
-/* Drop indicator line */
-.ProseMirror-drop-target::before {
-  content: '';
+/* ProseMirror 内置拖拽时编辑器光标指示 */
+.ProseMirror[data-dragging='true'] {
+  cursor: grabbing;
+}
+
+/* ProseMirror drop cursor（内置放置指示线） */
+.ProseMirror .ProseMirror-dropcursor {
+  height: 2px !important;
+  background: var(--accent) !important;
+  border-radius: 1px;
   display: block;
+}
+
+/* Drop indicator line（自定义蓝色指示线） */
+.milkdown-drop-indicator {
+  position: fixed;
   height: 2px;
   background: var(--accent);
   border-radius: 1px;
-  margin: -1px 0;
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+  transition: top 0.1s ease;
+}
+
+.milkdown-drop-indicator::before,
+.milkdown-drop-indicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.milkdown-drop-indicator::before {
+  left: -3px;
+}
+
+.milkdown-drop-indicator::after {
+  right: -3px;
 }
 
 /* ===== Slash Command Menu ===== */
