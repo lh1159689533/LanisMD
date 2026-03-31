@@ -53,6 +53,7 @@ pub fn run() {
             file_commands::duplicate_file,
             file_commands::move_to_trash,
             file_commands::copy_image_to_assets,
+            file_commands::save_image_bytes_to_assets,
             file_commands::reveal_in_finder,
             config_commands::get_config,
             config_commands::set_config,

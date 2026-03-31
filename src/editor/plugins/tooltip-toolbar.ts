@@ -19,6 +19,8 @@ import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 
+import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-upload-progress';
+
 // ---------------------------------------------------------------------------
 // SVG Icons
 // ---------------------------------------------------------------------------
@@ -279,20 +281,21 @@ function createImageDialog(
         close();
         return;
       }
+      // Close dialog immediately so user sees loading in the editor
+      close();
       try {
         const relativePath = await fileService.copyImageToAssets(localFilePath, currentFile.filePath);
         onSubmit(relativePath, alt);
       } catch (err) {
         console.error('Failed to copy image to assets:', err);
       }
-      close();
     } else {
       const src = srcInput.value.trim();
       const alt = urlAltInput.value.trim();
       if (src) {
+        close();
         onSubmit(src, alt);
       }
-      close();
     }
   }
 
@@ -566,28 +569,75 @@ class TooltipToolbarView {
   }
 
   /**
-   * Handle image button: show dialog to input URL & alt text
+   * Handle image button: insert an empty image-block (shows upload bar)
+   * or open image dialog if image-block not available.
    */
   private handleImageAction(view: EditorView) {
     // Hide the tooltip while dialog is open
     this.provider?.hide();
 
-    const dialog = createImageDialog(view, (src, alt) => {
-      const { state, dispatch } = view;
-      const imageType = state.schema.nodes.image;
-      if (!imageType) return;
+    const { state, dispatch } = view;
+    const schema = state.schema;
+    const imageBlockType = schema.nodes['image-block'] || schema.nodes.image_block;
 
+    if (imageBlockType) {
+      // First delete the selected text, then insert image-block at the correct block position
       const { from, to } = state.selection;
-      const tr = state.tr.replaceWith(from, to, imageType.create({ src, alt }));
-      dispatch(tr);
-      view.focus();
-    });
+      let tr = state.tr;
 
-    document.body.appendChild(dialog);
-    setTimeout(() => {
-      const firstInput = dialog.querySelector('input') as HTMLInputElement;
-      if (firstInput) firstInput.focus();
-    }, 50);
+      // Delete the selected content first
+      if (from !== to) {
+        tr = tr.delete(from, to);
+      }
+
+      // After deletion, resolve the position to find the parent block boundary
+      const mappedPos = tr.mapping.map(from);
+      const $pos = tr.doc.resolve(mappedPos);
+
+      // Find the end of the current block (paragraph) to insert the image-block after it
+      // If the current block becomes empty after deletion, replace it entirely
+      const parentNode = $pos.parent;
+
+      const imageBlock = imageBlockType.create({ src: '', caption: '', ratio: 1 });
+
+      if (parentNode.content.size === 0 || parentNode.textContent.trim() === '') {
+        // Parent block is empty after deletion — replace it with the image-block
+        const blockStart = $pos.before($pos.depth);
+        const blockEnd = $pos.after($pos.depth);
+        tr = tr.replaceWith(blockStart, blockEnd, imageBlock);
+      } else {
+        // Parent block still has content — insert image-block after the current block
+        const blockEnd = $pos.after($pos.depth);
+        tr = tr.insert(blockEnd, imageBlock);
+      }
+
+      dispatch(tr.scrollIntoView());
+      view.focus();
+    } else {
+      // Fallback: use the old dialog approach with loading placeholder
+      const dialog = createImageDialog(view, (src, alt) => {
+        // For URL input, just insert directly
+        if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+          const imageType = state.schema.nodes.image;
+          if (!imageType) return;
+          const { from, to } = state.selection;
+          const tr = state.tr.replaceWith(from, to, imageType.create({ src, alt }));
+          dispatch(tr);
+          view.focus();
+        } else {
+          // For local file upload, show loading placeholder
+          const placeholderId = insertLoadingPlaceholder(view);
+          // The src is already a relative path from createImageDialog's upload handler
+          replaceLoadingWithImage(view, placeholderId, src);
+        }
+      });
+
+      document.body.appendChild(dialog);
+      setTimeout(() => {
+        const firstInput = dialog.querySelector('input') as HTMLInputElement;
+        if (firstInput) firstInput.focus();
+      }, 50);
+    }
   }
 
   setView(view: EditorView) {

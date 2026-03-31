@@ -62,6 +62,15 @@ class FileService {
     return invoke<string>('copy_image_to_assets', { imagePath, docPath });
   }
 
+  /**
+   * Save raw image bytes into the `assets` folder next to the document.
+   * Used when we have a File/Blob object (e.g. from drag & drop or paste in image-block).
+   * Returns the relative path (e.g. `./assets/image_xxx.png`) for Markdown usage.
+   */
+  async saveImageBytesToAssets(data: Uint8Array, fileName: string, docPath: string): Promise<string> {
+    return invoke<string>('save_image_bytes_to_assets', { data: Array.from(data), fileName, docPath });
+  }
+
 }
 
 class ConfigService {

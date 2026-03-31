@@ -240,8 +240,343 @@
   background-color: rgba(37, 99, 235, 0.08);
 }
 
-/* Images */
-.milkdown-editor-root .ProseMirror img {
+/* ===== Image Block Component ===== */
+
+/* Base container */
+.milkdown-image-block {
+  outline: none;
+  margin: 12px 0;
+  display: block;
+  border-radius: 8px;
+  transition: outline 0.15s ease;
+}
+
+.milkdown-image-block.selected > .image-edit {
+  outline: 2px solid var(--accent);
+  border-radius: 8px;
+}
+
+.milkdown-image-block.selected > .image-wrapper img {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Empty state: upload bar --- */
+.milkdown-image-block > .image-edit {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  height: 48px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.milkdown-image-block > .image-edit:hover {
+  border-color: var(--accent);
+  background: rgba(37, 99, 235, 0.03);
+}
+
+.dark .milkdown-image-block > .image-edit:hover {
+  background: rgba(122, 162, 247, 0.06);
+}
+
+/* Image icon in the upload bar */
+.milkdown-image-block > .image-edit .image-icon {
+  color: var(--sidebar-text);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .image-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Link importer area */
+.milkdown-image-block > .image-edit .link-importer {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.milkdown-image-block > .image-edit .link-importer > .link-input-area {
+  width: 100%;
+  line-height: 24px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--editor-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  cursor: text;
+  pointer-events: none;
+  color: var(--sidebar-text);
+  opacity: 0.5;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .uploader {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  pointer-events: auto;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .uploader:hover {
+  opacity: 0.8;
+}
+
+.milkdown-image-block > .image-edit .link-importer.focus .placeholder .uploader {
+  color: var(--sidebar-text);
+  opacity: 0.4;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .text {
+  margin-left: 4px;
+}
+
+/* Confirm button */
+.milkdown-image-block > .image-edit .confirm {
+  background: var(--accent);
+  color: #fff;
+  line-height: 32px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .confirm:hover {
+  background: var(--accent-hover);
+}
+
+/* Delete button for empty state */
+.milkdown-image-block > .image-edit .delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--sidebar-text);
+  opacity: 0.4;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .delete-btn:hover {
+  opacity: 1;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* --- Image display state --- */
+.milkdown-image-block > .image-wrapper {
+  position: relative;
+  width: fit-content;
+  min-width: 100px;
+}
+
+/* Alignment */
+.milkdown-image-block > .image-wrapper {
+  margin: 0 auto;  /* default: center */
+}
+
+.milkdown-image-block[data-align="left"] > .image-wrapper {
+  margin: 0 auto 0 0;
+}
+
+.milkdown-image-block[data-align="center"] > .image-wrapper {
+  margin: 0 auto;
+}
+
+.milkdown-image-block[data-align="right"] > .image-wrapper {
+  margin: 0 0 0 auto;
+}
+
+.milkdown-image-block > .image-wrapper img {
+  max-width: 100%;
+  min-height: 80px;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: outline 0.15s ease;
+}
+
+/* --- Operation buttons (top-right overlay) --- */
+.milkdown-image-block > .image-wrapper .image-block-toolbar {
+  position: absolute;
+  display: flex;
+  gap: 4px;
+  right: 8px;
+  top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+
+.milkdown-image-block:hover > .image-wrapper .image-block-toolbar {
+  opacity: 1;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Active alignment button */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active:hover {
+  background: var(--accent-hover);
+}
+
+/* Delete button special styling */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+
+/* Separator in toolbar */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 4px 2px;
+  flex-shrink: 0;
+}
+
+/* Hide the original operation buttons from the component (if any) */
+.milkdown-image-block > .image-wrapper .operation {
+  position: absolute;
+  display: flex;
+  gap: 4px;
+  right: 8px;
+  top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.milkdown-image-block:hover > .image-wrapper .operation {
+  opacity: 1;
+}
+
+/* --- Resize handle --- */
+.milkdown-image-block > .image-wrapper > .image-resize-handle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 4px;
+  bottom: -2px;
+  width: 64px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 2px;
+  cursor: row-resize;
+}
+
+.milkdown-image-block:hover > .image-wrapper > .image-resize-handle {
+  opacity: 0.8;
+}
+
+.milkdown-image-block > .image-wrapper > .image-resize-handle:hover {
+  opacity: 1;
+  height: 6px;
+  bottom: -3px;
+}
+
+/* --- Caption input --- */
+.milkdown-image-block > .caption-input {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 8px auto 0;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.milkdown-image-block > .caption-input::placeholder {
+  color: var(--sidebar-text);
+  opacity: 0.4;
+}
+
+.milkdown-image-block > .caption-input:focus {
+  color: var(--editor-text);
+}
+
+/* Hidden utility */
+.milkdown-image-block .hidden {
+  display: none !important;
+}
+
+/* Legacy inline images (for backward compat) */
+.milkdown-editor-root .ProseMirror img:not(.milkdown-image-block img) {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
@@ -856,4 +1191,165 @@
 .milkdown-editor-root .math-delimiter {
   color: var(--accent);
   opacity: 0.7;
+}
+
+/* ===== Image Upload Loading Placeholder ===== */
+
+.image-loading-placeholder {
+  margin: 12px 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+.image-loading-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer / pulse animation */
+.image-loading-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(37, 99, 235, 0.04) 40%,
+    rgba(37, 99, 235, 0.08) 50%,
+    rgba(37, 99, 235, 0.04) 60%,
+    transparent 100%
+  );
+  animation: imageLoadingShimmer 1.8s ease-in-out infinite;
+}
+
+.dark .image-loading-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(122, 162, 247, 0.04) 40%,
+    rgba(122, 162, 247, 0.08) 50%,
+    rgba(122, 162, 247, 0.04) 60%,
+    transparent 100%
+  );
+}
+
+@keyframes imageLoadingShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.image-loading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.dark .image-loading-icon {
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.image-loading-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.image-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--editor-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: imageLoadingSpin 0.8s linear infinite;
+  flex-shrink: 0;
+  margin-left: auto;
+  z-index: 1;
+}
+
+@keyframes imageLoadingSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Image Block Upload Loading Overlay ===== */
+/* Shown over the image-block upload bar while file is being saved to assets */
+
+.image-block-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Shimmer animation for overlay */
+.image-block-loading-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(37, 99, 235, 0.04) 40%,
+    rgba(37, 99, 235, 0.08) 50%,
+    rgba(37, 99, 235, 0.04) 60%,
+    transparent 100%
+  );
+  animation: imageLoadingShimmer 1.8s ease-in-out infinite;
+}
+
+.dark .image-block-loading-overlay::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(122, 162, 247, 0.04) 40%,
+    rgba(122, 162, 247, 0.08) 50%,
+    rgba(122, 162, 247, 0.04) 60%,
+    transparent 100%
+  );
+}
+
+.image-block-loading-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+
+.image-block-loading-content span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  opacity: 0.7;
+}
+
+.image-block-loading-content .image-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--editor-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: imageLoadingSpin 0.8s linear infinite;
+  flex-shrink: 0;
+  margin-left: 0;
 }

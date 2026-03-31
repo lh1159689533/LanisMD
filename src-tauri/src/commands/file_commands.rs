@@ -266,6 +266,12 @@ pub async fn copy_image_to_assets(image_path: String, doc_path: String) -> AppRe
     crate::services::fs_service::FileSystemService::copy_image_to_assets(&image_path, &doc_path)
 }
 
+/// Save image bytes to the assets directory next to the document
+#[tauri::command]
+pub async fn save_image_bytes_to_assets(data: Vec<u8>, file_name: String, doc_path: String) -> AppResult<String> {
+    crate::services::fs_service::FileSystemService::save_image_bytes_to_assets(&data, &file_name, &doc_path)
+}
+
 /// Reveal file in system file manager (Finder on macOS)
 #[tauri::command]
 pub async fn reveal_in_finder(path: String) -> AppResult<()> {

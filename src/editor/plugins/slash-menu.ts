@@ -11,6 +11,7 @@ import { SlashProvider, slashFactory } from '@milkdown/plugin-slash';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
+import { openImageDialog } from './image-block';
 
 // ---------------------------------------------------------------------------
 // Slash command definitions
@@ -223,6 +224,52 @@ function insertCodeBlock(view: EditorView) {
   view.focus();
 }
 
+/**
+ * Insert an empty image-block node (shows the upload bar).
+ * If image-block is not available, fallback to opening the image dialog.
+ */
+function insertImage(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+
+  // Try the image-block node type from @milkdown/components/image-block
+  const imageBlockType = schema.nodes['image-block'] || schema.nodes.image_block;
+
+  if (imageBlockType) {
+    const { $from } = state.selection;
+    const parent = $from.parent;
+
+    // Create an empty image-block (will show the upload bar)
+    const imageBlock = imageBlockType.create({ src: '', caption: '', ratio: 1 });
+
+    if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
+      const from = $from.before();
+      const to = $from.after();
+      const tr = state.tr.replaceWith(from, to, imageBlock);
+      dispatch(tr.scrollIntoView());
+    } else {
+      const insertPos = $from.after();
+      const tr = state.tr.insert(insertPos, imageBlock);
+      dispatch(tr.scrollIntoView());
+    }
+    view.focus();
+  } else {
+    // Fallback: open image dialog
+    openImageDialog().then((result) => {
+      if (!result) return;
+      const imageType = schema.nodes.image;
+      if (!imageType) return;
+
+      const { from, to } = state.selection;
+      const tr = state.tr.replaceWith(from, to, imageType.create({ src: result.src, alt: result.alt }));
+      dispatch(tr.scrollIntoView());
+      view.focus();
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Icons (inline SVG)
 // ---------------------------------------------------------------------------
@@ -243,6 +290,8 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3"/></svg>',
   divider:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+  image:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -311,6 +360,12 @@ export const slashCommands: SlashCommand[] = [
     shortcut: '---',
     keywords: ['divider', 'hr', 'horizontal', '分割', '分隔', 'fgx'],
     execute: (view) => insertHr(view),
+  },
+  {
+    label: '图片',
+    icon: icons.image,
+    keywords: ['image', 'img', 'picture', 'photo', '图片', '图像', 'tp'],
+    execute: (view) => insertImage(view),
   },
 ];
 

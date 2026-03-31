@@ -16,7 +16,11 @@ import { slash, configureSlash } from './plugins/slash-menu';
 import { block, configureBlock } from './plugins/block-handle';
 import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
 import { underlineMarkSchema } from './plugins/underline-mark';
-import { imageViewPlugin } from './plugins/image-view';
+import { imageBlockComponent, configureImageBlock } from './plugins/image-block';
+import { imageBlockPastePlugin } from './plugins/image-paste';
+import { imageBlockToolbarPlugin } from './plugins/image-toolbar';
+import { imageUploadProgressPlugin } from './plugins/image-upload-progress';
+import { imageInputRulePlugin } from './plugins/image-input-rule';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
 export type EditorListener = {
@@ -38,11 +42,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
       ctx.set(defaultValueCtx, defaultValue);
       // Configure list-item-block rendering (checkbox icons for task lists)
       ctx.set(listItemBlockConfig.key, {
-        renderLabel: ({
-          label,
-          listType,
-          checked,
-        }) => {
+        renderLabel: ({ label, listType, checked }) => {
           if (checked == null) {
             if (listType === 'bullet') return bulletIcon;
             return label;
@@ -55,10 +55,16 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .config(configureSlash)
     .config(configureBlock)
     .config(configureTooltip)
+    .config(configureImageBlock)
     .use(commonmark)
     .use(gfm)
     .use(underlineMarkSchema)
     .use(listItemBlockComponent)
+    .use(imageBlockComponent)
+    .use(imageBlockPastePlugin)
+    .use(imageBlockToolbarPlugin)
+    .use(imageUploadProgressPlugin)
+    .use(imageInputRulePlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
@@ -68,8 +74,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(upload)
     .use(slash)
     .use(block)
-    .use(tooltip)
-    .use(imageViewPlugin);
+    .use(tooltip);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
