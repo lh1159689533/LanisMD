@@ -15,6 +15,7 @@ import {
 import { slash, configureSlash } from './plugins/slash-menu';
 import { block, configureBlock } from './plugins/block-handle';
 import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
+import { linkTooltip, configureLinkTooltip } from './plugins/link-tooltip';
 import { underlineMarkSchema } from './plugins/underline-mark';
 import { imageBlockComponent, configureImageBlock } from './plugins/image-block';
 import { imageBlockPastePlugin } from './plugins/image-paste';
@@ -55,6 +56,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .config(configureSlash)
     .config(configureBlock)
     .config(configureTooltip)
+    .config(configureLinkTooltip)
     .config(configureImageBlock)
     .use(commonmark)
     .use(gfm)
@@ -74,7 +76,8 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(upload)
     .use(slash)
     .use(block)
-    .use(tooltip);
+    .use(tooltip)
+    .use(linkTooltip);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -91,7 +91,7 @@ function clearAllMarks(view: EditorView) {
 // Link Dialog
 // ---------------------------------------------------------------------------
 
-function createLinkDialog(
+export function createLinkDialog(
   view: EditorView,
   existingText: string,
   existingHref: string,
