@@ -482,9 +482,15 @@
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   padding: 4px;
-  display: flex;
+  display: none;
   gap: 2px;
   z-index: 50;
+  position: absolute;
+}
+
+/* TooltipProvider 通过 data-show 属性控制显示/隐藏 */
+.milkdown-tooltip[data-show='true'] {
+  display: flex;
 }
 
 .dark .milkdown-tooltip {
@@ -509,6 +515,280 @@
 
 .milkdown-tooltip button:hover {
   background-color: rgba(37, 99, 235, 0.08);
+}
+
+.milkdown-tooltip button[data-active='true'] {
+  color: var(--accent);
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+.milkdown-tooltip-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--editor-border);
+  margin: 6px 2px;
+  flex-shrink: 0;
+}
+
+/* ===== Tooltip Dialog (Link / Image) ===== */
+.milkdown-tooltip-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  animation: tooltipDialogOverlayIn 0.15s ease-out;
+}
+
+@keyframes tooltipDialogOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dark .milkdown-tooltip-dialog-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.milkdown-tooltip-dialog {
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 20px 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  animation: tooltipDialogIn 0.15s ease-out;
+}
+
+@keyframes tooltipDialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dark .milkdown-tooltip-dialog {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.milkdown-tooltip-dialog-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--editor-text);
+  margin-bottom: 16px;
+}
+
+.milkdown-tooltip-dialog-field {
+  margin-bottom: 12px;
+}
+
+.milkdown-tooltip-dialog-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  margin-bottom: 6px;
+}
+
+.milkdown-tooltip-dialog-input {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--editor-text);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.milkdown-tooltip-dialog-input::placeholder {
+  color: var(--sidebar-text);
+  opacity: 0.5;
+}
+
+.milkdown-tooltip-dialog-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.dark .milkdown-tooltip-dialog-input:focus {
+  box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.15);
+}
+
+.milkdown-tooltip-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.milkdown-tooltip-dialog-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--editor-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.milkdown-tooltip-dialog-btn.cancel {
+  background: transparent;
+  color: var(--sidebar-text);
+}
+
+.milkdown-tooltip-dialog-btn.cancel:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .milkdown-tooltip-dialog-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.milkdown-tooltip-dialog-btn.confirm {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.milkdown-tooltip-dialog-btn.confirm:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Image dialog: local file pick button */
+.milkdown-tooltip-dialog-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 24px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  background: var(--sidebar-bg);
+  border: 1.5px dashed var(--editor-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  line-height: 1.5;
+  justify-content: center;
+}
+
+.milkdown-tooltip-dialog-file-btn:hover {
+  border-color: var(--accent);
+  background: rgba(37, 99, 235, 0.04);
+  color: var(--accent);
+}
+
+.milkdown-tooltip-dialog-file-btn.has-file {
+  border-color: var(--accent);
+  border-style: solid;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--accent);
+}
+
+.dark .milkdown-tooltip-dialog-file-btn:hover {
+  background: rgba(122, 162, 247, 0.08);
+}
+
+.dark .milkdown-tooltip-dialog-file-btn.has-file {
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.milkdown-tooltip-dialog-file-btn svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* Image dialog: file name display */
+.milkdown-tooltip-dialog-file-name {
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 6px;
+  padding: 0 2px;
+  word-break: break-all;
+}
+
+/* Image dialog: Tab navigation */
+.milkdown-tooltip-dialog-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  background: var(--sidebar-bg);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.milkdown-tooltip-dialog-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.milkdown-tooltip-dialog-tab:hover {
+  color: var(--editor-text);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .milkdown-tooltip-dialog-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.milkdown-tooltip-dialog-tab.active {
+  color: var(--accent);
+  background: var(--editor-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dark .milkdown-tooltip-dialog-tab.active {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.milkdown-tooltip-dialog-tab svg {
+  flex-shrink: 0;
+}
+
+/* Image dialog: Tab panel */
+.milkdown-tooltip-dialog-tab-panel {
+  animation: tooltipTabPanelIn 0.15s ease-out;
+}
+
+@keyframes tooltipTabPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Editor wrapper */

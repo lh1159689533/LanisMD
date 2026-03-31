@@ -10,6 +10,7 @@
 import { SlashProvider, slashFactory } from '@milkdown/plugin-slash';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
+import { TextSelection } from '@milkdown/kit/prose/state';
 
 // ---------------------------------------------------------------------------
 // Slash command definitions
@@ -56,14 +57,36 @@ function wrapBlock(view: EditorView, nodeType: string, attrs?: Record<string, un
   const { $from } = state.selection;
   const parent = $from.parent;
 
+  // blockquote is a wrapping node, not a block-type conversion
+  if (nodeType === 'blockquote') {
+    const paragraph = schema.nodes.paragraph;
+    if (!paragraph) return;
+
+    if (parent.type === paragraph && parent.content.size === 0) {
+      // Replace empty paragraph with blockquote > paragraph
+      const from = $from.before();
+      const to = $from.after();
+      const tr = state.tr.replaceWith(from, to, type.create(null, paragraph.create()));
+      // Place cursor inside the paragraph within blockquote
+      const cursorPos = from + 2; // blockquote(+1) > paragraph(+1)
+      tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+      dispatch(tr.scrollIntoView());
+    }
+    view.focus();
+    return;
+  }
+
   // If current block is an empty paragraph, replace it
   if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
     const tr = state.tr.setBlockType($from.before(), $from.after(), type, attrs);
-    dispatch(tr);
+    // Set cursor inside the new block
+    const cursorPos = $from.before() + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
   } else {
     // Otherwise try setBlockType on selection
     const tr = state.tr.setBlockType($from.pos, $from.pos, type, attrs);
-    dispatch(tr);
+    dispatch(tr.scrollIntoView());
   }
   view.focus();
 }
@@ -78,18 +101,29 @@ function insertHr(view: EditorView) {
 
   const { $from } = state.selection;
   const parent = $from.parent;
+  const paragraphType = schema.nodes.paragraph;
 
   // If paragraph is empty, replace; otherwise insert after
   if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
-    const tr = state.tr.replaceWith($from.before(), $from.after(), hrType.create());
-    // Add a new paragraph after hr
-    const paragraphType = schema.nodes.paragraph;
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, hrType.create());
+    // Add a new paragraph after hr and place cursor in it
     if (paragraphType) {
-      tr.insert(tr.mapping.map($from.after()), paragraphType.create());
+      const insertPos = tr.mapping.map(to);
+      tr.insert(insertPos, paragraphType.create());
+      // Cursor inside the new paragraph: insertPos(paragraph start) + 1
+      tr.setSelection(TextSelection.near(tr.doc.resolve(insertPos + 1)));
     }
     dispatch(tr.scrollIntoView());
   } else {
-    const tr = state.tr.insert($from.after(), hrType.create());
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, hrType.create());
+    if (paragraphType) {
+      const paraPos = tr.mapping.map(insertPos) + 1; // after hr node
+      tr.insert(paraPos, paragraphType.create());
+      tr.setSelection(TextSelection.near(tr.doc.resolve(paraPos + 1)));
+    }
     dispatch(tr.scrollIntoView());
   }
   view.focus();
@@ -109,32 +143,30 @@ function wrapInList(view: EditorView, listType: string) {
   const parent = $from.parent;
 
   if (parent.type === paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
     const tr = state.tr.replaceWith(
-      $from.before(),
-      $from.after(),
+      from,
+      to,
       list.create(null, listItem.create(null, paragraph.create())),
     );
-    // Place cursor inside the list item paragraph
+    // Place cursor inside: list(+1) > list_item(+1) > paragraph(+1)
+    const cursorPos = from + 3;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
     dispatch(tr.scrollIntoView());
-    // Focus and move cursor
-    setTimeout(() => {
-      const newState = view.state;
-      const pos = newState.selection.$from.pos;
-      view.dispatch(
-        newState.tr.setSelection(
-          // @ts-expect-error -- TextSelection exists on state
-          newState.selection.constructor.near(newState.doc.resolve(pos)),
-        ),
-      );
-      view.focus();
-    }, 0);
+    view.focus();
   } else {
     // Wrap current block in list
+    const from = $from.before();
+    const to = $from.after();
     const tr = state.tr.replaceWith(
-      $from.before(),
-      $from.after(),
+      from,
+      to,
       list.create(null, listItem.create(null, parent.copy(parent.content))),
     );
+    // Place cursor inside the wrapped content
+    const cursorPos = from + 3;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
     dispatch(tr.scrollIntoView());
     view.focus();
   }
@@ -145,7 +177,6 @@ function insertTaskList(view: EditorView) {
 
   const { state, dispatch } = view;
   const schema = state.schema;
-  // GFM task list: bullet_list > list_item (with checked attr)
   const bulletList = schema.nodes.bullet_list;
   const listItem = schema.nodes.list_item;
   const paragraph = schema.nodes.paragraph;
@@ -155,13 +186,19 @@ function insertTaskList(view: EditorView) {
   const parent = $from.parent;
 
   if (parent.type === paragraph && parent.content.size === 0) {
-    const tr = state.tr.replaceWith(
-      $from.before(),
-      $from.after(),
-      bulletList.create(null, listItem.create({ checked: false }, paragraph.create())),
+    const from = $from.before();
+    const to = $from.after();
+    // Create a task list item with checked=false, listType=bullet, label=•
+    const taskListItem = listItem.create(
+      { checked: false, listType: 'bullet', label: '•', spread: 'true' },
+      paragraph.create(),
     );
+    const tr = state.tr.replaceWith(from, to, bulletList.create(null, taskListItem));
+    // Place cursor inside: bullet_list(+1) > list_item(+1) > paragraph(+1)
+    const cursorPos = from + 3;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
     dispatch(tr.scrollIntoView());
-    setTimeout(() => view.focus(), 0);
+    view.focus();
   }
 }
 

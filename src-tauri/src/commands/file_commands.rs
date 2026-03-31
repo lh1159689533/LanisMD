@@ -260,6 +260,12 @@ pub async fn move_to_trash(path: String) -> AppResult<()> {
     crate::services::fs_service::FileSystemService::move_to_trash(&path)
 }
 
+/// Copy an image to the assets directory next to the document
+#[tauri::command]
+pub async fn copy_image_to_assets(image_path: String, doc_path: String) -> AppResult<String> {
+    crate::services::fs_service::FileSystemService::copy_image_to_assets(&image_path, &doc_path)
+}
+
 /// Reveal file in system file manager (Finder on macOS)
 #[tauri::command]
 pub async fn reveal_in_finder(path: String) -> AppResult<()> {

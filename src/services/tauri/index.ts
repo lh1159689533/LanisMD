@@ -53,6 +53,15 @@ class FileService {
   async revealInFinder(path: string): Promise<void> {
     return invoke<void>('reveal_in_finder', { path });
   }
+
+  /**
+   * Copy a local image file into the `assets` folder next to the document.
+   * Returns the relative path (e.g. `./assets/image.png`) for Markdown usage.
+   */
+  async copyImageToAssets(imagePath: string, docPath: string): Promise<string> {
+    return invoke<string>('copy_image_to_assets', { imagePath, docPath });
+  }
+
 }
 
 class ConfigService {

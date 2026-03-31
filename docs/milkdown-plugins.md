@@ -22,7 +22,7 @@
 | trailing | `@milkdown/kit/plugin/trailing` | ✅ 已集成 |
 | upload | `@milkdown/plugin-upload` | ✅ 已集成 |
 | slash | `@milkdown/plugin-slash` | ⚠️ 已注册，配置为空 |
-| tooltip | `@milkdown/kit/plugin/tooltip` | ⚠️ 已注册，配置为空 |
+| tooltip | `@milkdown/kit/plugin/tooltip` | ✅ 已集成（浮动格式工具栏） |
 
 **备注**：`@milkdown/react`、`@milkdown/theme-nord`、`@milkdown/utils` 已安装但代码中未使用，可考虑清理。
 
@@ -69,22 +69,21 @@
   ```
 - **工作量**：🟡 中（需要实现自定义菜单 UI + 命令列表 + 键盘导航）
 
-#### 3. Tooltip 浮动工具栏 — 完善配置
+#### 3. Tooltip 浮动工具栏 — ✅ 已完成
 
 - **包名**：`@milkdown/kit/plugin/tooltip`（已安装）
-- **功能**：选中文字后浮出格式化工具栏（加粗、斜体、删除线、行内代码、链接等）
-- **为什么必备**：当前同样配置为空。这是"对新手友好"的核心：不需要记快捷键，选中文字就能看到格式化选项
-- **实现方案**：
-  ```ts
-  ctx.set(tooltip.key, {
-    view: (view) => {
-      // 返回自定义的 tooltip DOM
-      // 包含：加粗(B) / 斜体(I) / 删除线(S) /
-      //       行内代码(``) / 链接(🔗) 等按钮
-    },
-  });
-  ```
-- **工作量**：🟡 中（需要实现工具栏 UI + 各格式切换命令）
+- **功能**：选中文字后浮出 Notion 风格格式化工具栏
+- **已实现按钮**：加粗、斜体、下划线、删除线、行内代码、链接（弹窗输入）、图片（弹窗输入）、清除格式
+- **附加功能**：
+  - 自定义 `underline` mark schema 扩展（渲染为 `<u>` 标签）
+  - 按钮高亮显示当前已激活的格式
+  - 跟随深色/浅色主题
+  - 链接/图片弹出对话框支持键盘操作（Enter 确认、Esc 关闭）
+- **实现文件**：
+  - `src/editor/plugins/tooltip-toolbar.ts` — 工具栏核心逻辑
+  - `src/editor/plugins/underline-mark.ts` — 下划线 mark schema
+  - `src/styles/editor.css` — 样式（`.milkdown-tooltip-*` 类名）
+- **工作量**：🟡 中（已完成）
 
 #### 4. component/link-tooltip — 链接预览与编辑
 

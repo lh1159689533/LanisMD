@@ -161,6 +161,64 @@ impl FileSystemService {
         }
     }
 
+    /// Copy a local image file into the `assets` folder next to the document.
+    /// Returns the relative path (e.g. `./assets/image.png`) for Markdown usage.
+    pub fn copy_image_to_assets(image_path: &str, doc_path: &str) -> AppResult<String> {
+        let src = Path::new(image_path);
+        if !src.exists() {
+            return Err(AppError::FileNotFound(image_path.to_string()));
+        }
+        if !src.is_file() {
+            return Err(AppError::InvalidPath("Source is not a file".to_string()));
+        }
+
+        let doc = Path::new(doc_path);
+        let doc_dir = doc
+            .parent()
+            .ok_or_else(|| AppError::InvalidPath("Cannot determine document directory".to_string()))?;
+
+        let assets_dir = doc_dir.join("assets");
+
+        // Create assets directory if it doesn't exist
+        if !assets_dir.exists() {
+            fs::create_dir_all(&assets_dir).map_err(|e| AppError::Io(e))?;
+        }
+
+        let original_name = src
+            .file_name()
+            .ok_or_else(|| AppError::InvalidPath("Cannot determine file name".to_string()))?
+            .to_string_lossy()
+            .to_string();
+
+        let stem = src
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let ext = src
+            .extension()
+            .map(|e| format!(".{}", e.to_string_lossy()))
+            .unwrap_or_default();
+
+        // Find a non-conflicting name
+        let mut final_name = original_name.clone();
+        let mut dest = assets_dir.join(&final_name);
+        let mut counter = 1u32;
+
+        while dest.exists() {
+            final_name = format!("{}-{}{}", stem, counter, ext);
+            dest = assets_dir.join(&final_name);
+            counter += 1;
+            if counter > 9999 {
+                return Err(AppError::WriteFailed("Too many copies with same name".to_string()));
+            }
+        }
+
+        fs::copy(src, &dest).map_err(|e| AppError::Io(e))?;
+
+        Ok(format!("./assets/{}", final_name))
+    }
+
     /// Move file or directory to system trash
     pub fn move_to_trash(path: &str) -> AppResult<()> {
         let p = Path::new(path);
