@@ -22,6 +22,7 @@ import { imageBlockPastePlugin } from './plugins/image-paste';
 import { imageBlockToolbarPlugin } from './plugins/image-toolbar';
 import { imageUploadProgressPlugin } from './plugins/image-upload-progress';
 import { imageInputRulePlugin } from './plugins/image-input-rule';
+import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
 export type EditorListener = {
@@ -58,6 +59,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .config(configureTooltip)
     .config(configureLinkTooltip)
     .config(configureImageBlock)
+    .config(configureCodeBlock)
     .use(commonmark)
     .use(gfm)
     .use(underlineMarkSchema)
@@ -67,6 +69,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(imageBlockToolbarPlugin)
     .use(imageUploadProgressPlugin)
     .use(imageInputRulePlugin)
+    .use(codeBlockComponent)
     .use(history)
     .use(listener)
     .use(clipboard)

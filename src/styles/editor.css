@@ -122,6 +122,373 @@
 }
 
 /* Code Blocks */
+/* ===== Code Block Component (Milkdown + CodeMirror 6) ===== */
+
+/* Container - uses milkdown's code_block node class */
+.milkdown-editor-root .ProseMirror [data-type='code_block'],
+.milkdown-editor-root .ProseMirror code-block {
+  position: relative;
+  display: block;
+  margin: 1em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--editor-border);
+  transition: border-color 0.15s ease;
+  background: #f6f8fa;
+}
+
+.dark .milkdown-editor-root .ProseMirror [data-type='code_block'],
+.dark .milkdown-editor-root .ProseMirror code-block {
+  background: #1a1b26;
+}
+
+.milkdown-editor-root .ProseMirror [data-type='code_block']:hover,
+.milkdown-editor-root .ProseMirror code-block:hover {
+  border-color: var(--accent);
+}
+
+/* Toolbar: language selector + copy button */
+.milkdown-editor-root .tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #f0f2f5;
+  border-bottom: 1px solid var(--editor-border);
+  min-height: 36px;
+}
+
+.dark .milkdown-editor-root .tools {
+  background: #16171f;
+}
+
+/* Language selector button */
+.milkdown-editor-root .language-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.milkdown-editor-root .language-button:hover {
+  color: var(--editor-text);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dark .milkdown-editor-root .language-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Expand icon in language button */
+.milkdown-editor-root .expand-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* Language picker dropdown */
+.milkdown-editor-root .language-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  min-width: 200px;
+  max-width: 280px;
+  background: var(--editor-bg);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+}
+
+.dark .milkdown-editor-root .language-picker {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* List wrapper in picker */
+.milkdown-editor-root .language-picker .list-wrapper {
+  border-radius: 8px;
+}
+
+.milkdown-editor-root .language-picker .list-wrapper ul.language-list {
+  padding-left: 0;
+  overflow: auto;
+  max-height: 300px;
+}
+
+/* Search box in language picker */
+.milkdown-editor-root .search-box {
+  position: sticky;
+  top: 0;
+  background: var(--editor-bg);
+  padding: 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--editor-border);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.milkdown-editor-root .search-icon {
+  display: flex;
+  align-items: center;
+  color: var(--sidebar-text);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.milkdown-editor-root .search-input {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--editor-text);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.milkdown-editor-root .search-input:focus {
+  border-color: var(--accent);
+}
+
+.milkdown-editor-root .search-input::placeholder {
+  color: var(--sidebar-text);
+  opacity: 0.5;
+}
+
+.milkdown-editor-root .clear-icon {
+  display: flex;
+  align-items: center;
+  color: var(--sidebar-text);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.milkdown-editor-root .clear-icon:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dark .milkdown-editor-root .clear-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.milkdown-editor-root .clear-icon.hidden {
+  display: none;
+}
+
+/* Language list */
+.milkdown-editor-root .language-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+
+.milkdown-editor-root .language-list-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--editor-text);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.milkdown-editor-root .language-list-item:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.milkdown-editor-root .language-list-item[aria-selected='true'] {
+  color: var(--accent);
+  font-weight: 500;
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.milkdown-editor-root .language-list-item.no-result {
+  color: var(--sidebar-text);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.milkdown-editor-root .language-list-item.no-result:hover {
+  background: transparent;
+}
+
+/* Tools button group (copy button container) */
+.milkdown-editor-root .tools-button-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Copy button */
+.milkdown-editor-root .copy-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.milkdown-editor-root .copy-button:hover {
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* Copy button success state */
+.milkdown-editor-root .copy-button.copied {
+  color: #22c55e;
+}
+
+.milkdown-editor-root .copy-button.copied:hover {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+/* Milkdown icon styling */
+.milkdown-editor-root .milkdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milkdown-editor-root .milkdown-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* CodeMirror host container */
+.milkdown-editor-root .codemirror-host {
+  background: #f6f8fa;
+}
+
+.dark .milkdown-editor-root .codemirror-host {
+  background: #1a1b26;
+}
+
+.milkdown-editor-root .codemirror-host.hidden {
+  display: none;
+}
+
+/* Preview panel */
+.milkdown-editor-root .preview-panel {
+  padding: 12px 16px;
+  border-top: 1px solid var(--editor-border);
+  background: var(--editor-bg);
+}
+
+.milkdown-editor-root .preview-divider {
+  height: 1px;
+  background: var(--editor-border);
+  margin-bottom: 8px;
+}
+
+.milkdown-editor-root .preview-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.milkdown-editor-root .preview-toggle-button {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.milkdown-editor-root .preview-toggle-button:hover {
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* CodeMirror editor overrides */
+.milkdown-editor-root .cm-editor {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.milkdown-editor-root .cm-editor.cm-focused {
+  outline: none;
+}
+
+.milkdown-editor-root .cm-scroller {
+  overflow-x: auto;
+  padding: 12px 0;
+}
+
+.milkdown-editor-root .cm-content {
+  padding: 0 16px;
+}
+
+.milkdown-editor-root .cm-gutters {
+  padding-left: 8px;
+}
+
+/* Hide line numbers when setting is off */
+.milkdown-editor-root[data-show-line-numbers='false'] .cm-gutters {
+  display: none !important;
+}
+
+.milkdown-editor-root .cm-lineNumbers .cm-gutterElement {
+  padding: 0 8px 0 0;
+  min-width: 32px;
+  font-size: 0.75rem;
+}
+
+/* Scrollbar inside CodeMirror */
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar {
+  height: 4px;
+}
+
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--editor-border);
+  border-radius: 2px;
+}
+
+/* ===== Fallback: ProseMirror pre/code blocks (compatibility) ===== */
 .milkdown-editor-root .ProseMirror pre {
   background-color: #1e293b;
   color: #e2e8f0;
@@ -410,18 +777,18 @@
 
 /* Alignment */
 .milkdown-image-block > .image-wrapper {
-  margin: 0 auto;  /* default: center */
+  margin: 0 auto; /* default: center */
 }
 
-.milkdown-image-block[data-align="left"] > .image-wrapper {
+.milkdown-image-block[data-align='left'] > .image-wrapper {
   margin: 0 auto 0 0;
 }
 
-.milkdown-image-block[data-align="center"] > .image-wrapper {
+.milkdown-image-block[data-align='center'] > .image-wrapper {
   margin: 0 auto;
 }
 
-.milkdown-image-block[data-align="right"] > .image-wrapper {
+.milkdown-image-block[data-align='right'] > .image-wrapper {
   margin: 0 0 0 auto;
 }
 
@@ -878,8 +1245,12 @@
 }
 
 @keyframes tooltipDialogOverlayIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .dark .milkdown-tooltip-dialog-overlay {
@@ -942,7 +1313,9 @@
   border: 1px solid var(--editor-border);
   border-radius: 8px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   font-family: inherit;
 }
 
@@ -1241,8 +1614,12 @@
 }
 
 @keyframes imageLoadingShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .image-loading-icon {
@@ -1283,7 +1660,9 @@
 }
 
 @keyframes imageLoadingSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Image Block Upload Loading Overlay ===== */

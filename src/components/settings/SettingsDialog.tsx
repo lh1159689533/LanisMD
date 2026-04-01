@@ -129,6 +129,41 @@ export function SettingsDialog() {
                 <label>行高</label>
                 <span>{config.editor.lineHeight}</span>
               </div>
+
+              {/* Code Block Settings */}
+              <div className="mt-2 border-t border-[var(--editor-border)] pt-3">
+                <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-[var(--sidebar-text)]">
+                  代码块
+                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[var(--sidebar-text)]">
+                    显示行号
+                  </label>
+                  <button
+                    onClick={() =>
+                      setNestedConfig(
+                        'editor.codeBlock.showLineNumbers',
+                        !config.editor.codeBlock?.showLineNumbers,
+                      )
+                    }
+                    className={`relative h-5 w-9 rounded-full transition-colors ${
+                      config.editor.codeBlock?.showLineNumbers !== false
+                        ? 'bg-[var(--accent)]'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={cn(
+                        'absolute left-0.5 top-0.5 h-4 w-4',
+                        'rounded-full bg-white shadow transition-transform',
+                        config.editor.codeBlock?.showLineNumbers !== false
+                          ? 'translate-x-4'
+                          : '',
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

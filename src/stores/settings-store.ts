@@ -12,6 +12,9 @@ const DEFAULT_CONFIG: AppConfig = {
     lineHeight: 1.75,
     wordWrap: 'soft',
     showLineNumbers: true,
+    codeBlock: {
+      showLineNumbers: true,
+    },
   },
   recentFiles: { maxCount: 20 },
   recentFolders: { closeOnClickOutside: true },

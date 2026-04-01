@@ -10,6 +10,9 @@ export interface AppConfig {
     lineHeight: number;
     wordWrap: 'soft' | 'hard' | 'off';
     showLineNumbers: boolean;
+    codeBlock: {
+      showLineNumbers: boolean;
+    };
   };
   recentFiles: {
     maxCount: number;

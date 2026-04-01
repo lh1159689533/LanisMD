@@ -1,10 +1,16 @@
 import { useRef, useEffect } from 'react';
 import { useEditor } from '../hooks/use-editor';
+import { useSettingsStore } from '@/stores/settings-store';
 import '@/styles/editor.css';
 
 export function EditorCore() {
   const { rootRef } = useEditor();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // 监听代码块设置变化
+  const showLineNumbers = useSettingsStore(
+    (s) => s.config.editor.codeBlock?.showLineNumbers !== false
+  );
 
   useEffect(() => {
     const el = containerRef.current;
@@ -27,6 +33,7 @@ export function EditorCore() {
       <div
         ref={rootRef}
         className="milkdown-editor-root"
+        data-show-line-numbers={showLineNumbers}
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
