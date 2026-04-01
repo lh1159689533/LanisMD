@@ -618,7 +618,7 @@
   transition: outline 0.15s ease;
 }
 
-.milkdown-image-block.selected > .image-edit {
+/* .milkdown-image-block.selected > .image-edit {
   outline: 2px solid var(--accent);
   border-radius: 8px;
 }
@@ -626,7 +626,7 @@
 .milkdown-image-block.selected > .image-wrapper img {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
+} */
 
 /* --- Empty state: upload bar --- */
 .milkdown-image-block > .image-edit {
@@ -799,6 +799,9 @@
   object-fit: cover;
   border-radius: 8px;
   transition: outline 0.15s ease;
+  /* Disable macOS/WebKit Live Text (image OCR) to prevent text selection overlay */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* --- Operation buttons (top-right overlay) --- */
@@ -817,7 +820,8 @@
   backdrop-filter: blur(8px);
 }
 
-.milkdown-image-block:hover > .image-wrapper .image-block-toolbar {
+/* Toolbar visible when image is selected AND toolbar is not hidden */
+.milkdown-image-block.image-selected:not(.toolbar-hidden) > .image-wrapper .image-block-toolbar {
   opacity: 1;
 }
 
@@ -887,29 +891,78 @@
   opacity: 1;
 }
 
-/* --- Resize handle --- */
+/* --- Resize handles (four corners) --- */
+/* Hide the original bottom resize handle from milkdown */
 .milkdown-image-block > .image-wrapper > .image-resize-handle {
+  display: none !important;
+}
+
+/* Corner resize handles container */
+.milkdown-image-block > .image-wrapper .image-corner-handles {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 4px;
-  bottom: -2px;
-  width: 64px;
-  background: var(--accent);
+  inset: 0;
+  pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
-  border-radius: 2px;
-  cursor: row-resize;
 }
 
-.milkdown-image-block:hover > .image-wrapper > .image-resize-handle {
-  opacity: 0.8;
-}
-
-.milkdown-image-block > .image-wrapper > .image-resize-handle:hover {
+/* Show handles when image block is selected */
+.milkdown-image-block.image-selected > .image-wrapper .image-corner-handles {
   opacity: 1;
-  height: 6px;
-  bottom: -3px;
+}
+
+/* Individual corner handle */
+.milkdown-image-block > .image-wrapper .image-corner-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 3px;
+  pointer-events: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.milkdown-image-block > .image-wrapper .image-corner-handle:hover {
+  background: var(--accent-hover, var(--accent));
+  transform: scale(1.15);
+}
+
+/* Top-left corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='nw'] {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+/* Top-right corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='ne'] {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+/* Bottom-left corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='sw'] {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+/* Bottom-right corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='se'] {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
+/* Selection outline when selected */
+.milkdown-image-block.image-selected > .image-wrapper img {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* --- Caption input --- */

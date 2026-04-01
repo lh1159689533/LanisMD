@@ -56,13 +56,38 @@ function createToolbar(
     e.stopPropagation();
   });
 
-  // Get current alignment
+  // Get current alignment from node attrs (not DOM)
   const getCurrentAlign = (): string => {
+    try {
+      const resolvedPos = view.state.doc.resolve(nodePos);
+      const node = resolvedPos.nodeAfter;
+      if (node && (node.type.name === 'image-block' || node.type.name === 'image_block')) {
+        return node.attrs.align || 'center';
+      }
+    } catch {
+      // fallback
+    }
     return blockEl.getAttribute('data-align') || 'center';
   };
 
-  // Set alignment
+  // Set alignment via ProseMirror transaction (syncs to document model)
   const setAlignment = (align: string) => {
+    try {
+      const { state, dispatch } = view;
+      const resolvedPos = state.doc.resolve(nodePos);
+      const node = resolvedPos.nodeAfter;
+      if (node && (node.type.name === 'image-block' || node.type.name === 'image_block')) {
+        const tr = state.tr.setNodeMarkup(nodePos, undefined, {
+          ...node.attrs,
+          align,
+        });
+        dispatch(tr);
+      }
+    } catch (e) {
+      console.warn('Failed to set alignment:', e);
+    }
+    // Sync data-align to container DOM for CSS styling
+    // (milkdown's image-block component doesn't auto-sync node attrs to container)
     blockEl.setAttribute('data-align', align);
     // Update active states
     toolbar.querySelectorAll('.align-btn').forEach((btn) => {
@@ -227,11 +252,26 @@ function injectToolbars(view: EditorView) {
     // Only inject toolbar for blocks that have an image (not empty state)
     if (!imageWrapper) return;
 
-    // Check if toolbar already exists
-    if (imageWrapper.querySelector(`[${TOOLBAR_ATTR}]`)) return;
-
     const nodePos = findNodePos(view, blockEl);
     if (nodePos == null) return;
+
+    // Sync data-align from node attrs to container DOM for CSS styling
+    // (milkdown's image-block component doesn't auto-sync node attrs to container)
+    try {
+      const resolvedPos = view.state.doc.resolve(nodePos);
+      const node = resolvedPos.nodeAfter;
+      if (node && (node.type.name === 'image-block' || node.type.name === 'image_block')) {
+        const align = node.attrs.align || 'center';
+        if (blockEl.getAttribute('data-align') !== align) {
+          blockEl.setAttribute('data-align', align);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Check if toolbar already exists
+    if (imageWrapper.querySelector(`[${TOOLBAR_ATTR}]`)) return;
 
     const toolbar = createToolbar(view, blockEl, nodePos);
     imageWrapper.appendChild(toolbar);

@@ -32,7 +32,7 @@
 
 ### 🔴 P0 — 必备（核心书写体验，不可或缺）
 
-#### 1. plugin-block — 块级拖拽手柄
+#### 1. plugin-block — 块级拖拽手柄（已实现但存在问题，在考虑要不要移除）
 
 - **包名**：`@milkdown/kit/plugin/block`（已包含在 kit 中）
 - **功能**：为每个块级元素（段落、标题、代码块等）添加拖拽手柄，支持通过拖拽调整内容顺序
@@ -51,7 +51,7 @@
 - **工作量**：🟢 低（插件注册即用，需自定义手柄样式）
 - **依赖**：`@floating-ui/dom`（kit 已内置）
 
-#### 2. Slash 命令菜单 — 完善配置
+#### 2. Slash 命令菜单 ✅ 已完成
 
 - **包名**：`@milkdown/plugin-slash`（已安装）
 - **功能**：输入 `/` 触发命令菜单，快速插入标题、列表、代码块、表格、分割线、引用等
@@ -85,7 +85,7 @@
   - `src/styles/editor.css` — 样式（`.milkdown-tooltip-*` 类名）
 - **工作量**：🟡 中（已完成）
 
-#### 4. component/link-tooltip — 链接预览与编辑
+#### 4. component/link-tooltip 链接预览与编辑 — ✅ 已完成
 
 - **包名**：`@milkdown/components/link-tooltip`（需通过 kit 导入）
 - **功能**：悬停链接时显示预览浮层（显示 URL），点击可编辑/打开链接
@@ -101,7 +101,7 @@
 
 ### 🟡 P1 — 推荐（显著提升体验，建议尽早实现）
 
-#### 5. plugin-prism — 代码块语法高亮
+#### 5. plugin-prism 代码块语法高亮 — ✅ 已完成
 
 - **包名**：`@milkdown/plugin-prism`（需单独安装）
 - **功能**：为代码块添加语法高亮（基于 Prism.js / refractor），支持 100+ 种编程语言
@@ -119,7 +119,7 @@
 - **替代方案**：使用 `@milkdown/components/code-block` 组件（集成 CodeMirror 6），提供更强大的代码编辑体验（行号、折叠等），但体积更大
 - **工作量**：🟢 低（prism 方案）/ 🟡 中（CodeMirror 方案）
 
-#### 6. component/code-block — 增强代码块（CodeMirror）
+#### 6. component/code-block 增强代码块（CodeMirror） — ✅ 已完成
 
 - **包名**：`@milkdown/components/code-block`
 - **功能**：用 CodeMirror 6 替换默认代码块渲染，提供：语言选择下拉菜单、语法高亮、行号、自动缩进、括号匹配等
@@ -132,17 +132,33 @@
 - **工作量**：🟡 中（需要自定义语言选择器 UI 和样式）
 - **注意**：与 plugin-prism 二选一，不要同时使用
 
-#### 7. component/image-block — 增强图片块
+#### 7. component/image-block 增强图片块 ✅ 已完成
 
 - **包名**：`@milkdown/components/image-block`
 - **功能**：替换默认的图片渲染，支持：图片上传、拖拽调整大小、标题/alt 编辑、居中/左/右对齐
-- **为什么推荐**：当前图片功能较基础（仅显示），无法调整大小或添加标题。笔记中图片操作很频繁
-- **实现方案**：
-  ```ts
-  import { imageBlockComponent } from '@milkdown/components/image-block';
-  // .use(imageBlockComponent)
+- **已实现功能**：
+  - 图片上传（本地文件选择 + URL 输入）
+  - 拖拽调整大小
+  - 对齐控制（左/中/右）
+  - 图片操作工具栏（编辑、对齐、删除）
+  - 粘贴图片自动保存到 `./assets/` 目录
+  - **图片对齐持久化**：采用 MarkText 风格的 HTML img 标签格式
+- **Markdown 输出格式**：
+  ```html
+  <!-- 居中对齐（默认）：使用标准 Markdown -->
+  ![1.00](./assets/image.png)
+  
+  <!-- 非居中对齐：使用 HTML img 标签 -->
+  <img src="./assets/image.png" alt="" data-align="left" width="216">
   ```
-- **工作量**：🟡 中（需要自定义上传逻辑和样式）
+- **实现文件**：
+  - `src/editor/plugins/image-block.ts` — 核心配置（上传、对话框等）
+  - `src/editor/plugins/image-block-schema-extend.ts` — Schema 扩展（align/width 属性 + 序列化）
+  - `src/editor/plugins/image-toolbar.ts` — 图片操作工具栏
+  - `src/editor/plugins/image-paste.ts` — 粘贴图片处理
+  - `src/editor/plugins/image-upload-progress.ts` — 上传进度提示
+  - `src/editor/plugins/image-input-rule.ts` — Markdown 图片语法触发
+- **工作量**：🟡 中（已完成）
 
 #### 8. component/list-item-block — 增强列表项
 
@@ -215,23 +231,6 @@
   // .use(imageInlineComponent)
   ```
 - **工作量**：🟢 低
-
-#### 13. plugin-collab — 协同编辑
-
-- **包名**：`@milkdown/plugin-collab`（需单独安装）
-- **功能**：基于 Yjs 的实时协同编辑，支持多人同时编辑同一文档
-- **为什么可选**：LanisMD 定位为本地轻量笔记应用（Tauri 桌面端），协同编辑需要服务端支持，复杂度极高。但如果未来考虑云同步或团队协作，可以作为远期规划
-- **实现方案**：
-  ```bash
-  pnpm add @milkdown/plugin-collab yjs y-prosemirror y-protocols y-websocket
-  ```
-  ```ts
-  import { collab, collabServiceCtx } from '@milkdown/plugin-collab';
-  // .use(collab)
-  // 需要配置 WebSocket 连接和 Yjs 文档
-  ```
-- **工作量**：🔴 极高（需要搭建 WebSocket 服务 + 冲突解决 + 同步逻辑）
-- **建议**：列入远期规划（v2.0+）
 
 ---
 
