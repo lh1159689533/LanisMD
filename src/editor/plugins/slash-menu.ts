@@ -130,6 +130,63 @@ function insertHr(view: EditorView) {
   view.focus();
 }
 
+function insertTable(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const tableType = schema.nodes.table;
+  const tableRowType = schema.nodes.table_row;
+  const tableHeaderType = schema.nodes.table_header;
+  const tableCellType = schema.nodes.table_cell;
+  const paragraphType = schema.nodes.paragraph;
+
+  if (!tableType || !tableRowType || !tableCellType || !paragraphType) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  // Create a 3x3 table with header row
+  const headerCellType = tableHeaderType || tableCellType;
+  const headerCells = [
+    headerCellType.create(null, paragraphType.create()),
+    headerCellType.create(null, paragraphType.create()),
+    headerCellType.create(null, paragraphType.create()),
+  ];
+  const headerRow = tableRowType.create(null, headerCells);
+
+  const bodyRows = [];
+  for (let i = 0; i < 2; i++) {
+    const cells = [
+      tableCellType.create(null, paragraphType.create()),
+      tableCellType.create(null, paragraphType.create()),
+      tableCellType.create(null, paragraphType.create()),
+    ];
+    bodyRows.push(tableRowType.create(null, cells));
+  }
+
+  const table = tableType.create(null, [headerRow, ...bodyRows]);
+
+  if (parent.type === paragraphType && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, table);
+    // Place cursor in the first header cell
+    // table(+1) > row(+1) > cell(+1) > paragraph(+1) = +4
+    const cursorPos = from + 4;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  } else {
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, table);
+    // Place cursor in the first header cell
+    const cursorPos = insertPos + 4;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
 function wrapInList(view: EditorView, listType: string) {
   removeSlashTrigger(view);
 
@@ -292,6 +349,8 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="22" y2="12"/></svg>',
   image:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  table:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -366,6 +425,12 @@ export const slashCommands: SlashCommand[] = [
     icon: icons.image,
     keywords: ['image', 'img', 'picture', 'photo', '图片', '图像', 'tp'],
     execute: (view) => insertImage(view),
+  },
+  {
+    label: '表格',
+    icon: icons.table,
+    keywords: ['table', 'grid', '表格', 'bg'],
+    execute: (view) => insertTable(view),
   },
 ];
 

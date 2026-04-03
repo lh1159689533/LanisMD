@@ -19,8 +19,8 @@ export function SettingsDialog() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div
         className={cn(
-          'flex max-h-[500px] w-[600px] overflow-hidden rounded-lg',
-          'bg-white shadow-2xl dark:bg-[#1f2335]',
+          'flex h-[80%] max-h-[500px] min-h-[200px] w-[60%] min-w-[300px]',
+          'overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#1f2335]',
         )}
       >
         {/* Navigation */}
@@ -74,10 +74,11 @@ export function SettingsDialog() {
                       !config.recentFolders?.closeOnClickOutside,
                     )
                   }
-                  className={`relative h-5 w-9 rounded-full transition-colors ${config.recentFolders?.closeOnClickOutside !== false
+                  className={`relative h-5 w-9 rounded-full transition-colors ${
+                    config.recentFolders?.closeOnClickOutside !== false
                       ? 'bg-[var(--accent)]'
                       : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
+                  }`}
                 >
                   <span
                     className={cn(
@@ -99,10 +100,11 @@ export function SettingsDialog() {
                   <button
                     key={theme}
                     onClick={() => setConfig('theme', theme)}
-                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${config.theme === theme
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${
+                      config.theme === theme
                         ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
                         : 'hover:border-[var(--accent)]/50 border-[var(--editor-border)]'
-                      }`}
+                    }`}
                   >
                     {theme === 'light' && <RiSunLine size={13} />}
                     {theme === 'dark' && <RiMoonLine size={13} />}
@@ -136,9 +138,7 @@ export function SettingsDialog() {
                   代码块
                 </label>
                 <div className="flex items-center justify-between">
-                  <label className="text-[var(--sidebar-text)]">
-                    显示行号
-                  </label>
+                  <label className="text-[var(--sidebar-text)]">显示行号</label>
                   <button
                     onClick={() =>
                       setNestedConfig(
@@ -156,9 +156,7 @@ export function SettingsDialog() {
                       className={cn(
                         'absolute left-0.5 top-0.5 h-4 w-4',
                         'rounded-full bg-white shadow transition-transform',
-                        config.editor.codeBlock?.showLineNumbers !== false
-                          ? 'translate-x-4'
-                          : '',
+                        config.editor.codeBlock?.showLineNumbers !== false ? 'translate-x-4' : '',
                       )}
                     />
                   </button>
