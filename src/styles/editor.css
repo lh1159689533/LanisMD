@@ -550,6 +550,62 @@
   margin-bottom: 0.25em;
 }
 
+/* Inner list-item wrapper: flex layout for label + content */
+.milkdown-editor-root .ProseMirror .milkdown-list-item-block > .list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* Label wrapper: contains the bullet/number/checkbox icon */
+.milkdown-editor-root .ProseMirror .milkdown-list-item-block .list-item > .label-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+/* Icon inside label wrapper */
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon:hover {
+  color: var(--accent);
+}
+
+/* Checkbox icons (task list) */
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon
+  svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* Task List */
 .milkdown-editor-root .ProseMirror ul.contains-task-list {
   list-style: none;
