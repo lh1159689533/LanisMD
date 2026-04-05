@@ -172,17 +172,28 @@
   ```
 - **工作量**：🟡 中
 
-#### 9. component/table-block — 增强表格
+#### 9. component/table-block — 增强表格 ✅ 已完成
 
-- **包名**：`@milkdown/components/table-block`
-- **功能**：替换默认 GFM 表格渲染，支持：列/行拖拽排序、添加/删除行列、单元格选中
-- **为什么推荐**：当前表格功能基础，编辑体验不佳。增强表格让用户可以像 Excel 一样直觉操作
-- **实现方案**：
-  ```ts
-  import { tableBlockComponent } from '@milkdown/components/table-block';
-  // .use(tableBlockComponent)
-  ```
-- **工作量**：🟡 中（需要自定义操作按钮 UI）
+- **包名**：`@milkdown/kit/component/table-block`
+- **功能**：替换默认 GFM 表格渲染，支持：
+  - 列/行拖拽排序
+  - 添加/删除行列
+  - 列对齐方式调整（左/中/右）
+  - 单元格选中
+  - 拖拽调整列宽（仅编辑时生效）
+- **已实现功能**：
+  - 点击单元格时显示横条 handle
+  - Hover handle 时交互反馈
+  - 点击 handle 后高亮并选中整行/列（蓝色边框）
+  - 列 tooltip：左对齐、居中、右对齐、删除、向左/右插入列
+  - 行 tooltip：向上/下插入行、删除
+  - 支持深色/浅色主题自动切换
+  - Slash 命令菜单支持插入表格（`/表格`）
+- **实现文件**：
+  - `src/editor/plugins/table-block.ts` — 组件配置（自定义按钮图标）
+  - `src/editor/plugins/table-column-resize.ts` — 列宽拖拽调整
+  - `src/styles/editor.css` — 样式（`.milkdown-table-block` 类名）
+- **工作量**：🟡 中（已完成）
 
 #### 10. plugin-automd — 自动 Markdown 转换
 

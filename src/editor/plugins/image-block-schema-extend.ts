@@ -55,13 +55,16 @@ export const extendedImageBlockSchema = imageBlockSchema.extendSchema((prev) => 
       ],
       // 扩展 toDOM 以输出 data-align
       toDOM: (node) => {
-        return ['img', {
-          'data-type': 'image-block',
-          src: node.attrs.src,
-          caption: node.attrs.caption,
-          ratio: node.attrs.ratio,
-          'data-align': node.attrs.align || 'center',
-        }];
+        return [
+          'img',
+          {
+            'data-type': 'image-block',
+            src: node.attrs.src,
+            caption: node.attrs.caption,
+            ratio: node.attrs.ratio,
+            'data-align': node.attrs.align || 'center',
+          },
+        ];
       },
       // 扩展 parseMarkdown 以支持从 remark 插件转换的 image-block 节点
       // 注意：HTML <img> 标签已被 remarkHtmlImagePlugin 转换为 image-block 节点
@@ -136,7 +139,7 @@ export const extendedImageBlockSchema = imageBlockSchema.extendSchema((prev) => 
 
 /**
  * Remark 插件：将 HTML <img> 标签解析为 image-block 节点
- * 
+ *
  * 注意：milkdown 的 image-block 是 block 级别节点，不能嵌套在 paragraph 内。
  * 需要处理两种情况：
  * 1. <img> 标签独占一行（顶层 html 节点）
@@ -145,7 +148,15 @@ export const extendedImageBlockSchema = imageBlockSchema.extendSchema((prev) => 
 export const remarkHtmlImagePlugin = $remark('remarkHtmlImage', () => {
   return () => (tree: Root) => {
     // 辅助函数：从 html 值创建 image-block 节点
-    const createImageBlockFromHtml = (htmlValue: string): { type: string; url: string; title: string; alt: string; data: { align: string } } | null => {
+    const createImageBlockFromHtml = (
+      htmlValue: string,
+    ): {
+      type: string;
+      url: string;
+      title: string;
+      alt: string;
+      data: { align: string };
+    } | null => {
       // 支持更宽松的匹配：允许 img 标签前后有空白字符
       const trimmedValue = htmlValue.trim();
       const imgMatch = trimmedValue.match(/^<img\s+([^>]*)\/?>$/i);
@@ -182,7 +193,7 @@ export const remarkHtmlImagePlugin = $remark('remarkHtmlImage', () => {
       if (typeof node.value !== 'string') return;
       const imageBlock = createImageBlockFromHtml(node.value);
       if (!imageBlock) return;
-      
+
       // 记录替换（稍后执行）
       if (parent && typeof index === 'number') {
         replacements.push({ parent, index, newNode: imageBlock });
@@ -213,11 +224,8 @@ export const remarkHtmlImagePlugin = $remark('remarkHtmlImage', () => {
     // 执行所有替换（从后往前，避免索引错位）
     replacements.sort((a, b) => b.index - a.index);
     for (const { parent, index, newNode } of replacements) {
-      ((parent as { children: unknown[] }).children)[index] = newNode;
+      (parent as { children: unknown[] }).children[index] = newNode;
     }
-
-    // 调试：打印最终的 AST
-    console.log('[remarkHtmlImagePlugin] Final AST:', JSON.stringify(tree, null, 2));
   };
 });
 
@@ -235,7 +243,7 @@ function extractAttr(attrStr: string, attrName: string): string | null {
   if (quotedMatch) {
     return quotedMatch[1]; // 返回空字符串也是有效的
   }
-  
+
   // 匹配 attr=value（无引号，不含空格和 >）
   const unquotedRegex = new RegExp(`${attrName}=([^\\s>]+)`, 'i');
   const unquotedMatch = attrStr.match(unquotedRegex);

@@ -633,8 +633,13 @@
   width: 100%;
   margin: 1em 0;
   overflow: hidden;
-  border-radius: 8px;
   border: 1px solid var(--editor-border);
+}
+
+.milkdown-editor-root .ProseMirror table {
+  border: 1px solid var(--editor-border);
+  border-color: var(--editor-border);
+  border-width: 1px;
 }
 
 .milkdown-editor-root .ProseMirror th {
@@ -642,21 +647,12 @@
   font-weight: 600;
   text-align: left;
   padding: 10px 14px;
-  border-bottom: 2px solid var(--editor-border);
+  border: 1px solid var(--editor-border);
 }
 
 .milkdown-editor-root .ProseMirror td {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--editor-border);
-}
-
-.milkdown-editor-root .ProseMirror tr:last-child td {
-  border-bottom: none;
-}
-
-.milkdown-editor-root .ProseMirror th:last-child,
-.milkdown-editor-root .ProseMirror td:last-child {
-  border-right: none;
+  border: 1px solid var(--editor-border);
 }
 
 .milkdown-editor-root .ProseMirror .selectedCell {
@@ -1897,4 +1893,502 @@
 .milkdown-link-tooltip-btn.copied:hover {
   color: #22c55e;
   background-color: rgba(34, 197, 94, 0.08);
+}
+
+/* =====================================================
+   Table Handle Plugin - Notion Style (六状态机)
+   ===================================================== */
+
+/* ===== Handle Base Styles ===== */
+.table-handle {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    width 0.15s ease,
+    height 0.15s ease,
+    padding 0.15s ease;
+  border-radius: 4px;
+}
+
+.table-handle:active {
+  cursor: grabbing;
+}
+
+/* ===== State: HIDDEN ===== */
+.table-handle[data-state='hidden'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== State: BAR (细条状，无图标) ===== */
+.table-handle[data-state='bar'] {
+  opacity: 1;
+  pointer-events: auto;
+  background-color: var(--editor-border);
+  border: none;
+}
+
+.table-handle[data-type='col'][data-state='bar'] {
+  width: 32px;
+  height: 7px;
+  padding: 0;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  background-color: var(--editor-border);
+}
+
+.table-handle[data-type='row'][data-state='bar'] {
+  width: 7px;
+  height: 32px;
+  padding: 0;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  background-color: var(--editor-border);
+}
+
+.table-handle[data-state='bar'] .handle-icon {
+  display: none;
+}
+
+.table-handle[data-state='bar'] .button-group {
+  display: none;
+}
+
+/* ===== State: HOVER (正常尺寸，白底灰点) ===== */
+.table-handle[data-state='hover'] {
+  opacity: 1;
+  pointer-events: auto;
+  background-color: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  color: #6b7280;
+}
+
+.table-handle[data-type='col'][data-state='hover'] {
+  width: auto;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+.table-handle[data-type='row'][data-state='hover'] {
+  width: 20px;
+  height: auto;
+  min-height: 24px;
+  padding: 8px 0;
+  flex-direction: column;
+}
+
+.table-handle[data-state='hover'] .handle-icon {
+  display: flex;
+}
+
+.table-handle[data-state='hover'] .button-group {
+  display: none;
+}
+
+/* ===== State: SELECTED (蓝底白点，显示菜单) ===== */
+.table-handle[data-state='selected'] {
+  opacity: 1;
+  pointer-events: auto;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+}
+
+.table-handle[data-type='col'][data-state='selected'] {
+  width: auto;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+.table-handle[data-type='row'][data-state='selected'] {
+  width: 20px;
+  height: auto;
+  min-height: 24px;
+  padding: 8px 0;
+  flex-direction: column;
+}
+
+.table-handle[data-state='selected']:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.table-handle[data-state='selected'] .handle-icon {
+  display: flex;
+}
+
+/* ===== State: SELECTED_NO_MENU (蓝底白点，菜单隐藏) ===== */
+.table-handle[data-state='selected_no_menu'] {
+  opacity: 1;
+  pointer-events: auto;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+}
+
+.table-handle[data-type='col'][data-state='selected_no_menu'] {
+  width: auto;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+.table-handle[data-type='row'][data-state='selected_no_menu'] {
+  width: 20px;
+  height: auto;
+  min-height: 24px;
+  padding: 8px 0;
+  flex-direction: column;
+}
+
+.table-handle[data-state='selected_no_menu']:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.table-handle[data-state='selected_no_menu'] .handle-icon {
+  display: flex;
+}
+
+.table-handle[data-state='selected_no_menu'] .button-group {
+  display: none;
+}
+
+/* ===== State: DRAGGING ===== */
+.table-handle[data-state='dragging'] {
+  opacity: 0.6;
+  cursor: grabbing;
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+}
+
+.table-handle[data-type='col'][data-state='dragging'] {
+  width: auto;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+.table-handle[data-type='row'][data-state='dragging'] {
+  width: 20px;
+  height: auto;
+  min-height: 24px;
+  padding: 8px 0;
+  flex-direction: column;
+}
+
+.table-handle[data-state='dragging'] .handle-icon {
+  display: flex;
+}
+
+.table-handle[data-state='dragging'] .button-group {
+  display: none;
+}
+
+/* ===== Handle Icon ===== */
+.table-handle .handle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.table-handle .handle-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== Button Group (Menu) - 只在 SELECTED 状态显示 ===== */
+.table-handle .button-group {
+  position: absolute;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  z-index: 200;
+  white-space: nowrap;
+}
+
+/* 列手柄菜单位置（上方） */
+.table-handle[data-type='col'] .button-group {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 行手柄菜单位置（上方） */
+.table-handle[data-type='row'] .button-group {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dark .table-handle .button-group {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.table-handle .button-group[data-show='true'] {
+  display: flex;
+  animation: tableHandleMenuIn 0.12s ease-out;
+}
+
+@keyframes tableHandleMenuIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Menu Buttons */
+.table-handle .button-group .menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--editor-text);
+  transition: all 0.15s ease;
+}
+
+.table-handle .button-group .menu-button:not(.disabled):hover {
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--accent);
+}
+
+.table-handle .button-group .menu-button[data-type='deleteCol']:not(.disabled):hover,
+.table-handle .button-group .menu-button[data-type='deleteRow']:not(.disabled):hover {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+/* Disabled 状态 */
+.table-handle .button-group .menu-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.table-handle .button-group .menu-button.disabled:hover {
+  background-color: transparent;
+}
+
+.table-handle .button-group .menu-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Separator */
+.table-handle .button-group .separator {
+  width: 1px;
+  height: 20px;
+  background: var(--editor-border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* ===== Add Line (添加行/列按钮线) ===== */
+.add-line {
+  position: absolute;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+}
+
+.add-line[data-show='false'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.add-line[data-show='true'] {
+  opacity: 0.4;
+}
+
+.add-line[data-show='true']:hover {
+  opacity: 1;
+}
+
+.add-line[data-type='col'] {
+  width: 2px;
+  background: var(--accent);
+}
+
+.add-line[data-type='row'] {
+  height: 2px;
+  background: var(--accent);
+}
+
+/* Add Button */
+.add-line .add-button {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--editor-bg);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-line .add-button:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.add-line .add-button svg {
+  width: 12px;
+  height: 12px;
+}
+
+.add-line[data-type='col'] .add-button {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.add-line[data-type='col'] .add-button:hover {
+  transform: translateY(-50%) scale(1.1);
+}
+
+.add-line[data-type='row'] .add-button {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.add-line[data-type='row'] .add-button:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* ===== Selection Highlight (选中行/列高亮) ===== */
+/* 列选中 - 整列边框包裹效果 */
+.milkdown-editor-root .ProseMirror table th.selected-col,
+.milkdown-editor-root .ProseMirror table td.selected-col {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  box-shadow:
+    inset 2px 0 0 var(--accent),
+    inset -2px 0 0 var(--accent);
+}
+
+/* 列选中 - 首行顶部边框 */
+.milkdown-editor-root .ProseMirror table th.selected-col[data-col-select-pos='first'],
+.milkdown-editor-root .ProseMirror table td.selected-col[data-col-select-pos='first'] {
+  box-shadow:
+    inset 2px 0 0 var(--accent),
+    inset -2px 0 0 var(--accent),
+    inset 0 2px 0 var(--accent);
+}
+
+/* 列选中 - 末行底部边框 */
+.milkdown-editor-root .ProseMirror table th.selected-col[data-col-select-pos='last'],
+.milkdown-editor-root .ProseMirror table td.selected-col[data-col-select-pos='last'] {
+  box-shadow:
+    inset 2px 0 0 var(--accent),
+    inset -2px 0 0 var(--accent),
+    inset 0 -2px 0 var(--accent);
+}
+
+/* 行选中 - 整行边框包裹效果 (使用 Decoration 给每个单元格添加 class) */
+.milkdown-editor-root .ProseMirror table th.selected-row-cell,
+.milkdown-editor-root .ProseMirror table td.selected-row-cell {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  box-shadow:
+    inset 0 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent);
+}
+
+/* 行选中 - 首列左边框 */
+.milkdown-editor-root .ProseMirror table th.selected-row-cell[data-row-select-pos='first'],
+.milkdown-editor-root .ProseMirror table td.selected-row-cell[data-row-select-pos='first'] {
+  box-shadow:
+    inset 0 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent),
+    inset 2px 0 0 var(--accent);
+}
+
+/* 行选中 - 末列右边框 */
+.milkdown-editor-root .ProseMirror table th.selected-row-cell[data-row-select-pos='last'],
+.milkdown-editor-root .ProseMirror table td.selected-row-cell[data-row-select-pos='last'] {
+  box-shadow:
+    inset 0 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent),
+    inset -2px 0 0 var(--accent);
+}
+
+/* 暗色模式 */
+.dark .milkdown-editor-root .ProseMirror table th.selected-col,
+.dark .milkdown-editor-root .ProseMirror table td.selected-col,
+.dark .milkdown-editor-root .ProseMirror table th.selected-row-cell,
+.dark .milkdown-editor-root .ProseMirror table td.selected-row-cell {
+  background-color: rgba(122, 162, 247, 0.12) !important;
+}
+
+/* ===== Drag Preview ===== */
+.drag-preview {
+  background: var(--editor-bg);
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  opacity: 0.8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.drag-preview table {
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.drag-preview th,
+.drag-preview td {
+  padding: 8px 12px;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-bg);
+}
+
+/* ===== Dark Mode for Table Handle ===== */
+.dark .table-handle[data-state='bar'] {
+  background-color: var(--editor-border);
+}
+
+.dark .table-handle[data-state='hover'] {
+  background-color: var(--sidebar-bg);
+  border-color: var(--editor-border);
+  color: var(--sidebar-text);
+}
+
+.dark .table-handle .button-group .menu-button:hover {
+  background-color: rgba(122, 162, 247, 0.12);
+}
+
+.dark .add-line .add-button {
+  background: var(--editor-bg);
+}
+
+.dark .add-line .add-button:hover {
+  background: var(--accent);
 }

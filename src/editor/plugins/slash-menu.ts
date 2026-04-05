@@ -137,6 +137,7 @@ function insertTable(view: EditorView) {
   const schema = state.schema;
   const tableType = schema.nodes.table;
   const tableRowType = schema.nodes.table_row;
+  const tableHeaderRowType = schema.nodes.table_header_row; // 表头行类型
   const tableHeaderType = schema.nodes.table_header;
   const tableCellType = schema.nodes.table_cell;
   const paragraphType = schema.nodes.paragraph;
@@ -153,7 +154,9 @@ function insertTable(view: EditorView) {
     headerCellType.create(null, paragraphType.create()),
     headerCellType.create(null, paragraphType.create()),
   ];
-  const headerRow = tableRowType.create(null, headerCells);
+  // 使用 table_header_row 作为表头行类型，如果不存在则回退到 table_row
+  const headerRowType = tableHeaderRowType || tableRowType;
+  const headerRow = headerRowType.create(null, headerCells);
 
   const bodyRows = [];
   for (let i = 0; i < 2; i++) {

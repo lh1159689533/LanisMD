@@ -3,7 +3,7 @@ name: git-commit
 description: Git 快速提交工具。将工作区变更自动 add 并生成语义化 commit message 后提交（不 push）。当用户提到以下关键词时使用：git commit、提交代码、提交变更、commit、暂存提交
 allowed-tools:
   - Bash
-disable: true
+disable: false
 ---
 
 # Git 快速提交技能

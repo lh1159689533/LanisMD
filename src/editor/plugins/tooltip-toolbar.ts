@@ -12,6 +12,7 @@ import { TooltipProvider, tooltipFactory } from '@milkdown/kit/plugin/tooltip';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import type { EditorState } from '@milkdown/kit/prose/state';
+import { NodeSelection, Selection } from '@milkdown/kit/prose/state';
 import { toggleMark } from '@milkdown/kit/prose/commands';
 import type { MarkType } from '@milkdown/kit/prose/model';
 
@@ -20,6 +21,22 @@ import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-upload-progress';
+
+// ---------------------------------------------------------------------------
+// Helper Functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if the selection is a CellSelection (table row/column/multi-cell selection)
+ * CellSelection is from prosemirror-tables and has $anchorCell and $headCell properties
+ */
+function isCellSelection(selection: Selection): boolean {
+  return (
+    selection &&
+    '$anchorCell' in selection &&
+    '$headCell' in selection
+  );
+}
 
 // ---------------------------------------------------------------------------
 // SVG Icons
@@ -693,6 +710,14 @@ export function configureTooltip(ctx: Ctx) {
 
           // Only show when there's a non-empty text selection
           if (empty || from === to) return false;
+
+          // Don't show for NodeSelection (when a node is selected, not text)
+          // NodeSelection happens when clicking on node boundaries or draggable nodes
+          if (selection instanceof NodeSelection) return false;
+
+          // Don't show for CellSelection (table row/column/multi-cell selection)
+          // CellSelection happens when clicking row/column handles or selecting multiple cells
+          if (isCellSelection(selection)) return false;
 
           // Don't show if selection is entirely within a code block
           const $from = state.doc.resolve(from);

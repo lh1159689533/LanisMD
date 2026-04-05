@@ -18,7 +18,10 @@ import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
 import { linkTooltip, configureLinkTooltip } from './plugins/link-tooltip';
 import { underlineMarkSchema } from './plugins/underline-mark';
 import { imageBlockComponent, configureImageBlock } from './plugins/image-block';
-import { extendedImageBlockSchema, remarkHtmlImagePlugin } from './plugins/image-block-schema-extend';
+import {
+  extendedImageBlockSchema,
+  remarkHtmlImagePlugin,
+} from './plugins/image-block-schema-extend';
 import { imageBlockPastePlugin } from './plugins/image-paste';
 import { imageBlockToolbarPlugin } from './plugins/image-toolbar';
 import { imageUploadProgressPlugin } from './plugins/image-upload-progress';
@@ -26,6 +29,9 @@ import { imageInputRulePlugin } from './plugins/image-input-rule';
 import { imageResizePlugin } from './plugins/image-resize';
 import { imageBlockClickPlugin } from './plugins/image-block-click';
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
+import { tableHandlePlugin } from './plugins/table-block';
+import { tableColumnResizePlugin } from './plugins/table-column-resize';
+import { extendedTableSchema } from './plugins/table-schema-extend';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
 export type EditorListener = {
@@ -77,6 +83,9 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(imageResizePlugin)
     .use(imageBlockClickPlugin)
     .use(codeBlockComponent)
+    .use(extendedTableSchema)
+    .use(tableHandlePlugin)
+    .use(tableColumnResizePlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
