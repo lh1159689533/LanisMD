@@ -83,7 +83,6 @@ function getColumnIndex(cell: HTMLTableCellElement): number {
  * 同时设置 colgroup/col 和所有单元格的宽度
  */
 function setColumnWidth(table: HTMLTableElement, colIndex: number, width: number) {
-  debugger;
   // 1. 确保表格使用固定布局
   table.style.tableLayout = 'fixed';
 

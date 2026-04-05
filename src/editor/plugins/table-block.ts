@@ -476,17 +476,39 @@ function selectLastCellForAdd(type: 'col' | 'row') {
 // Handle Positioning
 // ---------------------------------------------------------------------------
 
-function getPositionContainer(): HTMLElement | null {
-  if (positionContainer) return positionContainer;
+function getPositionContainer(view?: EditorView): HTMLElement | null {
+  // 如果已缓存且仍在 DOM 中，直接返回
+  if (positionContainer && document.contains(positionContainer)) {
+    return positionContainer;
+  }
 
-  // 查找 .milkdown-editor-root 作为定位参照容器
+  // 清除无效的缓存
+  positionContainer = null;
+
+  // 优先使用传入的 view，其次使用 currentView
+  const editorView = view || currentView;
+
+  // 从 view 获取容器（更可靠的方式）
+  if (editorView) {
+    const editorDom = editorView.dom;
+    // 向上查找 .milkdown-editor-root 容器
+    const root = editorDom.closest('.milkdown-editor-root') as HTMLElement | null;
+    if (root) {
+      positionContainer = root;
+      return positionContainer;
+    }
+  }
+
+  // 回退到全局查询（不推荐，但作为兜底）
   positionContainer = document.querySelector('.milkdown-editor-root') as HTMLElement | null;
   return positionContainer;
 }
 
-function positionHandles(cell: HTMLTableCellElement, table: HTMLTableElement) {
-  const container = getPositionContainer();
-  if (!container) return;
+function positionHandles(cell: HTMLTableCellElement, table: HTMLTableElement, view?: EditorView) {
+  const container = getPositionContainer(view);
+  if (!container) {
+    return;
+  }
 
   // 确保容器有相对定位，以便 absolute 子元素能正确定位
   const containerStyle = getComputedStyle(container);
@@ -581,8 +603,8 @@ function updateHandleVisuals() {
 
   // 更新列手柄
   if (elements.colHandle) {
-    elements.colHandle.dataset.state =
-      type === 'col' ? state : state === 'hidden' ? 'hidden' : 'bar';
+    const newState = type === 'col' ? state : state === 'hidden' ? 'hidden' : 'bar';
+    elements.colHandle.dataset.state = newState;
     const colMenu = elements.colHandle.querySelector('.button-group') as HTMLElement;
     if (colMenu) {
       colMenu.dataset.show = type === 'col' && state === 'selected' ? 'true' : 'false';
@@ -1378,7 +1400,7 @@ function handleSelectionChange(view: EditorView): void {
   if (inTable && tableNode && cellNode) {
     clearHideTimer();
     currentFocusedCell = cellNode;
-    positionHandles(cellNode, tableNode);
+    positionHandles(cellNode, tableNode, view);
 
     if (stateContext.state === 'hidden') {
       setState(transitionState('focusCell'));
@@ -1554,43 +1576,101 @@ export const tableHandlePlugin = $prose(() => {
     },
 
     view(view) {
+      // 保存本实例的 view 引用，用于 destroy 时比较
+      const instanceView = view;
       currentView = view;
 
-      // 创建手柄元素
-      elements.colHandle = createHandleElement('col');
-      elements.rowHandle = createHandleElement('row');
-      elements.colAddLine = createAddLine('col');
-      elements.rowAddLine = createAddLine('row');
+      // 清理 DOM 中所有现有的手柄元素（确保只有一个实例的手柄）
+      document.querySelectorAll('.table-handle, .add-line').forEach((el) => {
+        el.remove();
+      });
 
-      // 添加到 milkdown-editor-root 容器（用于 absolute 定位）
-      const container = getPositionContainer();
-      if (container) {
-        container.appendChild(elements.colHandle);
-        container.appendChild(elements.rowHandle);
-        container.appendChild(elements.colAddLine);
-        container.appendChild(elements.rowAddLine);
-      }
+      // 创建新的手柄元素并赋值给全局 elements
+      const colHandle = createHandleElement('col');
+      const rowHandle = createHandleElement('row');
+      const colAddLine = createAddLine('col');
+      const rowAddLine = createAddLine('row');
+
+      // 同步更新全局 elements
+      elements.colHandle = colHandle;
+      elements.rowHandle = rowHandle;
+      elements.colAddLine = colAddLine;
+      elements.rowAddLine = rowAddLine;
+
+      // 添加手柄到容器的函数
+      const appendHandlesToContainer = () => {
+        const container = getPositionContainer();
+        if (container) {
+          // 检查元素是否已经在容器中
+          if (colHandle && !container.contains(colHandle)) {
+            container.appendChild(colHandle);
+          }
+          if (rowHandle && !container.contains(rowHandle)) {
+            container.appendChild(rowHandle);
+          }
+          if (colAddLine && !container.contains(colAddLine)) {
+            container.appendChild(colAddLine);
+          }
+          if (rowAddLine && !container.contains(rowAddLine)) {
+            container.appendChild(rowAddLine);
+          }
+          return true;
+        }
+        return false;
+      };
+
+      // 使用多次重试来确保手柄被添加到容器
+      const tryAppendWithRetry = (attempts: number = 0) => {
+        if (attempts > 10) {
+          console.warn('Table handle: Failed to append handles to container after 10 attempts');
+          return;
+        }
+        if (!appendHandlesToContainer()) {
+          // 使用递增延迟重试
+          setTimeout(() => tryAppendWithRetry(attempts + 1), 50 * (attempts + 1));
+        }
+      };
+
+      // 尝试立即添加，如果失败则启动重试
+      tryAppendWithRetry();
 
       return {
         update(view) {
+          // 确保手柄元素已添加到容器（处理延迟加载的情况）
+          if (colHandle && !colHandle.parentElement) {
+            appendHandlesToContainer();
+          }
+          // 同步确保全局 elements 是最新的（处理多实例问题）
+          if (elements.colHandle !== colHandle) {
+            elements.colHandle = colHandle;
+            elements.rowHandle = rowHandle;
+            elements.colAddLine = colAddLine;
+            elements.rowAddLine = rowAddLine;
+          }
           // 监听选区变化
           handleSelectionChange(view);
         },
         destroy() {
-          elements.colHandle?.remove();
-          elements.rowHandle?.remove();
-          elements.colAddLine?.remove();
-          elements.rowAddLine?.remove();
-          elements = {
-            colHandle: null,
-            rowHandle: null,
-            colAddLine: null,
-            rowAddLine: null,
-          };
+          colHandle?.remove();
+          rowHandle?.remove();
+          colAddLine?.remove();
+          rowAddLine?.remove();
+          // 只有当全局 elements 指向本实例的元素时才清空
+          if (elements.colHandle === colHandle) {
+            elements = {
+              colHandle: null,
+              rowHandle: null,
+              colAddLine: null,
+              rowAddLine: null,
+            };
+          }
           clearHideTimer();
-          currentView = null;
-          currentFocusedCell = null;
-          positionContainer = null; // 清理定位容器引用
+          // 只有当 currentView 指向本实例时才清空
+          if (currentView === instanceView) {
+            currentView = null;
+            currentFocusedCell = null;
+            positionContainer = null; // 清理定位容器引用
+          }
         },
       };
     },
