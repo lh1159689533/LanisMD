@@ -2329,6 +2329,17 @@ export const tableHandlePlugin = $prose(() => {
       const instanceView = view;
       currentView = view;
 
+      // 重置全局状态，确保从干净的状态开始
+      stateContext = {
+        state: 'hidden',
+        type: null,
+        index: null,
+        tableElement: null,
+      };
+      currentFocusedCell = null;
+      isInteractingWithHandle = false;
+      positionContainer = null; // 清除旧的容器缓存，让新实例重新获取
+
       // 清理 DOM 中所有现有的手柄元素（确保只有一个实例的手柄）
       document.querySelectorAll('.table-handle, .add-line, .table-drag-indicator').forEach((el) => {
         el.remove();
@@ -2427,6 +2438,14 @@ export const tableHandlePlugin = $prose(() => {
             currentView = null;
             currentFocusedCell = null;
             positionContainer = null; // 清理定位容器引用
+            // 重置状态机到初始状态，确保下一个实例从 'hidden' 状态开始
+            stateContext = {
+              state: 'hidden',
+              type: null,
+              index: null,
+              tableElement: null,
+            };
+            isInteractingWithHandle = false;
           }
         },
       };
