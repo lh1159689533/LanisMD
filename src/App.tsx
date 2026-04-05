@@ -1,5 +1,6 @@
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
+import { BrowserLayout } from './components/layout/BrowserLayout';
 
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { ToastContainer } from './components/common/ToastContainer';
@@ -9,16 +10,23 @@ import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useShortcuts } from './hooks/useShortcuts';
 import { useFileWatcher } from './hooks/useFileWatcher';
+import { useBrowserFile } from './hooks/useBrowserFile';
 import { cn } from './utils/cn';
+import { isTauri } from './utils/platform';
 
-export default function App() {
+// Check platform once at module level
+const IS_TAURI = isTauri();
+
+/**
+ * Tauri desktop app mode
+ */
+function TauriApp() {
   const { settingsOpen } = useUIStore();
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const openSettings = useUIStore((s) => s.openSettings);
   const { openFileFromDisk, newFile } = useFile();
   const { notifySelfWrite } = useFileWatcher();
   const { saveNow } = useAutoSave({ onAfterSave: notifySelfWrite });
-  useTheme();
 
   useShortcuts({
     onNewFile: newFile,
@@ -29,6 +37,28 @@ export default function App() {
   });
 
   return (
+    <>
+      <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
+      <MainLayout />
+      {settingsOpen && <SettingsDialog />}
+      <ToastContainer />
+    </>
+  );
+}
+
+/**
+ * Browser mode - simplified editor only
+ */
+function BrowserApp() {
+  useBrowserFile();
+
+  return <BrowserLayout />;
+}
+
+export default function App() {
+  useTheme();
+
+  return (
     <div
       className={cn(
         'flex h-screen flex-col overflow-hidden',
@@ -36,10 +66,7 @@ export default function App() {
         'dark:bg-[#1a1b26] dark:text-slate-100',
       )}
     >
-      <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
-      <MainLayout />
-      {settingsOpen && <SettingsDialog />}
-      <ToastContainer />
+      {IS_TAURI ? <TauriApp /> : <BrowserApp />}
     </div>
   );
 }

@@ -42,6 +42,21 @@ interface HandleElements {
   rowHandle: HTMLElement | null;
   colAddLine: HTMLElement | null;
   rowAddLine: HTMLElement | null;
+  dragIndicator: HTMLElement | null;
+}
+
+// Drag state for tracking drop target
+interface DragState {
+  isDragging: boolean;
+  sourceType: HandleType | null;
+  sourceIndex: number | null;
+  targetIndex: number | null;
+  insertPosition: 'before' | 'after' | null;
+  // 自定义拖拽预览元素
+  customPreview: HTMLElement | null;
+  // 被拖拽元素的原始尺寸
+  previewWidth: number;
+  previewHeight: number;
 }
 
 // Selection highlight state for Decoration
@@ -128,6 +143,19 @@ let elements: HandleElements = {
   rowHandle: null,
   colAddLine: null,
   rowAddLine: null,
+  dragIndicator: null,
+};
+
+// Drag state
+let dragState: DragState = {
+  isDragging: false,
+  sourceType: null,
+  sourceIndex: null,
+  targetIndex: null,
+  insertPosition: null,
+  customPreview: null,
+  previewWidth: 0,
+  previewHeight: 0,
 };
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -282,6 +310,7 @@ function createHandleElement(type: HandleType): HTMLElement {
   });
 
   handle.addEventListener('dragend', () => {
+    cleanupDragState();
     setState(transitionState('dragEnd'));
   });
 
@@ -423,6 +452,18 @@ function createAddLine(type: 'col' | 'row'): HTMLElement {
 
   line.appendChild(btn);
   return line;
+}
+
+/**
+ * 创建拖拽指示线元素
+ */
+function createDragIndicator(): HTMLElement {
+  const indicator = document.createElement('div');
+  indicator.className = 'table-drag-indicator';
+  indicator.dataset.show = 'false';
+  indicator.dataset.type = '';
+  indicator.contentEditable = 'false';
+  return indicator;
 }
 
 // ---------------------------------------------------------------------------
@@ -1253,18 +1294,49 @@ function setupDragData(event: DragEvent) {
   const rowIndex = elements.rowHandle?.dataset.rowIndex;
   const index = type === 'col' ? colIndex : rowIndex;
 
-  event.dataTransfer.effectAllowed = 'move';
-  event.dataTransfer.setData('text/plain', JSON.stringify({ type, index }));
+  // 初始化拖拽状态
+  dragState = {
+    isDragging: true,
+    sourceType: type,
+    sourceIndex: index !== undefined ? parseInt(index) : null,
+    targetIndex: null,
+    insertPosition: null,
+    customPreview: null,
+    previewWidth: 0,
+    previewHeight: 0,
+  };
 
-  // 创建拖拽预览
-  const preview = createDragPreview();
+  event.dataTransfer.effectAllowed = 'move';
+  // 使用自定义 MIME 类型，避免编辑器将拖拽数据当作普通文本插入
+  event.dataTransfer.setData('application/x-table-drag', JSON.stringify({ type, index }));
+  // 设置空的 text/plain 以防止浏览器默认行为
+  event.dataTransfer.setData('text/plain', '');
+
+  // 创建自定义拖拽预览（固定定位，手动控制位置）
+  const preview = createCustomDragPreview();
   if (preview) {
-    event.dataTransfer.setDragImage(preview, 0, 0);
-    setTimeout(() => preview.remove(), 0);
+    dragState.customPreview = preview;
+    
+    // 使用透明 1x1 像素图像作为原生拖拽预览（隐藏原生预览）
+    const emptyImg = new Image();
+    emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    event.dataTransfer.setDragImage(emptyImg, 0, 0);
+    
+    // 初始定位预览元素到鼠标位置
+    updateCustomPreviewPosition(event.clientX, event.clientY);
+  }
+
+  // 设置表格为可 drop 目标
+  if (stateContext.tableElement) {
+    setupTableDropZone(stateContext.tableElement);
   }
 }
 
-function createDragPreview(): HTMLElement | null {
+/**
+ * 创建自定义拖拽预览元素
+ * 使用固定定位，位置由 updateCustomPreviewPosition 手动控制
+ */
+function createCustomDragPreview(): HTMLElement | null {
   const { type, tableElement } = stateContext;
   const colIndex = elements.colHandle?.dataset.colIndex;
   const rowIndex = elements.rowHandle?.dataset.rowIndex;
@@ -1272,38 +1344,701 @@ function createDragPreview(): HTMLElement | null {
   if (!tableElement) return null;
 
   const preview = document.createElement('div');
-  preview.className = 'drag-preview';
+  preview.className = 'drag-preview drag-preview-custom';
   preview.style.position = 'fixed';
-  preview.style.top = '-9999px';
-  preview.style.left = '-9999px';
+  preview.style.zIndex = '10000';
+  preview.style.pointerEvents = 'none';
+  preview.style.opacity = '0.85';
+  preview.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+  preview.style.borderRadius = '4px';
+  preview.style.overflow = 'hidden';
 
   if (type === 'col' && colIndex !== undefined) {
     const idx = parseInt(colIndex);
-    // 复制整列
+    // 复制整列，保留原始宽高
     const rows = tableElement.querySelectorAll('tr');
     const table = document.createElement('table');
-    rows.forEach((row) => {
+    table.style.borderCollapse = 'collapse';
+    table.style.background = 'white';
+    
+    let totalWidth = 0;
+    let totalHeight = 0;
+    
+    rows.forEach((row, rowIdx) => {
       const newRow = document.createElement('tr');
       const cells = row.querySelectorAll('th, td');
       if (cells[idx]) {
-        newRow.appendChild(cells[idx].cloneNode(true));
+        const originalCell = cells[idx] as HTMLTableCellElement;
+        const clonedCell = originalCell.cloneNode(true) as HTMLTableCellElement;
+        
+        // 获取原始单元格的实际尺寸
+        const cellRect = originalCell.getBoundingClientRect();
+        const computedStyle = getComputedStyle(originalCell);
+        
+        // 记录尺寸（只需记录一次宽度）
+        if (rowIdx === 0) {
+          totalWidth = cellRect.width;
+        }
+        totalHeight += cellRect.height;
+        
+        // 设置克隆单元格的精确宽高
+        clonedCell.style.width = `${cellRect.width}px`;
+        clonedCell.style.minWidth = `${cellRect.width}px`;
+        clonedCell.style.maxWidth = `${cellRect.width}px`;
+        clonedCell.style.height = `${cellRect.height}px`;
+        clonedCell.style.minHeight = `${cellRect.height}px`;
+        clonedCell.style.boxSizing = 'border-box';
+        clonedCell.style.padding = computedStyle.padding;
+        clonedCell.style.backgroundColor = computedStyle.backgroundColor || 'white';
+        clonedCell.style.border = computedStyle.border;
+        
+        newRow.appendChild(clonedCell);
       }
       table.appendChild(newRow);
     });
     preview.appendChild(table);
+    
+    // 记录预览元素尺寸
+    dragState.previewWidth = totalWidth;
+    dragState.previewHeight = totalHeight;
   } else if (type === 'row' && rowIndex !== undefined) {
     const idx = parseInt(rowIndex);
-    // 复制整行
+    // 复制整行，保留原始宽高
     const rows = tableElement.querySelectorAll('tr');
     if (rows[idx]) {
+      const originalRow = rows[idx] as HTMLTableRowElement;
       const table = document.createElement('table');
-      table.appendChild(rows[idx].cloneNode(true));
+      table.style.borderCollapse = 'collapse';
+      table.style.background = 'white';
+      
+      const clonedRow = document.createElement('tr');
+      const cells = originalRow.querySelectorAll('th, td');
+      
+      let totalWidth = 0;
+      let totalHeight = 0;
+      
+      cells.forEach((cell, cellIdx) => {
+        const originalCell = cell as HTMLTableCellElement;
+        const clonedCell = originalCell.cloneNode(true) as HTMLTableCellElement;
+        
+        // 获取原始单元格的实际尺寸
+        const cellRect = originalCell.getBoundingClientRect();
+        const computedStyle = getComputedStyle(originalCell);
+        
+        // 记录尺寸
+        totalWidth += cellRect.width;
+        if (cellIdx === 0) {
+          totalHeight = cellRect.height;
+        }
+        
+        // 设置克隆单元格的精确宽高
+        clonedCell.style.width = `${cellRect.width}px`;
+        clonedCell.style.minWidth = `${cellRect.width}px`;
+        clonedCell.style.maxWidth = `${cellRect.width}px`;
+        clonedCell.style.height = `${cellRect.height}px`;
+        clonedCell.style.minHeight = `${cellRect.height}px`;
+        clonedCell.style.boxSizing = 'border-box';
+        clonedCell.style.padding = computedStyle.padding;
+        clonedCell.style.backgroundColor = computedStyle.backgroundColor || 'white';
+        clonedCell.style.border = computedStyle.border;
+        
+        clonedRow.appendChild(clonedCell);
+      });
+      
+      table.appendChild(clonedRow);
       preview.appendChild(table);
+      
+      // 记录预览元素尺寸
+      dragState.previewWidth = totalWidth;
+      dragState.previewHeight = totalHeight;
     }
   }
 
   document.body.appendChild(preview);
   return preview;
+}
+
+/**
+ * 更新自定义拖拽预览元素的位置
+ * 根据拖拽类型和表格边界限制预览位置
+ */
+function updateCustomPreviewPosition(clientX: number, clientY: number) {
+  const preview = dragState.customPreview;
+  const tableElement = stateContext.tableElement;
+  
+  if (!preview || !tableElement) return;
+  
+  const tableRect = tableElement.getBoundingClientRect();
+  const { sourceType, previewWidth, previewHeight } = dragState;
+  
+  // 计算允许超出的距离（列宽度或行高度的 1/3）
+  const allowedOverflowX = sourceType === 'col' ? previewWidth / 3 : 0;
+  const allowedOverflowY = sourceType === 'row' ? previewHeight / 3 : 0;
+  
+  // 预览元素的中心应该跟随鼠标
+  let previewX = clientX - previewWidth / 2;
+  let previewY = clientY - previewHeight / 2;
+  
+  if (sourceType === 'col') {
+    // 列拖拽：横向允许超出 1/3 宽度，纵向完全不能超出
+    // 计算边界（预览中心相对于表格）
+    const minX = tableRect.left - allowedOverflowX;
+    const maxX = tableRect.right - previewWidth + allowedOverflowX;
+    const minY = tableRect.top;
+    const maxY = tableRect.bottom - previewHeight;
+    
+    previewX = Math.max(minX, Math.min(maxX, previewX));
+    previewY = Math.max(minY, Math.min(maxY, previewY));
+  } else if (sourceType === 'row') {
+    // 行拖拽：纵向允许超出 1/3 高度，横向完全不能超出
+    const minX = tableRect.left;
+    const maxX = tableRect.right - previewWidth;
+    const minY = tableRect.top - allowedOverflowY;
+    const maxY = tableRect.bottom - previewHeight + allowedOverflowY;
+    
+    previewX = Math.max(minX, Math.min(maxX, previewX));
+    previewY = Math.max(minY, Math.min(maxY, previewY));
+  }
+  
+  preview.style.left = `${previewX}px`;
+  preview.style.top = `${previewY}px`;
+}
+
+/**
+ * 设置表格为拖拽放置区域
+ * 
+ * 注意：macOS Tauri (WebKit) 对拖拽事件有特殊处理要求：
+ * 1. 必须在 dragenter 中调用 preventDefault() 才能使 dragover 正常工作
+ * 2. 事件监听器需要使用 capture 模式确保能够捕获到事件
+ * 3. 同时在 document 级别监听以处理 WebKit 的事件冒泡问题
+ */
+function setupTableDropZone(tableElement: HTMLTableElement) {
+  // 添加 dragenter 事件监听器 - WebKit 需要这个来启用 drop
+  const handleDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+
+  // 添加 dragover 事件监听器
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    updateDragIndicator(e, tableElement);
+  };
+
+  // 添加 dragleave 事件监听器
+  const handleDragLeave = (e: DragEvent) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    // 只有当真正离开表格时才隐藏指示线
+    if (!relatedTarget || !tableElement.contains(relatedTarget)) {
+      hideDragIndicator();
+    }
+  };
+
+  // 添加 drop 事件监听器
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    hideDragIndicator();
+    
+    // 执行移动操作
+    if (dragState.sourceIndex !== null && dragState.targetIndex !== null && dragState.insertPosition !== null) {
+      executeDragMove();
+    }
+    
+    // 清理事件监听器
+    cleanupDropZone();
+  };
+
+  /**
+   * 判断鼠标是否在有效的拖拽范围内
+   * 拖动列时：只要 X 坐标在表格左右范围内（允许超出 1/3 列宽）即为有效
+   * 拖动行时：只要 Y 坐标在表格上下范围内（允许超出 1/3 行高）即为有效
+   */
+  const isInValidDropRange = (clientX: number, clientY: number): boolean => {
+    const tableRect = tableElement.getBoundingClientRect();
+    const { sourceType, previewWidth, previewHeight } = dragState;
+    
+    if (sourceType === 'col') {
+      // 列拖拽：检查 X 坐标是否在有效范围内
+      const allowedOverflowX = previewWidth / 3;
+      const minX = tableRect.left - allowedOverflowX;
+      const maxX = tableRect.right + allowedOverflowX;
+      return clientX >= minX && clientX <= maxX;
+    } else if (sourceType === 'row') {
+      // 行拖拽：检查 Y 坐标是否在有效范围内
+      const allowedOverflowY = previewHeight / 3;
+      const minY = tableRect.top - allowedOverflowY;
+      const maxY = tableRect.bottom + allowedOverflowY;
+      return clientY >= minY && clientY <= maxY;
+    }
+    
+    return false;
+  };
+
+  // Document 级别的事件处理器（用于 WebKit 兼容 + 表格外部预览位置更新）
+  const handleDocumentDragOver = (e: DragEvent) => {
+    // 只有当拖拽状态激活时才处理
+    if (!dragState.isDragging) return;
+    
+    // 阻止事件冒泡，防止 Milkdown 的块插入指示条被触发
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
+    const target = e.target as HTMLElement;
+    const isInsideTable = tableElement.contains(target) || target === tableElement;
+    const isValidRange = isInValidDropRange(e.clientX, e.clientY);
+    
+    if (isInsideTable) {
+      // 在表格内部：正常处理拖拽指示线和预览位置
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+      }
+      updateDragIndicator(e, tableElement);
+    } else if (isValidRange) {
+      // 在表格外部但在有效拖拽范围内：正常处理指示线和预览位置
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+      }
+      updateDragIndicator(e, tableElement);
+    } else {
+      // 完全超出有效范围：只更新预览位置
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'none';
+      }
+      updateCustomPreviewPosition(e.clientX, e.clientY);
+    }
+  };
+
+  // Document 级别的 dragenter 处理器（防止 Milkdown 块插入触发）
+  const handleDocumentDragEnter = (e: DragEvent) => {
+    if (!dragState.isDragging) return;
+    
+    // 阻止事件冒泡，防止 Milkdown 的块插入指示条被触发
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  };
+
+  const handleDocumentDrop = (e: DragEvent) => {
+    if (!dragState.isDragging) return;
+    
+    // 阻止事件冒泡
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
+    const target = e.target as HTMLElement;
+    const isInsideTable = tableElement.contains(target) || target === tableElement;
+    const isValidRange = isInValidDropRange(e.clientX, e.clientY);
+    
+    // 在表格内部或有效拖拽范围内都可以执行 drop
+    if (isInsideTable || isValidRange) {
+      e.preventDefault();
+      
+      hideDragIndicator();
+      
+      if (dragState.sourceIndex !== null && dragState.targetIndex !== null && dragState.insertPosition !== null) {
+        executeDragMove();
+      }
+      
+      cleanupDropZone();
+    }
+  };
+
+  // 清理函数
+  const cleanupDropZone = () => {
+    tableElement.removeEventListener('dragenter', handleDragEnter, true);
+    tableElement.removeEventListener('dragover', handleDragOver, true);
+    tableElement.removeEventListener('dragleave', handleDragLeave, true);
+    tableElement.removeEventListener('drop', handleDrop, true);
+    document.removeEventListener('dragenter', handleDocumentDragEnter, true);
+    document.removeEventListener('dragover', handleDocumentDragOver, true);
+    document.removeEventListener('drop', handleDocumentDrop, true);
+    // 移除暂存的清理函数引用
+    (tableElement as any)._dragCleanup = null;
+  };
+
+  // 暂存清理函数引用
+  (tableElement as any)._dragCleanup = cleanupDropZone;
+
+  // 使用 capture 模式确保事件能被捕获（WebKit 兼容）
+  tableElement.addEventListener('dragenter', handleDragEnter, true);
+  tableElement.addEventListener('dragover', handleDragOver, true);
+  tableElement.addEventListener('dragleave', handleDragLeave, true);
+  tableElement.addEventListener('drop', handleDrop, true);
+  
+  // 同时在 document 级别监听（WebKit 备用方案 + 阻止 Milkdown 块插入）
+  document.addEventListener('dragenter', handleDocumentDragEnter, true);
+  document.addEventListener('dragover', handleDocumentDragOver, true);
+  document.addEventListener('drop', handleDocumentDrop, true);
+}
+
+/**
+ * 更新拖拽指示线位置
+ */
+function updateDragIndicator(e: DragEvent, tableElement: HTMLTableElement) {
+  if (!dragState.isDragging || !dragState.sourceType) return;
+
+  // 更新自定义预览元素位置
+  updateCustomPreviewPosition(e.clientX, e.clientY);
+
+  const indicator = elements.dragIndicator;
+  if (!indicator) return;
+
+  const container = getPositionContainer();
+  if (!container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const tableRect = tableElement.getBoundingClientRect();
+
+  if (dragState.sourceType === 'col') {
+    // 列拖拽：根据鼠标 X 位置确定插入位置
+    const cols = getColumnPositions(tableElement);
+    const mouseX = e.clientX;
+
+    let targetIndex = 0;
+    let insertPosition: 'before' | 'after' = 'before';
+    let indicatorX = cols[0]?.left ?? tableRect.left;
+
+    for (let i = 0; i < cols.length; i++) {
+      const col = cols[i];
+      const colCenter = col.left + col.width / 2;
+
+      if (mouseX < colCenter) {
+        targetIndex = i;
+        insertPosition = 'before';
+        indicatorX = col.left;
+        break;
+      } else {
+        targetIndex = i;
+        insertPosition = 'after';
+        indicatorX = col.left + col.width;
+      }
+    }
+
+    // 不允许拖到自己的位置
+    const sourceIndex = dragState.sourceIndex!;
+    const isSamePosition = 
+      (insertPosition === 'before' && targetIndex === sourceIndex) ||
+      (insertPosition === 'after' && targetIndex === sourceIndex) ||
+      (insertPosition === 'before' && targetIndex === sourceIndex + 1) ||
+      (insertPosition === 'after' && targetIndex === sourceIndex - 1);
+
+    if (isSamePosition) {
+      indicator.dataset.show = 'false';
+      dragState.targetIndex = null;
+      dragState.insertPosition = null;
+      return;
+    }
+
+    // 更新状态
+    dragState.targetIndex = targetIndex;
+    dragState.insertPosition = insertPosition;
+
+    // 定位指示线
+    indicator.dataset.type = 'col';
+    indicator.dataset.show = 'true';
+    indicator.style.left = `${indicatorX - containerRect.left}px`;
+    indicator.style.top = `${tableRect.top - containerRect.top}px`;
+    indicator.style.width = '3px';
+    indicator.style.height = `${tableRect.height}px`;
+  } else {
+    // 行拖拽：根据鼠标 Y 位置确定插入位置
+    const rows = getRowPositions(tableElement);
+    const mouseY = e.clientY;
+
+    let targetIndex = 0;
+    let insertPosition: 'before' | 'after' = 'before';
+    let indicatorY = rows[0]?.top ?? tableRect.top;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowCenter = row.top + row.height / 2;
+
+      if (mouseY < rowCenter) {
+        targetIndex = i;
+        insertPosition = 'before';
+        indicatorY = row.top;
+        break;
+      } else {
+        targetIndex = i;
+        insertPosition = 'after';
+        indicatorY = row.top + row.height;
+      }
+    }
+
+    // 不允许拖到自己的位置
+    const sourceIndex = dragState.sourceIndex!;
+    const isSamePosition = 
+      (insertPosition === 'before' && targetIndex === sourceIndex) ||
+      (insertPosition === 'after' && targetIndex === sourceIndex) ||
+      (insertPosition === 'before' && targetIndex === sourceIndex + 1) ||
+      (insertPosition === 'after' && targetIndex === sourceIndex - 1);
+
+    if (isSamePosition) {
+      indicator.dataset.show = 'false';
+      dragState.targetIndex = null;
+      dragState.insertPosition = null;
+      return;
+    }
+
+    // 更新状态
+    dragState.targetIndex = targetIndex;
+    dragState.insertPosition = insertPosition;
+
+    // 定位指示线
+    indicator.dataset.type = 'row';
+    indicator.dataset.show = 'true';
+    indicator.style.left = `${tableRect.left - containerRect.left}px`;
+    indicator.style.top = `${indicatorY - containerRect.top}px`;
+    indicator.style.width = `${tableRect.width}px`;
+    indicator.style.height = '3px';
+  }
+}
+
+/**
+ * 获取表格所有列的位置信息
+ */
+function getColumnPositions(tableElement: HTMLTableElement): Array<{ left: number; width: number }> {
+  const firstRow = tableElement.querySelector('tr');
+  if (!firstRow) return [];
+
+  const cells = firstRow.querySelectorAll('th, td');
+  return Array.from(cells).map((cell) => {
+    const rect = cell.getBoundingClientRect();
+    return { left: rect.left, width: rect.width };
+  });
+}
+
+/**
+ * 获取表格所有行的位置信息
+ */
+function getRowPositions(tableElement: HTMLTableElement): Array<{ top: number; height: number }> {
+  const rows = tableElement.querySelectorAll('tr');
+  return Array.from(rows).map((row) => {
+    const rect = row.getBoundingClientRect();
+    return { top: rect.top, height: rect.height };
+  });
+}
+
+/**
+ * 隐藏拖拽指示线
+ */
+function hideDragIndicator() {
+  const indicator = elements.dragIndicator;
+  if (indicator) {
+    indicator.dataset.show = 'false';
+  }
+}
+
+/**
+ * 执行拖拽移动操作
+ */
+function executeDragMove() {
+  if (!currentView || !stateContext.tableElement) return;
+
+  const { sourceType, sourceIndex, targetIndex, insertPosition } = dragState;
+  if (sourceType === null || sourceIndex === null || targetIndex === null || insertPosition === null) return;
+
+  // 计算实际的目标索引
+  let actualTargetIndex = targetIndex;
+  if (insertPosition === 'after') {
+    actualTargetIndex = targetIndex + 1;
+  }
+
+  // 如果移动到原位置之后，需要调整索引
+  if (actualTargetIndex > sourceIndex) {
+    actualTargetIndex -= 1;
+  }
+
+  // 如果源和目标相同，不执行移动
+  if (actualTargetIndex === sourceIndex) return;
+
+  if (sourceType === 'col') {
+    moveColumn(sourceIndex, actualTargetIndex);
+  } else {
+    moveRow(sourceIndex, actualTargetIndex);
+  }
+}
+
+/**
+ * 移动列
+ */
+function moveColumn(fromIndex: number, toIndex: number) {
+  if (!currentView) return;
+
+  const tableInfo = getTableInfo();
+  if (!tableInfo) return;
+
+  const { state, dispatch } = currentView;
+  const { tableNode, tablePos, map } = tableInfo;
+
+  // 创建新的事务
+  let tr = state.tr;
+
+  // 遍历每一行，移动对应列的单元格
+  const rowCount = map.height;
+  const colCount = map.width;
+
+  // 收集需要移动的数据
+  const cellsToMove: Array<{ row: number; cell: any; cellPos: number }> = [];
+
+  for (let row = 0; row < rowCount; row++) {
+    const cellPos = map.positionAt(row, fromIndex, tableNode);
+    const absolutePos = tablePos + cellPos + 1;
+    const cellNode = state.doc.nodeAt(absolutePos);
+    if (cellNode) {
+      cellsToMove.push({ row, cell: cellNode, cellPos: absolutePos });
+    }
+  }
+
+  // 使用事务来移动单元格
+  // 策略：先删除源列的单元格，再在目标位置插入
+  // 但由于 ProseMirror 的位置会在删除后变化，需要从后往前处理或者重新计算位置
+
+  // 更简单的方法：直接操作表格节点，重新排列列
+  const newRows: any[] = [];
+  
+  tableNode.forEach((rowNode: any) => {
+    const newCells: any[] = [];
+    const cells: any[] = [];
+    
+    rowNode.forEach((cell: any) => {
+      cells.push(cell);
+    });
+
+    // 重新排列单元格
+    for (let col = 0; col < colCount; col++) {
+      let sourceCol: number;
+      if (col === toIndex) {
+        sourceCol = fromIndex;
+      } else if (fromIndex < toIndex) {
+        // 向右移动：fromIndex 到 toIndex-1 的列需要左移一位
+        if (col >= fromIndex && col < toIndex) {
+          sourceCol = col + 1;
+        } else {
+          sourceCol = col;
+        }
+      } else {
+        // 向左移动：toIndex+1 到 fromIndex 的列需要右移一位
+        if (col > toIndex && col <= fromIndex) {
+          sourceCol = col - 1;
+        } else {
+          sourceCol = col;
+        }
+      }
+      newCells.push(cells[sourceCol]);
+    }
+
+    const newRowNode = rowNode.type.create(rowNode.attrs, newCells);
+    newRows.push(newRowNode);
+  });
+
+  const newTableNode = tableNode.type.create(tableNode.attrs, newRows);
+  tr = tr.replaceWith(tablePos, tablePos + tableNode.nodeSize, newTableNode);
+
+  dispatch(tr);
+  currentView.focus();
+
+  // 更新手柄位置到新位置
+  repositionHandleToIndex('col', toIndex);
+}
+
+/**
+ * 移动行
+ */
+function moveRow(fromIndex: number, toIndex: number) {
+  if (!currentView) return;
+
+  const tableInfo = getTableInfo();
+  if (!tableInfo) return;
+
+  const { state, dispatch } = currentView;
+  const { tableNode, tablePos, map } = tableInfo;
+
+  const rowCount = map.height;
+
+  // 收集所有行
+  const rows: any[] = [];
+  tableNode.forEach((rowNode: any) => {
+    rows.push(rowNode);
+  });
+
+  // 重新排列行
+  const newRows: any[] = [];
+  for (let row = 0; row < rowCount; row++) {
+    let sourceRow: number;
+    if (row === toIndex) {
+      sourceRow = fromIndex;
+    } else if (fromIndex < toIndex) {
+      // 向下移动：fromIndex 到 toIndex-1 的行需要上移一位
+      if (row >= fromIndex && row < toIndex) {
+        sourceRow = row + 1;
+      } else {
+        sourceRow = row;
+      }
+    } else {
+      // 向上移动：toIndex+1 到 fromIndex 的行需要下移一位
+      if (row > toIndex && row <= fromIndex) {
+        sourceRow = row - 1;
+      } else {
+        sourceRow = row;
+      }
+    }
+    newRows.push(rows[sourceRow]);
+  }
+
+  const newTableNode = tableNode.type.create(tableNode.attrs, newRows);
+  let tr = state.tr.replaceWith(tablePos, tablePos + tableNode.nodeSize, newTableNode);
+
+  dispatch(tr);
+  currentView.focus();
+
+  // 更新手柄位置到新位置
+  repositionHandleToIndex('row', toIndex);
+}
+
+/**
+ * 拖拽结束时清理状态
+ */
+function cleanupDragState() {
+  // 隐藏指示线
+  hideDragIndicator();
+
+  // 移除自定义预览元素
+  if (dragState.customPreview) {
+    dragState.customPreview.remove();
+  }
+
+  // 清理表格上的事件监听器
+  if (stateContext.tableElement) {
+    const cleanup = (stateContext.tableElement as any)._dragCleanup;
+    if (cleanup) {
+      cleanup();
+    }
+  }
+
+  // 重置拖拽状态
+  dragState = {
+    isDragging: false,
+    sourceType: null,
+    sourceIndex: null,
+    targetIndex: null,
+    insertPosition: null,
+    customPreview: null,
+    previewWidth: 0,
+    previewHeight: 0,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1569,6 +2304,20 @@ export const tableHandlePlugin = $prose(() => {
         }
         return createSelectionDecorations(state.doc, pluginState);
       },
+      // 拦截表格行/列拖拽的 drop 事件，防止编辑器将拖拽数据插入为文本
+      handleDrop(_view, event) {
+        // 检查是否是我们的表格拖拽数据
+        if (event.dataTransfer?.types.includes('application/x-table-drag')) {
+          // 完全阻止 ProseMirror 的默认 drop 处理
+          // 实际的移动操作由 setupTableDropZone 中的 handleDrop 处理
+          return true;
+        }
+        // 如果当前正在进行表格拖拽，也阻止默认行为
+        if (dragState.isDragging) {
+          return true;
+        }
+        return false;
+      },
       handleDOMEvents: {
         click: handleCellClick,
         pointerleave: handlePointerLeave,
@@ -1581,7 +2330,7 @@ export const tableHandlePlugin = $prose(() => {
       currentView = view;
 
       // 清理 DOM 中所有现有的手柄元素（确保只有一个实例的手柄）
-      document.querySelectorAll('.table-handle, .add-line').forEach((el) => {
+      document.querySelectorAll('.table-handle, .add-line, .table-drag-indicator').forEach((el) => {
         el.remove();
       });
 
@@ -1590,12 +2339,14 @@ export const tableHandlePlugin = $prose(() => {
       const rowHandle = createHandleElement('row');
       const colAddLine = createAddLine('col');
       const rowAddLine = createAddLine('row');
+      const dragIndicator = createDragIndicator();
 
       // 同步更新全局 elements
       elements.colHandle = colHandle;
       elements.rowHandle = rowHandle;
       elements.colAddLine = colAddLine;
       elements.rowAddLine = rowAddLine;
+      elements.dragIndicator = dragIndicator;
 
       // 添加手柄到容器的函数
       const appendHandlesToContainer = () => {
@@ -1613,6 +2364,9 @@ export const tableHandlePlugin = $prose(() => {
           }
           if (rowAddLine && !container.contains(rowAddLine)) {
             container.appendChild(rowAddLine);
+          }
+          if (dragIndicator && !container.contains(dragIndicator)) {
+            container.appendChild(dragIndicator);
           }
           return true;
         }
@@ -1646,6 +2400,7 @@ export const tableHandlePlugin = $prose(() => {
             elements.rowHandle = rowHandle;
             elements.colAddLine = colAddLine;
             elements.rowAddLine = rowAddLine;
+            elements.dragIndicator = dragIndicator;
           }
           // 监听选区变化
           handleSelectionChange(view);
@@ -1655,6 +2410,7 @@ export const tableHandlePlugin = $prose(() => {
           rowHandle?.remove();
           colAddLine?.remove();
           rowAddLine?.remove();
+          dragIndicator?.remove();
           // 只有当全局 elements 指向本实例的元素时才清空
           if (elements.colHandle === colHandle) {
             elements = {
@@ -1662,6 +2418,7 @@ export const tableHandlePlugin = $prose(() => {
               rowHandle: null,
               colAddLine: null,
               rowAddLine: null,
+              dragIndicator: null,
             };
           }
           clearHideTimer();

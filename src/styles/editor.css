@@ -2370,6 +2370,31 @@
   background: var(--editor-bg);
 }
 
+/* ===== Drag Indicator (拖拽指示线) ===== */
+.table-drag-indicator {
+  position: absolute;
+  background-color: var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10001; /* 比预览元素 (10000) 更高 */
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.table-drag-indicator[data-show='true'] {
+  opacity: 1;
+}
+
+/* 列拖拽指示线 - 垂直线 */
+.table-drag-indicator[data-type='col'] {
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* 行拖拽指示线 - 水平线 */
+.table-drag-indicator[data-type='row'] {
+  box-shadow: 0 0 8px var(--accent);
+}
+
 /* ===== Dark Mode for Table Handle ===== */
 .dark .table-handle[data-state='bar'] {
   background-color: var(--editor-border);

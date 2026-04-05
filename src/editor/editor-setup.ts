@@ -30,7 +30,6 @@ import { imageResizePlugin } from './plugins/image-resize';
 import { imageBlockClickPlugin } from './plugins/image-block-click';
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import { tableHandlePlugin } from './plugins/table-block';
-import { tableColumnResizePlugin } from './plugins/table-column-resize';
 import { extendedTableSchema } from './plugins/table-schema-extend';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
@@ -85,7 +84,6 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(codeBlockComponent)
     .use(extendedTableSchema)
     .use(tableHandlePlugin)
-    .use(tableColumnResizePlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
