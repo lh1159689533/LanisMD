@@ -29,7 +29,7 @@ import { imageInputRulePlugin } from './plugins/image-input-rule';
 import { imageResizePlugin } from './plugins/image-resize';
 import { imageBlockClickPlugin } from './plugins/image-block-click';
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
-import { tableHandlePlugin } from './plugins/table-block';
+import { tableHandlePlugin } from './plugins/table-block/index';
 import { extendedTableSchema } from './plugins/table-schema-extend';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
