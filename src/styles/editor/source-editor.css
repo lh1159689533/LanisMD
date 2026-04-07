@@ -36,7 +36,7 @@
 /* ===== Markdown syntax highlighting enhancements ===== */
 .source-editor-root .cm-header {
   font-weight: 600;
-  color: var(--lanismd-editor-text);
+  color: var(--lanismd-heading-color);
 }
 
 .source-editor-root .cm-header-1 {
@@ -65,17 +65,17 @@
 }
 
 .source-editor-root .cm-link {
-  color: var(--lanismd-accent);
+  color: var(--lanismd-link-color);
   text-decoration: underline;
 }
 
 .source-editor-root .cm-url {
-  color: var(--lanismd-accent);
+  color: var(--lanismd-link-color);
   opacity: 0.7;
 }
 
 .source-editor-root .cm-quote {
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-blockquote-text);
   font-style: italic;
 }
 
@@ -84,25 +84,21 @@
 }
 
 .source-editor-root .cm-hr {
-  color: var(--lanismd-editor-border);
+  color: var(--lanismd-hr-color);
 }
 
 /* ===== Inline code ===== */
 .source-editor-root .cm-inlineCode {
-  background-color: rgba(0, 0, 0, 0.06);
-  color: var(--lanismd-accent);
+  background-color: var(--lanismd-inline-code-bg);
+  color: var(--lanismd-inline-code-text);
   padding: 0.1em 0.3em;
   border-radius: var(--lanismd-radius-sm);
   font-family: var(--lanismd-font-mono);
 }
 
-.dark .source-editor-root .cm-inlineCode {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
 /* ===== Code block fence ===== */
 .source-editor-root .cm-codeFence {
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-text-muted);
 }
 
 /* ===== Scrollbar ===== */
@@ -116,10 +112,10 @@
 }
 
 .source-editor-root .cm-scroller::-webkit-scrollbar-thumb {
-  background: var(--lanismd-editor-border);
+  background: var(--lanismd-scrollbar-thumb);
   border-radius: 3px;
 }
 
 .source-editor-root .cm-scroller::-webkit-scrollbar-thumb:hover {
-  background: var(--lanismd-sidebar-text);
+  background: var(--lanismd-scrollbar-thumb-hover);
 }

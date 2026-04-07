@@ -24,7 +24,9 @@
   }
 }
 
-.dark .milkdown-tooltip-dialog-overlay {
+.dark .milkdown-tooltip-dialog-overlay,
+.theme-dark .milkdown-tooltip-dialog-overlay,
+.theme-nord .milkdown-tooltip-dialog-overlay {
   background: rgba(0, 0, 0, 0.5);
 }
 
@@ -49,10 +51,6 @@
     opacity: 1;
     transform: scale(1) translateY(0);
   }
-}
-
-.dark .milkdown-tooltip-dialog {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Dialog Title ===== */
@@ -95,17 +93,12 @@
 }
 
 .milkdown-tooltip-dialog-input::placeholder {
-  color: var(--lanismd-sidebar-text);
-  opacity: 0.5;
+  color: var(--lanismd-text-muted);
 }
 
 .milkdown-tooltip-dialog-input:focus {
   border-color: var(--lanismd-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.dark .milkdown-tooltip-dialog-input:focus {
-  box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.15);
+  box-shadow: 0 0 0 3px var(--lanismd-focus-ring);
 }
 
 /* ===== Dialog Actions ===== */
@@ -134,16 +127,12 @@
 }
 
 .milkdown-tooltip-dialog-btn.cancel:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.dark .milkdown-tooltip-dialog-btn.cancel:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--lanismd-sidebar-hover);
 }
 
 .milkdown-tooltip-dialog-btn.confirm {
   background: var(--lanismd-accent);
-  color: #fff;
+  color: var(--lanismd-accent-contrast);
   border-color: var(--lanismd-accent);
 }
 
@@ -174,7 +163,7 @@
 
 .milkdown-tooltip-dialog-file-btn:hover {
   border-color: var(--lanismd-accent);
-  background: rgba(37, 99, 235, 0.04);
+  background: var(--lanismd-accent-light);
   color: var(--lanismd-accent);
 }
 
@@ -183,14 +172,6 @@
   border-style: solid;
   background: var(--lanismd-selected-bg);
   color: var(--lanismd-accent);
-}
-
-.dark .milkdown-tooltip-dialog-file-btn:hover {
-  background: var(--lanismd-hover-bg-dark);
-}
-
-.dark .milkdown-tooltip-dialog-file-btn.has-file {
-  background: rgba(122, 162, 247, 0.1);
 }
 
 .milkdown-tooltip-dialog-file-btn svg {
@@ -238,21 +219,13 @@
 
 .milkdown-tooltip-dialog-tab:hover {
   color: var(--lanismd-editor-text);
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.dark .milkdown-tooltip-dialog-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--lanismd-sidebar-hover);
 }
 
 .milkdown-tooltip-dialog-tab.active {
   color: var(--lanismd-accent);
   background: var(--lanismd-editor-bg);
   box-shadow: var(--lanismd-shadow-sm);
-}
-
-.dark .milkdown-tooltip-dialog-tab.active {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .milkdown-tooltip-dialog-tab svg {

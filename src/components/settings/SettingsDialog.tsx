@@ -1,8 +1,19 @@
-import { RiCloseLine, RiSunLine, RiMoonLine } from 'react-icons/ri';
+import { RiCloseLine, RiSunLine, RiMoonLine, RiComputerLine } from 'react-icons/ri';
+import { TbLeaf, TbSnowflake } from 'react-icons/tb';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { cn } from '@/utils/cn';
+import { THEME_LIST } from '@/types/config';
 import type { ThemeMode } from '@/types';
+
+// 主题图标映射
+const THEME_ICONS: Record<ThemeMode, React.ReactNode> = {
+  system: <RiComputerLine size={13} />,
+  light: <RiSunLine size={13} />,
+  dark: <RiMoonLine size={13} />,
+  sepia: <TbLeaf size={13} />,
+  nord: <TbSnowflake size={13} />,
+};
 
 const SECTIONS = [
   { id: 'general', label: '通用' },
@@ -16,7 +27,7 @@ export function SettingsDialog() {
   const { config, setConfig, setNestedConfig } = useSettingsStore();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
       <div
         className={cn(
           'flex h-[80%] max-h-[500px] min-h-[200px] w-[60%] min-w-[300px]',
@@ -95,22 +106,21 @@ export function SettingsDialog() {
           {settingsActiveSection === 'appearance' && (
             <div className="space-y-4 text-xs">
               <label className="block">主题</label>
-              <div className="flex gap-2">
-                {(['system', 'light', 'dark'] as ThemeMode[]).map((theme) => (
+              <div className="flex flex-wrap gap-2">
+                {THEME_LIST.map((theme) => (
                   <button
-                    key={theme}
-                    onClick={() => setConfig('theme', theme)}
-                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${
-                      config.theme === theme
+                    key={theme.id}
+                    onClick={() => setConfig('theme', theme.id)}
+                    title={theme.description}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors',
+                      config.theme === theme.id
                         ? 'bg-[var(--lanismd-accent)]/10 border-[var(--lanismd-accent)] text-[var(--lanismd-accent)]'
-                        : 'hover:border-[var(--lanismd-accent)]/50 border-[var(--lanismd-editor-border)]'
-                    }`}
+                        : 'hover:border-[var(--lanismd-accent)]/50 border-[var(--lanismd-editor-border)]',
+                    )}
                   >
-                    {theme === 'light' && <RiSunLine size={13} />}
-                    {theme === 'dark' && <RiMoonLine size={13} />}
-                    <span>
-                      {theme === 'system' ? '跟随系统' : theme === 'light' ? '浅色' : '深色'}
-                    </span>
+                    {THEME_ICONS[theme.id]}
+                    <span>{theme.name}</span>
                   </button>
                 ))}
               </div>

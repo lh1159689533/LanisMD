@@ -22,10 +22,6 @@
   display: block;
 }
 
-.dark .milkdown-slash {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
 /* Scrollbar */
 .milkdown-slash::-webkit-scrollbar {
   width: 4px;
@@ -36,7 +32,7 @@
 }
 
 .milkdown-slash::-webkit-scrollbar-thumb {
-  background: var(--lanismd-editor-border);
+  background: var(--lanismd-scrollbar-thumb);
   border-radius: 2px;
 }
 
@@ -70,10 +66,6 @@
   flex-shrink: 0;
 }
 
-.dark .milkdown-slash-icon {
-  background: rgba(37, 99, 235, 0.12);
-}
-
 .milkdown-slash-label {
   flex: 1;
   font-size: var(--lanismd-font-size-base);
@@ -82,15 +74,13 @@
 
 .milkdown-slash-shortcut {
   font-size: var(--lanismd-font-size-xs);
-  color: var(--lanismd-sidebar-text);
-  opacity: 0.6;
+  color: var(--lanismd-text-muted);
   font-family: var(--lanismd-font-mono);
 }
 
 .milkdown-slash-empty {
   padding: var(--lanismd-spacing-lg) var(--lanismd-spacing-xl);
   font-size: var(--lanismd-font-size-base);
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-text-muted);
   text-align: center;
-  opacity: 0.6;
 }

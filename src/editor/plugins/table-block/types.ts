@@ -69,13 +69,23 @@ export const HIDE_DELAY = 200;
 // ---------------------------------------------------------------------------
 
 export const icons = {
-  dragHandle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+  /** 行手柄图标 - 竖向六点（2列×3行） */
+  rowDragHandle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
     <circle cx="8" cy="6" r="2"/>
     <circle cx="16" cy="6" r="2"/>
     <circle cx="8" cy="12" r="2"/>
     <circle cx="16" cy="12" r="2"/>
     <circle cx="8" cy="18" r="2"/>
     <circle cx="16" cy="18" r="2"/>
+  </svg>`,
+  /** 列手柄图标 - 横向六点（3列×2行） */
+  colDragHandle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="5" cy="9" r="2"/>
+    <circle cx="12" cy="9" r="2"/>
+    <circle cx="19" cy="9" r="2"/>
+    <circle cx="5" cy="15" r="2"/>
+    <circle cx="12" cy="15" r="2"/>
+    <circle cx="19" cy="15" r="2"/>
   </svg>`,
   add: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 5v14M5 12h14"/>

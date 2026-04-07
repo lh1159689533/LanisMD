@@ -50,10 +50,10 @@ export function createHandleElement(
   handle.dataset.state = 'hidden';
   handle.contentEditable = 'false';
 
-  // 六点图标
+  // 六点图标 - 根据手柄类型选择对应图标
   const icon = document.createElement('span');
   icon.className = 'handle-icon';
-  icon.innerHTML = icons.dragHandle;
+  icon.innerHTML = type === 'col' ? icons.colDragHandle : icons.rowDragHandle;
   handle.appendChild(icon);
 
   // 操作菜单

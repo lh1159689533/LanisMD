@@ -7,7 +7,7 @@
  * - 复制代码按钮（hover 时显示）
  * - 行号（可通过设置开关）
  * - 自动缩进、括号匹配
- * - 亮色 / 暗色主题跟随
+ * - 主题通过 CSS 变量自动跟随
  */
 
 import { codeBlockComponent, codeBlockConfig } from '@milkdown/kit/component/code-block';
@@ -62,146 +62,81 @@ function setupCopyButtonTracking() {
 setupCopyButtonTracking();
 
 // ---------------------------------------------------------------------------
-// Light Theme (for CodeMirror)
+// Unified CodeMirror Theme (消费 CSS 变量)
 // ---------------------------------------------------------------------------
 
-const lightHighlightStyle = HighlightStyle.define([
-  { tag: tags.keyword, color: '#d73a49' },
-  { tag: tags.comment, color: '#6a737d', fontStyle: 'italic' },
-  { tag: tags.string, color: '#032f62' },
-  { tag: tags.number, color: '#005cc5' },
-  { tag: tags.variableName, color: '#24292e' },
-  { tag: tags.function(tags.variableName), color: '#6f42c1' },
-  { tag: tags.typeName, color: '#22863a' },
-  { tag: tags.className, color: '#6f42c1' },
-  { tag: tags.definition(tags.variableName), color: '#e36209' },
-  { tag: tags.propertyName, color: '#005cc5' },
-  { tag: tags.operator, color: '#d73a49' },
-  { tag: tags.punctuation, color: '#24292e' },
-  { tag: tags.bool, color: '#005cc5' },
-  { tag: tags.regexp, color: '#032f62' },
-  { tag: tags.tagName, color: '#22863a' },
-  { tag: tags.attributeName, color: '#6f42c1' },
-  { tag: tags.attributeValue, color: '#032f62' },
-  { tag: tags.meta, color: '#6a737d' },
+const editorTheme = EditorView.theme({
+  '&': {
+    backgroundColor: 'var(--lanismd-cm-bg)',
+    color: 'var(--lanismd-cm-text)',
+  },
+  '.cm-content': {
+    caretColor: 'var(--lanismd-cm-cursor)',
+  },
+  '.cm-gutters': {
+    backgroundColor: 'var(--lanismd-cm-gutter-bg)',
+    color: 'var(--lanismd-cm-gutter-text)',
+    border: 'none',
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: 'var(--lanismd-cm-gutter-active)',
+    color: 'var(--lanismd-cm-text)',
+  },
+  '.cm-activeLine': {
+    backgroundColor: 'var(--lanismd-cm-line-active)',
+  },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--lanismd-cm-cursor)',
+  },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
+    backgroundColor: 'var(--lanismd-cm-selection)',
+  },
+  '.cm-matchingBracket, .cm-nonmatchingBracket': {
+    backgroundColor: 'var(--lanismd-cm-bracket-match)',
+    outline: '1px solid var(--lanismd-cm-bracket-outline)',
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Syntax Highlighting (消费 CSS 变量)
+// ---------------------------------------------------------------------------
+
+const highlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: 'var(--lanismd-syntax-keyword)' },
+  { tag: tags.comment, color: 'var(--lanismd-syntax-comment)', fontStyle: 'italic' },
+  { tag: tags.string, color: 'var(--lanismd-syntax-string)' },
+  { tag: tags.number, color: 'var(--lanismd-syntax-number)' },
+  { tag: tags.variableName, color: 'var(--lanismd-syntax-variable)' },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: 'var(--lanismd-syntax-function)' },
+  { tag: tags.typeName, color: 'var(--lanismd-syntax-type)' },
+  { tag: tags.className, color: 'var(--lanismd-syntax-class)' },
+  { tag: tags.definition(tags.variableName), color: 'var(--lanismd-syntax-definition)' },
+  { tag: tags.propertyName, color: 'var(--lanismd-syntax-property)' },
+  { tag: tags.operator, color: 'var(--lanismd-syntax-operator)' },
+  { tag: tags.punctuation, color: 'var(--lanismd-syntax-punctuation)' },
+  { tag: tags.bool, color: 'var(--lanismd-syntax-bool)' },
+  { tag: tags.regexp, color: 'var(--lanismd-syntax-regexp)' },
+  { tag: tags.tagName, color: 'var(--lanismd-syntax-tag)' },
+  { tag: tags.attributeName, color: 'var(--lanismd-syntax-attr-name)' },
+  { tag: tags.attributeValue, color: 'var(--lanismd-syntax-attr-value)' },
+  { tag: tags.meta, color: 'var(--lanismd-syntax-meta)' },
 ]);
 
-const lightTheme = EditorView.theme(
-  {
-    '&': {
-      backgroundColor: '#f6f8fa',
-      color: '#24292e',
-    },
-    '.cm-gutters': {
-      backgroundColor: '#f6f8fa',
-      color: '#6e7781',
-      border: 'none',
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(37, 99, 235, 0.06)',
-      color: '#24292e',
-    },
-    '.cm-activeLine': {
-      backgroundColor: 'rgba(37, 99, 235, 0.04)',
-    },
-    '.cm-cursor': {
-      borderLeftColor: '#24292e',
-    },
-    '&.cm-focused .cm-selectionBackground, ::selection': {
-      backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    },
-    '.cm-selectionBackground': {
-      backgroundColor: 'rgba(37, 99, 235, 0.12)',
-    },
-    '.cm-matchingBracket': {
-      backgroundColor: 'rgba(37, 99, 235, 0.2)',
-      outline: '1px solid rgba(37, 99, 235, 0.3)',
-    },
-  },
-  { dark: false },
-);
-
 // ---------------------------------------------------------------------------
-// Dark Theme (for CodeMirror - Tokyo Night inspired)
-// ---------------------------------------------------------------------------
-
-const darkHighlightStyle = HighlightStyle.define([
-  { tag: tags.keyword, color: '#bb9af7' },
-  { tag: tags.comment, color: '#565f89', fontStyle: 'italic' },
-  { tag: tags.string, color: '#9ece6a' },
-  { tag: tags.number, color: '#ff9e64' },
-  { tag: tags.variableName, color: '#c0caf5' },
-  { tag: tags.function(tags.variableName), color: '#7aa2f7' },
-  { tag: tags.typeName, color: '#2ac3de' },
-  { tag: tags.className, color: '#bb9af7' },
-  { tag: tags.definition(tags.variableName), color: '#e0af68' },
-  { tag: tags.propertyName, color: '#7dcfff' },
-  { tag: tags.operator, color: '#89ddff' },
-  { tag: tags.punctuation, color: '#c0caf5' },
-  { tag: tags.bool, color: '#ff9e64' },
-  { tag: tags.regexp, color: '#b4f9f8' },
-  { tag: tags.tagName, color: '#f7768e' },
-  { tag: tags.attributeName, color: '#bb9af7' },
-  { tag: tags.attributeValue, color: '#9ece6a' },
-  { tag: tags.meta, color: '#565f89' },
-]);
-
-const darkTheme = EditorView.theme(
-  {
-    '&': {
-      backgroundColor: '#1a1b26',
-      color: '#c0caf5',
-    },
-    '.cm-gutters': {
-      backgroundColor: '#1a1b26',
-      color: '#3b4261',
-      border: 'none',
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(122, 162, 247, 0.08)',
-      color: '#c0caf5',
-    },
-    '.cm-activeLine': {
-      backgroundColor: 'rgba(122, 162, 247, 0.06)',
-    },
-    '.cm-cursor': {
-      borderLeftColor: '#c0caf5',
-    },
-    '&.cm-focused .cm-selectionBackground, ::selection': {
-      backgroundColor: 'rgba(122, 162, 247, 0.2)',
-    },
-    '.cm-selectionBackground': {
-      backgroundColor: 'rgba(122, 162, 247, 0.15)',
-    },
-    '.cm-matchingBracket': {
-      backgroundColor: 'rgba(122, 162, 247, 0.25)',
-      outline: '1px solid rgba(122, 162, 247, 0.4)',
-    },
-  },
-  { dark: true },
-);
-
-// ---------------------------------------------------------------------------
-// Build extensions based on current settings and theme
+// Build extensions based on current settings
 // ---------------------------------------------------------------------------
 
 function getCodeMirrorExtensions(): Extension[] {
-  const isDark = document.documentElement.classList.contains('dark');
-
   const extensions: Extension[] = [
     keymap.of(defaultKeymap.concat(indentWithTab)),
     basicSetup,
     bracketMatching(),
     EditorView.lineWrapping,
     lineNumbers(), // 始终加载行号，通过 CSS 控制显示/隐藏
+    // 统一的主题和语法高亮（使用 CSS 变量，自动跟随主题切换）
+    editorTheme,
+    syntaxHighlighting(highlightStyle),
   ];
-
-  // Theme
-  if (isDark) {
-    extensions.push(darkTheme, syntaxHighlighting(darkHighlightStyle));
-  } else {
-    extensions.push(lightTheme, syntaxHighlighting(lightHighlightStyle));
-  }
 
   return extensions;
 }

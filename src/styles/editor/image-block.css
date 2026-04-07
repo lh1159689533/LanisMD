@@ -112,7 +112,7 @@
 /* Confirm button */
 .milkdown-image-block > .image-edit .confirm {
   background: var(--lanismd-accent);
-  color: #fff;
+  color: var(--lanismd-accent-contrast);
   line-height: 32px;
   padding: 0 var(--lanismd-spacing-xl);
   border-radius: var(--lanismd-radius-md);
@@ -226,7 +226,7 @@
 
 .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  color: var(--lanismd-accent-contrast);
 }
 
 .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item svg {
@@ -237,7 +237,7 @@
 /* Active alignment button */
 .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active {
   background: var(--lanismd-accent);
-  color: #fff;
+  color: var(--lanismd-accent-contrast);
 }
 
 .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active:hover {
@@ -247,7 +247,7 @@
 /* Delete button special styling */
 .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.delete-btn:hover {
   background: rgba(239, 68, 68, 0.8);
-  color: #fff;
+  color: var(--lanismd-accent-contrast);
 }
 
 /* Separator in toolbar */
@@ -301,7 +301,7 @@
   width: 12px;
   height: 12px;
   background: var(--lanismd-accent);
-  border: 2px solid #fff;
+  border: 2px solid var(--lanismd-editor-bg);
   border-radius: 3px;
   pointer-events: auto;
   box-shadow: var(--lanismd-shadow-sm);

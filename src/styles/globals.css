@@ -28,18 +28,10 @@ body,
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
+  background: var(--lanismd-scrollbar-thumb);
   border-radius: 3px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #3b4261;
-}
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #545c7e;
+  background: var(--lanismd-scrollbar-thumb-hover);
 }

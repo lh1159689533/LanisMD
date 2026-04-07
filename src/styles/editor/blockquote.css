@@ -4,9 +4,10 @@
  */
 
 .milkdown-editor-root .ProseMirror blockquote {
-  border-left: 4px solid var(--lanismd-accent);
+  border-left: 4px solid var(--lanismd-blockquote-border);
   padding-left: var(--lanismd-spacing-xl);
   margin: 1em 0;
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-blockquote-text);
   font-style: italic;
+  background: var(--lanismd-blockquote-bg);
 }

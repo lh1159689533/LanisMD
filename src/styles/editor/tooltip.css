@@ -20,10 +20,6 @@
   display: flex;
 }
 
-.dark .milkdown-tooltip {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
 .milkdown-tooltip button {
   display: flex;
   align-items: center;
@@ -46,7 +42,7 @@
 
 .milkdown-tooltip button[data-active='true'] {
   color: var(--lanismd-accent);
-  background-color: rgba(37, 99, 235, 0.12);
+  background-color: var(--lanismd-accent-light);
 }
 
 .milkdown-tooltip-separator {

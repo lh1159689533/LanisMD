@@ -1,24 +1,120 @@
 /**
- * LanisMD Dark Theme
- * 深色主题变量定义
+ * LanisMD Dark Theme (Tokyo Night inspired)
+ * 深色主题完整变量定义
  */
 
-.dark {
-  /* ========== Editor ========== */
+.dark,
+.theme-dark {
+  /* ===== 1. 应用 UI ===== */
+  
+  /* Editor Area */
   --lanismd-editor-bg: #1a1b26;
   --lanismd-editor-text: #c0caf5;
   --lanismd-editor-border: #292e42;
-
-  /* ========== Sidebar ========== */
+  
+  /* Sidebar */
   --lanismd-sidebar-bg: #1f2335;
   --lanismd-sidebar-text: #a9b1d6;
   --lanismd-sidebar-border: #292e42;
-
-  /* ========== Titlebar ========== */
+  --lanismd-sidebar-hover: rgba(255, 255, 255, 0.04);
+  --lanismd-sidebar-active: rgba(122, 162, 247, 0.12);
+  
+  /* Titlebar */
   --lanismd-titlebar-bg: #1f2335;
   --lanismd-titlebar-text: #c0caf5;
-
-  /* ========== Accent ========== */
+  
+  /* Accent */
   --lanismd-accent: #7aa2f7;
   --lanismd-accent-hover: #89b4fa;
+  --lanismd-accent-light: rgba(122, 162, 247, 0.15);
+  --lanismd-accent-contrast: #ffffff;
+  
+  /* Status Colors */
+  --lanismd-success: #9ece6a;
+  --lanismd-warning: #e0af68;
+  --lanismd-danger: #f7768e;
+  
+  /* Interactive */
+  --lanismd-hover-bg: rgba(122, 162, 247, 0.12);
+  --lanismd-selected-bg: rgba(122, 162, 247, 0.08);
+  --lanismd-focus-ring: rgba(122, 162, 247, 0.5);
+  
+  /* Shadows */
+  --lanismd-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --lanismd-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --lanismd-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  
+  /* Scrollbar */
+  --lanismd-scrollbar-thumb: #3b4261;
+  --lanismd-scrollbar-thumb-hover: #545c7e;
+  
+  /* Handle (table drag handles) */
+  --lanismd-handle-color: #7982a9;
+  
+  /* ===== 2. 编辑器内容 ===== */
+  
+  /* Typography */
+  --lanismd-heading-color: #c0caf5;
+  --lanismd-text-muted: #565f89;
+  --lanismd-link-color: var(--lanismd-accent);
+  --lanismd-link-hover: var(--lanismd-accent-hover);
+  
+  /* Inline Code */
+  --lanismd-inline-code-bg: rgba(255, 255, 255, 0.08);
+  --lanismd-inline-code-text: #7dcfff;
+  
+  /* Blockquote */
+  --lanismd-blockquote-border: var(--lanismd-accent);
+  --lanismd-blockquote-bg: transparent;
+  --lanismd-blockquote-text: var(--lanismd-sidebar-text);
+  
+  /* Table */
+  --lanismd-table-header-bg: var(--lanismd-sidebar-bg);
+  --lanismd-table-border: var(--lanismd-editor-border);
+  --lanismd-table-row-hover: rgba(255, 255, 255, 0.02);
+  
+  /* Horizontal Rule */
+  --lanismd-hr-color: var(--lanismd-editor-border);
+  
+  /* Selection */
+  --lanismd-selection-bg: rgba(122, 162, 247, 0.25);
+  --lanismd-selection-text: inherit;
+  
+  /* ===== 3. 代码块 ===== */
+  
+  /* Code Block Container */
+  --lanismd-code-bg: #1a1b26;
+  --lanismd-code-toolbar-bg: #16171f;
+  
+  /* CodeMirror Editor */
+  --lanismd-cm-bg: #1a1b26;
+  --lanismd-cm-text: #c0caf5;
+  --lanismd-cm-gutter-bg: #1a1b26;
+  --lanismd-cm-gutter-text: #3b4261;
+  --lanismd-cm-line-active: rgba(122, 162, 247, 0.06);
+  --lanismd-cm-gutter-active: rgba(122, 162, 247, 0.08);
+  --lanismd-cm-cursor: #c0caf5;
+  --lanismd-cm-selection: rgba(122, 162, 247, 0.2);
+  --lanismd-cm-bracket-match: rgba(122, 162, 247, 0.25);
+  --lanismd-cm-bracket-outline: rgba(122, 162, 247, 0.4);
+  
+  /* Syntax Highlighting (Tokyo Night inspired) */
+  --lanismd-syntax-keyword: #bb9af7;
+  --lanismd-syntax-comment: #565f89;
+  --lanismd-syntax-string: #9ece6a;
+  --lanismd-syntax-number: #ff9e64;
+  --lanismd-syntax-variable: #c0caf5;
+  --lanismd-syntax-function: #7aa2f7;
+  --lanismd-syntax-type: #2ac3de;
+  --lanismd-syntax-class: #bb9af7;
+  --lanismd-syntax-property: #7dcfff;
+  --lanismd-syntax-operator: #89ddff;
+  --lanismd-syntax-punctuation: #c0caf5;
+  --lanismd-syntax-bool: #ff9e64;
+  --lanismd-syntax-regexp: #b4f9f8;
+  --lanismd-syntax-tag: #f7768e;
+  --lanismd-syntax-attr-name: #bb9af7;
+  --lanismd-syntax-attr-value: #9ece6a;
+  --lanismd-syntax-meta: #565f89;
+  --lanismd-syntax-definition: #e0af68;
 }

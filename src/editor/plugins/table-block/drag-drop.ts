@@ -31,7 +31,7 @@ function createCustomDragPreview(
   const preview = document.createElement('div');
   preview.className = 'drag-preview drag-preview-custom';
   preview.style.position = 'fixed';
-  preview.style.zIndex = '10000';
+  preview.style.zIndex = '100';
   preview.style.pointerEvents = 'none';
   preview.style.opacity = '0.85';
   preview.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';

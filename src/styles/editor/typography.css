@@ -10,7 +10,7 @@
 .milkdown-editor-root .ProseMirror h4,
 .milkdown-editor-root .ProseMirror h5,
 .milkdown-editor-root .ProseMirror h6 {
-  color: var(--lanismd-editor-text);
+  color: var(--lanismd-heading-color);
   font-weight: 600;
   line-height: 1.4;
   margin-top: 1.5em;
@@ -20,13 +20,13 @@
 .milkdown-editor-root .ProseMirror h1 {
   font-size: 1.875rem;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--lanismd-editor-border);
+  border-bottom: 1px solid var(--lanismd-hr-color);
 }
 
 .milkdown-editor-root .ProseMirror h2 {
   font-size: 1.5rem;
   padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--lanismd-editor-border);
+  border-bottom: 1px solid var(--lanismd-hr-color);
 }
 
 .milkdown-editor-root .ProseMirror h3 {
@@ -44,14 +44,14 @@
 
 /* ===== Links ===== */
 .milkdown-editor-root .ProseMirror a {
-  color: var(--lanismd-accent);
+  color: var(--lanismd-link-color);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .milkdown-editor-root .ProseMirror a:hover {
-  color: var(--lanismd-accent-hover);
+  color: var(--lanismd-link-hover);
 }
 
 /* ===== Bold & Italic ===== */
@@ -70,21 +70,17 @@
 
 /* ===== Inline Code ===== */
 .milkdown-editor-root .ProseMirror code {
-  background-color: rgba(0, 0, 0, 0.06);
-  color: var(--lanismd-accent);
+  background-color: var(--lanismd-inline-code-bg);
+  color: var(--lanismd-inline-code-text);
   padding: 0.15em 0.4em;
   border-radius: var(--lanismd-radius-sm);
   font-family: var(--lanismd-font-mono);
   font-size: 0.875em;
 }
 
-.dark .milkdown-editor-root .ProseMirror code {
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
 /* ===== Horizontal Rule ===== */
 .milkdown-editor-root .ProseMirror hr {
   border: none;
-  border-top: 2px solid var(--lanismd-editor-border);
+  border-top: 2px solid var(--lanismd-hr-color);
   margin: 2em 0;
 }

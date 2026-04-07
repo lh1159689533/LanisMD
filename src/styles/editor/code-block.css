@@ -13,12 +13,7 @@
   overflow: hidden;
   border: 1px solid var(--lanismd-editor-border);
   transition: border-color var(--lanismd-transition-normal);
-  background: #f6f8fa;
-}
-
-.dark .milkdown-editor-root .ProseMirror [data-type='code_block'],
-.dark .milkdown-editor-root .ProseMirror code-block {
-  background: #1a1b26;
+  background: var(--lanismd-code-bg);
 }
 
 .milkdown-editor-root .ProseMirror [data-type='code_block']:hover,
@@ -32,13 +27,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px var(--lanismd-spacing-lg);
-  background: #f0f2f5;
+  background: var(--lanismd-code-toolbar-bg);
   border-bottom: 1px solid var(--lanismd-editor-border);
   min-height: 36px;
-}
-
-.dark .milkdown-editor-root .tools {
-  background: #16171f;
 }
 
 /* ===== Language selector button ===== */
@@ -61,11 +52,7 @@
 
 .milkdown-editor-root .language-button:hover {
   color: var(--lanismd-editor-text);
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.dark .milkdown-editor-root .language-button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--lanismd-hover-bg);
 }
 
 /* Expand icon in language button */
@@ -87,10 +74,6 @@
   border-radius: var(--lanismd-radius-lg);
   box-shadow: var(--lanismd-shadow-md);
   margin-top: var(--lanismd-spacing-sm);
-}
-
-.dark .milkdown-editor-root .language-picker {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* List wrapper in picker */
@@ -163,11 +146,7 @@
 
 .milkdown-editor-root .clear-icon:hover {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.dark .milkdown-editor-root .clear-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--lanismd-hover-bg);
 }
 
 .milkdown-editor-root .clear-icon.hidden {
@@ -245,11 +224,11 @@
 
 /* Copy button success state */
 .milkdown-editor-root .copy-button.copied {
-  color: var(--lanismd-success-color);
+  color: var(--lanismd-success);
 }
 
 .milkdown-editor-root .copy-button.copied:hover {
-  color: var(--lanismd-success-color);
+  color: var(--lanismd-success);
   background: rgba(34, 197, 94, 0.08);
 }
 
@@ -267,11 +246,7 @@
 
 /* ===== CodeMirror host container ===== */
 .milkdown-editor-root .codemirror-host {
-  background: #f6f8fa;
-}
-
-.dark .milkdown-editor-root .codemirror-host {
-  background: #1a1b26;
+  background: var(--lanismd-code-bg);
 }
 
 .milkdown-editor-root .codemirror-host.hidden {
@@ -363,14 +338,14 @@
 }
 
 .milkdown-editor-root .cm-scroller::-webkit-scrollbar-thumb {
-  background: var(--lanismd-editor-border);
+  background: var(--lanismd-scrollbar-thumb);
   border-radius: 2px;
 }
 
 /* ===== Fallback: ProseMirror pre/code blocks (compatibility) ===== */
 .milkdown-editor-root .ProseMirror pre {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  background-color: var(--lanismd-code-bg);
+  color: var(--lanismd-cm-text);
   border-radius: var(--lanismd-radius-lg);
   padding: var(--lanismd-spacing-xl) var(--lanismd-spacing-2xl);
   margin: 1em 0;
@@ -378,10 +353,6 @@
   font-family: var(--lanismd-font-mono);
   font-size: 0.875rem;
   line-height: 1.6;
-}
-
-.dark .milkdown-editor-root .ProseMirror pre {
-  background-color: #0f172a;
 }
 
 .milkdown-editor-root .ProseMirror pre code {
