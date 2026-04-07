@@ -239,30 +239,27 @@ class TableHandlePluginContext {
     requestAnimationFrame(() => {
       if (!this.currentView) return;
 
-      // 重新查找当前聚焦的表格
-      const { state } = this.currentView;
-      const { selection } = state;
-      const $from = selection.$from;
-
       let tableNode: HTMLTableElement | null = null;
 
-      // 从选区位置查找表格
-      for (let d = $from.depth; d > 0; d--) {
-        const node = $from.node(d);
-        if (node.type.name === 'table') {
-          const pos = $from.before(d);
-          const dom = this.currentView.nodeDOM(pos) as HTMLElement;
-          if (dom && dom.tagName === 'TABLE') {
-            tableNode = dom as HTMLTableElement;
-          }
-          break;
-        }
-      }
+      // 优先使用已保存的表格元素（拖拽场景下这是正确的源表格）
+      if (this.stateContext.tableElement && document.contains(this.stateContext.tableElement)) {
+        tableNode = this.stateContext.tableElement;
+      } else {
+        // 否则从选区位置查找表格
+        const { state } = this.currentView;
+        const { selection } = state;
+        const $from = selection.$from;
 
-      // 如果从选区找不到，尝试使用之前保存的表格元素
-      if (!tableNode && this.stateContext.tableElement) {
-        if (document.contains(this.stateContext.tableElement)) {
-          tableNode = this.stateContext.tableElement;
+        for (let d = $from.depth; d > 0; d--) {
+          const node = $from.node(d);
+          if (node.type.name === 'table') {
+            const pos = $from.before(d);
+            const dom = this.currentView.nodeDOM(pos) as HTMLElement;
+            if (dom && dom.tagName === 'TABLE') {
+              tableNode = dom as HTMLTableElement;
+            }
+            break;
+          }
         }
       }
 
@@ -364,6 +361,10 @@ class TableHandlePluginContext {
     // 确保选中
     this.selectRowOrColumn();
 
+    // 删除前记录表格位置，用于删除后重新定位
+    const tableInfo = this.tableOperations.getTableInfo(this.stateContext.tableElement);
+    const tablePos = tableInfo?.tablePos ?? -1;
+
     const newIndex = this.tableOperations.deleteColumn(
       currentColIndex,
       this.stateContext.tableElement,
@@ -376,6 +377,8 @@ class TableHandlePluginContext {
       this.currentFocusedCell = null;
       this.updateHandleVisuals();
     } else {
+      // 删除后 DOM 会重建，需要根据位置重新获取表格元素
+      this.refreshTableElementByPos(tablePos);
       this.repositionHandleToIndex('col', newIndex);
     }
   }
@@ -393,6 +396,10 @@ class TableHandlePluginContext {
     const selectionCreated = this.selectRowOrColumn();
     if (!selectionCreated) return;
 
+    // 删除前记录表格位置，用于删除后重新定位
+    const tableInfo = this.tableOperations.getTableInfo(this.stateContext.tableElement);
+    const tablePos = tableInfo?.tablePos ?? -1;
+
     const newIndex = this.tableOperations.deleteRow(
       currentRowIndex,
       this.stateContext.tableElement,
@@ -405,7 +412,22 @@ class TableHandlePluginContext {
       this.currentFocusedCell = null;
       this.updateHandleVisuals();
     } else {
+      // 删除后 DOM 会重建，需要根据位置重新获取表格元素
+      this.refreshTableElementByPos(tablePos);
       this.repositionHandleToIndex('row', newIndex);
+    }
+  }
+
+  /**
+   * 根据表格位置刷新 stateContext.tableElement
+   * 用于 DOM 重建后（如删除行/列）重新获取正确的表格引用
+   */
+  private refreshTableElementByPos(tablePos: number): void {
+    if (!this.currentView || tablePos < 0) return;
+
+    const dom = this.currentView.nodeDOM(tablePos) as HTMLElement;
+    if (dom && dom.tagName === 'TABLE') {
+      this.stateContext.tableElement = dom as HTMLTableElement;
     }
   }
 
