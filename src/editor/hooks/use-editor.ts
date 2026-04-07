@@ -11,11 +11,16 @@ export function useEditor() {
   const currentFile = useFileStore((s) => s.currentFile);
   const currentFileId = currentFile?.id ?? null;
   const updateStats = useEditorStore((s) => s.updateStats);
+  
+  // 监听编辑模式变化，用于在切换回 wysiwyg 时重新创建编辑器
+  const mode = useEditorStore((s) => s.mode);
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || !currentFileId) return;
+    // 源码模式下不创建 Milkdown 编辑器
+    if (!root || !currentFileId || mode === 'source') return;
 
+    // 重新获取最新的文件内容（可能在源码模式下被修改）
     const file = useFileStore.getState().currentFile;
     if (!file) return;
 
@@ -39,6 +44,7 @@ export function useEditor() {
       },
     };
 
+    // 使用最新的文件内容创建编辑器
     const editorInstance = createEditor(root, file.content);
 
     editorInstance
@@ -66,8 +72,8 @@ export function useEditor() {
         editorRef.current = null;
       }
     };
-    // Only re-create editor when currentFileId changes, NOT when content changes
-  }, [currentFileId, updateStats]);
+    // Re-create editor when currentFileId or mode changes
+  }, [currentFileId, mode, updateStats]);
 
   return { rootRef, editorRef };
 }

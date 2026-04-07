@@ -2417,3 +2417,126 @@
 .dark .add-line .add-button:hover {
   background: var(--accent);
 }
+
+/* ===== Source Editor (CodeMirror) ===== */
+
+.source-editor-root {
+  min-height: 100%;
+  outline: none;
+}
+
+.source-editor-root .cm-editor {
+  height: 100%;
+  min-height: calc(100vh - 200px);
+  outline: none;
+}
+
+.source-editor-root .cm-editor.cm-focused {
+  outline: none;
+}
+
+.source-editor-root .cm-scroller {
+  overflow: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.source-editor-root .cm-content {
+  padding: 4px 0;
+}
+
+.source-editor-root .cm-line {
+  padding: 0;
+}
+
+/* Markdown syntax highlighting enhancements */
+.source-editor-root .cm-header {
+  font-weight: 600;
+  color: var(--editor-text);
+}
+
+.source-editor-root .cm-header-1 {
+  font-size: 1.5em;
+}
+
+.source-editor-root .cm-header-2 {
+  font-size: 1.3em;
+}
+
+.source-editor-root .cm-header-3 {
+  font-size: 1.15em;
+}
+
+.source-editor-root .cm-strong {
+  font-weight: 600;
+}
+
+.source-editor-root .cm-emphasis {
+  font-style: italic;
+}
+
+.source-editor-root .cm-strikethrough {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.source-editor-root .cm-link {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.source-editor-root .cm-url {
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.source-editor-root .cm-quote {
+  color: var(--sidebar-text);
+  font-style: italic;
+}
+
+.source-editor-root .cm-list {
+  color: var(--accent);
+}
+
+.source-editor-root .cm-hr {
+  color: var(--editor-border);
+}
+
+/* Inline code */
+.source-editor-root .cm-inlineCode {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--accent);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+}
+
+.dark .source-editor-root .cm-inlineCode {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Code block fence */
+.source-editor-root .cm-codeFence {
+  color: var(--sidebar-text);
+}
+
+/* Scrollbar */
+.source-editor-root .cm-scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--editor-border);
+  border-radius: 3px;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-text);
+}
