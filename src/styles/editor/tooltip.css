@@ -1,0 +1,58 @@
+/**
+ * LanisMD Editor - Tooltip / Floating Toolbar
+ * 浮动工具栏样式
+ */
+
+.milkdown-tooltip {
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  padding: var(--lanismd-spacing-sm);
+  display: none;
+  gap: var(--lanismd-spacing-xs);
+  z-index: 50;
+  position: absolute;
+}
+
+/* TooltipProvider 通过 data-show 属性控制显示/隐藏 */
+.milkdown-tooltip[data-show='true'] {
+  display: flex;
+}
+
+.dark .milkdown-tooltip {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.milkdown-tooltip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  transition: background-color var(--lanismd-transition-normal);
+}
+
+.milkdown-tooltip button:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.milkdown-tooltip button[data-active='true'] {
+  color: var(--lanismd-accent);
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+.milkdown-tooltip-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--lanismd-editor-border);
+  margin: 6px var(--lanismd-spacing-xs);
+  flex-shrink: 0;
+}

@@ -1,0 +1,79 @@
+/**
+ * LanisMD Editor - Base Styles
+ * 编辑器根样式、ProseMirror 核心配置
+ */
+
+/* ===== Editor Root ===== */
+.milkdown-editor-root {
+  min-height: 100%;
+  outline: none;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--lanismd-editor-text);
+  caret-color: var(--lanismd-accent);
+}
+
+.milkdown-editor-root:focus {
+  outline: none;
+}
+
+.milkdown-editor-root .milkdown {
+  position: relative;
+}
+
+.milkdown .milkdown-block-handle {
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  transition: all var(--lanismd-transition-medium);
+  display: flex;
+  position: absolute;
+}
+
+/* ===== ProseMirror Overrides ===== */
+.milkdown-editor-root .ProseMirror {
+  min-height: calc(100vh - 200px);
+  outline: none;
+  padding: var(--lanismd-spacing-sm) 0;
+}
+
+.milkdown-editor-root .ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+.milkdown-editor-root .ProseMirror > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== Selection ===== */
+/* .milkdown-editor-root .ProseMirror ::selection {
+  background-color: var(--lanismd-accent);
+  color: white;
+} */
+
+/* ===== Placeholder ===== */
+.milkdown-editor-root .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--lanismd-sidebar-text);
+  pointer-events: none;
+  height: 0;
+  opacity: 0.5;
+}
+
+/* ===== Editor Wrapper Animation ===== */
+.editor-wrapper {
+  animation: editorFadeIn var(--lanismd-transition-slow);
+}
+
+@keyframes editorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

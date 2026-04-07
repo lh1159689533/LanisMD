@@ -75,13 +75,13 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
     <div
       className={cn(
         'absolute right-4 top-12 z-50 w-80 p-3',
-        'rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] shadow-lg',
+        'rounded-lg border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-editor-bg)] shadow-lg',
       )}
     >
       <div className="mb-2 flex items-center gap-1.5">
         <div className="relative flex-1">
           <RiSearchLine
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)]"
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--lanismd-lanismd-sidebar-text)]"
             size={13}
           />
           <input
@@ -93,12 +93,12 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
             placeholder="搜索..."
             className={cn(
               'h-7 w-full pl-7 pr-2',
-              'rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)]',
-              'text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]',
+              'rounded-md border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-sidebar-bg)]',
+              'text-xs text-[var(--lanismd-lanismd-editor-text)] outline-none focus:border-[var(--lanismd-lanismd-accent)]',
             )}
           />
         </div>
-        <span className="min-w-[40px] text-center text-[10px] text-[var(--sidebar-text)]">
+        <span className="min-w-[40px] text-center text-[10px] text-[var(--lanismd-lanismd-sidebar-text)]">
           {matchCount > 0 ? `${currentIndex}/${matchCount}` : '0'}
         </span>
         <button
@@ -126,7 +126,7 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
       <div className="mb-2 flex items-center gap-1.5">
         <div className="relative flex-1">
           <RiSearchLine
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--sidebar-text)] opacity-50"
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--lanismd-lanismd-sidebar-text)] opacity-50"
             size={13}
           />
           <input
@@ -137,8 +137,8 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
             placeholder="替换..."
             className={cn(
               'h-7 w-full pl-7 pr-2',
-              'rounded-md border border-[var(--editor-border)] bg-[var(--sidebar-bg)]',
-              'text-xs text-[var(--editor-text)] outline-none focus:border-[var(--accent)]',
+              'rounded-md border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-sidebar-bg)]',
+              'text-xs text-[var(--lanismd-lanismd-editor-text)] outline-none focus:border-[var(--lanismd-lanismd-accent)]',
             )}
           />
         </div>
@@ -146,8 +146,8 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
           onClick={() => onReplace?.(searchText, replaceText)}
           disabled={matchCount === 0}
           className={cn(
-            'h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white',
-            'transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30',
+            'h-7 rounded-md bg-[var(--lanismd-lanismd-accent)] px-2 text-[10px] text-white',
+            'transition-colors hover:bg-[var(--lanismd-lanismd-accent-hover)] disabled:opacity-30',
           )}
         >
           替换
@@ -156,8 +156,8 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
           onClick={() => onReplaceAll?.(searchText, replaceText)}
           disabled={matchCount === 0}
           className={cn(
-            'h-7 rounded-md bg-[var(--accent)] px-2 text-[10px] text-white',
-            'transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-30',
+            'h-7 rounded-md bg-[var(--lanismd-lanismd-accent)] px-2 text-[10px] text-white',
+            'transition-colors hover:bg-[var(--lanismd-lanismd-accent-hover)] disabled:opacity-30',
           )}
         >
           全部
@@ -168,28 +168,28 @@ export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: Sea
         <label
           className={cn(
             'flex cursor-pointer items-center gap-1',
-            'select-none text-[10px] text-[var(--sidebar-text)]',
+            'select-none text-[10px] text-[var(--lanismd-sidebar-text)]',
           )}
         >
           <input
             type="checkbox"
             checked={caseSensitive}
             onChange={(e) => setCaseSensitive(e.target.checked)}
-            className="h-3 w-3 accent-[var(--accent)]"
+            className="h-3 w-3 accent-[var(--lanismd-accent)]"
           />
           区分大小写
         </label>
         <label
           className={cn(
             'flex cursor-pointer items-center gap-1',
-            'select-none text-[10px] text-[var(--sidebar-text)]',
+            'select-none text-[10px] text-[var(--lanismd-sidebar-text)]',
           )}
         >
           <input
             type="checkbox"
             checked={useRegex}
             onChange={(e) => setUseRegex(e.target.checked)}
-            className="h-3 w-3 accent-[var(--accent)]"
+            className="h-3 w-3 accent-[var(--lanismd-accent)]"
           />
           正则
         </label>

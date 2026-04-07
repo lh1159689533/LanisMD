@@ -1,0 +1,52 @@
+/**
+ * LanisMD Editor CSS Variables
+ * 统一管理编辑器样式中的重复值
+ */
+
+:root {
+  /* ========== Border Radius ========== */
+  --lanismd-radius-sm: 4px;
+  --lanismd-radius-md: 6px;
+  --lanismd-radius-lg: 8px;
+  --lanismd-radius-xl: 12px;
+
+  /* ========== Transitions ========== */
+  --lanismd-transition-fast: 0.12s ease;
+  --lanismd-transition-normal: 0.15s ease;
+  --lanismd-transition-medium: 0.2s ease;
+  --lanismd-transition-slow: 0.3s ease;
+
+  /* ========== Spacing ========== */
+  --lanismd-spacing-xs: 2px;
+  --lanismd-spacing-sm: 4px;
+  --lanismd-spacing-md: 8px;
+  --lanismd-spacing-lg: 12px;
+  --lanismd-spacing-xl: 16px;
+  --lanismd-spacing-2xl: 20px;
+  --lanismd-spacing-3xl: 24px;
+
+  /* ========== Font Sizes ========== */
+  --lanismd-font-size-xs: 11px;
+  --lanismd-font-size-sm: 12px;
+  --lanismd-font-size-base: 13px;
+  --lanismd-font-size-md: 14px;
+  --lanismd-font-size-lg: 15px;
+
+  /* ========== Shadows ========== */
+  --lanismd-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --lanismd-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --lanismd-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* ========== Interactive Colors ========== */
+  --lanismd-hover-bg: rgba(37, 99, 235, 0.08);
+  --lanismd-hover-bg-dark: rgba(122, 162, 247, 0.12);
+  --lanismd-selected-bg: rgba(37, 99, 235, 0.06);
+  --lanismd-danger-color: #ef4444;
+  --lanismd-success-color: #22c55e;
+
+  /* ========== Code Font ========== */
+  --lanismd-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+
+  /* ========== Layout ========== */
+  --lanismd-editor-max-width: 800px;
+}

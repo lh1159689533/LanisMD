@@ -172,8 +172,8 @@ function InlineEditInput({
         onBlur={handleBlur}
         className={cn(
           'min-w-0 flex-1 px-1 py-0.5',
-          'rounded border border-[var(--accent)]',
-          'bg-[var(--editor-bg)] text-xs text-[var(--editor-text)] outline-none',
+          'rounded border border-[var(--lanismd-accent)]',
+          'bg-[var(--lanismd-editor-bg)] text-xs text-[var(--lanismd-editor-text)] outline-none',
         )}
         spellCheck={false}
       />
@@ -341,8 +341,8 @@ function FileTreeItem({
           'flex w-full items-center gap-1 truncate rounded-md px-2 py-1',
           'text-left text-xs transition-colors',
           isSelected && !node.isDir
-            ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-            : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5',
+            ? 'bg-[var(--lanismd-accent)]/15 text-[var(--lanismd-accent)]'
+            : 'text-[var(--lanismd-sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5',
         )}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         title={node.path}
@@ -513,7 +513,7 @@ function FileListItem({
     return (
       <div className="px-3 py-2">
         <div className="mb-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-[10px] text-[var(--sidebar-text)] opacity-50">
+          <span className="truncate text-[10px] text-[var(--lanismd-sidebar-text)] opacity-50">
             {entry.relativeDir}
           </span>
         </div>
@@ -534,16 +534,16 @@ function FileListItem({
       className={cn(
         'w-full rounded-md px-3 py-2',
         'text-left transition-colors',
-        isSelected ? 'bg-[var(--accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5',
+        isSelected ? 'bg-[var(--lanismd-accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5',
       )}
       title={entry.path}
     >
       {/* Row 1: folder path + modified time */}
       <div className="mb-0.5 flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] text-[var(--sidebar-text)] opacity-50">
+        <span className="truncate text-[10px] text-[var(--lanismd-sidebar-text)] opacity-50">
           {entry.relativeDir}
         </span>
-        <span className="shrink-0 whitespace-nowrap text-[10px] text-[var(--sidebar-text)] opacity-40">
+        <span className="shrink-0 whitespace-nowrap text-[10px] text-[var(--lanismd-sidebar-text)] opacity-40">
           {timeAgo(entry.modifiedTime)}
         </span>
       </div>
@@ -551,14 +551,16 @@ function FileListItem({
       <div className="leading-tight">
         <span
           className={`text-sm font-semibold ${
-            isSelected ? 'text-[var(--accent)]' : 'text-[var(--sidebar-text)]'
+            isSelected ? 'text-[var(--lanismd-accent)]' : 'text-[var(--lanismd-sidebar-text)]'
           }`}
         >
           {entry.stem}
         </span>
         <span
           className={`text-xs ${
-            isSelected ? 'text-[var(--accent)] opacity-50' : 'text-[var(--sidebar-text)] opacity-40'
+            isSelected
+              ? 'text-[var(--lanismd-accent)] opacity-50'
+              : 'text-[var(--lanismd-sidebar-text)] opacity-40'
           }`}
         >
           {entry.ext}
@@ -1161,16 +1163,16 @@ export function FileTree() {
   if (!rootPath) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-        <RiFolderAddLine size={32} className="text-[var(--sidebar-text)] opacity-40" />
-        <p className="select-none text-center text-xs text-[var(--sidebar-text)] opacity-60">
+        <RiFolderAddLine size={32} className="text-[var(--lanismd-sidebar-text)] opacity-40" />
+        <p className="select-none text-center text-xs text-[var(--lanismd-sidebar-text)] opacity-60">
           打开文件夹以浏览 Markdown 文件
         </p>
         <button
           onClick={handleOpenFolder}
           className={cn(
             'flex select-none items-center gap-1.5 px-3 py-1.5',
-            'rounded-md border border-[var(--editor-border)]',
-            'text-xs text-[var(--sidebar-text)]',
+            'rounded-md border border-[var(--lanismd-editor-border)]',
+            'text-xs text-[var(--lanismd-sidebar-text)]',
             'transition-colors hover:bg-black/5 dark:hover:bg-white/5',
           )}
         >
@@ -1192,10 +1194,10 @@ export function FileTree() {
   return (
     <div
       ref={fileTreeRootRef}
-      className="relative flex h-full flex-col text-xs text-[var(--sidebar-text)]"
+      className="relative flex h-full flex-col text-xs text-[var(--lanismd-sidebar-text)]"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--sidebar-border)] px-2 py-1.5">
+      <div className="flex items-center justify-between border-b border-[var(--lanismd-sidebar-border)] px-2 py-1.5">
         <span className="truncate font-medium" title={rootPath}>
           {folderName}
         </span>
@@ -1205,7 +1207,7 @@ export function FileTree() {
             onClick={() => setShowRecentFolders((v) => !v)}
             className={`rounded p-1 transition-colors ${
               showRecentFolders
-                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
                 : 'hover:bg-black/5 dark:hover:bg-white/10'
             }`}
             title="最近打开的文件夹"
@@ -1213,14 +1215,14 @@ export function FileTree() {
             <RiHistoryLine size={13} />
           </button>
 
-          <span className="mx-0.5 h-3 w-px bg-[var(--sidebar-border)]" />
+          <span className="mx-0.5 h-3 w-px bg-[var(--lanismd-sidebar-border)]" />
 
           {/* View mode toggle */}
           <button
             onClick={() => setViewMode('tree')}
             className={`rounded p-1 transition-colors ${
               viewMode === 'tree'
-                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
                 : 'hover:bg-black/5 dark:hover:bg-white/10'
             }`}
             title="树视图"
@@ -1231,7 +1233,7 @@ export function FileTree() {
             onClick={() => setViewMode('list')}
             className={`rounded p-1 transition-colors ${
               viewMode === 'list'
-                ? 'bg-black/10 text-[var(--accent)] dark:bg-white/15'
+                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
                 : 'hover:bg-black/5 dark:hover:bg-white/10'
             }`}
             title="列表视图"
@@ -1239,7 +1241,7 @@ export function FileTree() {
             <RiListUnordered size={13} />
           </button>
 
-          <span className="mx-0.5 h-3 w-px bg-[var(--sidebar-border)]" />
+          <span className="mx-0.5 h-3 w-px bg-[var(--lanismd-sidebar-border)]" />
 
           <button
             onClick={handleOpenFolder}

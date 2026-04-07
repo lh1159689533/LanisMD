@@ -1,11 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { EditorState } from '@codemirror/state';
-import {
-  EditorView,
-  keymap,
-  highlightActiveLine,
-  drawSelection,
-} from '@codemirror/view';
+import { EditorView, keymap, highlightActiveLine, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
@@ -18,16 +13,16 @@ import { useSettingsStore } from '@/stores/settings-store';
 const lightTheme = EditorView.theme(
   {
     '&': {
-      backgroundColor: 'var(--editor-bg)',
-      color: 'var(--editor-text)',
+      backgroundColor: 'var(--lanismd-editor-bg)',
+      color: 'var(--lanismd-editor-text)',
     },
     '.cm-content': {
-      caretColor: 'var(--accent)',
+      caretColor: 'var(--lanismd-accent)',
       fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
       padding: '0',
     },
     '.cm-cursor': {
-      borderLeftColor: 'var(--accent)',
+      borderLeftColor: 'var(--lanismd-accent)',
     },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
       backgroundColor: 'rgba(37, 99, 235, 0.15)',
@@ -36,14 +31,14 @@ const lightTheme = EditorView.theme(
       backgroundColor: 'rgba(0, 0, 0, 0.03)',
     },
     '.cm-gutters': {
-      backgroundColor: 'var(--editor-bg)',
-      color: 'var(--sidebar-text)',
+      backgroundColor: 'var(--lanismd-editor-bg)',
+      color: 'var(--lanismd-sidebar-text)',
       border: 'none',
       paddingRight: '8px',
     },
     '.cm-activeLineGutter': {
       backgroundColor: 'rgba(0, 0, 0, 0.03)',
-      color: 'var(--editor-text)',
+      color: 'var(--lanismd-editor-text)',
     },
     '.cm-lineNumbers .cm-gutterElement': {
       padding: '0 8px 0 16px',
@@ -58,16 +53,16 @@ const lightTheme = EditorView.theme(
 const darkTheme = EditorView.theme(
   {
     '&': {
-      backgroundColor: 'var(--editor-bg)',
-      color: 'var(--editor-text)',
+      backgroundColor: 'var(--lanismd-editor-bg)',
+      color: 'var(--lanismd-editor-text)',
     },
     '.cm-content': {
-      caretColor: 'var(--accent)',
+      caretColor: 'var(--lanismd-accent)',
       fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
       padding: '0',
     },
     '.cm-cursor': {
-      borderLeftColor: 'var(--accent)',
+      borderLeftColor: 'var(--lanismd-accent)',
     },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
       backgroundColor: 'rgba(122, 162, 247, 0.2)',
@@ -76,14 +71,14 @@ const darkTheme = EditorView.theme(
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
     },
     '.cm-gutters': {
-      backgroundColor: 'var(--editor-bg)',
-      color: 'var(--sidebar-text)',
+      backgroundColor: 'var(--lanismd-editor-bg)',
+      color: 'var(--lanismd-sidebar-text)',
       border: 'none',
       paddingRight: '8px',
     },
     '.cm-activeLineGutter': {
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
-      color: 'var(--editor-text)',
+      color: 'var(--lanismd-editor-text)',
     },
     '.cm-lineNumbers .cm-gutterElement': {
       padding: '0 8px 0 16px',
@@ -104,7 +99,6 @@ export function SourceEditor() {
   const updateStats = useEditorStore((s) => s.updateStats);
   const updateCursor = useEditorStore((s) => s.updateCursor);
   const theme = useSettingsStore((s) => s.config.theme);
-
 
   // 判断是否为暗色主题
   const isDark =
@@ -143,8 +137,6 @@ export function SourceEditor() {
       drawSelection(),
       bracketMatching(),
       highlightActiveLine(),
-
-
 
       // 键盘映射
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
@@ -226,7 +218,7 @@ export function SourceEditor() {
     <div
       ref={containerRef}
       className="source-editor-root"
-      style={{ maxWidth: 'var(--editor-max-width, 800px)' }}
+      style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
       spellCheck={false}
       autoCorrect="off"
       autoCapitalize="off"

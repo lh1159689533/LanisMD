@@ -1,0 +1,394 @@
+/**
+ * LanisMD Editor - Image Block Component
+ * 图片块组件样式
+ */
+
+/* ===== Base container ===== */
+.milkdown-image-block {
+  outline: none;
+  margin: var(--lanismd-spacing-lg) 0;
+  display: block;
+  border-radius: var(--lanismd-radius-lg);
+  transition: outline var(--lanismd-transition-normal);
+}
+
+/* ===== Empty state: upload bar ===== */
+.milkdown-image-block > .image-edit {
+  display: flex;
+  align-items: center;
+  padding: var(--lanismd-spacing-lg) var(--lanismd-spacing-xl);
+  gap: var(--lanismd-spacing-lg);
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  height: 48px;
+  transition: all var(--lanismd-transition-normal);
+  cursor: pointer;
+}
+
+.milkdown-image-block > .image-edit:hover {
+  border-color: var(--lanismd-accent);
+  background: rgba(37, 99, 235, 0.03);
+}
+
+.dark .milkdown-image-block > .image-edit:hover {
+  background: var(--lanismd-hover-bg-dark);
+}
+
+/* Image icon in the upload bar */
+.milkdown-image-block > .image-edit .image-icon {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .image-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Link importer area */
+.milkdown-image-block > .image-edit .link-importer {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.milkdown-image-block > .image-edit .link-importer > .link-input-area {
+  width: 100%;
+  line-height: 24px;
+  padding: 0;
+  font-size: var(--lanismd-font-size-base);
+  color: var(--lanismd-editor-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  cursor: text;
+  pointer-events: none;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+  font-size: var(--lanismd-font-size-base);
+  gap: var(--lanismd-spacing-md);
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .uploader {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lanismd-accent);
+  pointer-events: auto;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  transition: opacity var(--lanismd-transition-normal);
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .uploader:hover {
+  opacity: 0.8;
+}
+
+.milkdown-image-block > .image-edit .link-importer.focus .placeholder .uploader {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+}
+
+.milkdown-image-block > .image-edit .link-importer .placeholder .text {
+  margin-left: var(--lanismd-spacing-sm);
+}
+
+/* Confirm button */
+.milkdown-image-block > .image-edit .confirm {
+  background: var(--lanismd-accent);
+  color: #fff;
+  line-height: 32px;
+  padding: 0 var(--lanismd-spacing-xl);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all var(--lanismd-transition-normal);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .confirm:hover {
+  background: var(--lanismd-accent-hover);
+}
+
+/* Delete button for empty state */
+.milkdown-image-block > .image-edit .delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+  transition: all var(--lanismd-transition-normal);
+  flex-shrink: 0;
+}
+
+.milkdown-image-block > .image-edit .delete-btn:hover {
+  opacity: 1;
+  color: var(--lanismd-danger-color);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ===== Image display state ===== */
+.milkdown-image-block > .image-wrapper {
+  position: relative;
+  width: fit-content;
+  min-width: 100px;
+}
+
+/* Alignment */
+.milkdown-image-block > .image-wrapper {
+  margin: 0 auto; /* default: center */
+}
+
+.milkdown-image-block[data-align='left'] > .image-wrapper {
+  margin: 0 auto 0 0;
+}
+
+.milkdown-image-block[data-align='center'] > .image-wrapper {
+  margin: 0 auto;
+}
+
+.milkdown-image-block[data-align='right'] > .image-wrapper {
+  margin: 0 0 0 auto;
+}
+
+.milkdown-image-block > .image-wrapper img {
+  max-width: 100%;
+  min-height: 80px;
+  display: block;
+  object-fit: cover;
+  border-radius: var(--lanismd-radius-lg);
+  transition: outline var(--lanismd-transition-normal);
+  /* Disable macOS/WebKit Live Text (image OCR) to prevent text selection overlay */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ===== Operation buttons (top-right overlay) ===== */
+.milkdown-image-block > .image-wrapper .image-block-toolbar {
+  position: absolute;
+  display: flex;
+  gap: var(--lanismd-spacing-sm);
+  right: var(--lanismd-spacing-md);
+  top: var(--lanismd-spacing-md);
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-medium);
+  z-index: 10;
+  padding: var(--lanismd-spacing-sm);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--lanismd-radius-lg);
+  backdrop-filter: blur(8px);
+}
+
+/* Toolbar visible when image is selected AND toolbar is not hidden */
+.milkdown-image-block.image-selected:not(.toolbar-hidden) > .image-wrapper .image-block-toolbar {
+  opacity: 1;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  padding: var(--lanismd-spacing-sm);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  border: none;
+  transition: all var(--lanismd-transition-normal);
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Active alignment button */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active {
+  background: var(--lanismd-accent);
+  color: #fff;
+}
+
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.active:hover {
+  background: var(--lanismd-accent-hover);
+}
+
+/* Delete button special styling */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-item.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+
+/* Separator in toolbar */
+.milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: var(--lanismd-spacing-sm) var(--lanismd-spacing-xs);
+  flex-shrink: 0;
+}
+
+/* Hide the original operation buttons from the component (if any) */
+.milkdown-image-block > .image-wrapper .operation {
+  position: absolute;
+  display: flex;
+  gap: var(--lanismd-spacing-sm);
+  right: var(--lanismd-spacing-md);
+  top: var(--lanismd-spacing-md);
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-medium);
+  z-index: 10;
+}
+
+.milkdown-image-block:hover > .image-wrapper .operation {
+  opacity: 1;
+}
+
+/* ===== Resize handles (four corners) ===== */
+/* Hide the original bottom resize handle from milkdown */
+.milkdown-image-block > .image-wrapper > .image-resize-handle {
+  display: none !important;
+}
+
+/* Corner resize handles container */
+.milkdown-image-block > .image-wrapper .image-corner-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-medium);
+}
+
+/* Show handles when image block is selected */
+.milkdown-image-block.image-selected > .image-wrapper .image-corner-handles {
+  opacity: 1;
+}
+
+/* Individual corner handle */
+.milkdown-image-block > .image-wrapper .image-corner-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--lanismd-accent);
+  border: 2px solid #fff;
+  border-radius: 3px;
+  pointer-events: auto;
+  box-shadow: var(--lanismd-shadow-sm);
+  transition:
+    transform var(--lanismd-transition-normal),
+    background var(--lanismd-transition-normal);
+}
+
+.milkdown-image-block > .image-wrapper .image-corner-handle:hover {
+  background: var(--accent-hover, var(--lanismd-accent));
+  transform: scale(1.15);
+}
+
+/* Top-left corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='nw'] {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+/* Top-right corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='ne'] {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+/* Bottom-left corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='sw'] {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+/* Bottom-right corner */
+.milkdown-image-block > .image-wrapper .image-corner-handle[data-corner='se'] {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
+/* Selection outline when selected */
+.milkdown-image-block.image-selected > .image-wrapper img {
+  outline: 2px solid var(--lanismd-accent);
+  outline-offset: 2px;
+}
+
+/* ===== Caption input ===== */
+.milkdown-image-block > .caption-input {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: var(--lanismd-spacing-md) auto 0;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  font-size: var(--lanismd-font-size-base);
+  color: var(--lanismd-sidebar-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.milkdown-image-block > .caption-input::placeholder {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+}
+
+.milkdown-image-block > .caption-input:focus {
+  color: var(--lanismd-editor-text);
+}
+
+/* Hidden utility */
+.milkdown-image-block .hidden {
+  display: none !important;
+}
+
+/* Legacy inline images (for backward compat) */
+.milkdown-editor-root .ProseMirror img:not(.milkdown-image-block img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--lanismd-radius-lg);
+  margin: 0.75em 0;
+  cursor: pointer;
+}
+
+.milkdown-editor-root .ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid var(--lanismd-accent);
+  outline-offset: 2px;
+}

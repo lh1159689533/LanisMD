@@ -1,0 +1,35 @@
+/**
+ * LanisMD Editor - Table Base Styles
+ * 表格基础样式
+ */
+
+.milkdown-editor-root .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+  border: 1px solid var(--lanismd-editor-border);
+}
+
+.milkdown-editor-root .ProseMirror table {
+  border: 1px solid var(--lanismd-editor-border);
+  border-color: var(--lanismd-editor-border);
+  border-width: 1px;
+}
+
+.milkdown-editor-root .ProseMirror th {
+  background-color: var(--lanismd-sidebar-bg);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid var(--lanismd-editor-border);
+}
+
+.milkdown-editor-root .ProseMirror td {
+  padding: 10px 14px;
+  border: 1px solid var(--lanismd-editor-border);
+}
+
+.milkdown-editor-root .ProseMirror .selectedCell {
+  background-color: var(--lanismd-hover-bg);
+}

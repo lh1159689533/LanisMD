@@ -1,0 +1,96 @@
+/**
+ * LanisMD Editor - Slash Command Menu
+ * 斜杠命令菜单样式
+ */
+
+.milkdown-slash {
+  display: none;
+  position: absolute;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  padding: var(--lanismd-spacing-sm);
+  min-width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+/* SlashProvider 通过 data-show 属性控制显示/隐藏 */
+.milkdown-slash[data-show='true'] {
+  display: block;
+}
+
+.dark .milkdown-slash {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar */
+.milkdown-slash::-webkit-scrollbar {
+  width: 4px;
+}
+
+.milkdown-slash::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.milkdown-slash::-webkit-scrollbar-thumb {
+  background: var(--lanismd-editor-border);
+  border-radius: 2px;
+}
+
+.milkdown-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-lg);
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  font-size: var(--lanismd-font-size-md);
+  color: var(--lanismd-editor-text);
+  transition: background-color var(--lanismd-transition-normal);
+  user-select: none;
+}
+
+.milkdown-slash-item:hover,
+.milkdown-slash-item[data-active='true'] {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.milkdown-slash-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-md);
+  background: var(--lanismd-selected-bg);
+  color: var(--lanismd-accent);
+  flex-shrink: 0;
+}
+
+.dark .milkdown-slash-icon {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.milkdown-slash-label {
+  flex: 1;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+}
+
+.milkdown-slash-shortcut {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  font-family: var(--lanismd-font-mono);
+}
+
+.milkdown-slash-empty {
+  padding: var(--lanismd-spacing-lg) var(--lanismd-spacing-xl);
+  font-size: var(--lanismd-font-size-base);
+  color: var(--lanismd-sidebar-text);
+  text-align: center;
+  opacity: 0.6;
+}

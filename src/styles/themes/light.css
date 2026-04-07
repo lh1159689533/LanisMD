@@ -1,0 +1,25 @@
+/**
+ * LanisMD Light Theme
+ * 浅色主题变量定义
+ */
+
+:root,
+.light {
+  /* ========== Editor ========== */
+  --lanismd-editor-bg: #ffffff;
+  --lanismd-editor-text: #1e293b;
+  --lanismd-editor-border: #e2e8f0;
+
+  /* ========== Sidebar ========== */
+  --lanismd-sidebar-bg: #f8fafc;
+  --lanismd-sidebar-text: #475569;
+  --lanismd-sidebar-border: #e2e8f0;
+
+  /* ========== Titlebar ========== */
+  --lanismd-titlebar-bg: #f8fafc;
+  --lanismd-titlebar-text: #1e293b;
+
+  /* ========== Accent ========== */
+  --lanismd-accent: #2563eb;
+  --lanismd-accent-hover: #1d4ed8;
+}

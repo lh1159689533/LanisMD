@@ -1,0 +1,393 @@
+/**
+ * LanisMD Editor - Code Block Component
+ * 代码块组件样式 (Milkdown + CodeMirror 6)
+ */
+
+/* ===== Container ===== */
+.milkdown-editor-root .ProseMirror [data-type='code_block'],
+.milkdown-editor-root .ProseMirror code-block {
+  position: relative;
+  display: block;
+  margin: 1em 0;
+  border-radius: var(--lanismd-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--lanismd-editor-border);
+  transition: border-color var(--lanismd-transition-normal);
+  background: #f6f8fa;
+}
+
+.dark .milkdown-editor-root .ProseMirror [data-type='code_block'],
+.dark .milkdown-editor-root .ProseMirror code-block {
+  background: #1a1b26;
+}
+
+.milkdown-editor-root .ProseMirror [data-type='code_block']:hover,
+.milkdown-editor-root .ProseMirror code-block:hover {
+  border-color: var(--lanismd-accent);
+}
+
+/* ===== Toolbar: language selector + copy button ===== */
+.milkdown-editor-root .tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--lanismd-spacing-lg);
+  background: #f0f2f5;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  min-height: 36px;
+}
+
+.dark .milkdown-editor-root .tools {
+  background: #16171f;
+}
+
+/* ===== Language selector button ===== */
+.milkdown-editor-root .language-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  cursor: pointer;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-radius: var(--lanismd-radius-sm);
+  transition: all var(--lanismd-transition-normal);
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.milkdown-editor-root .language-button:hover {
+  color: var(--lanismd-editor-text);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dark .milkdown-editor-root .language-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Expand icon in language button */
+.milkdown-editor-root .expand-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Language picker dropdown ===== */
+.milkdown-editor-root .language-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  min-width: 200px;
+  max-width: 280px;
+  background: var(--lanismd-editor-bg);
+  border: none;
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  margin-top: var(--lanismd-spacing-sm);
+}
+
+.dark .milkdown-editor-root .language-picker {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* List wrapper in picker */
+.milkdown-editor-root .language-picker .list-wrapper {
+  border-radius: var(--lanismd-radius-lg);
+}
+
+.milkdown-editor-root .language-picker .list-wrapper ul.language-list {
+  padding-left: 0;
+  overflow: auto;
+  max-height: 300px;
+}
+
+/* ===== Search box in language picker ===== */
+.milkdown-editor-root .search-box {
+  position: sticky;
+  top: 0;
+  background: var(--lanismd-editor-bg);
+  padding: var(--lanismd-spacing-md);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-md);
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  border-top-left-radius: var(--lanismd-radius-lg);
+  border-top-right-radius: var(--lanismd-radius-lg);
+}
+
+.milkdown-editor-root .search-icon {
+  display: flex;
+  align-items: center;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.milkdown-editor-root .search-input {
+  flex: 1;
+  padding: 6px var(--lanismd-spacing-md);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  outline: none;
+  transition: border-color var(--lanismd-transition-normal);
+  font-family: inherit;
+}
+
+.milkdown-editor-root .search-input:focus {
+  border-color: var(--lanismd-accent);
+}
+
+.milkdown-editor-root .search-input::placeholder {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+}
+
+.milkdown-editor-root .clear-icon {
+  display: flex;
+  align-items: center;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-sm);
+  transition: all var(--lanismd-transition-normal);
+  flex-shrink: 0;
+}
+
+.milkdown-editor-root .clear-icon:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.dark .milkdown-editor-root .clear-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.milkdown-editor-root .clear-icon.hidden {
+  display: none;
+}
+
+/* ===== Language list ===== */
+.milkdown-editor-root .language-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--lanismd-spacing-sm);
+}
+
+.milkdown-editor-root .language-list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-lg);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  transition: background var(--lanismd-transition-fast);
+  user-select: none;
+}
+
+.milkdown-editor-root .language-list-item:hover {
+  background: var(--lanismd-hover-bg);
+}
+
+.milkdown-editor-root .language-list-item[aria-selected='true'] {
+  color: var(--lanismd-accent);
+  font-weight: 500;
+  background: var(--lanismd-selected-bg);
+}
+
+.milkdown-editor-root .language-list-item.no-result {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.milkdown-editor-root .language-list-item.no-result:hover {
+  background: transparent;
+}
+
+/* ===== Tools button group (copy button container) ===== */
+.milkdown-editor-root .tools-button-group {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+}
+
+/* ===== Copy button ===== */
+.milkdown-editor-root .copy-button {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) 10px;
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--lanismd-radius-sm);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.milkdown-editor-root .copy-button:hover {
+  color: var(--lanismd-accent);
+  background: var(--lanismd-hover-bg);
+}
+
+/* Copy button success state */
+.milkdown-editor-root .copy-button.copied {
+  color: var(--lanismd-success-color);
+}
+
+.milkdown-editor-root .copy-button.copied:hover {
+  color: var(--lanismd-success-color);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+/* ===== Milkdown icon styling ===== */
+.milkdown-editor-root .milkdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milkdown-editor-root .milkdown-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== CodeMirror host container ===== */
+.milkdown-editor-root .codemirror-host {
+  background: #f6f8fa;
+}
+
+.dark .milkdown-editor-root .codemirror-host {
+  background: #1a1b26;
+}
+
+.milkdown-editor-root .codemirror-host.hidden {
+  display: none;
+}
+
+/* ===== Preview panel ===== */
+.milkdown-editor-root .preview-panel {
+  padding: var(--lanismd-spacing-lg) var(--lanismd-spacing-xl);
+  border-top: 1px solid var(--lanismd-editor-border);
+  background: var(--lanismd-editor-bg);
+}
+
+.milkdown-editor-root .preview-divider {
+  height: 1px;
+  background: var(--lanismd-editor-border);
+  margin-bottom: var(--lanismd-spacing-md);
+}
+
+.milkdown-editor-root .preview-label {
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  margin-bottom: var(--lanismd-spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.milkdown-editor-root .preview-toggle-button {
+  padding: var(--lanismd-spacing-sm) 10px;
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--lanismd-radius-sm);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  font-family: inherit;
+}
+
+.milkdown-editor-root .preview-toggle-button:hover {
+  color: var(--lanismd-accent);
+  background: var(--lanismd-hover-bg);
+}
+
+/* ===== CodeMirror editor overrides ===== */
+.milkdown-editor-root .cm-editor {
+  font-family: var(--lanismd-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.milkdown-editor-root .cm-editor.cm-focused {
+  outline: none;
+}
+
+.milkdown-editor-root .cm-scroller {
+  overflow-x: auto;
+  padding: var(--lanismd-spacing-lg) 0;
+}
+
+.milkdown-editor-root .cm-content {
+  padding: 0 var(--lanismd-spacing-xl);
+}
+
+.milkdown-editor-root .cm-gutters {
+  padding-left: var(--lanismd-spacing-md);
+}
+
+/* Hide line numbers when setting is off */
+.milkdown-editor-root[data-show-line-numbers='false'] .cm-gutters {
+  display: none !important;
+}
+
+.milkdown-editor-root .cm-lineNumbers .cm-gutterElement {
+  padding: 0 var(--lanismd-spacing-md) 0 0;
+  min-width: 32px;
+  font-size: 0.75rem;
+}
+
+/* Scrollbar inside CodeMirror */
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar {
+  height: 4px;
+}
+
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.milkdown-editor-root .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--lanismd-editor-border);
+  border-radius: 2px;
+}
+
+/* ===== Fallback: ProseMirror pre/code blocks (compatibility) ===== */
+.milkdown-editor-root .ProseMirror pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: var(--lanismd-radius-lg);
+  padding: var(--lanismd-spacing-xl) var(--lanismd-spacing-2xl);
+  margin: 1em 0;
+  overflow-x: auto;
+  font-family: var(--lanismd-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.dark .milkdown-editor-root .ProseMirror pre {
+  background-color: #0f172a;
+}
+
+.milkdown-editor-root .ProseMirror pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}

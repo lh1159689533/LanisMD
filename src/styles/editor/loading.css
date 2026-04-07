@@ -1,0 +1,169 @@
+/**
+ * LanisMD Editor - Loading States
+ * 加载状态和骨架屏样式
+ */
+
+/* ===== Image Upload Loading Placeholder ===== */
+.image-loading-placeholder {
+  margin: var(--lanismd-spacing-lg) 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+.image-loading-skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-lg);
+  padding: var(--lanismd-spacing-2xl) var(--lanismd-spacing-3xl);
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer / pulse animation */
+.image-loading-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(37, 99, 235, 0.04) 40%,
+    var(--lanismd-hover-bg) 50%,
+    rgba(37, 99, 235, 0.04) 60%,
+    transparent 100%
+  );
+  animation: imageLoadingShimmer 1.8s ease-in-out infinite;
+}
+
+.dark .image-loading-skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(122, 162, 247, 0.04) 40%,
+    var(--lanismd-hover-bg-dark) 50%,
+    rgba(122, 162, 247, 0.04) 60%,
+    transparent 100%
+  );
+}
+
+@keyframes imageLoadingShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.image-loading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lanismd-radius-lg);
+  background: var(--lanismd-selected-bg);
+  color: var(--lanismd-accent);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.dark .image-loading-icon {
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.image-loading-text {
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.image-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--lanismd-editor-border);
+  border-top-color: var(--lanismd-accent);
+  border-radius: 50%;
+  animation: imageLoadingSpin 0.8s linear infinite;
+  flex-shrink: 0;
+  margin-left: auto;
+  z-index: 1;
+}
+
+@keyframes imageLoadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Image Block Upload Loading Overlay ===== */
+/* Shown over the image-block upload bar while file is being saved to assets */
+.image-block-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  overflow: hidden;
+}
+
+/* Shimmer animation for overlay */
+.image-block-loading-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(37, 99, 235, 0.04) 40%,
+    var(--lanismd-hover-bg) 50%,
+    rgba(37, 99, 235, 0.04) 60%,
+    transparent 100%
+  );
+  animation: imageLoadingShimmer 1.8s ease-in-out infinite;
+}
+
+.dark .image-block-loading-overlay::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(122, 162, 247, 0.04) 40%,
+    var(--lanismd-hover-bg-dark) 50%,
+    rgba(122, 162, 247, 0.04) 60%,
+    transparent 100%
+  );
+}
+
+.image-block-loading-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+}
+
+.image-block-loading-content span {
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.7;
+}
+
+.image-block-loading-content .image-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--lanismd-editor-border);
+  border-top-color: var(--lanismd-accent);
+  border-radius: 50%;
+  animation: imageLoadingSpin 0.8s linear infinite;
+  flex-shrink: 0;
+  margin-left: 0;
+}

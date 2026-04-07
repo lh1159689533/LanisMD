@@ -117,8 +117,8 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
     <div
       className={cn(
         'flex h-9 shrink-0 items-center px-3',
-        'select-none border-b border-[var(--editor-border)]',
-        'bg-[var(--titlebar-bg)] text-[var(--titlebar-text)]',
+        'select-none border-b border-[var(--lanismd-editor-border)]',
+        'bg-[var(--lanismd-titlebar-bg)] text-[var(--lanismd-titlebar-text)]',
       )}
       data-tauri-drag-region
       onDoubleClick={handleDoubleClick}

@@ -1,0 +1,12 @@
+/**
+ * LanisMD Editor - Blockquote
+ * 引用块样式
+ */
+
+.milkdown-editor-root .ProseMirror blockquote {
+  border-left: 4px solid var(--lanismd-accent);
+  padding-left: var(--lanismd-spacing-xl);
+  margin: 1em 0;
+  color: var(--lanismd-sidebar-text);
+  font-style: italic;
+}

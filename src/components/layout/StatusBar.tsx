@@ -34,8 +34,8 @@ export function StatusBar() {
     <div
       className={cn(
         'flex h-6 shrink-0 select-none items-center justify-between',
-        'border-t border-[var(--editor-border)]',
-        'bg-[var(--titlebar-bg)] px-3 text-[11px] text-[var(--sidebar-text)]',
+        'border-t border-[var(--lanismd-editor-border)]',
+        'bg-[var(--lanismd-titlebar-bg)] px-3 text-[11px] text-[var(--lanismd-sidebar-text)]',
       )}
     >
       <div className="flex items-center gap-3">
@@ -55,7 +55,9 @@ export function StatusBar() {
           <>
             <button
               onClick={toggleMode}
-              className={cn('flex items-center gap-1 transition-colors hover:text-[var(--accent)]')}
+              className={cn(
+                'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+              )}
               title={mode === 'wysiwyg' ? '切换到源码模式' : '切换到预览模式'}
             >
               {mode === 'wysiwyg' ? (
@@ -78,7 +80,7 @@ export function StatusBar() {
         )}
         <button
           onClick={toggleTheme}
-          className="flex items-center gap-1 transition-colors hover:text-[var(--accent)]"
+          className="flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]"
           title={`Theme: ${config.theme}`}
         >
           {themeIcon}

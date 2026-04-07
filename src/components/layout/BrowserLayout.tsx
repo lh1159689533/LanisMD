@@ -15,7 +15,7 @@ export function BrowserLayout() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <div className="editor-container flex min-w-0 flex-1 flex-col">
-        <div className="editor-content min-h-0 flex-1 overflow-auto bg-[var(--editor-bg)]">
+        <div className="editor-content min-h-0 flex-1 overflow-auto bg-[var(--lanismd-editor-bg)]">
           {currentFile ? (
             <EditorCore />
           ) : (

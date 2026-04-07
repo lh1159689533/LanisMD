@@ -1,0 +1,116 @@
+/**
+ * LanisMD Editor - Block Handle
+ * 块拖拽手柄样式
+ */
+
+/* ===== Block Handle ===== */
+.milkdown-block-handle {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-normal);
+  pointer-events: auto;
+  z-index: 40;
+}
+
+/* Show handle when hovering over the editor area */
+.editor-wrapper:hover .milkdown-block-handle {
+  opacity: 0.4;
+}
+
+.editor-wrapper:hover .milkdown-block-handle:hover,
+.milkdown-block-handle.active {
+  opacity: 1;
+}
+
+.milkdown-block-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: var(--lanismd-radius-sm);
+  cursor: pointer;
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-normal);
+  padding: 0;
+}
+
+.milkdown-block-btn:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.milkdown-block-add:hover {
+  color: var(--lanismd-accent);
+}
+
+.milkdown-block-drag {
+  cursor: grab;
+}
+
+.milkdown-block-drag:active {
+  cursor: grabbing;
+}
+
+.milkdown-block-handle.dragging .milkdown-block-drag {
+  cursor: grabbing;
+  color: var(--lanismd-accent);
+}
+
+/* Block dragging visual feedback */
+.milkdown-block-dragging {
+  opacity: 0.4;
+  outline: 2px dashed var(--lanismd-accent);
+  outline-offset: 2px;
+  border-radius: var(--lanismd-radius-sm);
+  transition: opacity var(--lanismd-transition-normal);
+}
+
+/* ProseMirror 内置拖拽时编辑器光标指示 */
+.ProseMirror[data-dragging='true'] {
+  cursor: grabbing;
+}
+
+/* ProseMirror drop cursor（内置放置指示线） */
+.ProseMirror .ProseMirror-dropcursor {
+  height: 2px !important;
+  background: var(--lanismd-accent) !important;
+  border-radius: 1px;
+  display: block;
+}
+
+/* Drop indicator line（自定义蓝色指示线） */
+.milkdown-drop-indicator {
+  position: fixed;
+  height: 2px;
+  background: var(--lanismd-accent);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+  transition: top 0.1s ease;
+}
+
+.milkdown-drop-indicator::before,
+.milkdown-drop-indicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--lanismd-accent);
+  border-radius: 50%;
+}
+
+.milkdown-drop-indicator::before {
+  left: -3px;
+}
+
+.milkdown-drop-indicator::after {
+  right: -3px;
+}

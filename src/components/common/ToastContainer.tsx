@@ -52,7 +52,7 @@ function ToastItem({
     <div
       className={cn(
         'flex items-center gap-2 rounded-lg',
-        'border border-[var(--editor-border)]',
+        'border border-[var(--lanismd-editor-border)]',
         'bg-white px-3 py-2 text-xs shadow-lg dark:bg-[#1f2335]',
         'animate-in slide-in-from-top-2',
       )}
@@ -62,7 +62,7 @@ function ToastItem({
       >
         <Icon size={12} />
       </span>
-      <span className="flex-1 text-[var(--editor-text)]">{message}</span>
+      <span className="flex-1 text-[var(--lanismd-editor-text)]">{message}</span>
       <button
         onClick={() => removeToast(id)}
         className="rounded p-0.5 transition-colors hover:bg-black/5 dark:hover:bg-white/10"

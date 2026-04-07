@@ -11,14 +11,14 @@ export function MainLayout() {
     <div className="flex min-h-0 flex-1">
       <Sidebar />
       <div className="editor-container flex min-w-0 flex-1 flex-col">
-        <div className="editor-content min-h-0 flex-1 overflow-auto bg-[var(--editor-bg)]">
+        <div className="editor-content min-h-0 flex-1 overflow-auto bg-[var(--lanismd-editor-bg)]">
           {currentFile ? (
             <EditorCore />
           ) : (
             <div
               className={cn(
                 'flex h-full select-none items-center justify-center',
-                'text-sm text-[var(--sidebar-text)] opacity-40',
+                'text-sm text-[var(--lanismd-sidebar-text)] opacity-40',
               )}
             >
               没有打开的文件

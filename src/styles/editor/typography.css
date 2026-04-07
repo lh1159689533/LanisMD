@@ -1,0 +1,90 @@
+/**
+ * LanisMD Editor - Typography
+ * 标题、段落、链接、文字格式样式
+ */
+
+/* ===== Headings ===== */
+.milkdown-editor-root .ProseMirror h1,
+.milkdown-editor-root .ProseMirror h2,
+.milkdown-editor-root .ProseMirror h3,
+.milkdown-editor-root .ProseMirror h4,
+.milkdown-editor-root .ProseMirror h5,
+.milkdown-editor-root .ProseMirror h6 {
+  color: var(--lanismd-editor-text);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.milkdown-editor-root .ProseMirror h1 {
+  font-size: 1.875rem;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+}
+
+.milkdown-editor-root .ProseMirror h2 {
+  font-size: 1.5rem;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+}
+
+.milkdown-editor-root .ProseMirror h3 {
+  font-size: 1.25rem;
+}
+
+.milkdown-editor-root .ProseMirror h4 {
+  font-size: 1.125rem;
+}
+
+/* ===== Paragraph ===== */
+.milkdown-editor-root .ProseMirror p {
+  margin-bottom: 0.75em;
+}
+
+/* ===== Links ===== */
+.milkdown-editor-root .ProseMirror a {
+  color: var(--lanismd-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.milkdown-editor-root .ProseMirror a:hover {
+  color: var(--lanismd-accent-hover);
+}
+
+/* ===== Bold & Italic ===== */
+.milkdown-editor-root .ProseMirror strong {
+  font-weight: 600;
+}
+
+.milkdown-editor-root .ProseMirror em {
+  font-style: italic;
+}
+
+.milkdown-editor-root .ProseMirror del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* ===== Inline Code ===== */
+.milkdown-editor-root .ProseMirror code {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--lanismd-accent);
+  padding: 0.15em 0.4em;
+  border-radius: var(--lanismd-radius-sm);
+  font-family: var(--lanismd-font-mono);
+  font-size: 0.875em;
+}
+
+.dark .milkdown-editor-root .ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== Horizontal Rule ===== */
+.milkdown-editor-root .ProseMirror hr {
+  border: none;
+  border-top: 2px solid var(--lanismd-editor-border);
+  margin: 2em 0;
+}

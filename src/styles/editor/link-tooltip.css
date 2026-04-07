@@ -1,0 +1,60 @@
+/**
+ * LanisMD Editor - Link Hover Tooltip
+ * 链接悬浮提示样式
+ */
+
+.milkdown-link-tooltip {
+  /* display is controlled by JS (none / flex) */
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  padding: var(--lanismd-spacing-sm) 6px;
+  animation: linkTooltipIn var(--lanismd-transition-fast);
+}
+
+.dark .milkdown-link-tooltip {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes linkTooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.milkdown-link-tooltip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  color: var(--lanismd-editor-text);
+  transition: all var(--lanismd-transition-normal);
+  flex-shrink: 0;
+}
+
+.milkdown-link-tooltip-btn:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-accent);
+}
+
+.milkdown-link-tooltip-btn.copied {
+  color: var(--lanismd-success-color);
+}
+
+.milkdown-link-tooltip-btn.copied:hover {
+  color: var(--lanismd-success-color);
+  background-color: rgba(34, 197, 94, 0.08);
+}

@@ -1,0 +1,125 @@
+/**
+ * LanisMD Editor - Source Editor (CodeMirror)
+ * 源码编辑器样式
+ */
+
+.source-editor-root {
+  min-height: 100%;
+  outline: none;
+}
+
+.source-editor-root .cm-editor {
+  height: 100%;
+  min-height: calc(100vh - 200px);
+  outline: none;
+}
+
+.source-editor-root .cm-editor.cm-focused {
+  outline: none;
+}
+
+.source-editor-root .cm-scroller {
+  overflow: auto;
+  font-family: var(--lanismd-font-mono);
+  font-size: var(--lanismd-font-size-lg);
+  line-height: 1.75;
+}
+
+.source-editor-root .cm-content {
+  padding: var(--lanismd-spacing-sm) 0;
+}
+
+.source-editor-root .cm-line {
+  padding: 0;
+}
+
+/* ===== Markdown syntax highlighting enhancements ===== */
+.source-editor-root .cm-header {
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.source-editor-root .cm-header-1 {
+  font-size: 1.5em;
+}
+
+.source-editor-root .cm-header-2 {
+  font-size: 1.3em;
+}
+
+.source-editor-root .cm-header-3 {
+  font-size: 1.15em;
+}
+
+.source-editor-root .cm-strong {
+  font-weight: 600;
+}
+
+.source-editor-root .cm-emphasis {
+  font-style: italic;
+}
+
+.source-editor-root .cm-strikethrough {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.source-editor-root .cm-link {
+  color: var(--lanismd-accent);
+  text-decoration: underline;
+}
+
+.source-editor-root .cm-url {
+  color: var(--lanismd-accent);
+  opacity: 0.7;
+}
+
+.source-editor-root .cm-quote {
+  color: var(--lanismd-sidebar-text);
+  font-style: italic;
+}
+
+.source-editor-root .cm-list {
+  color: var(--lanismd-accent);
+}
+
+.source-editor-root .cm-hr {
+  color: var(--lanismd-editor-border);
+}
+
+/* ===== Inline code ===== */
+.source-editor-root .cm-inlineCode {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--lanismd-accent);
+  padding: 0.1em 0.3em;
+  border-radius: var(--lanismd-radius-sm);
+  font-family: var(--lanismd-font-mono);
+}
+
+.dark .source-editor-root .cm-inlineCode {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== Code block fence ===== */
+.source-editor-root .cm-codeFence {
+  color: var(--lanismd-sidebar-text);
+}
+
+/* ===== Scrollbar ===== */
+.source-editor-root .cm-scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--lanismd-editor-border);
+  border-radius: 3px;
+}
+
+.source-editor-root .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--lanismd-sidebar-text);
+}

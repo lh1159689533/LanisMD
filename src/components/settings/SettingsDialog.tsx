@@ -24,7 +24,7 @@ export function SettingsDialog() {
         )}
       >
         {/* Navigation */}
-        <div className="w-40 border-r border-[var(--editor-border)] bg-slate-50 p-3 dark:bg-[#1a1b26]">
+        <div className="w-40 border-r border-[var(--lanismd-editor-border)] bg-slate-50 p-3 dark:bg-[#1a1b26]">
           <h2 className="mb-3 px-2 text-sm font-semibold">设置</h2>
           <nav className="flex flex-col gap-0.5">
             {SECTIONS.map((section) => (
@@ -34,7 +34,7 @@ export function SettingsDialog() {
                 className={cn(
                   'rounded-md px-2 py-1.5 text-left text-xs transition-colors',
                   settingsActiveSection === section.id
-                    ? 'bg-[var(--accent)] text-white'
+                    ? 'bg-[var(--lanismd-accent)] text-white'
                     : 'hover:bg-black/5 dark:hover:bg-white/5',
                 )}
               >
@@ -60,11 +60,11 @@ export function SettingsDialog() {
 
           {settingsActiveSection === 'general' && (
             <div className="space-y-4 text-xs">
-              <div className="text-[var(--sidebar-text)]">
+              <div className="text-[var(--lanismd-sidebar-text)]">
                 <p>自动保存始终开启。停止编辑 1 秒后将自动保存更改。</p>
               </div>
               <div className="flex items-center justify-between">
-                <label className="text-[var(--sidebar-text)]">
+                <label className="text-[var(--lanismd-sidebar-text)]">
                   点击外部区域关闭"最近文件夹"面板
                 </label>
                 <button
@@ -76,7 +76,7 @@ export function SettingsDialog() {
                   }
                   className={`relative h-5 w-9 rounded-full transition-colors ${
                     config.recentFolders?.closeOnClickOutside !== false
-                      ? 'bg-[var(--accent)]'
+                      ? 'bg-[var(--lanismd-accent)]'
                       : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
@@ -102,8 +102,8 @@ export function SettingsDialog() {
                     onClick={() => setConfig('theme', theme)}
                     className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors ${
                       config.theme === theme
-                        ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
-                        : 'hover:border-[var(--accent)]/50 border-[var(--editor-border)]'
+                        ? 'bg-[var(--lanismd-accent)]/10 border-[var(--lanismd-accent)] text-[var(--lanismd-accent)]'
+                        : 'hover:border-[var(--lanismd-accent)]/50 border-[var(--lanismd-editor-border)]'
                     }`}
                   >
                     {theme === 'light' && <RiSunLine size={13} />}
@@ -133,12 +133,12 @@ export function SettingsDialog() {
               </div>
 
               {/* Code Block Settings */}
-              <div className="mt-2 border-t border-[var(--editor-border)] pt-3">
-                <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-[var(--sidebar-text)]">
+              <div className="mt-2 border-t border-[var(--lanismd-editor-border)] pt-3">
+                <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-[var(--lanismd-sidebar-text)]">
                   代码块
                 </label>
                 <div className="flex items-center justify-between">
-                  <label className="text-[var(--sidebar-text)]">显示行号</label>
+                  <label className="text-[var(--lanismd-sidebar-text)]">显示行号</label>
                   <button
                     onClick={() =>
                       setNestedConfig(
@@ -148,7 +148,7 @@ export function SettingsDialog() {
                     }
                     className={`relative h-5 w-9 rounded-full transition-colors ${
                       config.editor.codeBlock?.showLineNumbers !== false
-                        ? 'bg-[var(--accent)]'
+                        ? 'bg-[var(--lanismd-accent)]'
                         : 'bg-gray-300 dark:bg-gray-600'
                     }`}
                   >
@@ -166,7 +166,7 @@ export function SettingsDialog() {
           )}
 
           {settingsActiveSection === 'shortcuts' && (
-            <div className="text-xs text-[var(--sidebar-text)]">
+            <div className="text-xs text-[var(--lanismd-sidebar-text)]">
               <p>快捷键设置将在后续版本中提供。</p>
             </div>
           )}

@@ -28,22 +28,22 @@ export default {
       },
       colors: {
         editor: {
-          bg: 'var(--editor-bg)',
-          text: 'var(--editor-text)',
-          border: 'var(--editor-border)',
+          bg: 'var(--lanismd-editor-bg)',
+          text: 'var(--lanismd-editor-text)',
+          border: 'var(--lanismd-editor-border)',
         },
         sidebar: {
-          bg: 'var(--sidebar-bg)',
-          text: 'var(--sidebar-text)',
-          border: 'var(--sidebar-border)',
+          bg: 'var(--lanismd-sidebar-bg)',
+          text: 'var(--lanismd-sidebar-text)',
+          border: 'var(--lanismd-sidebar-border)',
         },
         titlebar: {
-          bg: 'var(--titlebar-bg)',
-          text: 'var(--titlebar-text)',
+          bg: 'var(--lanismd-titlebar-bg)',
+          text: 'var(--lanismd-titlebar-text)',
         },
       },
       maxWidth: {
-        editor: 'var(--editor-max-width, 800px)',
+        editor: 'var(--lanismd-editor-max-width, 800px)',
       },
     },
   },

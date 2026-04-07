@@ -1,0 +1,55 @@
+/**
+ * LanisMD Editor - Math & Mermaid
+ * 数学公式和 Mermaid 图表样式
+ */
+
+/* ===== KaTeX Math Styles ===== */
+.milkdown-editor-root .katex-display {
+  margin: 1em 0;
+  padding: var(--lanismd-spacing-lg) 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.milkdown-editor-root .katex {
+  font-size: 1.05em;
+}
+
+.milkdown-editor-root .math-inline {
+  display: inline;
+}
+
+.milkdown-editor-root .math-block {
+  display: block;
+  text-align: center;
+  padding: var(--lanismd-spacing-md) 0;
+  margin: 0.75em 0;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--lanismd-radius-sm);
+}
+
+.dark .milkdown-editor-root .math-block {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ===== Mermaid Diagram Styles ===== */
+.milkdown-editor-root .mermaid-container {
+  margin: 1em 0;
+  padding: var(--lanismd-spacing-xl);
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  text-align: center;
+  overflow-x: auto;
+}
+
+.milkdown-editor-root .mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== Math delimiter highlighting in source mode ===== */
+.milkdown-editor-root .math-delimiter {
+  color: var(--lanismd-accent);
+  opacity: 0.7;
+}

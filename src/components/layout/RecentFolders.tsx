@@ -86,16 +86,18 @@ export function RecentFoldersPanel({
         <div
           className={cn(
             'flex shrink-0 items-center justify-between',
-            'border-b border-[var(--sidebar-border)] px-3 py-1.5',
+            'border-b border-[var(--lanismd-sidebar-border)] px-3 py-1.5',
           )}
         >
-          <span className="text-xs font-medium text-[var(--sidebar-text)]">最近打开的文件夹</span>
+          <span className="text-xs font-medium text-[var(--lanismd-sidebar-text)]">
+            最近打开的文件夹
+          </span>
           <button
             onClick={onClose}
             className="rounded p-0.5 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
             title="关闭"
           >
-            <RiCloseLine size={14} className="text-[var(--sidebar-text)] opacity-60" />
+            <RiCloseLine size={14} className="text-[var(--lanismd-sidebar-text)] opacity-60" />
           </button>
         </div>
 
@@ -103,7 +105,7 @@ export function RecentFoldersPanel({
         <div className="flex-1 overflow-auto py-1">
           {recentFolders.length === 0 ? (
             <div className="px-3 py-4 text-center">
-              <span className="text-[10px] text-[var(--sidebar-text)] opacity-50">
+              <span className="text-[10px] text-[var(--lanismd-sidebar-text)] opacity-50">
                 暂无最近打开的文件夹
               </span>
             </div>
@@ -118,8 +120,8 @@ export function RecentFoldersPanel({
                     'flex w-full items-center gap-2 px-3 py-1.5',
                     'truncate text-left text-xs transition-colors',
                     isCurrent
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                      : 'text-[var(--sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10',
+                      ? 'bg-[var(--lanismd-accent)]/10 text-[var(--lanismd-accent)]'
+                      : 'text-[var(--lanismd-sidebar-text)] hover:bg-black/5 dark:hover:bg-white/10',
                   )}
                   title={folder.path}
                 >
@@ -127,7 +129,7 @@ export function RecentFoldersPanel({
                     size={14}
                     className={cn(
                       'shrink-0',
-                      isCurrent ? 'text-[var(--accent)]' : 'text-amber-500',
+                      isCurrent ? 'text-[var(--lanismd-accent)]' : 'text-amber-500',
                     )}
                   />
                   <span className="truncate">{folder.name}</span>

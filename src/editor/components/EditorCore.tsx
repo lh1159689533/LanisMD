@@ -3,18 +3,18 @@ import { useEditor } from '../hooks/use-editor';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { SourceEditor } from './SourceEditor';
-import '@/styles/editor.css';
+import '@/styles/editor/index.css';
 
 export function EditorCore() {
   const { rootRef } = useEditor();
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // 获取当前编辑模式
   const mode = useEditorStore((s) => s.mode);
-  
+
   // 监听代码块设置变化
   const showLineNumbers = useSettingsStore(
-    (s) => s.config.editor.codeBlock?.showLineNumbers !== false
+    (s) => s.config.editor.codeBlock?.showLineNumbers !== false,
   );
 
   useEffect(() => {
@@ -34,8 +34,8 @@ export function EditorCore() {
     return (
       <div
         ref={containerRef}
-        className="editor-wrapper relative mx-auto pl-16 pr-8 py-6 outline-none"
-        style={{ maxWidth: 'var(--editor-max-width, 800px)' }}
+        className="editor-wrapper relative mx-auto py-6 pl-16 pr-8 outline-none"
+        style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
       >
         <SourceEditor />
       </div>
@@ -46,8 +46,8 @@ export function EditorCore() {
   return (
     <div
       ref={containerRef}
-      className="editor-wrapper relative mx-auto pl-16 pr-8 py-6 outline-none"
-      style={{ maxWidth: 'var(--editor-max-width, 800px)' }}
+      className="editor-wrapper relative mx-auto py-6 pl-16 pr-8 outline-none"
+      style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
     >
       <div
         ref={rootRef}

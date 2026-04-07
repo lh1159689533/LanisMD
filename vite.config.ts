@@ -35,8 +35,47 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          milkdown: ['@milkdown/kit'],
-          'tauri-api': ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/plugin-fs'],
+          // React 核心
+          'react-vendor': ['react', 'react-dom'],
+          // Milkdown + CodeMirror 编辑器核心（合并避免循环依赖）
+          editor: [
+            '@milkdown/kit',
+            '@milkdown/plugin-block',
+            '@milkdown/plugin-slash',
+            '@milkdown/plugin-upload',
+            '@milkdown/react',
+            '@milkdown/theme-nord',
+            '@milkdown/utils',
+            'codemirror',
+            '@codemirror/commands',
+            '@codemirror/lang-markdown',
+            '@codemirror/language',
+            '@codemirror/state',
+            '@codemirror/theme-one-dark',
+            '@codemirror/view',
+            '@lezer/highlight',
+          ],
+          // Tauri API
+          'tauri-vendor': [
+            '@tauri-apps/api',
+            '@tauri-apps/plugin-dialog',
+            '@tauri-apps/plugin-fs',
+            '@tauri-apps/plugin-notification',
+            '@tauri-apps/plugin-os',
+            '@tauri-apps/plugin-shell',
+            '@tauri-apps/plugin-store',
+          ],
+          // 工具库
+          utils: [
+            'dompurify',
+            'katex',
+            'lucide-react',
+            'react-icons',
+            '@floating-ui/dom',
+            'zustand',
+            'clsx',
+            'tailwind-merge',
+          ],
         },
       },
     },

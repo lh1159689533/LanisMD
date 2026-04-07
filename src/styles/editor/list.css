@@ -1,0 +1,103 @@
+/**
+ * LanisMD Editor - Lists
+ * 普通列表和任务列表样式
+ */
+
+/* ===== Base Lists ===== */
+.milkdown-editor-root .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.75em;
+  margin: 0.5em 0;
+}
+
+.milkdown-editor-root .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.75em;
+  margin: 0.5em 0;
+}
+
+.milkdown-editor-root .ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.milkdown-editor-root .ProseMirror li > p {
+  margin-bottom: 0.25em;
+}
+
+/* ===== Milkdown List Item Block ===== */
+/* Inner list-item wrapper: flex layout for label + content */
+.milkdown-editor-root .ProseMirror .milkdown-list-item-block > .list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lanismd-spacing-sm);
+}
+
+/* Label wrapper: contains the bullet/number/checkbox icon */
+.milkdown-editor-root .ProseMirror .milkdown-list-item-block .list-item > .label-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin-top: var(--lanismd-spacing-xs);
+}
+
+/* Icon inside label wrapper */
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--lanismd-sidebar-text);
+  cursor: pointer;
+  transition: color var(--lanismd-transition-normal);
+}
+
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon:hover {
+  color: var(--lanismd-accent);
+}
+
+/* Checkbox icons (task list) */
+.milkdown-editor-root
+  .ProseMirror
+  .milkdown-list-item-block
+  .list-item
+  .label-wrapper
+  .milkdown-icon
+  svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ===== Task List ===== */
+.milkdown-editor-root .ProseMirror ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.milkdown-editor-root .ProseMirror .task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lanismd-spacing-md);
+}
+
+.milkdown-editor-root .ProseMirror input[type='checkbox'] {
+  margin-top: 6px;
+  accent-color: var(--lanismd-accent);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}

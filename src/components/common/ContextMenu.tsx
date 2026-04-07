@@ -78,13 +78,13 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
       onContextMenu={handleContextMenu}
       className={cn(
         'fixed z-[9999] min-w-[180px] py-1 shadow-xl backdrop-blur-sm',
-        'rounded-lg border border-[var(--sidebar-border)] bg-[var(--sidebar-bg)]',
+        'rounded-lg border border-[var(--lanismd-sidebar-border)] bg-[var(--lanismd-sidebar-bg)]',
       )}
       style={{ left: x, top: y }}
     >
       {groups.map((group, gi) => (
         <div key={gi}>
-          {gi > 0 && <div className="mx-2 my-1 h-px bg-[var(--sidebar-border)]" />}
+          {gi > 0 && <div className="mx-2 my-1 h-px bg-[var(--lanismd-sidebar-border)]" />}
           {group.items.map((item, ii) => (
             <button
               key={ii}
@@ -100,7 +100,7 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
                 'text-left text-xs transition-colors',
                 item.disabled
                   ? 'cursor-not-allowed opacity-40'
-                  : 'hover:bg-[var(--accent)]/10 text-[var(--sidebar-text)] hover:text-[var(--accent)]',
+                  : 'hover:bg-[var(--lanismd-accent)]/10 text-[var(--lanismd-sidebar-text)] hover:text-[var(--lanismd-accent)]',
               )}
             >
               {item.icon && (

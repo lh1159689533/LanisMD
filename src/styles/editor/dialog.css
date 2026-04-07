@@ -1,0 +1,276 @@
+/**
+ * LanisMD Editor - Tooltip Dialog (Link / Image)
+ * 弹窗对话框样式
+ */
+
+/* ===== Overlay ===== */
+.milkdown-tooltip-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  animation: tooltipDialogOverlayIn var(--lanismd-transition-normal);
+}
+
+@keyframes tooltipDialogOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dark .milkdown-tooltip-dialog-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Dialog Container ===== */
+.milkdown-tooltip-dialog {
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-xl);
+  box-shadow: var(--lanismd-shadow-lg);
+  padding: var(--lanismd-spacing-2xl) var(--lanismd-spacing-3xl);
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  animation: tooltipDialogIn var(--lanismd-transition-normal);
+}
+
+@keyframes tooltipDialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dark .milkdown-tooltip-dialog {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== Dialog Title ===== */
+.milkdown-tooltip-dialog-title {
+  font-size: var(--lanismd-font-size-lg);
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+  margin-bottom: var(--lanismd-spacing-xl);
+}
+
+/* ===== Dialog Field ===== */
+.milkdown-tooltip-dialog-field {
+  margin-bottom: var(--lanismd-spacing-lg);
+}
+
+.milkdown-tooltip-dialog-field label {
+  display: block;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  margin-bottom: 6px;
+}
+
+/* ===== Dialog Input ===== */
+.milkdown-tooltip-dialog-input {
+  display: block;
+  width: 100%;
+  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-lg);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.5;
+  color: var(--lanismd-editor-text);
+  background: var(--lanismd-sidebar-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  outline: none;
+  transition:
+    border-color var(--lanismd-transition-normal),
+    box-shadow var(--lanismd-transition-normal);
+  font-family: inherit;
+}
+
+.milkdown-tooltip-dialog-input::placeholder {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+}
+
+.milkdown-tooltip-dialog-input:focus {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.dark .milkdown-tooltip-dialog-input:focus {
+  box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.15);
+}
+
+/* ===== Dialog Actions ===== */
+.milkdown-tooltip-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--lanismd-spacing-md);
+  margin-top: var(--lanismd-spacing-2xl);
+}
+
+.milkdown-tooltip-dialog-btn {
+  padding: 6px var(--lanismd-spacing-xl);
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  border-radius: var(--lanismd-radius-lg);
+  border: 1px solid var(--lanismd-editor-border);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.milkdown-tooltip-dialog-btn.cancel {
+  background: transparent;
+  color: var(--lanismd-sidebar-text);
+}
+
+.milkdown-tooltip-dialog-btn.cancel:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .milkdown-tooltip-dialog-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.milkdown-tooltip-dialog-btn.confirm {
+  background: var(--lanismd-accent);
+  color: #fff;
+  border-color: var(--lanismd-accent);
+}
+
+.milkdown-tooltip-dialog-btn.confirm:hover {
+  background: var(--lanismd-accent-hover);
+  border-color: var(--lanismd-accent-hover);
+}
+
+/* ===== Image dialog: local file pick button ===== */
+.milkdown-tooltip-dialog-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: var(--lanismd-spacing-3xl) 14px;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  background: var(--lanismd-sidebar-bg);
+  border: 1.5px dashed var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  font-family: inherit;
+  line-height: 1.5;
+  justify-content: center;
+}
+
+.milkdown-tooltip-dialog-file-btn:hover {
+  border-color: var(--lanismd-accent);
+  background: rgba(37, 99, 235, 0.04);
+  color: var(--lanismd-accent);
+}
+
+.milkdown-tooltip-dialog-file-btn.has-file {
+  border-color: var(--lanismd-accent);
+  border-style: solid;
+  background: var(--lanismd-selected-bg);
+  color: var(--lanismd-accent);
+}
+
+.dark .milkdown-tooltip-dialog-file-btn:hover {
+  background: var(--lanismd-hover-bg-dark);
+}
+
+.dark .milkdown-tooltip-dialog-file-btn.has-file {
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.milkdown-tooltip-dialog-file-btn svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* ===== Image dialog: file name display ===== */
+.milkdown-tooltip-dialog-file-name {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-accent);
+  margin-top: 6px;
+  padding: 0 var(--lanismd-spacing-xs);
+  word-break: break-all;
+}
+
+/* ===== Image dialog: Tab navigation ===== */
+.milkdown-tooltip-dialog-tabs {
+  display: flex;
+  gap: var(--lanismd-spacing-xs);
+  margin-bottom: var(--lanismd-spacing-xl);
+  background: var(--lanismd-sidebar-bg);
+  border-radius: var(--lanismd-radius-lg);
+  padding: 3px;
+}
+
+.milkdown-tooltip-dialog-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px var(--lanismd-spacing-lg);
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  color: var(--lanismd-sidebar-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.milkdown-tooltip-dialog-tab:hover {
+  color: var(--lanismd-editor-text);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .milkdown-tooltip-dialog-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.milkdown-tooltip-dialog-tab.active {
+  color: var(--lanismd-accent);
+  background: var(--lanismd-editor-bg);
+  box-shadow: var(--lanismd-shadow-sm);
+}
+
+.dark .milkdown-tooltip-dialog-tab.active {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.milkdown-tooltip-dialog-tab svg {
+  flex-shrink: 0;
+}
+
+/* ===== Image dialog: Tab panel ===== */
+.milkdown-tooltip-dialog-tab-panel {
+  animation: tooltipTabPanelIn var(--lanismd-transition-normal);
+}
+
+@keyframes tooltipTabPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -97,8 +97,8 @@ export function ResizablePanel({
   return (
     <div
       className={cn(
-        'flex flex-col border-t border-[var(--sidebar-border)]',
-        'bg-[var(--sidebar-bg)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]',
+        'flex flex-col border-t border-[var(--lanismd-sidebar-border)]',
+        'bg-[var(--lanismd-sidebar-bg)] shadow-[0_-2px_8px_rgba(0,0,0,0.08)]',
       )}
       style={{ height: `${height}px` }}
     >
@@ -107,12 +107,12 @@ export function ResizablePanel({
         onMouseDown={handleMouseDown}
         className={cn(
           'group cursor-row-resize items-center justify-center transition-colors',
-          'hover:bg-[var(--accent)]/10 flex h-[6px] shrink-0',
+          'hover:bg-[var(--lanismd-accent)]/10 flex h-[6px] shrink-0',
         )}
       >
         <div
           className={cn(
-            'h-[3px] w-8 rounded-full bg-[var(--sidebar-text)]',
+            'h-[3px] w-8 rounded-full bg-[var(--lanismd-sidebar-text)]',
             'opacity-20 transition-opacity group-hover:opacity-40',
           )}
         />
