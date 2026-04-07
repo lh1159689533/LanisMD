@@ -62,6 +62,9 @@ import {
 import { TableOperations } from './row-col-operations';
 import { DragDropManager } from './drag-drop';
 
+// Re-export schema extension
+export { extendedTableSchema } from './schema-extend';
+
 // ---------------------------------------------------------------------------
 // Plugin Context Class
 // ---------------------------------------------------------------------------

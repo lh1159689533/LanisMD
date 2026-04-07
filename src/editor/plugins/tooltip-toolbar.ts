@@ -20,7 +20,7 @@ import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 
-import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-upload-progress';
+import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-block';
 
 // ---------------------------------------------------------------------------
 // Helper Functions

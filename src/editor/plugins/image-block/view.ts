@@ -11,36 +11,7 @@ import { $view } from '@milkdown/kit/utils';
 import { imageSchema } from '@milkdown/kit/preset/commonmark';
 import type { EditorView, NodeView } from '@milkdown/kit/prose/view';
 import type { Node } from '@milkdown/kit/prose/model';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { useFileStore } from '@/stores/file-store';
-
-/**
- * Check if a src is a relative path that needs resolving.
- * Uses an exclusion approach: anything that is NOT a full URL or data URL
- * is treated as a relative path.
- */
-function isRelativePath(src: string): boolean {
-  if (!src) return false;
-  // data: URLs (base64 inline images)
-  if (src.startsWith('data:')) return false;
-  // Full URLs with protocol (http://, https://, ftp://, etc.)
-  if (src.includes('://')) return false;
-  return true;
-}
-
-/**
- * Build the absolute file path for a relative image src
- * based on the current document's directory.
- */
-function buildAbsolutePath(src: string): string | null {
-  const currentFile = useFileStore.getState().currentFile;
-  if (!currentFile?.filePath) return null;
-
-  const lastSlash = currentFile.filePath.lastIndexOf('/');
-  const docDir = lastSlash >= 0 ? currentFile.filePath.substring(0, lastSlash) : '';
-  const relativePart = src.startsWith('./') ? src.substring(2) : src;
-  return `${docDir}/${relativePart}`;
-}
+import { resolveImageSrc } from './types';
 
 /**
  * ProseMirror NodeView for image nodes.
@@ -70,22 +41,7 @@ class ImageNodeView implements NodeView {
    */
   private resolveAndSetSrc(src: string): void {
     if (!src) return;
-
-    if (!isRelativePath(src)) {
-      // External URL or already a data URL — use directly
-      this.img.src = src;
-      return;
-    }
-
-    const absolutePath = buildAbsolutePath(src);
-    if (!absolutePath) {
-      this.img.src = src;
-      return;
-    }
-
-    // Convert absolute file path to Tauri asset protocol URL
-    // e.g. /Users/xxx/docs/img/image.png → asset://localhost/Users/xxx/docs/img/image.png
-    this.img.src = convertFileSrc(absolutePath);
+    this.img.src = resolveImageSrc(src);
   }
 
   update(node: Node): boolean {

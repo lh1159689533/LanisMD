@@ -12,7 +12,6 @@
 import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
-import { openImageDialogForEdit } from './image-block';
 
 const imageToolbarPluginKey = new PluginKey('IMAGE_BLOCK_TOOLBAR');
 
@@ -37,6 +36,13 @@ const toolbarIcons = {
 // ---------------------------------------------------------------------------
 
 const TOOLBAR_ATTR = 'data-image-toolbar';
+
+// Forward declaration - will be set by index.ts
+let openImageDialogForEditFn: ((view: EditorView, nodePos: number) => Promise<void>) | null = null;
+
+export function setOpenImageDialogForEdit(fn: (view: EditorView, nodePos: number) => Promise<void>) {
+  openImageDialogForEditFn = fn;
+}
 
 /**
  * Create the toolbar element for a given image block
@@ -98,7 +104,9 @@ function createToolbar(
 
   // Edit button
   const editBtn = createToolbarButton(toolbarIcons.edit, '编辑图片', () => {
-    openImageDialogForEdit(view, nodePos);
+    if (openImageDialogForEditFn) {
+      openImageDialogForEditFn(view, nodePos);
+    }
   });
   toolbar.appendChild(editBtn);
 

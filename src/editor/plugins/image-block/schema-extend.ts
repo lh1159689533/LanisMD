@@ -16,6 +16,7 @@ import { imageBlockSchema } from '@milkdown/kit/component/image-block';
 import { $remark } from '@milkdown/kit/utils';
 import type { Root } from 'mdast';
 import { visit } from 'unist-util-visit';
+import { escapeHtml, extractAttr } from './types';
 
 // ---------------------------------------------------------------------------
 // Extend image-block schema to add align attr
@@ -228,35 +229,3 @@ export const remarkHtmlImagePlugin = $remark('remarkHtmlImage', () => {
     }
   };
 });
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * 从 HTML 属性字符串中提取指定属性的值
- */
-function extractAttr(attrStr: string, attrName: string): string | null {
-  // 匹配 attr="value" 或 attr='value'（允许空字符串）
-  const quotedRegex = new RegExp(`${attrName}=["']([^"']*)["']`, 'i');
-  const quotedMatch = attrStr.match(quotedRegex);
-  if (quotedMatch) {
-    return quotedMatch[1]; // 返回空字符串也是有效的
-  }
-
-  // 匹配 attr=value（无引号，不含空格和 >）
-  const unquotedRegex = new RegExp(`${attrName}=([^\\s>]+)`, 'i');
-  const unquotedMatch = attrStr.match(unquotedRegex);
-  return unquotedMatch ? unquotedMatch[1] : null;
-}
-
-/**
- * 转义 HTML 特殊字符
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}

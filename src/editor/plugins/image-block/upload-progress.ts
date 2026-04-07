@@ -9,6 +9,7 @@
 import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import { Decoration, DecorationSet } from '@milkdown/kit/prose/view';
+import type { EditorView } from '@milkdown/kit/prose/view';
 
 // ---------------------------------------------------------------------------
 // Plugin Key & Types
@@ -112,8 +113,6 @@ export const imageUploadProgressPlugin = $prose(() => {
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
-
-import type { EditorView } from '@milkdown/kit/prose/view';
 
 /**
  * Insert a loading placeholder at the current cursor position.

@@ -10,7 +10,7 @@ import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
-import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-upload-progress';
+import { insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 
 const imagePastePluginKey = new PluginKey('IMAGE_PASTE');
 

@@ -14,39 +14,31 @@ import {
   imageBlockConfig,
 } from '@milkdown/kit/component/image-block';
 import type { Ctx } from '@milkdown/kit/ctx';
+import type { EditorView } from '@milkdown/kit/prose/view';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
-import { convertFileSrc } from '@tauri-apps/api/core';
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
+
+import { isRelativePath, buildAbsolutePath } from './types';
+import { insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
+import { setOpenImageDialogForEdit } from './toolbar';
+
+// Re-export all sub-modules
+export { extendedImageBlockSchema, remarkHtmlImagePlugin } from './schema-extend';
+export { imageBlockClickPlugin } from './click-handler';
+export { imageInputRulePlugin } from './input-rule';
+export { imageBlockPastePlugin } from './paste-handler';
+export { imageResizePlugin } from './resize';
+export { imageBlockToolbarPlugin } from './toolbar';
+export { imageUploadProgressPlugin, insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
+export { imageViewPlugin } from './view';
+
+// Re-export types
+export type { ImageDialogResult } from './types';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Check if a src is a relative path that needs resolving.
- */
-function isRelativePath(src: string): boolean {
-  if (!src) return false;
-  if (src.startsWith('data:')) return false;
-  if (src.startsWith('blob:')) return false;
-  if (src.includes('://')) return false;
-  return true;
-}
-
-/**
- * Build the absolute file path for a relative image src
- * based on the current document's directory.
- */
-function buildAbsolutePath(src: string): string | null {
-  const currentFile = useFileStore.getState().currentFile;
-  if (!currentFile?.filePath) return null;
-
-  const lastSlash = currentFile.filePath.lastIndexOf('/');
-  const docDir = lastSlash >= 0 ? currentFile.filePath.substring(0, lastSlash) : '';
-  const relativePart = src.startsWith('./') ? src.substring(2) : src;
-  return `${docDir}/${relativePart}`;
-}
 
 /**
  * Save a File object (from paste/drag/upload) to the assets directory.
@@ -300,6 +292,8 @@ function hideImageBlockLoading(el: HTMLElement): void {
 // Image Block Configuration
 // ---------------------------------------------------------------------------
 
+import { convertFileSrc } from '@tauri-apps/api/core';
+
 export function configureImageBlock(ctx: Ctx) {
   ctx.update(imageBlockConfig.key, (defaultConfig) => ({
     ...defaultConfig,
@@ -344,9 +338,6 @@ export function configureImageBlock(ctx: Ctx) {
 // ---------------------------------------------------------------------------
 // Helpers: upload with loading placeholder
 // ---------------------------------------------------------------------------
-
-import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-upload-progress';
-import type { EditorView } from '@milkdown/kit/prose/view';
 
 /**
  * Enhanced version of openImageDialog that shows a loading placeholder
@@ -523,12 +514,6 @@ function openImageDialogAsync(
 }
 
 // ---------------------------------------------------------------------------
-// Exports
-// ---------------------------------------------------------------------------
-
-export { imageBlockComponent, openImageDialog };
-
-// ---------------------------------------------------------------------------
 // Edit existing image-block (no new node insertion)
 // ---------------------------------------------------------------------------
 
@@ -560,3 +545,12 @@ export async function openImageDialogForEdit(
   }
   view.focus();
 }
+
+// Register the openImageDialogForEdit function with the toolbar module
+setOpenImageDialogForEdit(openImageDialogForEdit);
+
+// ---------------------------------------------------------------------------
+// Exports
+// ---------------------------------------------------------------------------
+
+export { imageBlockComponent, openImageDialog };
