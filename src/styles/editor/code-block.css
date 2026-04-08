@@ -8,8 +8,8 @@
 .milkdown-editor-root .ProseMirror code-block {
   position: relative;
   display: block;
-  margin: 1em 0;
-  border-radius: var(--lanismd-radius-lg);
+  margin: var(--lanismd-codeblock-margin);
+  border-radius: var(--lanismd-codeblock-border-radius);
   overflow: hidden;
   border: 1px solid var(--lanismd-editor-border);
   transition: border-color var(--lanismd-transition-normal);
@@ -26,10 +26,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px var(--lanismd-spacing-lg);
+  padding: var(--lanismd-codeblock-toolbar-padding);
   background: var(--lanismd-code-toolbar-bg);
   border-bottom: 1px solid var(--lanismd-editor-border);
-  min-height: 36px;
+  min-height: var(--lanismd-codeblock-toolbar-height);
+  position: relative;
+}
+
+/* ===== 窗口装饰 - macOS 风格 ===== */
+.milkdown-editor-root .tools[data-window-controls="macos"]::before,
+.milkdown-editor-root [data-window-controls="macos"] .tools::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: var(--lanismd-spacing-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--lanismd-codeblock-dot-size) * 3 + var(--lanismd-codeblock-dot-spacing) * 2);
+  height: var(--lanismd-codeblock-dot-size);
+  background: 
+    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) / 2), var(--lanismd-codeblock-dot-red) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2)),
+    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) * 1.5 + var(--lanismd-codeblock-dot-spacing)), var(--lanismd-codeblock-dot-yellow) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2)),
+    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) * 2.5 + var(--lanismd-codeblock-dot-spacing) * 2), var(--lanismd-codeblock-dot-green) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2));
+}
+
+/* 当显示窗口装饰时，调整工具栏内容位置 */
+.milkdown-editor-root .tools[data-window-controls="macos"],
+.milkdown-editor-root [data-window-controls="macos"] .tools {
+  padding-left: calc(var(--lanismd-codeblock-dot-size) * 3 + var(--lanismd-codeblock-dot-spacing) * 2 + var(--lanismd-spacing-2xl));
 }
 
 /* ===== Language selector button ===== */
@@ -39,15 +63,16 @@
   align-items: center;
   gap: var(--lanismd-spacing-sm);
   cursor: pointer;
-  font-size: var(--lanismd-font-size-sm);
-  font-weight: 500;
-  color: var(--lanismd-sidebar-text);
+  font-size: var(--lanismd-codeblock-lang-font-size);
+  font-weight: var(--lanismd-codeblock-lang-font-weight);
+  color: var(--lanismd-codeblock-lang-color);
   padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
   border-radius: var(--lanismd-radius-sm);
   transition: all var(--lanismd-transition-normal);
   background: transparent;
   border: none;
   font-family: inherit;
+  text-transform: var(--lanismd-codeblock-lang-text-transform);
 }
 
 .milkdown-editor-root .language-button:hover {
@@ -207,7 +232,7 @@
   padding: var(--lanismd-spacing-sm) 10px;
   font-size: var(--lanismd-font-size-xs);
   font-weight: 500;
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-codeblock-copy-btn-color);
   background: transparent;
   border: none;
   border-radius: var(--lanismd-radius-sm);
@@ -218,8 +243,8 @@
 }
 
 .milkdown-editor-root .copy-button:hover {
-  color: var(--lanismd-accent);
-  background: var(--lanismd-hover-bg);
+  color: var(--lanismd-codeblock-copy-btn-hover-color);
+  background: var(--lanismd-codeblock-copy-btn-hover-bg);
 }
 
 /* Copy button success state */

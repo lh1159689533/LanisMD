@@ -5,23 +5,51 @@
 
 /* ===== Base Lists ===== */
 .milkdown-editor-root .ProseMirror ul {
-  list-style-type: disc;
-  padding-left: 1.75em;
-  margin: 0.5em 0;
+  list-style-type: var(--lanismd-ul-marker-type);
+  padding-left: var(--lanismd-ul-padding-left);
+  margin: var(--lanismd-ul-margin);
 }
 
 .milkdown-editor-root .ProseMirror ol {
-  list-style-type: decimal;
-  padding-left: 1.75em;
-  margin: 0.5em 0;
+  list-style-type: var(--lanismd-ol-marker-type);
+  padding-left: var(--lanismd-ol-padding-left);
+  margin: var(--lanismd-ol-margin);
 }
 
 .milkdown-editor-root .ProseMirror li {
-  margin: 0.25em 0;
+  margin: var(--lanismd-li-margin);
+  line-height: var(--lanismd-li-line-height);
 }
 
 .milkdown-editor-root .ProseMirror li > p {
   margin-bottom: 0.25em;
+}
+
+/* ===== 无序列表标记颜色 ===== */
+.milkdown-editor-root .ProseMirror ul > li::marker {
+  color: var(--lanismd-ul-marker-color);
+  font-size: var(--lanismd-ul-marker-font-size);
+}
+
+/* ===== 有序列表标记颜色 ===== */
+.milkdown-editor-root .ProseMirror ol > li::marker {
+  color: var(--lanismd-ol-marker-color);
+}
+
+/* ===== 嵌套列表标记类型 ===== */
+/* 一级无序列表 */
+.milkdown-editor-root .ProseMirror > ul {
+  list-style-type: var(--lanismd-ul-l1-marker-type);
+}
+
+/* 二级无序列表 */
+.milkdown-editor-root .ProseMirror ul ul {
+  list-style-type: var(--lanismd-ul-l2-marker-type);
+}
+
+/* 三级及更深无序列表 */
+.milkdown-editor-root .ProseMirror ul ul ul {
+  list-style-type: var(--lanismd-ul-l3-marker-type);
 }
 
 /* ===== Milkdown List Item Block ===== */
@@ -55,7 +83,7 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: var(--lanismd-sidebar-text);
+  color: var(--lanismd-ul-marker-color, var(--lanismd-sidebar-text));
   cursor: pointer;
   transition: color var(--lanismd-transition-normal);
 }
@@ -93,11 +121,56 @@
   gap: var(--lanismd-spacing-md);
 }
 
+/* ===== 任务列表复选框自定义 ===== */
 .milkdown-editor-root .ProseMirror input[type='checkbox'] {
-  margin-top: 6px;
-  accent-color: var(--lanismd-accent);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin-top: 5px;
+  width: var(--lanismd-task-checkbox-size);
+  height: var(--lanismd-task-checkbox-size);
+  border: var(--lanismd-task-checkbox-border);
+  border-radius: var(--lanismd-task-checkbox-border-radius);
+  background: var(--lanismd-task-checkbox-bg);
   cursor: pointer;
-  width: 16px;
-  height: 16px;
   flex-shrink: 0;
+  position: relative;
+  transition: all var(--lanismd-transition-normal);
+}
+
+/* 复选框悬停状态 */
+.milkdown-editor-root .ProseMirror input[type='checkbox']:hover {
+  border-color: var(--lanismd-accent);
+}
+
+/* 复选框选中状态 */
+.milkdown-editor-root .ProseMirror input[type='checkbox']:checked {
+  background: var(--lanismd-task-checkbox-checked-bg);
+  border: 2px solid var(--lanismd-task-checkbox-checked-border);
+}
+
+/* 复选框选中后的勾选标记 */
+.milkdown-editor-root .ProseMirror input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--lanismd-task-checkbox-checkmark-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ===== 已完成任务样式 ===== */
+.milkdown-editor-root .ProseMirror .task-list-item.checked,
+.milkdown-editor-root .ProseMirror li:has(input[type='checkbox']:checked) > * {
+  text-decoration: var(--lanismd-task-checked-text-decoration);
+  opacity: var(--lanismd-task-checked-text-opacity);
+}
+
+/* 排除复选框本身 */
+.milkdown-editor-root .ProseMirror li:has(input[type='checkbox']:checked) > input[type='checkbox'] {
+  text-decoration: none;
+  opacity: 1;
 }

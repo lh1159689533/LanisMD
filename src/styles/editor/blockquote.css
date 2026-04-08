@@ -1,13 +1,92 @@
 /**
  * LanisMD Editor - Blockquote
- * 引用块样式
+ * 引用块样式（支持分级引用）
  */
 
+/* ===== 基础引用块样式 ===== */
 .milkdown-editor-root .ProseMirror blockquote {
-  border-left: 4px solid var(--lanismd-blockquote-border);
+  border-left: var(--lanismd-blockquote-border-width) var(--lanismd-blockquote-border-style) var(--lanismd-blockquote-border);
+  padding: var(--lanismd-blockquote-padding);
   padding-left: var(--lanismd-spacing-xl);
-  margin: 1em 0;
+  margin: var(--lanismd-blockquote-margin);
   color: var(--lanismd-blockquote-text);
-  font-style: italic;
+  font-style: var(--lanismd-blockquote-font-style);
   background: var(--lanismd-blockquote-bg);
+  border-radius: var(--lanismd-blockquote-border-radius);
+  position: relative;
+}
+
+/* ===== 分级引用样式 ===== */
+
+/* Level 1 (>) - 第一层引用 */
+.milkdown-editor-root .ProseMirror blockquote[data-level="1"],
+.milkdown-editor-root .ProseMirror > blockquote {
+  border-left-color: var(--lanismd-blockquote-l1-border-color);
+  background: var(--lanismd-blockquote-l1-bg);
+  color: var(--lanismd-blockquote-l1-text-color);
+}
+
+/* Level 2 (>>) - 第二层引用 */
+.milkdown-editor-root .ProseMirror blockquote[data-level="2"],
+.milkdown-editor-root .ProseMirror blockquote blockquote {
+  border-left-color: var(--lanismd-blockquote-l2-border-color);
+  background: var(--lanismd-blockquote-l2-bg);
+  color: var(--lanismd-blockquote-l2-text-color);
+}
+
+/* Level 3 (>>>) - 第三层引用 */
+.milkdown-editor-root .ProseMirror blockquote[data-level="3"],
+.milkdown-editor-root .ProseMirror blockquote blockquote blockquote {
+  border-left-color: var(--lanismd-blockquote-l3-border-color);
+  background: var(--lanismd-blockquote-l3-bg);
+  color: var(--lanismd-blockquote-l3-text-color);
+}
+
+/* Level 4+ (>>>>) - 第四层及更深层引用 */
+.milkdown-editor-root .ProseMirror blockquote[data-level="4"],
+.milkdown-editor-root .ProseMirror blockquote blockquote blockquote blockquote {
+  border-left-color: var(--lanismd-blockquote-l4-border-color);
+  background: var(--lanismd-blockquote-l4-bg);
+  color: var(--lanismd-blockquote-l4-text-color);
+}
+
+/* 更深层级继续使用 level 4 的样式 */
+.milkdown-editor-root .ProseMirror blockquote blockquote blockquote blockquote blockquote {
+  border-left-color: var(--lanismd-blockquote-l4-border-color);
+  background: var(--lanismd-blockquote-l4-bg);
+  color: var(--lanismd-blockquote-l4-text-color);
+}
+
+/* ===== 嵌套引用间距调整 ===== */
+.milkdown-editor-root .ProseMirror blockquote blockquote {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* ===== 引用块内段落样式 ===== */
+.milkdown-editor-root .ProseMirror blockquote p {
+  margin-bottom: 0.5em;
+}
+
+.milkdown-editor-root .ProseMirror blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 引用块内标题样式 ===== */
+.milkdown-editor-root .ProseMirror blockquote h1,
+.milkdown-editor-root .ProseMirror blockquote h2,
+.milkdown-editor-root .ProseMirror blockquote h3,
+.milkdown-editor-root .ProseMirror blockquote h4,
+.milkdown-editor-root .ProseMirror blockquote h5,
+.milkdown-editor-root .ProseMirror blockquote h6 {
+  margin-top: 0.75em;
+}
+
+.milkdown-editor-root .ProseMirror blockquote h1:first-child,
+.milkdown-editor-root .ProseMirror blockquote h2:first-child,
+.milkdown-editor-root .ProseMirror blockquote h3:first-child,
+.milkdown-editor-root .ProseMirror blockquote h4:first-child,
+.milkdown-editor-root .ProseMirror blockquote h5:first-child,
+.milkdown-editor-root .ProseMirror blockquote h6:first-child {
+  margin-top: 0;
 }

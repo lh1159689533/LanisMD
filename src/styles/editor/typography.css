@@ -3,84 +3,192 @@
  * 标题、段落、链接、文字格式样式
  */
 
-/* ===== Headings ===== */
+/* ===== Headings Base ===== */
 .milkdown-editor-root .ProseMirror h1,
 .milkdown-editor-root .ProseMirror h2,
 .milkdown-editor-root .ProseMirror h3,
 .milkdown-editor-root .ProseMirror h4,
 .milkdown-editor-root .ProseMirror h5,
 .milkdown-editor-root .ProseMirror h6 {
-  color: var(--lanismd-heading-color);
-  font-weight: 600;
-  line-height: 1.4;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  font-family: var(--lanismd-font-heading);
+  position: relative;
 }
 
+/* ===== H1 ===== */
 .milkdown-editor-root .ProseMirror h1 {
-  font-size: 1.875rem;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--lanismd-hr-color);
+  color: var(--lanismd-h1-color);
+  font-size: var(--lanismd-h1-font-size);
+  font-weight: var(--lanismd-h1-font-weight);
+  line-height: var(--lanismd-h1-line-height);
+  margin-top: var(--lanismd-h1-margin-top);
+  margin-bottom: var(--lanismd-h1-margin-bottom);
+  padding-bottom: var(--lanismd-h1-padding-bottom);
+  border-bottom: var(--lanismd-h1-border-bottom);
+  background: var(--lanismd-h1-background);
+  text-decoration: var(--lanismd-h1-text-decoration);
+  font-style: var(--lanismd-h1-font-style);
 }
 
+/* H1 前缀装饰 */
+.milkdown-editor-root .ProseMirror h1::before {
+  content: var(--lanismd-h1-prefix-content);
+  color: var(--lanismd-h1-prefix-color);
+  margin-right: 0.25em;
+}
+
+/* ===== H2 ===== */
 .milkdown-editor-root .ProseMirror h2 {
-  font-size: 1.5rem;
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--lanismd-hr-color);
+  color: var(--lanismd-h2-color);
+  font-size: var(--lanismd-h2-font-size);
+  font-weight: var(--lanismd-h2-font-weight);
+  line-height: var(--lanismd-h2-line-height);
+  margin-top: var(--lanismd-h2-margin-top);
+  margin-bottom: var(--lanismd-h2-margin-bottom);
+  padding-bottom: var(--lanismd-h2-padding-bottom);
+  border-bottom: var(--lanismd-h2-border-bottom);
+  background: var(--lanismd-h2-background);
+  text-decoration: var(--lanismd-h2-text-decoration);
+  font-style: var(--lanismd-h2-font-style);
 }
 
+/* H2 前缀装饰 */
+.milkdown-editor-root .ProseMirror h2::before {
+  content: var(--lanismd-h2-prefix-content);
+  color: var(--lanismd-h2-prefix-color);
+  margin-right: 0.25em;
+}
+
+/* ===== H3 ===== */
 .milkdown-editor-root .ProseMirror h3 {
-  font-size: 1.25rem;
+  color: var(--lanismd-h3-color);
+  font-size: var(--lanismd-h3-font-size);
+  font-weight: var(--lanismd-h3-font-weight);
+  line-height: var(--lanismd-h3-line-height);
+  margin-top: var(--lanismd-h3-margin-top);
+  margin-bottom: var(--lanismd-h3-margin-bottom);
+  border-bottom: var(--lanismd-h3-border-bottom);
+  background: var(--lanismd-h3-background);
 }
 
+/* H3 前缀装饰 */
+.milkdown-editor-root .ProseMirror h3::before {
+  content: var(--lanismd-h3-prefix-content);
+  color: var(--lanismd-h3-prefix-color);
+  margin-right: 0.25em;
+}
+
+/* ===== H4 ===== */
 .milkdown-editor-root .ProseMirror h4 {
-  font-size: 1.125rem;
+  color: var(--lanismd-h4-color);
+  font-size: var(--lanismd-h4-font-size);
+  font-weight: var(--lanismd-h4-font-weight);
+  line-height: var(--lanismd-h4-line-height);
+  margin-top: var(--lanismd-h4-margin-top);
+  margin-bottom: var(--lanismd-h4-margin-bottom);
+  background: var(--lanismd-h4-background);
+}
+
+/* H4 前缀装饰 */
+.milkdown-editor-root .ProseMirror h4::before {
+  content: var(--lanismd-h4-prefix-content);
+  color: var(--lanismd-h4-prefix-color);
+  margin-right: 0.25em;
+}
+
+/* ===== H5 ===== */
+.milkdown-editor-root .ProseMirror h5 {
+  color: var(--lanismd-h5-color);
+  font-size: var(--lanismd-h5-font-size);
+  font-weight: var(--lanismd-h5-font-weight);
+  line-height: var(--lanismd-h5-line-height);
+  margin-top: var(--lanismd-h5-margin-top);
+  margin-bottom: var(--lanismd-h5-margin-bottom);
+}
+
+/* H5 前缀装饰 */
+.milkdown-editor-root .ProseMirror h5::before {
+  content: var(--lanismd-h5-prefix-content);
+  color: var(--lanismd-h5-prefix-color);
+  margin-right: 0.25em;
+}
+
+/* ===== H6 ===== */
+.milkdown-editor-root .ProseMirror h6 {
+  color: var(--lanismd-h6-color);
+  font-size: var(--lanismd-h6-font-size);
+  font-weight: var(--lanismd-h6-font-weight);
+  line-height: var(--lanismd-h6-line-height);
+  margin-top: var(--lanismd-h6-margin-top);
+  margin-bottom: var(--lanismd-h6-margin-bottom);
+}
+
+/* H6 前缀装饰 */
+.milkdown-editor-root .ProseMirror h6::before {
+  content: var(--lanismd-h6-prefix-content);
+  color: var(--lanismd-h6-prefix-color);
+  margin-right: 0.25em;
 }
 
 /* ===== Paragraph ===== */
 .milkdown-editor-root .ProseMirror p {
-  margin-bottom: 0.75em;
+  margin-bottom: var(--lanismd-paragraph-margin);
+  text-indent: var(--lanismd-paragraph-text-indent);
 }
 
 /* ===== Links ===== */
 .milkdown-editor-root .ProseMirror a {
   color: var(--lanismd-link-color);
-  text-decoration: underline;
+  text-decoration: var(--lanismd-link-decoration);
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .milkdown-editor-root .ProseMirror a:hover {
   color: var(--lanismd-link-hover);
+  text-decoration: var(--lanismd-link-hover-decoration);
 }
 
-/* ===== Bold & Italic ===== */
+/* ===== Bold ===== */
 .milkdown-editor-root .ProseMirror strong {
-  font-weight: 600;
+  color: var(--lanismd-strong-color);
+  font-weight: var(--lanismd-strong-font-weight);
 }
 
+/* ===== Italic ===== */
 .milkdown-editor-root .ProseMirror em {
-  font-style: italic;
+  color: var(--lanismd-em-color);
+  font-style: var(--lanismd-em-font-style);
 }
 
+/* ===== Strikethrough ===== */
 .milkdown-editor-root .ProseMirror del {
-  text-decoration: line-through;
-  opacity: 0.7;
+  color: var(--lanismd-del-color);
+  text-decoration: var(--lanismd-del-decoration);
+  opacity: var(--lanismd-del-opacity);
+}
+
+/* ===== Highlight (mark) ===== */
+.milkdown-editor-root .ProseMirror mark {
+  background: var(--lanismd-mark-bg);
+  color: var(--lanismd-mark-color);
+  padding: var(--lanismd-mark-padding);
+  border-radius: var(--lanismd-mark-border-radius);
 }
 
 /* ===== Inline Code ===== */
 .milkdown-editor-root .ProseMirror code {
   background-color: var(--lanismd-inline-code-bg);
   color: var(--lanismd-inline-code-text);
-  padding: 0.15em 0.4em;
-  border-radius: var(--lanismd-radius-sm);
-  font-family: var(--lanismd-font-mono);
-  font-size: 0.875em;
+  padding: var(--lanismd-inline-code-padding);
+  border-radius: var(--lanismd-inline-code-border-radius);
+  font-family: var(--lanismd-inline-code-font-family);
+  font-size: var(--lanismd-inline-code-font-size);
+  border: var(--lanismd-inline-code-border);
 }
 
 /* ===== Horizontal Rule ===== */
 .milkdown-editor-root .ProseMirror hr {
   border: none;
-  border-top: 2px solid var(--lanismd-hr-color);
-  margin: 2em 0;
+  border-top: var(--lanismd-hr-height) var(--lanismd-hr-style) var(--lanismd-hr-color);
+  margin: var(--lanismd-hr-margin);
 }

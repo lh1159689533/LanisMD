@@ -1,0 +1,345 @@
+/**
+ * LanisMD CSS 变量完整参考
+ * ==================================
+ * 此文件包含所有可自定义的 CSS 变量的完整列表
+ * 
+ * 用途：
+ * - 主题开发者参考
+ * - 自定义主题的基础模板
+ * - 了解变量分层和命名规范
+ * 
+ * 注意：此文件不会被导入，仅作为参考文档
+ */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 第一层：基础设计令牌 (Design Tokens)
+ * 定义在 variables.css 中，通常不需要主题覆盖
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+:root {
+  /* === 间距系统 === */
+  --lanismd-spacing-xs: 4px;
+  --lanismd-spacing-sm: 8px;
+  --lanismd-spacing-md: 12px;
+  --lanismd-spacing-lg: 16px;
+  --lanismd-spacing-xl: 20px;
+  --lanismd-spacing-2xl: 24px;
+  --lanismd-spacing-3xl: 32px;
+  --lanismd-spacing-4xl: 48px;
+
+  /* === 圆角系统 === */
+  --lanismd-radius-sm: 4px;
+  --lanismd-radius-md: 6px;
+  --lanismd-radius-lg: 8px;
+  --lanismd-radius-xl: 12px;
+  --lanismd-radius-full: 9999px;
+
+  /* === 字体系统 === */
+  --lanismd-font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --lanismd-font-serif: "Georgia", "Noto Serif SC", "Source Han Serif SC", serif;
+  --lanismd-font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+
+  /* === 字号系统 === */
+  --lanismd-font-size-xs: 11px;
+  --lanismd-font-size-sm: 12px;
+  --lanismd-font-size-md: 14px;
+  --lanismd-font-size-lg: 16px;
+  --lanismd-font-size-xl: 18px;
+  --lanismd-font-size-2xl: 20px;
+  --lanismd-font-size-3xl: 24px;
+  --lanismd-font-size-4xl: 32px;
+
+  /* === 行高系统 === */
+  --lanismd-line-height-tight: 1.25;
+  --lanismd-line-height-normal: 1.5;
+  --lanismd-line-height-relaxed: 1.75;
+
+  /* === 过渡系统 === */
+  --lanismd-transition-fast: 0.1s ease;
+  --lanismd-transition-normal: 0.2s ease;
+  --lanismd-transition-slow: 0.3s ease;
+  --lanismd-transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* === Z-Index 系统 === */
+  --lanismd-z-dropdown: 100;
+  --lanismd-z-sticky: 200;
+  --lanismd-z-modal: 300;
+  --lanismd-z-popover: 400;
+  --lanismd-z-tooltip: 500;
+  --lanismd-z-toast: 600;
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 第二层：语义化颜色变量 - 应用 UI
+ * 这些是主题需要覆盖的主要变量
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.theme-example {
+  /* === 1. 编辑器区域 === */
+  --lanismd-editor-bg: #ffffff;              /* 编辑器背景 */
+  --lanismd-editor-text: #1e293b;            /* 编辑器文本 */
+  --lanismd-editor-border: #e2e8f0;          /* 编辑器边框 */
+
+  /* === 2. 侧边栏 === */
+  --lanismd-sidebar-bg: #f8fafc;             /* 侧边栏背景 */
+  --lanismd-sidebar-text: #475569;           /* 侧边栏文本 */
+  --lanismd-sidebar-border: #e2e8f0;         /* 侧边栏边框 */
+  --lanismd-sidebar-hover: rgba(0, 0, 0, 0.04);      /* 悬停背景 */
+  --lanismd-sidebar-active: rgba(37, 99, 235, 0.08); /* 选中背景 */
+  --lanismd-sidebar-active-text: #2563eb;    /* 选中项文本颜色 */
+  --lanismd-sidebar-active-border: #2563eb;  /* 选中项边框颜色 */
+
+  /* === 3. 标题栏 === */
+  --lanismd-titlebar-bg: #f8fafc;            /* 标题栏背景 */
+  --lanismd-titlebar-text: #1e293b;          /* 标题栏文本 */
+
+  /* === 4. 强调色 === */
+  --lanismd-accent: #2563eb;                 /* 主强调色 */
+  --lanismd-accent-hover: #1d4ed8;           /* 强调色悬停 */
+  --lanismd-accent-light: rgba(37, 99, 235, 0.1); /* 强调色浅色 */
+  --lanismd-accent-contrast: #ffffff;        /* 强调色对比文本 */
+
+  /* === 5. 状态颜色 === */
+  --lanismd-success: #22c55e;                /* 成功 */
+  --lanismd-warning: #f59e0b;                /* 警告 */
+  --lanismd-danger: #ef4444;                 /* 危险 */
+  --lanismd-info: #3b82f6;                   /* 信息 */
+
+  /* === 6. 交互状态 === */
+  --lanismd-hover-bg: rgba(37, 99, 235, 0.08);   /* 通用悬停背景 */
+  --lanismd-selected-bg: rgba(37, 99, 235, 0.06); /* 通用选中背景 */
+  --lanismd-focus-ring: rgba(37, 99, 235, 0.4);   /* 焦点环颜色 */
+
+  /* === 7. 阴影 === */
+  --lanismd-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --lanismd-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --lanismd-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* === 8. 滚动条 === */
+  --lanismd-scrollbar-thumb: #94a3b8;        /* 滚动条滑块 */
+  --lanismd-scrollbar-thumb-hover: #64748b;  /* 滚动条滑块悬停 */
+
+  /* === 9. 拖拽把手 === */
+  --lanismd-handle-color: #94a3b8;           /* 拖拽把手颜色 */
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 第三层：语义化颜色变量 - 编辑器内容
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.theme-example {
+  /* === 排版 === */
+  --lanismd-heading-color: #0f172a;          /* 标题颜色（全局） */
+  --lanismd-text-muted: #64748b;             /* 次要文本 */
+  --lanismd-link-color: var(--lanismd-accent);      /* 链接颜色 */
+  --lanismd-link-hover: var(--lanismd-accent-hover); /* 链接悬停 */
+
+  /* === 标题 H1-H6 独立颜色 === */
+  --lanismd-h1-color: #0f172a;
+  --lanismd-h2-color: #0f172a;
+  --lanismd-h3-color: #0f172a;
+  --lanismd-h4-color: #1e293b;
+  --lanismd-h5-color: #334155;
+  --lanismd-h6-color: #64748b;
+
+  /* === 标题 H1-H6 独立字号（可选覆盖）=== */
+  --lanismd-h1-font-size: 2em;
+  --lanismd-h2-font-size: 1.5em;
+  --lanismd-h3-font-size: 1.25em;
+  --lanismd-h4-font-size: 1em;
+  --lanismd-h5-font-size: 0.875em;
+  --lanismd-h6-font-size: 0.85em;
+
+  /* === 标题 H1-H6 独立字重（可选覆盖）=== */
+  --lanismd-h1-font-weight: 700;
+  --lanismd-h2-font-weight: 600;
+  --lanismd-h3-font-weight: 600;
+  --lanismd-h4-font-weight: 600;
+  --lanismd-h5-font-weight: 600;
+  --lanismd-h6-font-weight: 600;
+
+  /* === 标题 H1-H6 独立边距（可选覆盖）=== */
+  --lanismd-h1-margin-top: 1.5em;
+  --lanismd-h1-margin-bottom: 0.5em;
+  --lanismd-h2-margin-top: 1.4em;
+  --lanismd-h2-margin-bottom: 0.45em;
+  --lanismd-h3-margin-top: 1.3em;
+  --lanismd-h3-margin-bottom: 0.4em;
+  --lanismd-h4-margin-top: 1.2em;
+  --lanismd-h4-margin-bottom: 0.35em;
+  --lanismd-h5-margin-top: 1.1em;
+  --lanismd-h5-margin-bottom: 0.3em;
+  --lanismd-h6-margin-top: 1em;
+  --lanismd-h6-margin-bottom: 0.25em;
+
+  /* === 行内代码 === */
+  --lanismd-inline-code-bg: rgba(0, 0, 0, 0.06);
+  --lanismd-inline-code-text: var(--lanismd-accent);
+  --lanismd-inline-code-border-radius: var(--lanismd-radius-sm);
+  --lanismd-inline-code-padding: 0.15em 0.4em;
+
+  /* === 引用块 - 基础 === */
+  --lanismd-blockquote-border: var(--lanismd-accent);
+  --lanismd-blockquote-bg: transparent;
+  --lanismd-blockquote-text: var(--lanismd-sidebar-text);
+  --lanismd-blockquote-border-width: 4px;
+  --lanismd-blockquote-padding-left: 1em;
+  --lanismd-blockquote-margin: 1em 0;
+  --lanismd-blockquote-font-style: normal;
+
+  /* === 引用块 - 分级样式 === */
+  --lanismd-blockquote-l1-border-color: #3b82f6;
+  --lanismd-blockquote-l1-bg: rgba(59, 130, 246, 0.05);
+  --lanismd-blockquote-l1-text-color: #1e40af;
+
+  --lanismd-blockquote-l2-border-color: #22c55e;
+  --lanismd-blockquote-l2-bg: rgba(34, 197, 94, 0.05);
+  --lanismd-blockquote-l2-text-color: #166534;
+
+  --lanismd-blockquote-l3-border-color: #f59e0b;
+  --lanismd-blockquote-l3-bg: rgba(245, 158, 11, 0.05);
+  --lanismd-blockquote-l3-text-color: #92400e;
+
+  --lanismd-blockquote-l4-border-color: #f43f5e;
+  --lanismd-blockquote-l4-bg: rgba(244, 63, 94, 0.05);
+  --lanismd-blockquote-l4-text-color: #9f1239;
+
+  /* === 列表 === */
+  --lanismd-ul-marker-color: var(--lanismd-sidebar-text);
+  --lanismd-ol-marker-color: var(--lanismd-sidebar-text);
+  --lanismd-list-indent: 1.5em;
+  --lanismd-list-item-spacing: 0.25em;
+
+  /* === 任务列表 === */
+  --lanismd-task-checkbox-size: 16px;
+  --lanismd-task-checkbox-border: 2px solid #94a3b8;
+  --lanismd-task-checkbox-border-radius: var(--lanismd-radius-sm);
+  --lanismd-task-checkbox-bg: transparent;
+  --lanismd-task-checkbox-checked-bg: var(--lanismd-accent);
+  --lanismd-task-checkbox-checked-border: var(--lanismd-accent);
+  --lanismd-task-checkbox-check-color: #ffffff;
+
+  /* === 表格 === */
+  --lanismd-table-header-bg: var(--lanismd-sidebar-bg);
+  --lanismd-table-border: var(--lanismd-editor-border);
+  --lanismd-table-row-hover: rgba(0, 0, 0, 0.02);
+  --lanismd-table-cell-padding: 0.5em 1em;
+
+  /* === 分割线 === */
+  --lanismd-hr-color: var(--lanismd-editor-border);
+  --lanismd-hr-height: 1px;
+  --lanismd-hr-margin: 2em 0;
+
+  /* === 文本选择 === */
+  --lanismd-selection-bg: rgba(37, 99, 235, 0.2);
+  --lanismd-selection-text: inherit;
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 第四层：代码块变量
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.theme-example {
+  /* === 代码块容器 === */
+  --lanismd-code-bg: #f6f8fa;
+  --lanismd-code-toolbar-bg: #f0f2f5;
+  --lanismd-codeblock-border-radius: var(--lanismd-radius-lg);
+  --lanismd-codeblock-margin: 1em 0;
+
+  /* === 代码块工具栏 === */
+  --lanismd-codeblock-toolbar-height: 36px;
+  --lanismd-codeblock-toolbar-padding: 6px var(--lanismd-spacing-lg);
+
+  /* === 代码块窗口装饰 (macOS 风格) === */
+  --lanismd-codeblock-dot-size: 12px;
+  --lanismd-codeblock-dot-spacing: 8px;
+  --lanismd-codeblock-dot-red: #ff5f56;
+  --lanismd-codeblock-dot-yellow: #ffbd2e;
+  --lanismd-codeblock-dot-green: #27c93f;
+
+  /* === 代码块语言标签 === */
+  --lanismd-codeblock-lang-color: var(--lanismd-sidebar-text);
+  --lanismd-codeblock-lang-font-size: var(--lanismd-font-size-sm);
+  --lanismd-codeblock-lang-font-weight: 500;
+  --lanismd-codeblock-lang-text-transform: none;
+
+  /* === 代码块复制按钮 === */
+  --lanismd-codeblock-copy-btn-color: var(--lanismd-sidebar-text);
+  --lanismd-codeblock-copy-btn-hover-color: var(--lanismd-accent);
+  --lanismd-codeblock-copy-btn-hover-bg: var(--lanismd-hover-bg);
+
+  /* === CodeMirror 编辑器 === */
+  --lanismd-cm-bg: #f6f8fa;
+  --lanismd-cm-text: #24292e;
+  --lanismd-cm-gutter-bg: #f6f8fa;
+  --lanismd-cm-gutter-text: #6e7781;
+  --lanismd-cm-line-active: rgba(37, 99, 235, 0.04);
+  --lanismd-cm-gutter-active: rgba(37, 99, 235, 0.06);
+  --lanismd-cm-cursor: #24292e;
+  --lanismd-cm-selection: rgba(37, 99, 235, 0.15);
+  --lanismd-cm-bracket-match: rgba(37, 99, 235, 0.2);
+  --lanismd-cm-bracket-outline: rgba(37, 99, 235, 0.3);
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 第五层：语法高亮变量
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.theme-example {
+  /* === 核心语法元素 === */
+  --lanismd-syntax-keyword: #d73a49;         /* 关键字: if, else, return, const */
+  --lanismd-syntax-comment: #6a737d;         /* 注释 */
+  --lanismd-syntax-string: #032f62;          /* 字符串 */
+  --lanismd-syntax-number: #005cc5;          /* 数字 */
+  --lanismd-syntax-variable: #24292e;        /* 变量 */
+  --lanismd-syntax-function: #6f42c1;        /* 函数名 */
+  --lanismd-syntax-type: #22863a;            /* 类型 */
+  --lanismd-syntax-class: #6f42c1;           /* 类名 */
+  --lanismd-syntax-property: #005cc5;        /* 属性 */
+  --lanismd-syntax-operator: #d73a49;        /* 运算符 */
+  --lanismd-syntax-punctuation: #24292e;     /* 标点符号 */
+  --lanismd-syntax-bool: #005cc5;            /* 布尔值 */
+  --lanismd-syntax-regexp: #032f62;          /* 正则表达式 */
+
+  /* === HTML/XML 特定 === */
+  --lanismd-syntax-tag: #22863a;             /* HTML 标签 */
+  --lanismd-syntax-attr-name: #6f42c1;       /* 属性名 */
+  --lanismd-syntax-attr-value: #032f62;      /* 属性值 */
+
+  /* === 其他 === */
+  --lanismd-syntax-meta: #6a737d;            /* 元信息 */
+  --lanismd-syntax-definition: #e36209;      /* 定义 */
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 快速开始：创建自定义主题
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * 1. 创建新文件: your-theme-name.css
+ * 
+ * 2. 复制以下模板:
+ * 
+ *    .theme-your-name {
+ *      // 必须覆盖: 应用 UI 颜色
+ *      --lanismd-editor-bg: ...;
+ *      --lanismd-editor-text: ...;
+ *      --lanismd-accent: ...;
+ *      ...
+ *      
+ *      // 推荐覆盖: 语法高亮颜色
+ *      --lanismd-syntax-keyword: ...;
+ *      ...
+ *    }
+ * 
+ * 3. 在 themes/index.css 中导入:
+ *    @import './your-theme-name.css';
+ * 
+ * 4. 使用主题:
+ *    <div class="theme-your-name">...</div>
+ * 
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

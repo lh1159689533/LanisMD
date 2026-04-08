@@ -1,6 +1,6 @@
 /**
  * LanisMD Design Tokens
- * 设计 Token（与主题无关，保持不变）
+ * 设计 Token（与主题无关，保持不变）+ 主题变量默认值
  */
 
 :root {
@@ -25,7 +25,7 @@
   --lanismd-spacing-2xl: 20px;
   --lanismd-spacing-3xl: 24px;
 
-  /* ===== Font Sizes ===== */
+  /* ===== Font Sizes (UI) ===== */
   --lanismd-font-size-xs: 11px;
   --lanismd-font-size-sm: 12px;
   --lanismd-font-size-base: 13px;
@@ -34,7 +34,419 @@
 
   /* ===== Font Family ===== */
   --lanismd-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --lanismd-font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --lanismd-font-serif: 'Georgia', 'Times New Roman', serif;
+  --lanismd-font-heading: var(--lanismd-font-sans);
+  --lanismd-font-body: var(--lanismd-font-sans);
+  --lanismd-font-ui: var(--lanismd-font-sans);
 
   /* ===== Layout ===== */
   --lanismd-editor-max-width: 800px;
+
+  /* ===============================================
+   * 主题变量默认值（可被各主题覆盖）
+   * =============================================== */
+
+  /* ===== 全局/窗口 ===== */
+  --lanismd-bg-color: #ffffff;
+  --lanismd-text-color: #1e293b;
+  --lanismd-border-color: #e2e8f0;
+
+  /* ===== 滚动条 ===== */
+  --lanismd-scrollbar-width: 6px;
+  --lanismd-scrollbar-track-bg: transparent;
+  --lanismd-scrollbar-thumb-radius: 3px;
+
+  /* ===== 状态色 ===== */
+  --lanismd-info: #3b82f6;
+
+  /* ===== 侧边栏增强 ===== */
+  --lanismd-sidebar-active-text: inherit;
+  --lanismd-sidebar-active-border: #777;
+
+  /* ===============================================
+   * 标题 H1-H6 独立变量
+   * =============================================== */
+  
+  /* ===== H1 ===== */
+  --lanismd-h1-color: var(--lanismd-heading-color, #0f172a);
+  --lanismd-h1-font-size: 1.875rem;
+  --lanismd-h1-font-weight: 700;
+  --lanismd-h1-line-height: 1.2;
+  --lanismd-h1-margin-top: 1.5em;
+  --lanismd-h1-margin-bottom: 0.5em;
+  --lanismd-h1-padding-bottom: 0.3em;
+  --lanismd-h1-border-bottom: 1px solid var(--lanismd-hr-color, #e2e8f0);
+  --lanismd-h1-background: transparent;
+  --lanismd-h1-text-decoration: none;
+  --lanismd-h1-font-style: normal;
+  --lanismd-h1-prefix-content: none;
+  --lanismd-h1-prefix-color: inherit;
+  
+  /* ===== H2 ===== */
+  --lanismd-h2-color: var(--lanismd-heading-color, #0f172a);
+  --lanismd-h2-font-size: 1.5rem;
+  --lanismd-h2-font-weight: 600;
+  --lanismd-h2-line-height: 1.225;
+  --lanismd-h2-margin-top: 1.5em;
+  --lanismd-h2-margin-bottom: 0.5em;
+  --lanismd-h2-padding-bottom: 0.25em;
+  --lanismd-h2-border-bottom: 1px solid var(--lanismd-hr-color, #e2e8f0);
+  --lanismd-h2-background: transparent;
+  --lanismd-h2-text-decoration: none;
+  --lanismd-h2-font-style: normal;
+  --lanismd-h2-prefix-content: none;
+  --lanismd-h2-prefix-color: inherit;
+  
+  /* ===== H3 ===== */
+  --lanismd-h3-color: var(--lanismd-heading-color, #0f172a);
+  --lanismd-h3-font-size: 1.25rem;
+  --lanismd-h3-font-weight: 600;
+  --lanismd-h3-line-height: 1.43;
+  --lanismd-h3-margin-top: 1.25em;
+  --lanismd-h3-margin-bottom: 0.5em;
+  --lanismd-h3-border-bottom: none;
+  --lanismd-h3-background: transparent;
+  --lanismd-h3-prefix-content: none;
+  --lanismd-h3-prefix-color: inherit;
+  
+  /* ===== H4 ===== */
+  --lanismd-h4-color: var(--lanismd-heading-color, #0f172a);
+  --lanismd-h4-font-size: 1.125rem;
+  --lanismd-h4-font-weight: 600;
+  --lanismd-h4-line-height: 1.5;
+  --lanismd-h4-margin-top: 1em;
+  --lanismd-h4-margin-bottom: 0.5em;
+  --lanismd-h4-background: transparent;
+  --lanismd-h4-prefix-content: none;
+  --lanismd-h4-prefix-color: inherit;
+  
+  /* ===== H5 ===== */
+  --lanismd-h5-color: var(--lanismd-heading-color, #0f172a);
+  --lanismd-h5-font-size: 1em;
+  --lanismd-h5-font-weight: 600;
+  --lanismd-h5-line-height: 1.5;
+  --lanismd-h5-margin-top: 1em;
+  --lanismd-h5-margin-bottom: 0.5em;
+  --lanismd-h5-prefix-content: none;
+  --lanismd-h5-prefix-color: inherit;
+  
+  /* ===== H6 ===== */
+  --lanismd-h6-color: var(--lanismd-text-muted, #64748b);
+  --lanismd-h6-font-size: 1em;
+  --lanismd-h6-font-weight: 600;
+  --lanismd-h6-line-height: 1.5;
+  --lanismd-h6-margin-top: 1em;
+  --lanismd-h6-margin-bottom: 0.5em;
+  --lanismd-h6-prefix-content: none;
+  --lanismd-h6-prefix-color: inherit;
+
+  /* ===============================================
+   * 段落样式
+   * =============================================== */
+  --lanismd-paragraph-margin: 0.75em;
+  --lanismd-paragraph-text-indent: 0;
+
+  /* ===============================================
+   * 链接样式
+   * =============================================== */
+  --lanismd-link-decoration: underline;
+  --lanismd-link-hover-decoration: underline;
+
+  /* ===============================================
+   * 文字格式（粗体/斜体/删除线）
+   * =============================================== */
+  --lanismd-strong-color: inherit;
+  --lanismd-strong-font-weight: 600;
+  --lanismd-em-color: inherit;
+  --lanismd-em-font-style: italic;
+  --lanismd-del-color: inherit;
+  --lanismd-del-opacity: 0.7;
+  --lanismd-del-decoration: line-through;
+
+  /* ===============================================
+   * 高亮 (mark)
+   * =============================================== */
+  --lanismd-mark-bg: rgba(255, 235, 59, 0.5);
+  --lanismd-mark-color: inherit;
+  --lanismd-mark-padding: 0.1em 0.2em;
+  --lanismd-mark-border-radius: 2px;
+
+  /* ===============================================
+   * 行内代码增强
+   * =============================================== */
+  --lanismd-inline-code-padding: 0.15em 0.4em;
+  --lanismd-inline-code-border-radius: 4px;
+  --lanismd-inline-code-font-family: var(--lanismd-font-mono);
+  --lanismd-inline-code-font-size: 0.875em;
+  --lanismd-inline-code-border: none;
+
+  /* ===============================================
+   * 分割线
+   * =============================================== */
+  --lanismd-hr-height: 2px;
+  --lanismd-hr-style: solid;
+  --lanismd-hr-margin: 2em 0;
+
+  /* ===============================================
+   * 引用块（支持分级）
+   * =============================================== */
+  --lanismd-blockquote-border-width: 4px;
+  --lanismd-blockquote-border-style: solid;
+  --lanismd-blockquote-font-style: italic;
+  --lanismd-blockquote-padding: 0 0 0 1em;
+  --lanismd-blockquote-margin: 1em 0;
+  --lanismd-blockquote-border-radius: 0;
+  
+  /* Level 1 (>) - 默认样式 */
+  --lanismd-blockquote-l1-border-color: #3b82f6;
+  --lanismd-blockquote-l1-bg: rgba(59, 130, 246, 0.05);
+  --lanismd-blockquote-l1-text-color: #1e40af;
+  
+  /* Level 2 (>>) */
+  --lanismd-blockquote-l2-border-color: #22c55e;
+  --lanismd-blockquote-l2-bg: rgba(34, 197, 94, 0.05);
+  --lanismd-blockquote-l2-text-color: #166534;
+  
+  /* Level 3 (>>>) */
+  --lanismd-blockquote-l3-border-color: #f59e0b;
+  --lanismd-blockquote-l3-bg: rgba(245, 158, 11, 0.05);
+  --lanismd-blockquote-l3-text-color: #92400e;
+  
+  /* Level 4+ (>>>>) */
+  --lanismd-blockquote-l4-border-color: #f43f5e;
+  --lanismd-blockquote-l4-bg: rgba(244, 63, 94, 0.05);
+  --lanismd-blockquote-l4-text-color: #9f1239;
+
+  /* ===============================================
+   * 列表样式
+   * =============================================== */
+  
+  /* 无序列表 */
+  --lanismd-ul-padding-left: 1.75em;
+  --lanismd-ul-margin: 0.5em 0;
+  --lanismd-ul-marker-color: var(--lanismd-text-color);
+  --lanismd-ul-marker-type: disc;
+  --lanismd-ul-marker-content: '•';
+  --lanismd-ul-marker-font-size: 1em;
+  
+  /* 嵌套级别的标记类型 */
+  --lanismd-ul-l1-marker-type: disc;
+  --lanismd-ul-l2-marker-type: circle;
+  --lanismd-ul-l3-marker-type: square;
+  
+  /* 有序列表 */
+  --lanismd-ol-padding-left: 1.75em;
+  --lanismd-ol-margin: 0.5em 0;
+  --lanismd-ol-marker-color: var(--lanismd-text-color);
+  --lanismd-ol-marker-type: decimal;
+  
+  /* 任务列表 */
+  --lanismd-task-checkbox-size: 16px;
+  --lanismd-task-checkbox-border: 2px solid #94a3b8;
+  --lanismd-task-checkbox-border-radius: 4px;
+  --lanismd-task-checkbox-bg: transparent;
+  --lanismd-task-checkbox-checked-bg: var(--lanismd-accent, #2563eb);
+  --lanismd-task-checkbox-checked-border: var(--lanismd-accent, #2563eb);
+  --lanismd-task-checkbox-checkmark-color: white;
+  --lanismd-task-checked-text-decoration: line-through;
+  --lanismd-task-checked-text-opacity: 0.6;
+  
+  /* 列表项 */
+  --lanismd-li-margin: 0.25em 0;
+  --lanismd-li-line-height: 1.6;
+
+  /* ===============================================
+   * 代码块增强
+   * =============================================== */
+  
+  /* 容器 */
+  --lanismd-codeblock-border-radius: var(--lanismd-radius-lg);
+  --lanismd-codeblock-margin: 1em 0;
+  --lanismd-codeblock-padding: 0;
+  
+  /* 工具栏 */
+  --lanismd-codeblock-toolbar-height: 36px;
+  --lanismd-codeblock-toolbar-padding: 6px 12px;
+  
+  /* 语言标签 */
+  --lanismd-codeblock-lang-color: #64748b;
+  --lanismd-codeblock-lang-font-size: 12px;
+  --lanismd-codeblock-lang-font-weight: 500;
+  --lanismd-codeblock-lang-text-transform: uppercase;
+  
+  /* 复制按钮 */
+  --lanismd-codeblock-copy-btn-color: #64748b;
+  --lanismd-codeblock-copy-btn-hover-color: var(--lanismd-accent, #2563eb);
+  --lanismd-codeblock-copy-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  
+  /* 窗口装饰 */
+  --lanismd-codeblock-window-controls: none; /* none | macos | windows */
+  --lanismd-codeblock-dot-red: #ff5f56;
+  --lanismd-codeblock-dot-yellow: #ffbd2e;
+  --lanismd-codeblock-dot-green: #27c93f;
+  --lanismd-codeblock-dot-size: 12px;
+  --lanismd-codeblock-dot-spacing: 8px;
+
+  /* CodeMirror 增强 */
+  --lanismd-cm-font-family: var(--lanismd-font-mono);
+  --lanismd-cm-font-size: 0.875rem;
+  --lanismd-cm-line-height: 1.6;
+  --lanismd-cm-padding: 16px;
+  --lanismd-cm-gutter-width: 40px;
+  --lanismd-cm-gutter-padding: 0 8px 0 0;
+  --lanismd-cm-cursor-width: 2px;
+
+  /* ===============================================
+   * 表格增强
+   * =============================================== */
+  --lanismd-table-border-radius: 0;
+  --lanismd-table-margin: 1em 0;
+  --lanismd-table-header-font-weight: 600;
+  --lanismd-table-header-padding: 10px 14px;
+  --lanismd-table-cell-padding: 10px 14px;
+  --lanismd-table-stripe-bg: rgba(0, 0, 0, 0.01);
+
+  /* ===============================================
+   * 源码模式
+   * =============================================== */
+  --lanismd-source-bg: var(--lanismd-editor-bg);
+  --lanismd-source-text: var(--lanismd-editor-text);
+  --lanismd-source-font-family: var(--lanismd-font-mono);
+  --lanismd-source-font-size: 15px;
+  --lanismd-source-line-height: 1.75;
+  
+  /* Markdown 语法高亮 */
+  --lanismd-source-header-weight: 600;
+  --lanismd-source-h1-size: 1.5em;
+  --lanismd-source-h2-size: 1.3em;
+  --lanismd-source-h3-size: 1.15em;
+  --lanismd-source-strong-weight: 600;
+  --lanismd-source-emphasis-style: italic;
+  --lanismd-source-strikethrough-decoration: line-through;
+  --lanismd-source-strikethrough-opacity: 0.7;
+  --lanismd-source-url-opacity: 0.7;
+  --lanismd-source-quote-style: italic;
+
+  /* ===============================================
+   * 数学公式/图表
+   * =============================================== */
+  --lanismd-math-text-color: var(--lanismd-text-color);
+  --lanismd-math-bg: transparent;
+  --lanismd-math-block-margin: 1em 0;
+  --lanismd-math-block-padding: 1em;
+  
+  /* Mermaid 图表 */
+  --lanismd-mermaid-bg: transparent;
+  --lanismd-mermaid-text: var(--lanismd-text-color);
+  --lanismd-mermaid-line: var(--lanismd-border-color);
+  --lanismd-mermaid-primary: var(--lanismd-accent);
+  --lanismd-mermaid-secondary: #64748b;
+
+  /* ===============================================
+   * UI 组件
+   * =============================================== */
+  
+  /* 对话框/弹窗 */
+  --lanismd-dialog-bg: var(--lanismd-editor-bg);
+  --lanismd-dialog-border: 1px solid var(--lanismd-border-color);
+  --lanismd-dialog-border-radius: 12px;
+  --lanismd-dialog-shadow: var(--lanismd-shadow-lg);
+  --lanismd-dialog-header-bg: transparent;
+  --lanismd-dialog-header-border: 1px solid var(--lanismd-border-color);
+  --lanismd-dialog-width: 60%;
+  --lanismd-dialog-max-width: 900px;
+  --lanismd-dialog-max-height: 80%;
+  --lanismd-dialog-nav-width: 160px;
+  --lanismd-dialog-nav-bg: var(--lanismd-sidebar-bg);
+
+  /* 斜杠菜单 */
+  --lanismd-slash-menu-bg: var(--lanismd-editor-bg);
+  --lanismd-slash-menu-border: 1px solid var(--lanismd-border-color);
+  --lanismd-slash-menu-border-radius: 8px;
+  --lanismd-slash-menu-shadow: var(--lanismd-shadow-md);
+  --lanismd-slash-menu-item-hover-bg: var(--lanismd-hover-bg);
+  --lanismd-slash-menu-item-active-bg: var(--lanismd-selected-bg);
+
+  /* 工具提示 */
+  --lanismd-tooltip-bg: var(--lanismd-editor-bg);
+  --lanismd-tooltip-text: var(--lanismd-editor-text);
+  --lanismd-tooltip-border: 1px solid var(--lanismd-border-color);
+  --lanismd-tooltip-border-radius: 6px;
+  --lanismd-tooltip-shadow: var(--lanismd-shadow-md);
+
+  /* 右键菜单 */
+  --lanismd-context-menu-bg: var(--lanismd-editor-bg);
+  --lanismd-context-menu-border: 1px solid var(--lanismd-border-color);
+  --lanismd-context-menu-border-radius: 8px;
+  --lanismd-context-menu-shadow: var(--lanismd-shadow-lg);
+  --lanismd-context-menu-item-hover-bg: var(--lanismd-hover-bg);
+  --lanismd-context-menu-separator: var(--lanismd-border-color);
+
+  /* ===============================================
+   * 专注模式
+   * =============================================== */
+  --lanismd-focus-mode-blur-opacity: 0.4;
+  --lanismd-focus-mode-blur-color: var(--lanismd-text-muted);
+  --lanismd-focus-mode-transition: opacity 0.3s ease;
+
+  /* ===============================================
+   * 文件树（需组件改造支持）
+   * =============================================== */
+  --lanismd-file-tree-item-height: 28px;
+  --lanismd-file-tree-indent: 16px;
+  --lanismd-file-tree-icon-color: #64748b;
+  
+  /* 连线样式 */
+  --lanismd-file-tree-line-display: none;
+  --lanismd-file-tree-line-style: solid;
+  --lanismd-file-tree-line-color: #d0d0d0;
+  --lanismd-file-tree-line-width: 1px;
+  
+  /* 节点样式 */
+  --lanismd-file-tree-node-padding: 4px 8px;
+  --lanismd-file-tree-node-border-radius: 4px;
+  --lanismd-file-tree-active-border-left: none;
+
+  /* ===============================================
+   * 大纲（需组件改造支持）
+   * =============================================== */
+  --lanismd-outline-text: #475569;
+  --lanismd-outline-hover-bg: rgba(0, 0, 0, 0.04);
+  --lanismd-outline-active-bg: rgba(37, 99, 235, 0.08);
+  --lanismd-outline-active-text: #2563eb;
+  --lanismd-outline-indent: 12px;
+  --lanismd-outline-marker-color: #94a3b8;
+  
+  /* 连线样式 */
+  --lanismd-outline-line-display: none;
+  --lanismd-outline-line-style: solid;
+  --lanismd-outline-line-color: #e0e0e0;
+  --lanismd-outline-line-width: 1px;
+  
+  /* 展开器 */
+  --lanismd-outline-expander-display: none;
+  --lanismd-outline-expander-content: '›';
+  --lanismd-outline-expander-color: #666;
+  
+  /* 层级样式 */
+  --lanismd-outline-l1-font-size: 14px;
+  --lanismd-outline-l2-font-size: 13px;
+  --lanismd-outline-l3-font-size: 12px;
+  --lanismd-outline-l1-font-weight: 600;
+  --lanismd-outline-l2-font-weight: 500;
+  --lanismd-outline-l3-font-weight: 400;
+}
+
+/* ===============================================
+ * 打印样式变量
+ * =============================================== */
+@media print {
+  :root {
+    --lanismd-print-bg: white;
+    --lanismd-print-text: black;
+    --lanismd-print-link-color: #0066cc;
+    --lanismd-print-code-bg: #f5f5f5;
+    --lanismd-print-page-margin: 20mm;
+  }
 }

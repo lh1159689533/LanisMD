@@ -17,6 +17,8 @@
   --lanismd-sidebar-border: #d4c5a9;
   --lanismd-sidebar-hover: rgba(91, 70, 54, 0.06);
   --lanismd-sidebar-active: rgba(156, 102, 68, 0.12);
+  --lanismd-sidebar-active-text: #9c6644;
+  --lanismd-sidebar-active-border: #9c6644;
   
   /* Titlebar */
   --lanismd-titlebar-bg: #e8dcc8;
@@ -32,6 +34,7 @@
   --lanismd-success: #6b8e23;
   --lanismd-warning: #cd853f;
   --lanismd-danger: #cd5c5c;
+  --lanismd-info: #b8860b;
   
   /* Interactive */
   --lanismd-hover-bg: rgba(156, 102, 68, 0.1);
@@ -58,6 +61,14 @@
   --lanismd-link-color: var(--lanismd-accent);
   --lanismd-link-hover: var(--lanismd-accent-hover);
   
+  /* 标题 H1-H6 颜色 */
+  --lanismd-h1-color: #3d2914;
+  --lanismd-h2-color: #3d2914;
+  --lanismd-h3-color: #5b4636;
+  --lanismd-h4-color: #5b4636;
+  --lanismd-h5-color: #6b5744;
+  --lanismd-h6-color: #8b7355;
+  
   /* Inline Code */
   --lanismd-inline-code-bg: rgba(91, 70, 54, 0.08);
   --lanismd-inline-code-text: #7d5035;
@@ -66,6 +77,28 @@
   --lanismd-blockquote-border: var(--lanismd-accent);
   --lanismd-blockquote-bg: rgba(156, 102, 68, 0.05);
   --lanismd-blockquote-text: var(--lanismd-sidebar-text);
+  
+  /* 分级引用 */
+  --lanismd-blockquote-l1-border-color: #9c6644;
+  --lanismd-blockquote-l1-bg: rgba(156, 102, 68, 0.06);
+  --lanismd-blockquote-l1-text-color: #7d5035;
+  --lanismd-blockquote-l2-border-color: #6b8e23;
+  --lanismd-blockquote-l2-bg: rgba(107, 142, 35, 0.06);
+  --lanismd-blockquote-l2-text-color: #5a7a1e;
+  --lanismd-blockquote-l3-border-color: #cd853f;
+  --lanismd-blockquote-l3-bg: rgba(205, 133, 63, 0.06);
+  --lanismd-blockquote-l3-text-color: #a36c32;
+  --lanismd-blockquote-l4-border-color: #cd5c5c;
+  --lanismd-blockquote-l4-bg: rgba(205, 92, 92, 0.06);
+  --lanismd-blockquote-l4-text-color: #a34a4a;
+  
+  /* 列表 */
+  --lanismd-ul-marker-color: #6b5744;
+  --lanismd-ol-marker-color: #6b5744;
+  --lanismd-task-checkbox-border: 2px solid #c4b49a;
+  --lanismd-task-checkbox-checked-bg: var(--lanismd-accent);
+  --lanismd-task-checkbox-checked-border: var(--lanismd-accent);
+  --lanismd-task-checkbox-check-color: #f4ecd8;
   
   /* Table */
   --lanismd-table-header-bg: #e0d4c0;
@@ -84,6 +117,11 @@
   /* Code Block Container */
   --lanismd-code-bg: #efe6d5;
   --lanismd-code-toolbar-bg: #e8dcc8;
+  
+  /* 代码块窗口装饰 (macOS 风格) */
+  --lanismd-codeblock-dot-red: #d9806c;
+  --lanismd-codeblock-dot-yellow: #d9b96c;
+  --lanismd-codeblock-dot-green: #8cb88c;
   
   /* CodeMirror Editor */
   --lanismd-cm-bg: #efe6d5;

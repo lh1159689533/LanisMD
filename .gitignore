@@ -16,3 +16,4 @@ src-tauri/Cargo.lock
 .idea/
 *.swp
 *.swo
+typora-themes/
