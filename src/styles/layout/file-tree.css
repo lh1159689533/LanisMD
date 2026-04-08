@@ -1,0 +1,358 @@
+/**
+ * FileTree Component Styles
+ * 文件树组件样式 - CSS 变量驱动
+ */
+
+/* ===== 文件树容器 ===== */
+.file-tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+/* ===== 文件树头部 ===== */
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-bottom: 1px solid var(--lanismd-sidebar-border);
+}
+
+.file-tree-header-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  flex-shrink: 0;
+}
+
+.file-tree-header-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-sm);
+  transition: all var(--lanismd-transition-fast);
+  color: var(--lanismd-sidebar-text);
+}
+
+.file-tree-header-btn svg {
+  display: block;
+  width: 13px;
+  height: 13px;
+}
+
+.file-tree-header-btn:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.file-tree-header-btn.active {
+  background-color: var(--lanismd-sidebar-active);
+  color: var(--lanismd-sidebar-active-text);
+}
+
+.file-tree-header-separator {
+  width: 1px;
+  height: 12px;
+  margin: 0 var(--lanismd-spacing-xs);
+  background-color: var(--lanismd-sidebar-border);
+}
+
+/* ===== 文件树内容区 ===== */
+.file-tree-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--lanismd-spacing-sm) 0;
+}
+
+/* ===== 文件树节点 ===== */
+.file-tree-node {
+  position: relative;
+}
+
+.file-tree-node-item {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  width: 100%;
+  height: var(--lanismd-file-tree-item-height, 28px);
+  padding: var(--lanismd-file-tree-node-padding, 4px 8px);
+  border-radius: var(--lanismd-file-tree-node-border-radius, 4px);
+  text-align: left;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-fast);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-node-item:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.file-tree-node-item.selected {
+  background-color: var(--lanismd-sidebar-active);
+  color: var(--lanismd-sidebar-active-text);
+  border-left: var(--lanismd-file-tree-active-border-left, none);
+}
+
+.file-tree-node-item.selected .file-tree-node-name {
+  color: var(--lanismd-accent);
+}
+
+/* ===== 节点图标 ===== */
+.file-tree-node-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--lanismd-file-tree-icon-size, 14px);
+  height: var(--lanismd-file-tree-icon-size, 14px);
+  color: var(--lanismd-file-tree-icon-color, #64748b);
+}
+
+.file-tree-node-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.file-tree-node-icon.folder {
+  color: #f59e0b; /* amber-500 */
+}
+
+.file-tree-node-icon.file {
+  color: #3b82f6; /* blue-500 */
+}
+
+.file-tree-node-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+.file-tree-node-expand svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.file-tree-node-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== 文件树连线（可选，通过 CSS 变量控制显示） ===== */
+.file-tree-node-children {
+  position: relative;
+}
+
+/* 垂直连线 */
+.file-tree-node-children::before {
+  content: '';
+  display: var(--lanismd-file-tree-line-display, none);
+  position: absolute;
+  top: 0;
+  left: calc(var(--lanismd-file-tree-line-indent, 8px) + var(--depth, 0) * var(--lanismd-file-tree-indent, 16px));
+  width: var(--lanismd-file-tree-line-width, 1px);
+  height: 100%;
+  border-left-style: var(--lanismd-file-tree-line-style, solid);
+  border-left-width: var(--lanismd-file-tree-line-width, 1px);
+  border-left-color: var(--lanismd-file-tree-line-color, #d0d0d0);
+}
+
+/* 水平连线（节点级别） */
+.file-tree-node.has-line::before {
+  content: '';
+  display: var(--lanismd-file-tree-line-display, none);
+  position: absolute;
+  top: calc(var(--lanismd-file-tree-item-height, 28px) / 2);
+  left: calc(var(--lanismd-file-tree-line-indent, 8px) + (var(--depth, 0) - 1) * var(--lanismd-file-tree-indent, 16px));
+  width: calc(var(--lanismd-file-tree-indent, 16px) - var(--lanismd-file-tree-line-indent, 8px));
+  height: 0;
+  border-top-style: var(--lanismd-file-tree-line-style, solid);
+  border-top-width: var(--lanismd-file-tree-line-width, 1px);
+  border-top-color: var(--lanismd-file-tree-line-color, #d0d0d0);
+}
+
+/* 最后一个节点的垂直连线（停止在节点中心） */
+.file-tree-node.last-child.has-line::after {
+  content: '';
+  display: var(--lanismd-file-tree-line-display, none);
+  position: absolute;
+  top: calc(var(--lanismd-file-tree-item-height, 28px) / 2);
+  left: calc(var(--lanismd-file-tree-line-indent, 8px) + (var(--depth, 0) - 1) * var(--lanismd-file-tree-indent, 16px));
+  width: var(--lanismd-file-tree-line-width, 1px);
+  height: calc(50% + var(--lanismd-file-tree-item-height, 28px) / 2);
+  background-color: var(--lanismd-sidebar-bg);
+}
+
+/* ===== 内联编辑输入框 ===== */
+.file-tree-inline-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-xs) var(--lanismd-spacing-md);
+}
+
+.file-tree-inline-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--lanismd-spacing-xs) var(--lanismd-spacing-sm);
+  border: 1px solid var(--lanismd-accent);
+  border-radius: var(--lanismd-radius-sm);
+  background-color: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  outline: none;
+}
+
+.file-tree-inline-input:focus {
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring);
+}
+
+/* ===== 列表视图样式 ===== */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-xs);
+  padding: 0 var(--lanismd-spacing-sm);
+}
+
+.file-list-item {
+  display: block;
+  width: 100%;
+  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-lg);
+  border-radius: var(--lanismd-radius-md);
+  text-align: left;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.file-list-item:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.file-list-item.selected {
+  background-color: var(--lanismd-sidebar-active);
+}
+
+.file-list-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lanismd-spacing-md);
+  margin-bottom: var(--lanismd-spacing-xs);
+}
+
+.file-list-item-folder {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-list-item-time {
+  flex-shrink: 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+  white-space: nowrap;
+}
+
+.file-list-item-name {
+  line-height: 1.4;
+}
+
+.file-list-item-stem {
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  color: var(--lanismd-sidebar-text);
+}
+
+.file-list-item.selected .file-list-item-stem {
+  color: var(--lanismd-accent);
+}
+
+.file-list-item-ext {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+}
+
+.file-list-item.selected .file-list-item-ext {
+  color: var(--lanismd-accent);
+  opacity: 0.5;
+}
+
+/* ===== 空状态 ===== */
+.file-tree-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--lanismd-spacing-lg);
+  padding: var(--lanismd-spacing-xl);
+}
+
+.file-tree-empty-icon {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.4;
+}
+
+.file-tree-empty-text {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  text-align: center;
+  user-select: none;
+}
+
+.file-tree-empty-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-lg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-fast);
+  user-select: none;
+}
+
+.file-tree-empty-btn:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+/* ===== 无文件提示 ===== */
+.file-tree-no-files {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--lanismd-spacing-3xl);
+}
+
+.file-tree-no-files-text {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+}

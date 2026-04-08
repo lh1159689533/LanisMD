@@ -13,6 +13,8 @@ import { cn } from '@/utils/cn';
 import { FileTree } from './FileTree';
 import type { OutlineItem } from '@/types';
 
+import '../../styles/layout/sidebar.css';
+
 function scrollToHeading(item: OutlineItem) {
   const editorRoot = document.querySelector('.milkdown-editor-root .ProseMirror');
   if (!editorRoot) return;
@@ -30,19 +32,15 @@ function OutlineTree({ items, depth = 0 }: { items: OutlineItem[]; depth?: numbe
   if (!items.length) return null;
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 12 : 0 }}>
+    <div className={cn('outline-tree', depth > 0 && 'outline-tree-level')}>
       {items.map((item) => (
         <div key={item.id}>
           <button
-            className={cn(
-              'w-full truncate rounded px-2 py-1 text-left text-xs',
-              'text-[var(--lanismd-sidebar-text)] transition-colors',
-              'hover:bg-black/5 hover:text-[var(--lanismd-accent)]',
-              'dark:hover:bg-white/5',
-            )}
+            className={cn('outline-item', `level-${Math.min(item.level, 6)}`)}
             title={item.text}
             onClick={() => scrollToHeading(item)}
           >
+            <span className="outline-item-marker" />
             {item.text}
           </button>
           {item.children.length > 0 && <OutlineTree items={item.children} depth={depth + 1} />}
@@ -184,48 +182,26 @@ export function Sidebar() {
   const contentWidth = sidebarOpen ? sidebarWidth : 0;
 
   return (
-    <div className="sidebar relative flex h-full shrink-0 bg-[var(--lanismd-sidebar-bg)]">
-      {/* 图标栏 - 带过渡动画 */}
-      <div
-        className={cn(
-          'sidebar-icon-bar flex flex-col items-center gap-1',
-          'border-r border-[var(--lanismd-sidebar-border)] px-1 py-2',
-          'transition-opacity duration-300 ease-in-out',
-          sidebarOpen ? 'opacity-100' : 'opacity-70',
-        )}
-      >
+    <div className={cn('sidebar', !sidebarOpen && 'collapsed')}>
+      {/* 图标栏 */}
+      <div className="sidebar-icon-bar">
         <button
           onClick={() => setSidebarPanel('files')}
-          className={cn(
-            'rounded-md p-1.5 transition-all duration-200',
-            sidebarPanel === 'files'
-              ? 'scale-105 bg-[var(--lanismd-accent)] text-white'
-              : 'text-[var(--lanismd-sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
-          )}
+          className={cn('sidebar-icon-btn', sidebarPanel === 'files' && 'active')}
           title="文件树"
         >
           <RiFolderLine size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('outline')}
-          className={cn(
-            'rounded-md p-1.5 transition-all duration-200',
-            sidebarPanel === 'outline'
-              ? 'scale-105 bg-[var(--lanismd-accent)] text-white'
-              : 'text-[var(--lanismd-sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
-          )}
+          className={cn('sidebar-icon-btn', sidebarPanel === 'outline' && 'active')}
           title="大纲"
         >
           <RiListOrdered size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('search')}
-          className={cn(
-            'rounded-md p-1.5 transition-all duration-200',
-            sidebarPanel === 'search'
-              ? 'scale-105 bg-[var(--lanismd-accent)] text-white'
-              : 'text-[var(--lanismd-sidebar-text)] hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
-          )}
+          className={cn('sidebar-icon-btn', sidebarPanel === 'search' && 'active')}
           title="搜索"
         >
           <RiSearchLine size={16} />
@@ -234,104 +210,62 @@ export function Sidebar() {
         {/* 切换按钮 - 置底 */}
         <button
           onClick={toggleSidebar}
-          className={cn(
-            'mt-auto rounded-md p-1.5 transition-all duration-200',
-            'hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
-            !sidebarOpen && 'text-[var(--lanismd-accent)]',
-          )}
+          className={cn('sidebar-icon-btn toggle-btn', !sidebarOpen && 'collapsed')}
           title="切换侧边栏"
         >
-          <RiSideBarLine
-            size={16}
-            className={
-              sidebarOpen ? 'text-[var(--lanismd-sidebar-text)]' : 'text-[var(--lanismd-accent)]'
-            }
-          />
+          <RiSideBarLine size={16} />
         </button>
         {/* 设置 */}
-        <button
-          onClick={() => openSettings('general')}
-          className={cn(
-            'rounded-md p-1.5 transition-all duration-200',
-            'hover:scale-105 hover:bg-black/5 dark:hover:bg-white/10',
-          )}
-          title="设置"
-        >
-          <RiSettings3Line size={16} className="text-[var(--lanismd-sidebar-text)]" />
+        <button onClick={() => openSettings('general')} className="sidebar-icon-btn" title="设置">
+          <RiSettings3Line size={16} />
         </button>
       </div>
 
-      {/* 内容面板 - 带过渡动画（拖拽时禁用 CSS transition 避免延迟） */}
+      {/* 内容面板 */}
       <div
         ref={contentPanelRef}
-        className={cn(
-          'sidebar-content overflow-hidden',
-          'border-r border-[var(--lanismd-sidebar-border)]',
-          !isDragging && 'transition-[width] duration-300 ease-in-out',
-        )}
+        className={cn('sidebar-content', isDragging && 'no-transition')}
         style={{ width: `${contentWidth}px` }}
       >
         <div
           ref={innerPanelRef}
-          className={cn(
-            'h-full p-3',
-            sidebarPanel === 'files' ? 'overflow-hidden' : 'overflow-auto',
-          )}
+          className={cn('sidebar-content-inner', sidebarPanel === 'files' && 'files-panel')}
           style={{ width: `${sidebarWidth}px` }}
         >
           {sidebarPanel === 'outline' && (
-            <div className="text-xs text-[var(--lanismd-sidebar-text)]">
-              <p className="mb-2 font-medium">大纲</p>
+            <div className="outline-panel">
+              <p className="outline-panel-title">大纲</p>
               {outline.length > 0 ? (
                 <OutlineTree items={outline} />
               ) : (
-                <p className="text-[10px] opacity-60">
+                <p className="outline-panel-empty">
                   {currentFile ? '未找到标题' : '打开文件以查看大纲'}
                 </p>
               )}
             </div>
           )}
-          {sidebarPanel === 'files' && (
-            <div className="-m-3 h-full">
-              <FileTree />
-            </div>
-          )}
+          {sidebarPanel === 'files' && <FileTree />}
           {sidebarPanel === 'search' && (
-            <div className="text-xs text-[var(--lanismd-sidebar-text)]">
-              <p className="mb-2 font-medium">搜索</p>
+            <div className="search-panel">
+              <p className="search-panel-title">搜索</p>
               <input
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="在文件中搜索..."
-                className={cn(
-                  'w-full rounded-md border border-[var(--lanismd-editor-border)]',
-                  'bg-white px-2 py-1.5 text-xs dark:bg-[#1a1b26]',
-                  'focus:outline-none focus:ring-1 focus:ring-[var(--lanismd-accent)]',
-                )}
+                className="search-panel-input"
               />
             </div>
           )}
         </div>
       </div>
 
-      {/* 拖拽调整宽度 - 增强视觉反馈（始终渲染，折叠时也可拖拽展开） */}
+      {/* 拖拽调整宽度 */}
       <div
-        className={cn(
-          'sidebar-resizer group absolute -right-1 flex h-full w-[6px]',
-          'cursor-col-resize items-center justify-center transition-colors',
-          isDragging ? 'bg-[var(--lanismd-accent)]/20' : 'hover:bg-[var(--lanismd-accent)]/10',
-        )}
+        className={cn('sidebar-resizer', isDragging && 'dragging')}
         onMouseDown={handleMouseDown}
       >
-        <div
-          className={cn(
-            'h-8 w-[2px] rounded-full transition-all duration-150',
-            isDragging
-              ? 'h-12 bg-[var(--lanismd-accent)] opacity-60'
-              : 'bg-[var(--lanismd-sidebar-text)] opacity-0 group-hover:h-10 group-hover:opacity-25',
-          )}
-        />
+        <div className="sidebar-resizer-handle" />
       </div>
     </div>
   );

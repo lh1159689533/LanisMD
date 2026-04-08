@@ -1,0 +1,224 @@
+/**
+ * Settings Dialog Component Styles
+ * 设置弹窗组件样式 - CSS 变量驱动
+ */
+
+/* ===== 弹窗遮罩 ===== */
+.settings-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+
+/* ===== 弹窗容器 ===== */
+.settings-dialog {
+  display: flex;
+  width: var(--lanismd-dialog-width, 60%);
+  max-width: var(--lanismd-dialog-max-width, 900px);
+  min-width: 300px;
+  height: 80%;
+  max-height: var(--lanismd-dialog-max-height, 500px);
+  min-height: 200px;
+  overflow: hidden;
+  border-radius: var(--lanismd-dialog-border-radius, 12px);
+  background-color: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
+  border: var(--lanismd-dialog-border, 1px solid var(--lanismd-border-color));
+  box-shadow: var(--lanismd-dialog-shadow, var(--lanismd-shadow-lg));
+}
+
+/* ===== 导航栏 ===== */
+.settings-dialog-nav {
+  width: var(--lanismd-dialog-nav-width, 160px);
+  flex-shrink: 0;
+  padding: var(--lanismd-spacing-lg);
+  border-right: var(--lanismd-dialog-nav-border, 1px solid var(--lanismd-border-color));
+  background-color: var(--lanismd-dialog-nav-bg, var(--lanismd-sidebar-bg));
+}
+
+.settings-dialog-nav-title {
+  margin-bottom: var(--lanismd-spacing-lg);
+  padding: 0 var(--lanismd-spacing-md);
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.settings-dialog-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-xs);
+}
+
+.settings-dialog-nav-item {
+  width: 100%;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-radius: var(--lanismd-radius-md);
+  text-align: left;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-dialog-nav-item:hover {
+  background-color: var(--lanismd-dialog-nav-item-hover-bg, var(--lanismd-hover-bg));
+}
+
+.settings-dialog-nav-item.active {
+  background-color: var(--lanismd-accent);
+  color: var(--lanismd-accent-contrast, #ffffff);
+}
+
+/* ===== 内容区 ===== */
+.settings-dialog-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--lanismd-spacing-2xl);
+}
+
+.settings-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--lanismd-spacing-xl);
+}
+
+.settings-dialog-title {
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.settings-dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-dialog-close:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+/* ===== 设置区块 ===== */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-xl);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.settings-section-title {
+  margin-bottom: var(--lanismd-spacing-md);
+  padding-top: var(--lanismd-spacing-lg);
+  border-top: 1px solid var(--lanismd-editor-border);
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lanismd-sidebar-text);
+}
+
+.settings-section-title:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lanismd-spacing-lg);
+}
+
+.settings-item-label {
+  color: var(--lanismd-sidebar-text);
+}
+
+.settings-item-value {
+  color: var(--lanismd-editor-text);
+}
+
+.settings-item-description {
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.8;
+}
+
+/* ===== 开关控件 ===== */
+.settings-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: var(--lanismd-text-muted);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.settings-toggle.checked {
+  background-color: var(--lanismd-accent);
+}
+
+.settings-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: var(--lanismd-shadow-sm);
+  transition: transform var(--lanismd-transition-fast);
+}
+
+.settings-toggle.checked .settings-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* ===== 主题选择器 ===== */
+.settings-theme-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lanismd-spacing-md);
+}
+
+.settings-theme-item {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-lg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-theme-item:hover {
+  border-color: var(--lanismd-accent);
+  opacity: 0.8;
+}
+
+.settings-theme-item.selected {
+  border-color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent-light);
+  color: var(--lanismd-accent);
+}
+
+.settings-theme-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== 快捷键提示 ===== */
+.settings-shortcuts-hint {
+  color: var(--lanismd-sidebar-text);
+}

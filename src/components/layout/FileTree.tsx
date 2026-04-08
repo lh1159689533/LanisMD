@@ -31,6 +31,8 @@ import type { ContextMenuGroup } from '@/components/common/ContextMenu';
 import { RecentFoldersPanel } from './RecentFolders';
 import type { FileTreeNode } from '@/types';
 
+import '../../styles/layout/file-tree.css';
+
 // ─── Helpers ──────────────────────────────────────────────
 
 /**
@@ -160,21 +162,17 @@ function InlineEditInput({
 
   return (
     <div
-      className="flex items-center gap-1 px-2 py-0.5"
+      className="file-tree-inline-edit"
       style={{ paddingLeft: depth != null ? `${8 + depth * 16}px` : undefined }}
     >
-      {icon && <span className="shrink-0">{icon}</span>}
+      {icon && <span className="file-tree-node-icon shrink-0">{icon}</span>}
       <input
         ref={inputRef}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        className={cn(
-          'min-w-0 flex-1 px-1 py-0.5',
-          'rounded border border-[var(--lanismd-accent)]',
-          'bg-[var(--lanismd-editor-bg)] text-xs text-[var(--lanismd-editor-text)] outline-none',
-        )}
+        className="file-tree-inline-input"
         spellCheck={false}
       />
     </div>
@@ -299,7 +297,7 @@ function FileTreeItem({
 
   if (isBeingRenamed) {
     return (
-      <div>
+      <div className="file-tree-node" style={{ '--depth': depth } as React.CSSProperties}>
         <InlineEditInput
           value={node.name}
           onConfirm={handleRenameConfirm}
@@ -307,14 +305,17 @@ function FileTreeItem({
           depth={depth}
           icon={
             node.isDir ? (
-              <RiFolderLine size={14} className="text-amber-500" />
+              <RiFolderLine size={14} className="file-tree-node-icon folder" />
             ) : (
-              <RiFileTextLine size={14} className="text-blue-400" />
+              <RiFileTextLine size={14} className="file-tree-node-icon file" />
             )
           }
         />
         {node.isDir && isExpanded && node.children && (
-          <div>
+          <div
+            className="file-tree-node-children"
+            style={{ '--depth': depth } as React.CSSProperties}
+          >
             {node.children.map((child) => (
               <FileTreeItem
                 key={child.path}
@@ -333,40 +334,35 @@ function FileTreeItem({
   }
 
   return (
-    <div>
+    <div
+      className={cn('file-tree-node', depth > 0 && 'has-line')}
+      style={{ '--depth': depth } as React.CSSProperties}
+    >
       <button
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        className={cn(
-          'flex w-full items-center gap-1 truncate rounded-md px-2 py-1',
-          'text-left text-xs transition-colors',
-          isSelected && !node.isDir
-            ? 'bg-[var(--lanismd-accent)]/15 text-[var(--lanismd-accent)]'
-            : 'text-[var(--lanismd-sidebar-text)] hover:bg-black/5 dark:hover:bg-white/5',
-        )}
+        className={cn('file-tree-node-item', isSelected && !node.isDir && 'selected')}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
         title={node.path}
       >
         {node.isDir ? (
           <>
-            {isExpanded ? (
-              <RiArrowDownSLine size={14} className="shrink-0 opacity-60" />
-            ) : (
-              <RiArrowRightSLine size={14} className="shrink-0 opacity-60" />
-            )}
-            {isExpanded ? (
-              <RiFolderOpenLine size={14} className="shrink-0 text-amber-500" />
-            ) : (
-              <RiFolderLine size={14} className="shrink-0 text-amber-500" />
-            )}
+            <span className="file-tree-node-expand">
+              {isExpanded ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
+            </span>
+            <span className="file-tree-node-icon folder">
+              {isExpanded ? <RiFolderOpenLine size={14} /> : <RiFolderLine size={14} />}
+            </span>
           </>
         ) : (
           <>
-            <span className="w-[14px] shrink-0" />
-            <RiFileTextLine size={14} className="shrink-0 text-blue-400" />
+            <span className="file-tree-node-expand" />
+            <span className="file-tree-node-icon file">
+              <RiFileTextLine size={14} />
+            </span>
           </>
         )}
-        <span className="truncate">{node.name}</span>
+        <span className="file-tree-node-name">{node.name}</span>
       </button>
 
       {/* New entry inline edit at the top of children */}
@@ -378,16 +374,19 @@ function FileTreeItem({
           depth={depth + 1}
           icon={
             inlineEdit!.mode === 'new-folder' ? (
-              <RiFolderLine size={14} className="text-amber-500" />
+              <RiFolderLine size={14} className="file-tree-node-icon folder" />
             ) : (
-              <RiFileTextLine size={14} className="text-blue-400" />
+              <RiFileTextLine size={14} className="file-tree-node-icon file" />
             )
           }
         />
       )}
 
       {node.isDir && isExpanded && node.children && (
-        <div>
+        <div
+          className="file-tree-node-children"
+          style={{ '--depth': depth } as React.CSSProperties}
+        >
           {node.children.map((child) => (
             <FileTreeItem
               key={child.path}
@@ -511,17 +510,15 @@ function FileListItem({
 
   if (isBeingRenamed) {
     return (
-      <div className="px-3 py-2">
-        <div className="mb-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-[10px] text-[var(--lanismd-sidebar-text)] opacity-50">
-            {entry.relativeDir}
-          </span>
+      <div className="file-list-item">
+        <div className="file-list-item-meta">
+          <span className="file-list-item-folder">{entry.relativeDir}</span>
         </div>
         <InlineEditInput
           value={entry.name}
           onConfirm={onRenameConfirm}
           onCancel={onRenameCancel}
-          icon={<RiFileTextLine size={14} className="text-blue-400" />}
+          icon={<RiFileTextLine size={14} className="file-tree-node-icon file" />}
         />
       </div>
     );
@@ -531,40 +528,18 @@ function FileListItem({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={cn(
-        'w-full rounded-md px-3 py-2',
-        'text-left transition-colors',
-        isSelected ? 'bg-[var(--lanismd-accent)]/15' : 'hover:bg-black/5 dark:hover:bg-white/5',
-      )}
+      className={cn('file-list-item', isSelected && 'selected')}
       title={entry.path}
     >
       {/* Row 1: folder path + modified time */}
-      <div className="mb-0.5 flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] text-[var(--lanismd-sidebar-text)] opacity-50">
-          {entry.relativeDir}
-        </span>
-        <span className="shrink-0 whitespace-nowrap text-[10px] text-[var(--lanismd-sidebar-text)] opacity-40">
-          {timeAgo(entry.modifiedTime)}
-        </span>
+      <div className="file-list-item-meta">
+        <span className="file-list-item-folder">{entry.relativeDir}</span>
+        <span className="file-list-item-time">{timeAgo(entry.modifiedTime)}</span>
       </div>
       {/* Row 2: file name with .md dimmed */}
-      <div className="leading-tight">
-        <span
-          className={`text-sm font-semibold ${
-            isSelected ? 'text-[var(--lanismd-accent)]' : 'text-[var(--lanismd-sidebar-text)]'
-          }`}
-        >
-          {entry.stem}
-        </span>
-        <span
-          className={`text-xs ${
-            isSelected
-              ? 'text-[var(--lanismd-accent)] opacity-50'
-              : 'text-[var(--lanismd-sidebar-text)] opacity-40'
-          }`}
-        >
-          {entry.ext}
-        </span>
+      <div className="file-list-item-name">
+        <span className="file-list-item-stem">{entry.stem}</span>
+        <span className="file-list-item-ext">{entry.ext}</span>
       </div>
     </button>
   );
@@ -1162,20 +1137,10 @@ export function FileTree() {
 
   if (!rootPath) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
-        <RiFolderAddLine size={32} className="text-[var(--lanismd-sidebar-text)] opacity-40" />
-        <p className="select-none text-center text-xs text-[var(--lanismd-sidebar-text)] opacity-60">
-          打开文件夹以浏览 Markdown 文件
-        </p>
-        <button
-          onClick={handleOpenFolder}
-          className={cn(
-            'flex select-none items-center gap-1.5 px-3 py-1.5',
-            'rounded-md border border-[var(--lanismd-editor-border)]',
-            'text-xs text-[var(--lanismd-sidebar-text)]',
-            'transition-colors hover:bg-black/5 dark:hover:bg-white/5',
-          )}
-        >
+      <div className="file-tree-empty">
+        <RiFolderAddLine size={32} className="file-tree-empty-icon" />
+        <p className="file-tree-empty-text">打开文件夹以浏览 Markdown 文件</p>
+        <button onClick={handleOpenFolder} className="file-tree-empty-btn">
           <RiFolderOpenLine size={14} />
           打开文件夹
         </button>
@@ -1192,79 +1157,60 @@ export function FileTree() {
     inlineEdit.path === rootPath;
 
   return (
-    <div
-      ref={fileTreeRootRef}
-      className="relative flex h-full flex-col text-xs text-[var(--lanismd-sidebar-text)]"
-    >
+    <div ref={fileTreeRootRef} className="file-tree">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--lanismd-sidebar-border)] px-2 py-1.5">
-        <span className="truncate font-medium" title={rootPath}>
+      <div className="file-tree-header">
+        <span className="file-tree-header-title" title={rootPath}>
           {folderName}
         </span>
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="file-tree-header-actions">
           <button
             ref={recentFoldersBtnRef}
             onClick={() => setShowRecentFolders((v) => !v)}
-            className={`rounded p-1 transition-colors ${
-              showRecentFolders
-                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
-                : 'hover:bg-black/5 dark:hover:bg-white/10'
-            }`}
+            className={cn('file-tree-header-btn', showRecentFolders && 'active')}
             title="最近打开的文件夹"
           >
             <RiHistoryLine size={13} />
           </button>
 
-          <span className="mx-0.5 h-3 w-px bg-[var(--lanismd-sidebar-border)]" />
+          <span className="file-tree-header-separator" />
 
           {/* View mode toggle */}
           <button
             onClick={() => setViewMode('tree')}
-            className={`rounded p-1 transition-colors ${
-              viewMode === 'tree'
-                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
-                : 'hover:bg-black/5 dark:hover:bg-white/10'
-            }`}
+            className={cn('file-tree-header-btn', viewMode === 'tree' && 'active')}
             title="树视图"
           >
             <RiNodeTree size={13} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`rounded p-1 transition-colors ${
-              viewMode === 'list'
-                ? 'bg-black/10 text-[var(--lanismd-accent)] dark:bg-white/15'
-                : 'hover:bg-black/5 dark:hover:bg-white/10'
-            }`}
+            className={cn('file-tree-header-btn', viewMode === 'list' && 'active')}
             title="列表视图"
           >
             <RiListUnordered size={13} />
           </button>
 
-          <span className="mx-0.5 h-3 w-px bg-[var(--lanismd-sidebar-border)]" />
+          <span className="file-tree-header-separator" />
 
           <button
             onClick={handleOpenFolder}
-            className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+            className="file-tree-header-btn"
             title="打开其他文件夹"
           >
             <RiFolderOpenLine size={13} />
           </button>
-          <button
-            onClick={refreshTree}
-            className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
-            title="刷新"
-          >
+          <button onClick={refreshTree} className="file-tree-header-btn" title="刷新">
             <RiRefreshLine size={13} />
           </button>
         </div>
       </div>
 
       {/* Content area */}
-      <div className="flex-1 overflow-auto py-1" onContextMenu={handleBlankContextMenu}>
+      <div className="file-tree-content" onContextMenu={handleBlankContextMenu}>
         {tree.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <span className="text-[10px] opacity-60">未找到 Markdown 文件</span>
+          <div className="file-tree-no-files">
+            <span className="file-tree-no-files-text">未找到 Markdown 文件</span>
           </div>
         ) : viewMode === 'tree' ? (
           <>
@@ -1277,9 +1223,9 @@ export function FileTree() {
                 depth={0}
                 icon={
                   inlineEdit!.mode === 'new-folder' ? (
-                    <RiFolderLine size={14} className="text-amber-500" />
+                    <RiFolderLine size={14} className="file-tree-node-icon folder" />
                   ) : (
-                    <RiFileTextLine size={14} className="text-blue-400" />
+                    <RiFileTextLine size={14} className="file-tree-node-icon file" />
                   )
                 }
               />
@@ -1297,11 +1243,11 @@ export function FileTree() {
             ))}
           </>
         ) : flatFiles.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <span className="text-[10px] opacity-60">未找到 Markdown 文件</span>
+          <div className="file-tree-no-files">
+            <span className="file-tree-no-files-text">未找到 Markdown 文件</span>
           </div>
         ) : (
-          <div className="flex flex-col gap-0.5 px-1">
+          <div className="file-list">
             {flatFiles.map((entry) => (
               <FileListItem
                 key={entry.path}

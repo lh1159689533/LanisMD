@@ -1,0 +1,278 @@
+/**
+ * Sidebar Component Styles
+ * 侧边栏组件样式 - CSS 变量驱动
+ */
+
+/* ===== 侧边栏容器 ===== */
+.sidebar {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-shrink: 0;
+  background-color: var(--lanismd-sidebar-bg);
+}
+
+/* ===== 图标栏 ===== */
+.sidebar-icon-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-sm);
+  border-right: 1px solid var(--lanismd-sidebar-border);
+  transition: opacity var(--lanismd-transition-slow);
+}
+
+.sidebar.collapsed .sidebar-icon-bar {
+  opacity: 0.7;
+}
+
+.sidebar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-md);
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-medium);
+}
+
+.sidebar-icon-btn svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar-icon-btn:hover {
+  transform: scale(1.05);
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.sidebar-icon-btn.active {
+  transform: scale(1.05);
+  background-color: var(--lanismd-accent);
+  color: var(--lanismd-accent-contrast, #ffffff);
+}
+
+.sidebar-icon-btn.toggle-btn {
+  margin-top: auto;
+}
+
+.sidebar-icon-btn.toggle-btn.collapsed {
+  color: var(--lanismd-accent);
+}
+
+/* ===== 内容面板 ===== */
+.sidebar-content {
+  overflow: hidden;
+  border-right: 1px solid var(--lanismd-sidebar-border);
+  transition: width var(--lanismd-transition-slow);
+}
+
+.sidebar-content.no-transition {
+  transition: none;
+}
+
+.sidebar-content-inner {
+  height: 100%;
+  padding: var(--lanismd-spacing-lg);
+  overflow: auto;
+}
+
+.sidebar-content-inner.files-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ===== 调整器 ===== */
+.sidebar-resizer {
+  position: absolute;
+  right: -1px;
+  width: 6px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.sidebar-resizer:hover {
+  background-color: var(--lanismd-accent-light);
+}
+
+.sidebar-resizer.dragging {
+  background-color: var(--lanismd-accent-light);
+}
+
+.sidebar-resizer-handle {
+  width: 2px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: var(--lanismd-sidebar-text);
+  opacity: 0;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.sidebar-resizer:hover .sidebar-resizer-handle {
+  height: 40px;
+  opacity: 0.25;
+}
+
+.sidebar-resizer.dragging .sidebar-resizer-handle {
+  height: 48px;
+  background-color: var(--lanismd-accent);
+  opacity: 0.6;
+}
+
+/* ===== 大纲面板 ===== */
+.outline-panel {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+.outline-panel-title {
+  margin-bottom: var(--lanismd-spacing-md);
+  font-weight: 500;
+}
+
+.outline-panel-empty {
+  font-size: var(--lanismd-font-size-xs);
+  opacity: 0.6;
+}
+
+/* ===== 大纲树 ===== */
+.outline-tree {
+  position: relative;
+}
+
+.outline-tree-level {
+  position: relative;
+  margin-left: var(--lanismd-outline-indent, 12px);
+}
+
+.outline-tree-level:first-child {
+  margin-left: 0;
+}
+
+/* 大纲连线（可选） */
+.outline-tree-level::before {
+  content: '';
+  display: var(--lanismd-outline-line-display, none);
+  position: absolute;
+  top: 0;
+  left: calc(0px - var(--lanismd-outline-indent, 12px) / 2);
+  width: var(--lanismd-outline-line-width, 1px);
+  height: 100%;
+  border-left-style: var(--lanismd-outline-line-style, solid);
+  border-left-width: var(--lanismd-outline-line-width, 1px);
+  border-left-color: var(--lanismd-outline-line-color, #e0e0e0);
+}
+
+/* ===== 大纲节点 ===== */
+.outline-item {
+  position: relative;
+  width: 100%;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-radius: var(--lanismd-radius-sm);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lanismd-outline-text, var(--lanismd-sidebar-text));
+  transition: all var(--lanismd-transition-fast);
+}
+
+.outline-item:hover {
+  background-color: var(--lanismd-outline-hover-bg, var(--lanismd-sidebar-hover));
+  color: var(--lanismd-accent);
+}
+
+.outline-item.active {
+  background-color: var(--lanismd-outline-active-bg, var(--lanismd-sidebar-active));
+  color: var(--lanismd-outline-active-text, var(--lanismd-accent));
+}
+
+/* 大纲层级样式 */
+.outline-item.level-1 {
+  font-size: var(--lanismd-outline-l1-font-size, 14px);
+  font-weight: var(--lanismd-outline-l1-font-weight, 600);
+}
+
+.outline-item.level-2 {
+  font-size: var(--lanismd-outline-l2-font-size, 13px);
+  font-weight: var(--lanismd-outline-l2-font-weight, 500);
+}
+
+.outline-item.level-3,
+.outline-item.level-4,
+.outline-item.level-5,
+.outline-item.level-6 {
+  font-size: var(--lanismd-outline-l3-font-size, 12px);
+  font-weight: var(--lanismd-outline-l3-font-weight, 400);
+}
+
+/* 大纲展开器（可选） */
+.outline-item-expander {
+  display: var(--lanismd-outline-expander-display, none);
+  margin-right: var(--lanismd-spacing-xs);
+  font-size: var(--lanismd-outline-expander-size, 12px);
+  color: var(--lanismd-outline-expander-color, #666);
+  transition: transform var(--lanismd-transition-fast);
+}
+
+.outline-item-expander::before {
+  content: var(--lanismd-outline-expander-content, '›');
+}
+
+.outline-item.expanded .outline-item-expander {
+  transform: rotate(90deg);
+}
+
+/* 大纲标记 */
+.outline-item-marker {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--lanismd-spacing-sm);
+  border-radius: 50%;
+  background-color: var(--lanismd-outline-marker-color, #94a3b8);
+  vertical-align: middle;
+}
+
+.outline-item:hover .outline-item-marker,
+.outline-item.active .outline-item-marker {
+  background-color: var(--lanismd-accent);
+}
+
+/* ===== 搜索面板 ===== */
+.search-panel {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+.search-panel-title {
+  margin-bottom: var(--lanismd-spacing-md);
+  font-weight: 500;
+}
+
+.search-panel-input {
+  width: 100%;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  background-color: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  outline: none;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.search-panel-input:focus {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring);
+}
+
+.search-panel-input::placeholder {
+  color: var(--lanismd-text-muted);
+}

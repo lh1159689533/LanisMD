@@ -6,6 +6,8 @@ import { cn } from '@/utils/cn';
 import { THEME_LIST } from '@/types/config';
 import type { ThemeMode } from '@/types';
 
+import '../../styles/settings.css';
+
 // 主题图标映射
 const THEME_ICONS: Record<ThemeMode, React.ReactNode> = {
   system: <RiComputerLine size={13} />,
@@ -27,26 +29,19 @@ export function SettingsDialog() {
   const { config, setConfig, setNestedConfig } = useSettingsStore();
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30">
-      <div
-        className={cn(
-          'flex h-[80%] max-h-[500px] min-h-[200px] w-[60%] min-w-[300px]',
-          'overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#1f2335]',
-        )}
-      >
+    <div className="settings-dialog-overlay">
+      <div className="settings-dialog">
         {/* Navigation */}
-        <div className="w-40 border-r border-[var(--lanismd-editor-border)] bg-slate-50 p-3 dark:bg-[#1a1b26]">
-          <h2 className="mb-3 px-2 text-sm font-semibold">设置</h2>
-          <nav className="flex flex-col gap-0.5">
+        <div className="settings-dialog-nav">
+          <h2 className="settings-dialog-nav-title">设置</h2>
+          <nav className="settings-dialog-nav-list">
             {SECTIONS.map((section) => (
               <button
                 key={section.id}
                 onClick={() => useUIStore.setState({ settingsActiveSection: section.id })}
                 className={cn(
-                  'rounded-md px-2 py-1.5 text-left text-xs transition-colors',
-                  settingsActiveSection === section.id
-                    ? 'bg-[var(--lanismd-accent)] text-white'
-                    : 'hover:bg-black/5 dark:hover:bg-white/5',
+                  'settings-dialog-nav-item',
+                  settingsActiveSection === section.id && 'active',
                 )}
               >
                 {section.label}
@@ -56,28 +51,23 @@ export function SettingsDialog() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">
+        <div className="settings-dialog-content">
+          <div className="settings-dialog-header">
+            <h3 className="settings-dialog-title">
               {SECTIONS.find((s) => s.id === settingsActiveSection)?.label}
             </h3>
-            <button
-              onClick={closeSettings}
-              className="rounded p-1 hover:bg-black/5 dark:hover:bg-white/10"
-            >
+            <button onClick={closeSettings} className="settings-dialog-close">
               <RiCloseLine size={16} />
             </button>
           </div>
 
           {settingsActiveSection === 'general' && (
-            <div className="space-y-4 text-xs">
-              <div className="text-[var(--lanismd-sidebar-text)]">
+            <div className="settings-section">
+              <div className="settings-item-description">
                 <p>自动保存始终开启。停止编辑 1 秒后将自动保存更改。</p>
               </div>
-              <div className="flex items-center justify-between">
-                <label className="text-[var(--lanismd-sidebar-text)]">
-                  点击外部区域关闭"最近文件夹"面板
-                </label>
+              <div className="settings-item">
+                <label className="settings-item-label">点击外部区域关闭"最近文件夹"面板</label>
                 <button
                   onClick={() =>
                     setNestedConfig(
@@ -85,41 +75,29 @@ export function SettingsDialog() {
                       !config.recentFolders?.closeOnClickOutside,
                     )
                   }
-                  className={`relative h-5 w-9 rounded-full transition-colors ${
-                    config.recentFolders?.closeOnClickOutside !== false
-                      ? 'bg-[var(--lanismd-accent)]'
-                      : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
+                  className={cn(
+                    'settings-toggle',
+                    config.recentFolders?.closeOnClickOutside !== false && 'checked',
+                  )}
                 >
-                  <span
-                    className={cn(
-                      'absolute left-0.5 top-0.5 h-4 w-4',
-                      'rounded-full bg-white shadow transition-transform',
-                      config.recentFolders?.closeOnClickOutside !== false ? 'translate-x-4' : '',
-                    )}
-                  />
+                  <span className="settings-toggle-thumb" />
                 </button>
               </div>
             </div>
           )}
 
           {settingsActiveSection === 'appearance' && (
-            <div className="space-y-4 text-xs">
-              <label className="block">主题</label>
-              <div className="flex flex-wrap gap-2">
+            <div className="settings-section">
+              <label className="settings-item-label">主题</label>
+              <div className="settings-theme-list">
                 {THEME_LIST.map((theme) => (
                   <button
                     key={theme.id}
                     onClick={() => setConfig('theme', theme.id)}
                     title={theme.description}
-                    className={cn(
-                      'flex items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors',
-                      config.theme === theme.id
-                        ? 'bg-[var(--lanismd-accent)]/10 border-[var(--lanismd-accent)] text-[var(--lanismd-accent)]'
-                        : 'hover:border-[var(--lanismd-accent)]/50 border-[var(--lanismd-editor-border)]',
-                    )}
+                    className={cn('settings-theme-item', config.theme === theme.id && 'selected')}
                   >
-                    {THEME_ICONS[theme.id]}
+                    <span className="settings-theme-icon">{THEME_ICONS[theme.id]}</span>
                     <span>{theme.name}</span>
                   </button>
                 ))}
@@ -128,55 +106,44 @@ export function SettingsDialog() {
           )}
 
           {settingsActiveSection === 'editor' && (
-            <div className="space-y-4 text-xs">
-              <div className="flex items-center justify-between">
-                <label>字体大小</label>
-                <span>{config.editor.fontSize}px</span>
+            <div className="settings-section">
+              <div className="settings-item">
+                <label className="settings-item-label">字体大小</label>
+                <span className="settings-item-value">{config.editor.fontSize}px</span>
               </div>
-              <div className="flex items-center justify-between">
-                <label>最大宽度</label>
-                <span>{config.editor.maxWidth}px</span>
+              <div className="settings-item">
+                <label className="settings-item-label">最大宽度</label>
+                <span className="settings-item-value">{config.editor.maxWidth}px</span>
               </div>
-              <div className="flex items-center justify-between">
-                <label>行高</label>
-                <span>{config.editor.lineHeight}</span>
+              <div className="settings-item">
+                <label className="settings-item-label">行高</label>
+                <span className="settings-item-value">{config.editor.lineHeight}</span>
               </div>
 
               {/* Code Block Settings */}
-              <div className="mt-2 border-t border-[var(--lanismd-editor-border)] pt-3">
-                <label className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-[var(--lanismd-sidebar-text)]">
-                  代码块
-                </label>
-                <div className="flex items-center justify-between">
-                  <label className="text-[var(--lanismd-sidebar-text)]">显示行号</label>
-                  <button
-                    onClick={() =>
-                      setNestedConfig(
-                        'editor.codeBlock.showLineNumbers',
-                        !config.editor.codeBlock?.showLineNumbers,
-                      )
-                    }
-                    className={`relative h-5 w-9 rounded-full transition-colors ${
-                      config.editor.codeBlock?.showLineNumbers !== false
-                        ? 'bg-[var(--lanismd-accent)]'
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
-                  >
-                    <span
-                      className={cn(
-                        'absolute left-0.5 top-0.5 h-4 w-4',
-                        'rounded-full bg-white shadow transition-transform',
-                        config.editor.codeBlock?.showLineNumbers !== false ? 'translate-x-4' : '',
-                      )}
-                    />
-                  </button>
-                </div>
+              <div className="settings-section-title">代码块</div>
+              <div className="settings-item">
+                <label className="settings-item-label">显示行号</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'editor.codeBlock.showLineNumbers',
+                      !config.editor.codeBlock?.showLineNumbers,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.editor.codeBlock?.showLineNumbers !== false && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
               </div>
             </div>
           )}
 
           {settingsActiveSection === 'shortcuts' && (
-            <div className="text-xs text-[var(--lanismd-sidebar-text)]">
+            <div className="settings-shortcuts-hint">
               <p>快捷键设置将在后续版本中提供。</p>
             </div>
           )}
