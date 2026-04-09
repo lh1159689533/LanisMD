@@ -184,6 +184,7 @@ function InlineEditInput({
 function FileTreeItem({
   node,
   depth,
+  isLast,
   inlineEdit,
   onContextMenu,
   onStartInlineEdit,
@@ -191,6 +192,7 @@ function FileTreeItem({
 }: {
   node: FileTreeNode;
   depth: number;
+  isLast: boolean;
   inlineEdit: InlineEditState | null;
   onContextMenu: (e: React.MouseEvent, node: FileTreeNode) => void;
   onStartInlineEdit: (edit: InlineEditState) => void;
@@ -297,7 +299,15 @@ function FileTreeItem({
 
   if (isBeingRenamed) {
     return (
-      <div className="file-tree-node" style={{ '--depth': depth } as React.CSSProperties}>
+      <div
+        className={cn(
+          'file-tree-node',
+          depth > 0 && 'has-line',
+          isLast && 'is-last',
+          node.isDir && 'is-dir',
+        )}
+        style={{ '--depth': depth } as React.CSSProperties}
+      >
         <InlineEditInput
           value={node.name}
           onConfirm={handleRenameConfirm}
@@ -311,16 +321,17 @@ function FileTreeItem({
             )
           }
         />
-        {node.isDir && isExpanded && node.children && (
+        {node.isDir && isExpanded && !!node.children?.length && (
           <div
             className="file-tree-node-children"
             style={{ '--depth': depth } as React.CSSProperties}
           >
-            {node.children.map((child) => (
+            {node.children.map((child, index) => (
               <FileTreeItem
                 key={child.path}
                 node={child}
                 depth={depth + 1}
+                isLast={index === node.children!.length - 1}
                 inlineEdit={inlineEdit}
                 onContextMenu={onContextMenu}
                 onStartInlineEdit={onStartInlineEdit}
@@ -335,28 +346,33 @@ function FileTreeItem({
 
   return (
     <div
-      className={cn('file-tree-node', depth > 0 && 'has-line')}
+      className={cn('file-tree-node', depth > 0 && 'has-line', isLast && 'is-last')}
       style={{ '--depth': depth } as React.CSSProperties}
     >
       <button
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         className={cn('file-tree-node-item', isSelected && !node.isDir && 'selected')}
-        style={{ paddingLeft: `${8 + depth * 16}px` }}
+        style={{ paddingLeft: `${8 + depth * 20}px` }}
         title={node.path}
       >
         {node.isDir ? (
           <>
-            <span className="file-tree-node-expand">
-              {isExpanded ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
-            </span>
+            {/* 只有当目录有子节点时才显示展开图标 */}
+            {node.children && node.children.length > 0 ? (
+              <span className="file-tree-node-expand">
+                {isExpanded ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
+              </span>
+            ) : (
+              <span className="file-tree-node-expand" style={{ width: 14 }} />
+            )}
             <span className="file-tree-node-icon folder">
               {isExpanded ? <RiFolderOpenLine size={14} /> : <RiFolderLine size={14} />}
             </span>
           </>
         ) : (
           <>
-            <span className="file-tree-node-expand" />
+            <span className="file-tree-node-expand" style={{ width: 4 }} />
             <span className="file-tree-node-icon file">
               <RiFileTextLine size={14} />
             </span>
@@ -382,16 +398,17 @@ function FileTreeItem({
         />
       )}
 
-      {node.isDir && isExpanded && node.children && (
+      {node.isDir && isExpanded && !!node.children?.length && (
         <div
           className="file-tree-node-children"
           style={{ '--depth': depth } as React.CSSProperties}
         >
-          {node.children.map((child) => (
+          {node.children.map((child, index) => (
             <FileTreeItem
               key={child.path}
               node={child}
               depth={depth + 1}
+              isLast={index === node.children!.length - 1}
               inlineEdit={inlineEdit}
               onContextMenu={onContextMenu}
               onStartInlineEdit={onStartInlineEdit}
@@ -1230,11 +1247,12 @@ export function FileTree() {
                 }
               />
             )}
-            {tree.map((node) => (
+            {tree.map((node, index) => (
               <FileTreeItem
                 key={node.path}
                 node={node}
                 depth={0}
+                isLast={index === tree.length - 1}
                 inlineEdit={inlineEdit}
                 onContextMenu={handleTreeNodeContextMenu}
                 onStartInlineEdit={setInlineEdit}

@@ -1,15 +1,24 @@
-import { RiCloseLine, RiSunLine, RiMoonLine, RiComputerLine } from 'react-icons/ri';
+import { useState, useEffect } from 'react';
+import {
+  RiCloseLine,
+  RiSunLine,
+  RiMoonLine,
+  RiComputerLine,
+  RiFolderOpenLine,
+  RiPaletteLine,
+} from 'react-icons/ri';
 import { TbLeaf, TbSnowflake } from 'react-icons/tb';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { themeLoader, type ThemeMetadata } from '@/services';
 import { cn } from '@/utils/cn';
-import { THEME_LIST } from '@/types/config';
+import { BUILTIN_THEME_LIST, isCustomTheme, type BuiltinTheme } from '@/types/config';
 import type { ThemeMode } from '@/types';
 
 import '../../styles/settings.css';
 
-// 主题图标映射
-const THEME_ICONS: Record<ThemeMode, React.ReactNode> = {
+// 内置主题图标映射
+const BUILTIN_THEME_ICONS: Record<BuiltinTheme | 'system', React.ReactNode> = {
   system: <RiComputerLine size={13} />,
   light: <RiSunLine size={13} />,
   dark: <RiMoonLine size={13} />,
@@ -27,6 +36,19 @@ const SECTIONS = [
 export function SettingsDialog() {
   const { closeSettings, settingsActiveSection } = useUIStore();
   const { config, setConfig, setNestedConfig } = useSettingsStore();
+
+  // 用户自定义主题列表
+  const [userThemes, setUserThemes] = useState<ThemeMetadata[]>([]);
+
+  // 加载用户主题列表
+  useEffect(() => {
+    themeLoader.listUserThemes().then(setUserThemes);
+  }, []);
+
+  // 判断当前是否选中某个主题
+  const isThemeSelected = (themeId: ThemeMode) => config.theme === themeId;
+  const isCustomThemeSelected = (themeId: string) =>
+    isCustomTheme(config.theme) && config.theme === `custom:${themeId}`;
 
   return (
     <div className="settings-dialog-overlay">
@@ -88,19 +110,77 @@ export function SettingsDialog() {
 
           {settingsActiveSection === 'appearance' && (
             <div className="settings-section">
-              <label className="settings-item-label">主题</label>
+              {/* 内置主题 */}
+              <label className="settings-item-label">内置主题</label>
               <div className="settings-theme-list">
-                {THEME_LIST.map((theme) => (
+                {BUILTIN_THEME_LIST.map((theme) => (
                   <button
                     key={theme.id}
                     onClick={() => setConfig('theme', theme.id)}
                     title={theme.description}
-                    className={cn('settings-theme-item', config.theme === theme.id && 'selected')}
+                    className={cn('settings-theme-item', isThemeSelected(theme.id) && 'selected')}
                   >
-                    <span className="settings-theme-icon">{THEME_ICONS[theme.id]}</span>
+                    <span className="settings-theme-icon">
+                      {BUILTIN_THEME_ICONS[theme.id as BuiltinTheme | 'system']}
+                    </span>
                     <span>{theme.name}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* 用户自定义主题 */}
+              {userThemes.length > 0 && (
+                <>
+                  <label className="settings-item-label" style={{ marginTop: '16px' }}>
+                    自定义主题
+                  </label>
+                  <div className="settings-theme-list">
+                    {userThemes.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => setConfig('theme', `custom:${theme.id}`)}
+                        title={`用户主题: ${theme.name}`}
+                        className={cn(
+                          'settings-theme-item',
+                          isCustomThemeSelected(theme.id) && 'selected',
+                        )}
+                      >
+                        <span className="settings-theme-icon">
+                          <RiPaletteLine size={13} />
+                        </span>
+                        <span>{theme.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* 自定义 CSS 区域 */}
+              <div className="settings-section-title">自定义样式</div>
+              <div className="settings-item-description">
+                <p>
+                  创建主题：在主题目录放置 <code>my-theme.css</code> 单文件，或创建{' '}
+                  <code>my-theme/my-theme.css</code> 目录形式（支持自定义字体）。
+                </p>
+                <p style={{ marginTop: '8px' }}>
+                  覆盖样式：创建 <code>base.user.css</code>（全局）或{' '}
+                  <code>light.user.css</code> 等（主题专属）。
+                </p>
+              </div>
+              <div className="settings-item">
+                <label className="settings-item-label">主题目录</label>
+                <button
+                  onClick={async () => {
+                    await themeLoader.openUserThemesDir();
+                    // 刷新主题列表
+                    const themes = await themeLoader.listUserThemes();
+                    setUserThemes(themes);
+                  }}
+                  className="settings-button"
+                >
+                  <RiFolderOpenLine size={14} />
+                  <span>打开目录</span>
+                </button>
               </div>
             </div>
           )}

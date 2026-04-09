@@ -158,48 +158,94 @@
   white-space: nowrap;
 }
 
-/* ===== 文件树连线（可选，通过 CSS 变量控制显示） ===== */
+/* ===== 文件树连线（通过主题 CSS 变量控制显示） ===== */
 .file-tree-node-children {
   position: relative;
 }
 
-/* 垂直连线 */
+/* 
+ * 连线实现说明：
+ * - 竖线：从父节点中心向下延伸，贯穿所有子节点
+ * - 横线：
+ *   - 文件夹节点（有展开箭头）：从竖线延伸到展开箭头左边缘
+ *   - 文件节点（无展开箭头）：从竖线延伸到文件图标左边缘
+ * - 最后一个节点：竖线只到该节点中心（└ 形）
+ * 
+ * 布局参考（indent = 20px）：
+ * - paddingLeft = 8 + depth * 20
+ * - 展开箭头宽度 = 14px，间距(gap) = 4px
+ * - 图标宽度 = 14px
+ * 
+ * 竖线位置：在父节点展开箭头中心下方
+ * - 父节点箭头起始 = 8 + depth * 20
+ * - 父节点箭头中心 = 8 + depth * 20 + 7 = 15 + depth * 20
+ * - 子节点区域中的竖线位置 = 15 + depth * 20
+ */
+
+/* 子节点容器的竖线（从顶部第一个子节点中心开始） */
 .file-tree-node-children::before {
   content: '';
   display: var(--lanismd-file-tree-line-display, none);
   position: absolute;
-  top: 0;
-  left: calc(var(--lanismd-file-tree-line-indent, 8px) + var(--depth, 0) * var(--lanismd-file-tree-indent, 16px));
+  /* 从父节点中心高度开始（负值向上延伸） */
+  top: calc(-1 * var(--lanismd-file-tree-item-height, 28px) / 2 + 6px);
+  /* 竖线位置：父节点展开箭头中心 = 15 + depth * 20 */
+  left: calc(15px + var(--depth, 0) * var(--lanismd-file-tree-indent, 20px));
   width: var(--lanismd-file-tree-line-width, 1px);
-  height: 100%;
-  border-left-style: var(--lanismd-file-tree-line-style, solid);
-  border-left-width: var(--lanismd-file-tree-line-width, 1px);
-  border-left-color: var(--lanismd-file-tree-line-color, #d0d0d0);
+  /* 高度：整个子节点区域 + 向上延伸的半行高 */
+  height: calc(100% + var(--lanismd-file-tree-item-height, 28px) / 2);
+  background-color: var(--lanismd-file-tree-line-color, #d0d0d0);
 }
 
-/* 水平连线（节点级别） */
-.file-tree-node.has-line::before {
+/* 文件夹节点的横线（连接竖线到展开箭头左边缘） */
+.file-tree-node.has-line.is-dir::before {
   content: '';
   display: var(--lanismd-file-tree-line-display, none);
   position: absolute;
+  /* 横线垂直位置：节点中心 */
   top: calc(var(--lanismd-file-tree-item-height, 28px) / 2);
-  left: calc(var(--lanismd-file-tree-line-indent, 8px) + (var(--depth, 0) - 1) * var(--lanismd-file-tree-indent, 16px));
-  width: calc(var(--lanismd-file-tree-indent, 16px) - var(--lanismd-file-tree-line-indent, 8px));
+  /* 横线起点：父级竖线位置 = 15 + (depth - 1) * 20 = -5 + depth * 20 */
+  left: calc(-5px + var(--depth, 0) * var(--lanismd-file-tree-indent, 20px));
+  /* 横线长度：从竖线到展开箭头左边缘 = (8 + depth * 20) - (-5 + depth * 20) = 13px */
+  width: 13px;
   height: 0;
-  border-top-style: var(--lanismd-file-tree-line-style, solid);
+  border-top-style: solid;
   border-top-width: var(--lanismd-file-tree-line-width, 1px);
   border-top-color: var(--lanismd-file-tree-line-color, #d0d0d0);
 }
 
-/* 最后一个节点的垂直连线（停止在节点中心） */
-.file-tree-node.last-child.has-line::after {
+/* 文件节点的横线（连接竖线到文件图标左边缘） */
+.file-tree-node.has-line:not(.is-dir)::before {
   content: '';
   display: var(--lanismd-file-tree-line-display, none);
   position: absolute;
+  /* 横线垂直位置：节点中心 */
   top: calc(var(--lanismd-file-tree-item-height, 28px) / 2);
-  left: calc(var(--lanismd-file-tree-line-indent, 8px) + (var(--depth, 0) - 1) * var(--lanismd-file-tree-indent, 16px));
+  /* 横线起点：父级竖线位置 = -5 + depth * 20 */
+  left: calc(-5px + var(--depth, 0) * var(--lanismd-file-tree-indent, 20px));
+  /* 横线长度：从竖线到图标左边缘 
+   * 图标位置 = paddingLeft + 展开箭头占位(14px) + gap(4px) = 8 + depth * 20 + 14 + 4 = 26 + depth * 20
+   * 长度 = (26 + depth * 20) - (-5 + depth * 20) = 31px
+   */
+  width: 15px;
+  height: 0;
+  border-top-style: solid;
+  border-top-width: var(--lanismd-file-tree-line-width, 1px);
+  border-top-color: var(--lanismd-file-tree-line-color, #d0d0d0);
+}
+
+/* 最后一个子节点：用遮挡层隐藏竖线下半部分，形成 └ 效果 */
+.file-tree-node.has-line.is-last::after {
+  content: '';
+  display: var(--lanismd-file-tree-line-display, none);
+  position: absolute;
+  /* 从节点中心开始遮挡 */
+  top: calc(var(--lanismd-file-tree-item-height, 28px) / 2);
+  /* 与父级竖线同一水平位置 */
+  left: calc(-5px + var(--depth, 0) * var(--lanismd-file-tree-indent, 20px));
   width: var(--lanismd-file-tree-line-width, 1px);
-  height: calc(50% + var(--lanismd-file-tree-item-height, 28px) / 2);
+  /* 遮挡从节点中心到底部的所有区域 */
+  height: calc(100% - var(--lanismd-file-tree-item-height, 28px) / 2 + 6px);
   background-color: var(--lanismd-sidebar-bg);
 }
 

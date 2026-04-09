@@ -12,7 +12,13 @@ export { type OutlineItem, type EditorState, type CursorPosition } from './edito
 export {
   type AppConfig,
   type ThemeMode,
+  type BuiltinTheme,
+  type ThemeInfo,
   type ErrorCode,
   type AppError,
   type Toast,
+  BUILTIN_THEME_LIST,
+  THEME_LIST,
+  isCustomTheme,
+  getCustomThemeId,
 } from './config';

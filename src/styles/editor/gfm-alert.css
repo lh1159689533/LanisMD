@@ -1,0 +1,159 @@
+/**
+ * LanisMD Editor - GFM Alert
+ * GitHub Flavored Markdown Alert 样式
+ *
+ * 支持类型：NOTE, TIP, IMPORTANT, WARNING, CAUTION
+ */
+
+/* ===== 基础 Alert 样式 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] {
+  border-left-width: var(--lanismd-alert-border-width);
+  border-left-style: solid;
+  border-radius: var(--lanismd-alert-border-radius);
+  padding: var(--lanismd-alert-padding);
+  margin: var(--lanismd-alert-margin);
+  font-style: var(--lanismd-alert-font-style);
+  position: relative;
+}
+
+/* Alert 标题（伪元素实现：图标 + 文字） */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type]::before {
+  display: flex;
+  align-items: center;
+  font-weight: var(--lanismd-alert-title-font-weight);
+  font-size: var(--lanismd-alert-title-font-size);
+  margin-bottom: var(--lanismd-alert-title-margin-bottom);
+  gap: var(--lanismd-alert-icon-margin-right);
+}
+
+/* ===== NOTE 类型 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="note"] {
+  border-left-color: var(--lanismd-alert-note-border-color);
+  background: var(--lanismd-alert-note-bg);
+  color: var(--lanismd-alert-note-text-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="note"]::before {
+  content: 'Note';
+  color: var(--lanismd-alert-note-title-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="note"]::before {
+  background-image: var(--lanismd-alert-note-icon);
+  background-size: var(--lanismd-alert-icon-size) var(--lanismd-alert-icon-size);
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-left: calc(var(--lanismd-alert-icon-size) + var(--lanismd-alert-icon-margin-right));
+}
+
+/* ===== TIP 类型 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="tip"] {
+  border-left-color: var(--lanismd-alert-tip-border-color);
+  background: var(--lanismd-alert-tip-bg);
+  color: var(--lanismd-alert-tip-text-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="tip"]::before {
+  content: 'Tip';
+  color: var(--lanismd-alert-tip-title-color);
+  background-image: var(--lanismd-alert-tip-icon);
+  background-size: var(--lanismd-alert-icon-size) var(--lanismd-alert-icon-size);
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-left: calc(var(--lanismd-alert-icon-size) + var(--lanismd-alert-icon-margin-right));
+}
+
+/* ===== IMPORTANT 类型 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="important"] {
+  border-left-color: var(--lanismd-alert-important-border-color);
+  background: var(--lanismd-alert-important-bg);
+  color: var(--lanismd-alert-important-text-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="important"]::before {
+  content: 'Important';
+  color: var(--lanismd-alert-important-title-color);
+  background-image: var(--lanismd-alert-important-icon);
+  background-size: var(--lanismd-alert-icon-size) var(--lanismd-alert-icon-size);
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-left: calc(var(--lanismd-alert-icon-size) + var(--lanismd-alert-icon-margin-right));
+}
+
+/* ===== WARNING 类型 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="warning"] {
+  border-left-color: var(--lanismd-alert-warning-border-color);
+  background: var(--lanismd-alert-warning-bg);
+  color: var(--lanismd-alert-warning-text-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="warning"]::before {
+  content: 'Warning';
+  color: var(--lanismd-alert-warning-title-color);
+  background-image: var(--lanismd-alert-warning-icon);
+  background-size: var(--lanismd-alert-icon-size) var(--lanismd-alert-icon-size);
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-left: calc(var(--lanismd-alert-icon-size) + var(--lanismd-alert-icon-margin-right));
+}
+
+/* ===== CAUTION 类型 ===== */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="caution"] {
+  border-left-color: var(--lanismd-alert-caution-border-color);
+  background: var(--lanismd-alert-caution-bg);
+  color: var(--lanismd-alert-caution-text-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="caution"]::before {
+  content: 'Caution';
+  color: var(--lanismd-alert-caution-title-color);
+  background-image: var(--lanismd-alert-caution-icon);
+  background-size: var(--lanismd-alert-icon-size) var(--lanismd-alert-icon-size);
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding-left: calc(var(--lanismd-alert-icon-size) + var(--lanismd-alert-icon-margin-right));
+}
+
+/* ===== Alert 内部元素样式调整 ===== */
+
+/* 段落间距 */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] p {
+  margin-bottom: 0.5em;
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] p:last-child {
+  margin-bottom: 0;
+}
+
+/* 代码块在 Alert 内的样式 */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] pre {
+  margin: 0.75em 0;
+}
+
+/* 列表在 Alert 内的样式 */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] ul,
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type] ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+/* 链接在 Alert 内的样式（继承 title 颜色） */
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="note"] a {
+  color: var(--lanismd-alert-note-title-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="tip"] a {
+  color: var(--lanismd-alert-tip-title-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="important"] a {
+  color: var(--lanismd-alert-important-title-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="warning"] a {
+  color: var(--lanismd-alert-warning-title-color);
+}
+
+.milkdown-editor-root .ProseMirror blockquote[data-alert-type="caution"] a {
+  color: var(--lanismd-alert-caution-title-color);
+}

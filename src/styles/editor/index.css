@@ -28,6 +28,7 @@
 @import './code-block.css';
 @import './image-block.css';
 @import './blockquote.css';
+@import './gfm-alert.css';
 @import './list.css';
 
 /* Table */

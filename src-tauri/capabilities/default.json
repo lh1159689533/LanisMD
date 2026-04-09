@@ -5,18 +5,54 @@
   "permissions": [
     "core:default",
     "fs:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-read-file",
-    "fs:allow-write-file",
-    "fs:allow-stat",
-    "fs:allow-exists",
-    "fs:allow-mkdir",
-    "fs:allow-remove",
-    "fs:allow-rename",
-    "fs:allow-watch",
-    "fs:allow-unwatch",
-    "fs:allow-read-dir",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-rename",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-watch",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-unwatch",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$HOME/**" }, { "path": "**" }]
+    },
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",

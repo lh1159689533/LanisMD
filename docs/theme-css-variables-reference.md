@@ -481,6 +481,101 @@
 
 ---
 
+## 四-B、GFM Alert 变量（GitHub 风格提示框）✅ 已实现
+
+> **实现状态**：完整支持 GitHub Flavored Markdown Alert 语法，包括解析和样式渲染
+
+### 语法示例
+
+```markdown
+> [!NOTE]
+> 这是一条信息提示。
+
+> [!TIP]
+> 这是一条建议提示。
+
+> [!IMPORTANT]
+> 这是一条重要提示。
+
+> [!WARNING]
+> 这是一条警告提示。
+
+> [!CAUTION]
+> 这是一条危险提示。
+```
+
+### CSS 变量
+
+```css
+:root {
+  /* ===== 通用样式 ===== */
+  --lanismd-alert-border-width: 4px;
+  --lanismd-alert-border-radius: 6px;
+  --lanismd-alert-padding: 16px;
+  --lanismd-alert-margin: 1em 0;
+  --lanismd-alert-font-style: normal;
+  --lanismd-alert-title-font-weight: 600;
+  --lanismd-alert-title-font-size: 1em;
+  --lanismd-alert-title-margin-bottom: 0.5em;
+  --lanismd-alert-icon-size: 1em;
+  --lanismd-alert-icon-margin-right: 0.5em;
+
+  /* ===== NOTE - 信息提示（蓝色） ===== */
+  --lanismd-alert-note-border-color: #3b82f6;
+  --lanismd-alert-note-bg: rgba(59, 130, 246, 0.08);
+  --lanismd-alert-note-text-color: inherit;
+  --lanismd-alert-note-title-color: #3b82f6;
+  --lanismd-alert-note-icon: url("data:image/svg+xml,...");  /* 信息图标 SVG */
+
+  /* ===== TIP - 建议提示（绿色） ===== */
+  --lanismd-alert-tip-border-color: #22c55e;
+  --lanismd-alert-tip-bg: rgba(34, 197, 94, 0.08);
+  --lanismd-alert-tip-text-color: inherit;
+  --lanismd-alert-tip-title-color: #22c55e;
+  --lanismd-alert-tip-icon: url("data:image/svg+xml,...");  /* 灯泡图标 SVG */
+
+  /* ===== IMPORTANT - 重要提示（紫色） ===== */
+  --lanismd-alert-important-border-color: #a855f7;
+  --lanismd-alert-important-bg: rgba(168, 85, 247, 0.08);
+  --lanismd-alert-important-text-color: inherit;
+  --lanismd-alert-important-title-color: #a855f7;
+  --lanismd-alert-important-icon: url("data:image/svg+xml,...");  /* 消息图标 SVG */
+
+  /* ===== WARNING - 警告提示（黄色/橙色） ===== */
+  --lanismd-alert-warning-border-color: #f59e0b;
+  --lanismd-alert-warning-bg: rgba(245, 158, 11, 0.08);
+  --lanismd-alert-warning-text-color: inherit;
+  --lanismd-alert-warning-title-color: #f59e0b;
+  --lanismd-alert-warning-icon: url("data:image/svg+xml,...");  /* 警告三角图标 SVG */
+
+  /* ===== CAUTION - 危险提示（红色） ===== */
+  --lanismd-alert-caution-border-color: #ef4444;
+  --lanismd-alert-caution-bg: rgba(239, 68, 68, 0.08);
+  --lanismd-alert-caution-text-color: inherit;
+  --lanismd-alert-caution-title-color: #ef4444;
+  --lanismd-alert-caution-icon: url("data:image/svg+xml,...");  /* 八边形停止图标 SVG */
+}
+```
+
+### 自定义图标
+
+主题可以通过覆盖 `--lanismd-alert-*-icon` 变量来替换默认图标：
+
+```css
+/* 使用自定义 emoji 风格图标 */
+:root {
+  --lanismd-alert-note-icon: url("data:image/svg+xml,%3Csvg...%3E%3C/svg%3E");
+}
+```
+
+### 相关文件
+
+- `src/editor/plugins/gfm-alert/` - remark 解析插件和 schema 扩展
+- `src/styles/editor/gfm-alert.css` - Alert 样式文件
+- `src/styles/variables.css` - CSS 变量定义
+
+---
+
 ## 五、列表变量 ✅ 已实现
 
 > **实现状态**：列表标记颜色和任务列表复选框变量已在 4 个内置主题中定义，`list.css` 已使用这些变量
@@ -832,6 +927,7 @@
 | 文字格式 | 0 | 10+ (新增) | ❌ 待实现 |
 | 行内代码 | 2 | 7 | ⚠️ 部分实现 |
 | 引用块 | 3 | 20+ (新增) | ✅ 已实现（分级引用 L1-L4） |
+| GFM Alert | 0 | 30+ (新增) | ✅ 已实现（5 种提示框类型） |
 | 列表 | 0 | 25+ (新增) | ✅ 已实现（标记色、任务列表） |
 | 代码块 | 18 | 40+ | ✅ 已实现（窗口装饰、工具栏） |
 | 语法高亮 | 18 | 18 | ✅ 已实现 |
@@ -864,6 +960,7 @@
 | **代码块工具栏** | 语言标签、复制按钮变量化 |
 | **侧边栏增强** | 选中项文本色、边框色变量 |
 | **状态色增强** | 新增 `--lanismd-info` 变量 |
+| **GFM Alert** | 支持 NOTE/TIP/IMPORTANT/WARNING/CAUTION 5 种提示框 |
 
 **变更文件**：
 - `src/styles/variables.css` - 默认值定义
@@ -873,9 +970,11 @@
 - `src/styles/themes/nord.css` - Nord 主题
 - `src/styles/editor/typography.css` - 标题样式
 - `src/styles/editor/blockquote.css` - 引用块样式
+- `src/styles/editor/gfm-alert.css` - GFM Alert 样式（新增）
 - `src/styles/editor/list.css` - 列表样式
 - `src/styles/editor/code-block.css` - 代码块样式
 - `src/styles/themes/_variables-full.css` - 完整变量参考（新增）
+- `src/editor/plugins/gfm-alert/` - GFM Alert 插件（新增）
 
 ---
 

@@ -923,20 +923,36 @@ export interface ThemeLoaderService {
 
 > ⚠️ **重要说明**：阶段 0 是先决条件，必须在其他阶段之前完成。
 
-### 阶段 0：组件层改造（前置条件）
+### 阶段 0：组件层改造 ✅ 已完成（2026-04-08）
 
 | 任务 | 工作量 | 状态 | 说明 |
 |------|-------|------|------|
-| **文件树组件改造** | 3 天 | ❌ 未完成 | 添加 CSS 类、data 属性支持连线伪元素 |
-| **大纲组件重构** | 2 天 | ❌ 未完成 | 将硬编码 marginLeft 改为 CSS 变量驱动 |
-| **设置弹窗变量化** | 2 天 | ❌ 未完成 | 提取硬编码样式为 CSS 变量 |
-| **主题加载服务** | 3 天 | ❌ 未完成 | 实现 `theme-loader.ts`，支持加载用户 CSS |
+| **文件树组件改造** | 3 天 | ✅ 已完成 | 创建专用 CSS 文件，支持连线伪元素 |
+| **大纲组件重构** | 2 天 | ✅ 已完成 | CSS 变量驱动，支持层级样式和连线 |
+| **设置弹窗变量化** | 2 天 | ✅ 已完成 | 提取硬编码样式为 CSS 变量 |
+| **主题加载服务** | 3 天 | ✅ 已完成 | 实现 `theme-loader.ts`，支持加载用户主题 |
 
 **阶段 0 交付物**：
-- [ ] `FileTree.tsx` 支持 `data-depth` 属性和连线 CSS 类
-- [ ] `Sidebar.tsx` 大纲部分使用 CSS 变量控制样式
-- [ ] `SettingsDialog.tsx` 样式变量化
-- [ ] `src/services/theme-loader.ts` 基础实现
+- [x] `FileTree.tsx` 支持 CSS 变量驱动和连线伪元素类
+- [x] `Sidebar.tsx` 大纲部分使用 CSS 变量控制样式
+- [x] `SettingsDialog.tsx` 样式变量化
+- [x] `src/services/theme-loader.ts` 完整实现
+
+**新增文件**：
+| 文件 | 用途 |
+|------|------|
+| `src/styles/components/index.css` | 组件样式索引 |
+| `src/styles/components/file-tree.css` | 文件树组件样式（200+ 行） |
+| `src/styles/components/sidebar.css` | 侧边栏组件样式（180+ 行） |
+| `src/styles/components/settings-dialog.css` | 设置弹窗组件样式（160+ 行） |
+| `src/services/theme-loader.ts` | 主题加载服务（支持自定义主题和字体） |
+
+**核心功能**：
+- 文件树连线支持（通过 `--lanismd-file-tree-line-display` 控制）
+- 大纲连线支持（通过 `--lanismd-outline-line-display` 控制）
+- 层级字体大小/权重变量化
+- 主题热加载支持
+- 自定义字体加载支持
 
 ### 阶段 1：变量体系扩展 ✅ 已完成（2026-04-08）
 
@@ -985,16 +1001,64 @@ export interface ThemeLoaderService {
 2. ✅ 重构代码块工具栏样式（语言标签、复制按钮变量化）
 3. ✅ 支持更多自定义选项
 
-### 阶段 4：用户自定义 CSS 加载（5 天）
-1. 完善 `theme-loader.ts` 服务
-2. 支持 `base.user.css` 加载
-3. 支持 `{theme}.user.css` 加载
-4. 添加文件监听，支持热重载
+### 阶段 4：用户自定义 CSS 加载 ✅ 已完成（2026-04-08）
 
-### 阶段 5：自定义字体支持（3 天）
-1. 支持 `@font-face` 定义
-2. 支持从主题目录加载字体文件
-3. 字体预加载和回退机制
+> **完成情况**：完整实现 Typora 风格的用户 CSS 加载机制
+
+1. ✅ 完善 `theme-loader.ts` 服务
+2. ✅ 支持 `base.user.css` 全局加载
+3. ✅ 支持 `{theme}.user.css` 主题专属加载
+4. ✅ 切换主题时自动重新加载（Typora 风格）
+5. ✅ 设置界面添加"打开主题目录"按钮
+
+**实现细节**：
+
+| 功能 | 说明 |
+|------|------|
+| **文件位置** | `~/.config/lanismd/themes/`（macOS/Linux）或 `AppData/lanismd/themes/`（Windows） |
+| **全局样式** | `base.user.css` - 应用于所有主题 |
+| **主题专属** | `{theme}.user.css`（如 `light.user.css`、`dark.user.css`）- 仅在该主题激活时加载 |
+| **加载顺序** | 内置主题 CSS → `base.user.css` → `{theme}.user.css` |
+| **生效时机** | 切换主题时重新加载（无需重启应用） |
+
+**新增/修改文件**：
+
+| 文件 | 变更 |
+|------|------|
+| `src/services/theme-loader.ts` | 新增 `loadUserCSS()`、`createUserCSSTemplate()` 等方法 |
+| `src/hooks/useTheme.ts` | 集成用户 CSS 加载，主题切换时调用 `themeLoader.loadUserCSS()` |
+| `src/components/settings/SettingsDialog.tsx` | 添加"自定义样式"区域和"打开主题目录"按钮 |
+| `src/styles/settings.css` | 添加按钮样式 |
+
+**使用方法**：
+
+```css
+/* base.user.css - 全局自定义（应用于所有主题） */
+:root {
+  --lanismd-font-family-base: 'Your Font', sans-serif;
+  --editor-max-width: 900px;
+}
+
+/* light.user.css - 仅 Light 主题下生效 */
+.theme-light {
+  --lanismd-accent: #your-custom-color;
+  --lanismd-code-bg: #your-code-bg;
+}
+```
+
+### 阶段 5：自定义字体支持 ✅ 已完成（2026-04-09）
+1. ✅ 全局字体目录支持（`themes/fonts/`）- 所有主题可用
+2. ✅ 主题专属字体（`themes/{theme}/fonts/`）
+3. ✅ 用户 CSS 字体路径处理（`url('./fonts/...')` 自动转换）
+4. ✅ `local()` 支持 - 优先使用系统已安装字体
+5. ✅ 多格式回退链 - woff2 → woff → ttf 自动回退
+6. ✅ 字体预加载 - 使用 `<link rel="preload">` 减少 FOUT
+7. ✅ 智能字体解析 - 从文件名自动推断字体族、权重、样式
+
+**实现细节**：
+- 字体文件命名支持：`FiraCode-Regular.woff2`、`OpenSans-BoldItalic.ttf` 等
+- 自动生成多个 `local()` 名称变体，提高系统字体匹配率
+- 按格式优先级排序：woff2 > woff > truetype > opentype
 
 ### 阶段 6：文档和示例 ⚠️ 部分完成（2026-04-08）
 1. ⚠️ 编写主题开发文档（待完善）
@@ -1009,7 +1073,7 @@ export interface ThemeLoaderService {
 ┌─────────────────────────────────────────────────────────────────────┐
 │ P0 (必须) - 基础主题能力                                             │
 ├─────────────────────────────────────────────────────────────────────┤
-│ ☐ 阶段 0: 组件层改造（文件树、大纲、设置弹窗、主题加载服务）           │
+│ ✅ 阶段 0: 组件层改造（文件树、大纲、设置弹窗、主题加载服务）           │
 │ ✅ 阶段 1: CSS 变量体系扩展                                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │ P1 (高优) - 增强主题能力                                             │
@@ -1034,26 +1098,47 @@ export interface ThemeLoaderService {
 
 ## 九、示例主题结构
 
-用户自定义主题文件结构：
+用户自定义主题文件结构（Typora 风格，无需 manifest.json）：
 
 ```
 ~/.lanismd/themes/
 ├── base.user.css                     # 全局自定义（所有主题生效）
 ├── light.user.css                    # light 主题自定义
-├── my-custom-theme/                  # 自定义主题目录
-│   ├── theme.css                     # 主题主文件
-│   ├── codeblock.css                 # 代码块样式（可选）
-│   └── theme.json                    # 主题元数据
+├── github-light.css                  # 单文件主题（形式 1）
+└── dracula/                          # 目录形式主题（形式 2）
+    ├── dracula.css                   # 主题 CSS（必须与目录同名）
+    └── fonts/                        # 可选：自定义字体（自动发现加载）
+        └── fira-code.woff2
 ```
+
+### 主题发现规则
+
+| 形式 | 示例 | 主题 ID | 显示名称 |
+|------|------|---------|---------|
+| 单文件 | `github-light.css` | `github-light` | `Github Light` |
+| 目录形式 | `dracula/dracula.css` | `dracula` | `Dracula` |
+
+**命名规则**：
+- 文件名/目录名使用小写字母和连字符
+- 显示名称自动转换：连字符→空格，每个单词首字母大写
+- 目录形式的 CSS 入口文件**必须与目录同名**
+
+**字体自动发现**（仅目录形式）：
+- 如果存在 `fonts/` 子目录，自动扫描并加载字体文件
+- 支持格式：`.woff2`、`.woff`、`.ttf`、`.otf`
+- 字体名从文件名推断：`fira-code.woff2` → `Fira Code`
 
 ### 示例主题 CSS
 
 ```css
 /**
  * LanisMD Theme: Bloom (粉色浪漫主题)
+ * 
+ * 文件位置（二选一）：
+ * - 单文件：~/.lanismd/themes/bloom.css
+ * - 目录形式：~/.lanismd/themes/bloom/bloom.css
  */
 
-:root,
 .theme-bloom {
   /* 全局 */
   --lanismd-editor-bg: #fdf2f8;

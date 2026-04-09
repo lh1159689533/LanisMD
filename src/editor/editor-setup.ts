@@ -31,6 +31,7 @@ import {
 } from './plugins/image-block';
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import { tableHandlePlugin, extendedTableSchema } from './plugins/table-block';
+import { remarkGfmAlertPlugin, gfmAlertSchema } from './plugins/gfm-alert';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 
 export type EditorListener = {
@@ -71,6 +72,8 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(commonmark)
     .use(gfm)
     .use(underlineMarkSchema)
+    .use(gfmAlertSchema)
+    .use(remarkGfmAlertPlugin)
     .use(listItemBlockComponent)
     .use(imageBlockComponent)
     .use(extendedImageBlockSchema)

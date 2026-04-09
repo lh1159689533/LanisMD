@@ -6,23 +6,34 @@ import {
   RiComputerLine,
   RiCodeSSlashLine,
   RiEyeLine,
+  RiPaletteLine,
 } from 'react-icons/ri';
 import { TbLeaf, TbSnowflake } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
-import { THEME_LIST } from '@/types/config';
+import { BUILTIN_THEME_LIST, isCustomTheme, getCustomThemeId, type BuiltinTheme } from '@/types/config';
 import type { ThemeMode } from '@/types';
 import { cn } from '@/utils/cn';
 
-// 主题图标映射
-const THEME_ICONS: Record<ThemeMode, React.ReactNode> = {
+// 内置主题图标映射
+const BUILTIN_THEME_ICONS: Record<BuiltinTheme | 'system', React.ReactNode> = {
   system: <RiComputerLine size={13} />,
   light: <RiSunLine size={13} />,
   dark: <RiMoonLine size={13} />,
   sepia: <TbLeaf size={13} />,
   nord: <TbSnowflake size={13} />,
 };
+
+/**
+ * 获取当前主题的图标
+ */
+function getThemeIcon(theme: ThemeMode): React.ReactNode {
+  if (isCustomTheme(theme)) {
+    return <RiPaletteLine size={13} />;
+  }
+  return BUILTIN_THEME_ICONS[theme as BuiltinTheme | 'system'];
+}
 
 export function StatusBar() {
   const { wordCount, charCount, lineCount, cursorLine, cursorColumn, mode, setMode } =
@@ -60,7 +71,15 @@ export function StatusBar() {
     setConfig('theme', theme);
   };
 
-  const currentThemeInfo = THEME_LIST.find((t) => t.id === config.theme);
+  // 获取当前主题的描述
+  const getCurrentThemeDescription = () => {
+    if (isCustomTheme(config.theme)) {
+      const themeId = getCustomThemeId(config.theme);
+      return `自定义主题: ${themeId}`;
+    }
+    const themeInfo = BUILTIN_THEME_LIST.find((t) => t.id === config.theme);
+    return themeInfo?.description;
+  };
 
   return (
     <div
@@ -115,9 +134,9 @@ export function StatusBar() {
             ref={themeButtonRef}
             onClick={() => setShowThemeMenu(!showThemeMenu)}
             className="flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]"
-            title={currentThemeInfo?.description}
+            title={getCurrentThemeDescription()}
           >
-            {THEME_ICONS[config.theme]}
+            {getThemeIcon(config.theme)}
           </button>
 
           {/* 主题选择菜单 */}
@@ -130,7 +149,7 @@ export function StatusBar() {
                 'bg-[var(--lanismd-editor-bg)] py-1 shadow-lg',
               )}
             >
-              {THEME_LIST.map((theme) => (
+              {BUILTIN_THEME_LIST.map((theme) => (
                 <button
                   key={theme.id}
                   onClick={() => handleThemeSelect(theme.id)}
@@ -141,7 +160,7 @@ export function StatusBar() {
                   )}
                   title={theme.description}
                 >
-                  {THEME_ICONS[theme.id]}
+                  {BUILTIN_THEME_ICONS[theme.id as BuiltinTheme | 'system']}
                   <span>{theme.name}</span>
                 </button>
               ))}

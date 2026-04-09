@@ -222,3 +222,33 @@
 .settings-shortcuts-hint {
   color: var(--lanismd-sidebar-text);
 }
+
+/* ===== 按钮样式 ===== */
+.settings-button {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  background-color: transparent;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.settings-button:hover {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent-light);
+}
+
+/* ===== 描述区的 code 标签 ===== */
+.settings-item-description code {
+  padding: 2px 6px;
+  border-radius: var(--lanismd-radius-sm);
+  background-color: var(--lanismd-code-bg, rgba(0, 0, 0, 0.06));
+  font-family: var(--lanismd-font-mono);
+  font-size: 0.9em;
+}

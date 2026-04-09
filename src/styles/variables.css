@@ -67,7 +67,7 @@
   /* ===============================================
    * 标题 H1-H6 独立变量
    * =============================================== */
-  
+
   /* ===== H1 ===== */
   --lanismd-h1-color: var(--lanismd-heading-color, #0f172a);
   --lanismd-h1-font-size: 1.875rem;
@@ -82,7 +82,7 @@
   --lanismd-h1-font-style: normal;
   --lanismd-h1-prefix-content: none;
   --lanismd-h1-prefix-color: inherit;
-  
+
   /* ===== H2 ===== */
   --lanismd-h2-color: var(--lanismd-heading-color, #0f172a);
   --lanismd-h2-font-size: 1.5rem;
@@ -97,7 +97,7 @@
   --lanismd-h2-font-style: normal;
   --lanismd-h2-prefix-content: none;
   --lanismd-h2-prefix-color: inherit;
-  
+
   /* ===== H3 ===== */
   --lanismd-h3-color: var(--lanismd-heading-color, #0f172a);
   --lanismd-h3-font-size: 1.25rem;
@@ -109,7 +109,7 @@
   --lanismd-h3-background: transparent;
   --lanismd-h3-prefix-content: none;
   --lanismd-h3-prefix-color: inherit;
-  
+
   /* ===== H4 ===== */
   --lanismd-h4-color: var(--lanismd-heading-color, #0f172a);
   --lanismd-h4-font-size: 1.125rem;
@@ -120,7 +120,7 @@
   --lanismd-h4-background: transparent;
   --lanismd-h4-prefix-content: none;
   --lanismd-h4-prefix-color: inherit;
-  
+
   /* ===== H5 ===== */
   --lanismd-h5-color: var(--lanismd-heading-color, #0f172a);
   --lanismd-h5-font-size: 1em;
@@ -130,7 +130,7 @@
   --lanismd-h5-margin-bottom: 0.5em;
   --lanismd-h5-prefix-content: none;
   --lanismd-h5-prefix-color: inherit;
-  
+
   /* ===== H6 ===== */
   --lanismd-h6-color: var(--lanismd-text-muted, #64748b);
   --lanismd-h6-font-size: 1em;
@@ -197,31 +197,82 @@
   --lanismd-blockquote-padding: 0 0 0 1em;
   --lanismd-blockquote-margin: 1em 0;
   --lanismd-blockquote-border-radius: 0;
-  
+
   /* Level 1 (>) - 默认样式 */
   --lanismd-blockquote-l1-border-color: #3b82f6;
   --lanismd-blockquote-l1-bg: rgba(59, 130, 246, 0.05);
   --lanismd-blockquote-l1-text-color: #1e40af;
-  
+
   /* Level 2 (>>) */
   --lanismd-blockquote-l2-border-color: #22c55e;
   --lanismd-blockquote-l2-bg: rgba(34, 197, 94, 0.05);
   --lanismd-blockquote-l2-text-color: #166534;
-  
+
   /* Level 3 (>>>) */
   --lanismd-blockquote-l3-border-color: #f59e0b;
   --lanismd-blockquote-l3-bg: rgba(245, 158, 11, 0.05);
   --lanismd-blockquote-l3-text-color: #92400e;
-  
+
   /* Level 4+ (>>>>) */
   --lanismd-blockquote-l4-border-color: #f43f5e;
   --lanismd-blockquote-l4-bg: rgba(244, 63, 94, 0.05);
   --lanismd-blockquote-l4-text-color: #9f1239;
 
   /* ===============================================
+   * GFM Alert（GitHub 风格提示框）
+   * =============================================== */
+
+  /* 通用样式 */
+  --lanismd-alert-border-width: 4px;
+  --lanismd-alert-border-radius: 6px;
+  --lanismd-alert-padding: 16px;
+  --lanismd-alert-margin: 1em 0;
+  --lanismd-alert-font-style: normal;
+  --lanismd-alert-title-font-weight: 600;
+  --lanismd-alert-title-font-size: 1em;
+  --lanismd-alert-title-margin-bottom: 0.5em;
+  --lanismd-alert-icon-size: 1em;
+  --lanismd-alert-icon-margin-right: 0.5em;
+
+  /* NOTE - 信息提示（蓝色） */
+  --lanismd-alert-note-border-color: #3b82f6;
+  --lanismd-alert-note-bg: rgba(59, 130, 246, 0.08);
+  --lanismd-alert-note-text-color: inherit;
+  --lanismd-alert-note-title-color: #3b82f6;
+  --lanismd-alert-note-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='%233b82f6'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+
+  /* TIP - 建议提示（绿色） */
+  --lanismd-alert-tip-border-color: #22c55e;
+  --lanismd-alert-tip-bg: rgba(34, 197, 94, 0.08);
+  --lanismd-alert-tip-text-color: inherit;
+  --lanismd-alert-tip-title-color: #22c55e;
+  --lanismd-alert-tip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='%2322c55e'%3E%3Cpath d='M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z'%3E%3C/path%3E%3C/svg%3E");
+
+  /* IMPORTANT - 重要提示（紫色） */
+  --lanismd-alert-important-border-color: #a855f7;
+  --lanismd-alert-important-bg: rgba(168, 85, 247, 0.08);
+  --lanismd-alert-important-text-color: inherit;
+  --lanismd-alert-important-title-color: #a855f7;
+  --lanismd-alert-important-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='%23a855f7'%3E%3Cpath d='M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+
+  /* WARNING - 警告提示（黄色/橙色） */
+  --lanismd-alert-warning-border-color: #f59e0b;
+  --lanismd-alert-warning-bg: rgba(245, 158, 11, 0.08);
+  --lanismd-alert-warning-text-color: inherit;
+  --lanismd-alert-warning-title-color: #f59e0b;
+  --lanismd-alert-warning-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='%23f59e0b'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+
+  /* CAUTION - 危险提示（红色） */
+  --lanismd-alert-caution-border-color: #ef4444;
+  --lanismd-alert-caution-bg: rgba(239, 68, 68, 0.08);
+  --lanismd-alert-caution-text-color: inherit;
+  --lanismd-alert-caution-title-color: #ef4444;
+  --lanismd-alert-caution-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' fill='%23ef4444'%3E%3Cpath d='M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+
+  /* ===============================================
    * 列表样式
    * =============================================== */
-  
+
   /* 无序列表 */
   --lanismd-ul-padding-left: 1.75em;
   --lanismd-ul-margin: 0.5em 0;
@@ -229,18 +280,18 @@
   --lanismd-ul-marker-type: disc;
   --lanismd-ul-marker-content: '•';
   --lanismd-ul-marker-font-size: 1em;
-  
+
   /* 嵌套级别的标记类型 */
   --lanismd-ul-l1-marker-type: disc;
   --lanismd-ul-l2-marker-type: circle;
   --lanismd-ul-l3-marker-type: square;
-  
+
   /* 有序列表 */
   --lanismd-ol-padding-left: 1.75em;
   --lanismd-ol-margin: 0.5em 0;
   --lanismd-ol-marker-color: var(--lanismd-text-color);
   --lanismd-ol-marker-type: decimal;
-  
+
   /* 任务列表 */
   --lanismd-task-checkbox-size: 16px;
   --lanismd-task-checkbox-border: 2px solid #94a3b8;
@@ -251,7 +302,7 @@
   --lanismd-task-checkbox-checkmark-color: white;
   --lanismd-task-checked-text-decoration: line-through;
   --lanismd-task-checked-text-opacity: 0.6;
-  
+
   /* 列表项 */
   --lanismd-li-margin: 0.25em 0;
   --lanismd-li-line-height: 1.6;
@@ -259,27 +310,27 @@
   /* ===============================================
    * 代码块增强
    * =============================================== */
-  
+
   /* 容器 */
   --lanismd-codeblock-border-radius: var(--lanismd-radius-lg);
   --lanismd-codeblock-margin: 1em 0;
   --lanismd-codeblock-padding: 0;
-  
+
   /* 工具栏 */
   --lanismd-codeblock-toolbar-height: 36px;
   --lanismd-codeblock-toolbar-padding: 6px 12px;
-  
+
   /* 语言标签 */
   --lanismd-codeblock-lang-color: #64748b;
   --lanismd-codeblock-lang-font-size: 12px;
   --lanismd-codeblock-lang-font-weight: 500;
   --lanismd-codeblock-lang-text-transform: uppercase;
-  
+
   /* 复制按钮 */
   --lanismd-codeblock-copy-btn-color: #64748b;
   --lanismd-codeblock-copy-btn-hover-color: var(--lanismd-accent, #2563eb);
   --lanismd-codeblock-copy-btn-hover-bg: rgba(0, 0, 0, 0.05);
-  
+
   /* 窗口装饰 */
   --lanismd-codeblock-window-controls: none; /* none | macos | windows */
   --lanismd-codeblock-dot-red: #ff5f56;
@@ -315,7 +366,7 @@
   --lanismd-source-font-family: var(--lanismd-font-mono);
   --lanismd-source-font-size: 15px;
   --lanismd-source-line-height: 1.75;
-  
+
   /* Markdown 语法高亮 */
   --lanismd-source-header-weight: 600;
   --lanismd-source-h1-size: 1.5em;
@@ -335,7 +386,7 @@
   --lanismd-math-bg: transparent;
   --lanismd-math-block-margin: 1em 0;
   --lanismd-math-block-padding: 1em;
-  
+
   /* Mermaid 图表 */
   --lanismd-mermaid-bg: transparent;
   --lanismd-mermaid-text: var(--lanismd-text-color);
@@ -346,7 +397,7 @@
   /* ===============================================
    * UI 组件
    * =============================================== */
-  
+
   /* 对话框/弹窗 */
   --lanismd-dialog-bg: var(--lanismd-editor-bg);
   --lanismd-dialog-border: 1px solid var(--lanismd-border-color);
@@ -394,15 +445,14 @@
    * 文件树（需组件改造支持）
    * =============================================== */
   --lanismd-file-tree-item-height: 28px;
-  --lanismd-file-tree-indent: 16px;
+  --lanismd-file-tree-indent: 20px;
   --lanismd-file-tree-icon-color: #64748b;
-  
+
   /* 连线样式 */
   --lanismd-file-tree-line-display: none;
-  --lanismd-file-tree-line-style: solid;
   --lanismd-file-tree-line-color: #d0d0d0;
   --lanismd-file-tree-line-width: 1px;
-  
+
   /* 节点样式 */
   --lanismd-file-tree-node-padding: 4px 8px;
   --lanismd-file-tree-node-border-radius: 4px;
@@ -417,18 +467,18 @@
   --lanismd-outline-active-text: #2563eb;
   --lanismd-outline-indent: 12px;
   --lanismd-outline-marker-color: #94a3b8;
-  
+
   /* 连线样式 */
   --lanismd-outline-line-display: none;
   --lanismd-outline-line-style: solid;
   --lanismd-outline-line-color: #e0e0e0;
   --lanismd-outline-line-width: 1px;
-  
+
   /* 展开器 */
   --lanismd-outline-expander-display: none;
   --lanismd-outline-expander-content: '›';
   --lanismd-outline-expander-color: #666;
-  
+
   /* 层级样式 */
   --lanismd-outline-l1-font-size: 14px;
   --lanismd-outline-l2-font-size: 13px;

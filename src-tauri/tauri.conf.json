@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/nickel-org/nickel.rs/master/nickel/schema.json",
   "productName": "LanisMD",
   "version": "0.1.0",
-  "identifier": "com.lanismd.app",
+  "identifier": "com.lanis.md",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
