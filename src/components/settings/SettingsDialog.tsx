@@ -7,7 +7,7 @@ import {
   RiFolderOpenLine,
   RiPaletteLine,
 } from 'react-icons/ri';
-import { TbLeaf, TbSnowflake } from 'react-icons/tb';
+import { TbLeaf, TbSnowflake, TbFlower } from 'react-icons/tb';
 import { useUIStore } from '@/stores/ui-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
@@ -24,6 +24,24 @@ const BUILTIN_THEME_ICONS: Record<BuiltinTheme | 'system', React.ReactNode> = {
   dark: <RiMoonLine size={13} />,
   sepia: <TbLeaf size={13} />,
   nord: <TbSnowflake size={13} />,
+  // Bloom 系列 - 浅色
+  'bloom-petal': <TbFlower size={13} />,
+  'bloom-spring': <TbFlower size={13} />,
+  'bloom-amber': <TbFlower size={13} />,
+  'bloom-ink': <TbFlower size={13} />,
+  'bloom-mist': <TbFlower size={13} />,
+  'bloom-ripple': <TbFlower size={13} />,
+  'bloom-stone': <TbFlower size={13} />,
+  'bloom-verdant': <TbFlower size={13} />,
+  // Bloom 系列 - 深色
+  'bloom-petal-dark': <TbFlower size={13} />,
+  'bloom-spring-dark': <TbFlower size={13} />,
+  'bloom-amber-dark': <TbFlower size={13} />,
+  'bloom-ink-dark': <TbFlower size={13} />,
+  'bloom-mist-dark': <TbFlower size={13} />,
+  'bloom-ripple-dark': <TbFlower size={13} />,
+  'bloom-stone-dark': <TbFlower size={13} />,
+  'bloom-verdant-dark': <TbFlower size={13} />,
 };
 
 const SECTIONS = [

@@ -1,0 +1,38 @@
+/**
+ * LanisMD Bloom Theme Base
+ * Bloom 主题系列共享基础样式
+ * 
+ * 包含：
+ * - MiSans 字体定义
+ * - Bloom 主题通用字体设置
+ */
+
+/* ===== MiSans 字体定义 ===== */
+@font-face {
+  font-family: "MiSans";
+  src: url("./fonts/MiSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans";
+  src: url("./fonts/MiSans-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans";
+  src: url("./fonts/MiSans-Semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== Bloom 主题通用字体设置 ===== */
+[class*="theme-bloom"] {
+  --lanismd-font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;
+}

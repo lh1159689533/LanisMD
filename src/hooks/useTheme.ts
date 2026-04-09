@@ -9,6 +9,24 @@ const BUILTIN_THEME_CLASS_MAP: Record<BuiltinTheme, string[]> = {
   dark: ['theme-dark', 'dark'], // 保留 dark class 兼容 Tailwind
   sepia: ['theme-sepia'],
   nord: ['theme-nord', 'dark'], // Nord 是深色主题，需要 dark class
+  // Bloom 系列 - 浅色
+  'bloom-petal': ['theme-bloom-petal'],
+  'bloom-spring': ['theme-bloom-spring'],
+  'bloom-amber': ['theme-bloom-amber'],
+  'bloom-ink': ['theme-bloom-ink'],
+  'bloom-mist': ['theme-bloom-mist'],
+  'bloom-ripple': ['theme-bloom-ripple'],
+  'bloom-stone': ['theme-bloom-stone'],
+  'bloom-verdant': ['theme-bloom-verdant'],
+  // Bloom 系列 - 深色（需要 dark class 兼容 Tailwind）
+  'bloom-petal-dark': ['theme-bloom-petal-dark', 'dark'],
+  'bloom-spring-dark': ['theme-bloom-spring-dark', 'dark'],
+  'bloom-amber-dark': ['theme-bloom-amber-dark', 'dark'],
+  'bloom-ink-dark': ['theme-bloom-ink-dark', 'dark'],
+  'bloom-mist-dark': ['theme-bloom-mist-dark', 'dark'],
+  'bloom-ripple-dark': ['theme-bloom-ripple-dark', 'dark'],
+  'bloom-stone-dark': ['theme-bloom-stone-dark', 'dark'],
+  'bloom-verdant-dark': ['theme-bloom-verdant-dark', 'dark'],
 };
 
 // 所有可能的主题 class（用于清理）
@@ -20,6 +38,23 @@ const ALL_THEME_CLASSES = [
   'theme-sepia',
   'theme-nord',
   'theme-custom',
+  // Bloom 系列
+  'theme-bloom-petal',
+  'theme-bloom-spring',
+  'theme-bloom-amber',
+  'theme-bloom-ink',
+  'theme-bloom-mist',
+  'theme-bloom-ripple',
+  'theme-bloom-stone',
+  'theme-bloom-verdant',
+  'theme-bloom-petal-dark',
+  'theme-bloom-spring-dark',
+  'theme-bloom-amber-dark',
+  'theme-bloom-ink-dark',
+  'theme-bloom-mist-dark',
+  'theme-bloom-ripple-dark',
+  'theme-bloom-stone-dark',
+  'theme-bloom-verdant-dark',
 ];
 
 export function useTheme() {

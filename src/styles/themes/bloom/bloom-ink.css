@@ -1,0 +1,144 @@
+/**
+ * LanisMD Bloom Ink Theme
+ * 莫兰迪朱砂墨 - 浅色版
+ * Hue: 30
+ */
+
+@import './bloom-base.css';
+
+.theme-bloom-ink {
+  /* === 主色调 (Hue: 30) === */
+  --lanismd-accent: oklch(58% 0.16 30);
+  --lanismd-accent-hover: oklch(52% 0.16 30);
+  --lanismd-accent-light: oklch(92% 0.06 30);
+  --lanismd-accent-contrast: #ffffff;
+  
+  /* === 编辑器区域 === */
+  --lanismd-editor-bg: oklch(97% 0.002 240);
+  --lanismd-editor-text: oklch(20% 0.01 240);
+  --lanismd-editor-border: oklch(90% 0.01 240);
+  
+  /* === 侧边栏 === */
+  --lanismd-sidebar-bg: oklch(95% 0.005 240);
+  --lanismd-sidebar-text: oklch(40% 0.01 240);
+  --lanismd-sidebar-border: oklch(90% 0.01 240);
+  --lanismd-sidebar-hover: oklch(93% 0.01 240);
+  --lanismd-sidebar-active: oklch(90% 0.06 30);
+  --lanismd-sidebar-active-text: oklch(40% 0.14 30);
+  --lanismd-sidebar-active-border: oklch(58% 0.16 30);
+  
+  /* === 标题栏 === */
+  --lanismd-titlebar-bg: oklch(95% 0.005 240);
+  --lanismd-titlebar-text: oklch(20% 0.01 240);
+  
+  /* === 状态色 (莫兰迪风格) === */
+  --lanismd-success: oklch(70% 0.1 150);
+  --lanismd-warning: oklch(75% 0.1 75);
+  --lanismd-danger: oklch(58% 0.16 30);
+  --lanismd-info: oklch(62% 0.1 250);
+  
+  /* === 交互状态 === */
+  --lanismd-hover-bg: oklch(93% 0.03 30);
+  --lanismd-selected-bg: oklch(91% 0.05 30);
+  --lanismd-focus-ring: oklch(58% 0.16 30 / 40%);
+  
+  /* === 阴影 === */
+  --lanismd-shadow-sm: 0 2px 8px oklch(20% 0.01 240 / 4%);
+  --lanismd-shadow-md: 0 10px 30px oklch(20% 0.01 240 / 6%);
+  --lanismd-shadow-lg: 0 24px 60px oklch(20% 0.01 240 / 10%);
+  
+  /* === 滚动条 === */
+  --lanismd-scrollbar-thumb: oklch(75% 0.04 30);
+  --lanismd-scrollbar-thumb-hover: oklch(60% 0.08 30);
+  
+  /* === 拖拽手柄 === */
+  --lanismd-handle-color: oklch(70% 0.04 30);
+  
+  /* === 标题颜色 === */
+  --lanismd-heading-color: oklch(20% 0.01 240);
+  --lanismd-h1-color: oklch(20% 0.01 240);
+  --lanismd-h2-color: oklch(25% 0.01 240);
+  --lanismd-h3-color: oklch(30% 0.01 240);
+  --lanismd-h4-color: oklch(35% 0.01 240);
+  --lanismd-h5-color: oklch(40% 0.01 240);
+  --lanismd-h6-color: oklch(50% 0.01 240);
+  
+  /* === 文本 === */
+  --lanismd-text-muted: oklch(50% 0.01 240);
+  --lanismd-link-color: oklch(55% 0.16 30);
+  --lanismd-link-hover: oklch(50% 0.16 30);
+  
+  /* === 引用块 === */
+  --lanismd-blockquote-border: oklch(58% 0.16 30);
+  --lanismd-blockquote-bg: oklch(95% 0.005 240);
+  --lanismd-blockquote-text: oklch(40% 0.01 240);
+  
+  /* 分级引用 */
+  --lanismd-blockquote-l1-border-color: oklch(62% 0.1 250);
+  --lanismd-blockquote-l1-bg: oklch(96% 0.02 250);
+  --lanismd-blockquote-l1-text-color: oklch(40% 0.08 250);
+  --lanismd-blockquote-l2-border-color: oklch(70% 0.1 150);
+  --lanismd-blockquote-l2-bg: oklch(96% 0.02 150);
+  --lanismd-blockquote-l2-text-color: oklch(40% 0.08 150);
+  --lanismd-blockquote-l3-border-color: oklch(75% 0.1 75);
+  --lanismd-blockquote-l3-bg: oklch(96% 0.02 75);
+  --lanismd-blockquote-l3-text-color: oklch(45% 0.08 75);
+  --lanismd-blockquote-l4-border-color: oklch(58% 0.14 30);
+  --lanismd-blockquote-l4-bg: oklch(96% 0.02 30);
+  --lanismd-blockquote-l4-text-color: oklch(45% 0.1 30);
+  
+  /* === 列表 === */
+  --lanismd-ul-marker-color: oklch(55% 0.14 30);
+  --lanismd-ol-marker-color: oklch(55% 0.14 30);
+  --lanismd-task-checkbox-border: 2px solid oklch(70% 0.06 30);
+  --lanismd-task-checkbox-checked-bg: oklch(58% 0.16 30);
+  --lanismd-task-checkbox-checked-border: oklch(58% 0.16 30);
+  
+  /* === 行内代码 === */
+  --lanismd-inline-code-bg: oklch(93% 0.04 30);
+  --lanismd-inline-code-text: oklch(48% 0.14 30);
+  
+  /* === 表格 === */
+  --lanismd-table-header-bg: oklch(95% 0.005 240);
+  --lanismd-table-border: oklch(90% 0.01 240);
+  --lanismd-table-row-hover: oklch(96% 0.005 240);
+  
+  /* === 代码块 === */
+  --lanismd-code-bg: oklch(95% 0.005 240);
+  --lanismd-code-toolbar-bg: oklch(93% 0.01 240);
+  --lanismd-codeblock-dot-red: oklch(65% 0.12 25);
+  --lanismd-codeblock-dot-yellow: oklch(78% 0.12 85);
+  --lanismd-codeblock-dot-green: oklch(72% 0.12 145);
+  
+  /* === CodeMirror === */
+  --lanismd-cm-bg: oklch(95% 0.005 240);
+  --lanismd-cm-text: oklch(20% 0.01 240);
+  --lanismd-cm-gutter-bg: oklch(95% 0.005 240);
+  --lanismd-cm-gutter-text: oklch(50% 0.01 240);
+  --lanismd-cm-line-active: oklch(93% 0.03 30);
+  --lanismd-cm-gutter-active: oklch(91% 0.05 30);
+  --lanismd-cm-cursor: oklch(20% 0.01 240);
+  --lanismd-cm-selection: oklch(58% 0.16 30 / 15%);
+  --lanismd-cm-bracket-match: oklch(58% 0.16 30 / 20%);
+  --lanismd-cm-bracket-outline: oklch(58% 0.16 30 / 30%);
+  
+  /* === 语法高亮 === */
+  --lanismd-syntax-keyword: oklch(55% 0.16 30);
+  --lanismd-syntax-string: oklch(52% 0.12 140);
+  --lanismd-syntax-number: oklch(58% 0.12 40);
+  --lanismd-syntax-function: oklch(48% 0.12 260);
+  --lanismd-syntax-comment: oklch(55% 0.01 240);
+  --lanismd-syntax-variable: oklch(20% 0.01 240);
+  --lanismd-syntax-type: oklch(55% 0.14 140);
+  --lanismd-syntax-class: oklch(48% 0.12 260);
+  --lanismd-syntax-property: oklch(48% 0.12 260);
+  --lanismd-syntax-operator: oklch(55% 0.16 30);
+  --lanismd-syntax-punctuation: oklch(40% 0.01 240);
+  --lanismd-syntax-bool: oklch(58% 0.12 40);
+  --lanismd-syntax-regexp: oklch(52% 0.12 140);
+  --lanismd-syntax-tag: oklch(55% 0.14 140);
+  --lanismd-syntax-attr-name: oklch(48% 0.12 260);
+  --lanismd-syntax-attr-value: oklch(52% 0.12 140);
+  --lanismd-syntax-meta: oklch(55% 0.01 240);
+  --lanismd-syntax-definition: oklch(55% 0.14 40);
+}

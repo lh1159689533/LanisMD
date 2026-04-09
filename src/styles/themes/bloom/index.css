@@ -1,0 +1,41 @@
+/**
+ * LanisMD Bloom Theme Series Index
+ * Bloom 主题系列索引文件
+ * 
+ * 包含 16 个主题（8 浅色 + 8 深色）：
+ * - Petal (玫瑰粉)
+ * - Spring (薰衣草紫)
+ * - Amber (琥珀黄)
+ * - Ink (朱砂墨)
+ * - Mist (雾蓝)
+ * - Ripple (青绿)
+ * - Stone (石褐)
+ * - Verdant (翠绿)
+ */
+
+/* 共享基础样式（MiSans 字体） */
+@import './bloom-base.css';
+
+/* 增强样式 */
+@import './bloom-typography.css';
+@import './bloom-code-block.css';
+
+/* ===== 浅色主题 ===== */
+@import './bloom-petal.css';
+@import './bloom-spring.css';
+@import './bloom-amber.css';
+@import './bloom-ink.css';
+@import './bloom-mist.css';
+@import './bloom-ripple.css';
+@import './bloom-stone.css';
+@import './bloom-verdant.css';
+
+/* ===== 深色主题 ===== */
+@import './bloom-petal-dark.css';
+@import './bloom-spring-dark.css';
+@import './bloom-amber-dark.css';
+@import './bloom-ink-dark.css';
+@import './bloom-mist-dark.css';
+@import './bloom-ripple-dark.css';
+@import './bloom-stone-dark.css';
+@import './bloom-verdant-dark.css';

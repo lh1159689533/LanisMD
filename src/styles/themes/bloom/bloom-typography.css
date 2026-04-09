@@ -1,0 +1,93 @@
+/**
+ * LanisMD Bloom Theme Typography Enhancements
+ * Bloom 主题排版增强样式
+ * 
+ * 包含：
+ * - 标题装饰线（H1-H4 渐变下划线）
+ * - 引用块增强样式
+ */
+
+/* ===== 标题装饰线 ===== */
+
+/* 使标题具有相对定位，支持伪元素 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h1,
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h2,
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h3,
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h4 {
+  position: relative;
+  border-bottom: none; /* 移除默认底边框 */
+  padding-bottom: 0.6em;
+}
+
+/* H1 装饰线 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 76px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--lanismd-accent), transparent);
+  border-radius: 999px;
+}
+
+/* H2 装饰线 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, color-mix(in oklch, var(--lanismd-accent), transparent 15%), transparent);
+  border-radius: 999px;
+}
+
+/* H3 装饰线 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 44px;
+  height: 2px;
+  background: linear-gradient(90deg, color-mix(in oklch, var(--lanismd-accent), transparent 30%), transparent);
+  border-radius: 999px;
+}
+
+/* H4 装饰线 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror h4::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, color-mix(in oklch, var(--lanismd-accent), transparent 50%), transparent);
+  border-radius: 999px;
+}
+
+/* ===== 引用块增强 ===== */
+
+/* Bloom 主题引用块圆角和过渡 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror blockquote {
+  border-radius: 0 var(--lanismd-radius-md) var(--lanismd-radius-md) 0;
+  transition: background-color var(--lanismd-transition-normal),
+              border-color var(--lanismd-transition-normal);
+}
+
+/* ===== 行内代码增强 ===== */
+
+/* Bloom 主题行内代码样式 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror code {
+  border-radius: var(--lanismd-radius-sm);
+  font-weight: 500;
+}
+
+/* ===== 链接增强 ===== */
+
+/* Bloom 主题链接过渡效果 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror a {
+  transition: color var(--lanismd-transition-fast),
+              text-decoration-color var(--lanismd-transition-fast);
+}
