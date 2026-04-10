@@ -168,7 +168,7 @@ async function handleCurrentFileChanged(filePath: string, isDirty: boolean): Pro
     if (!shouldReload) return;
   }
 
-  // Reload the file content from disk
+  // 从磁盘重新加载文件内容
   try {
     const result = await fileService.readFile({
       path: filePath,

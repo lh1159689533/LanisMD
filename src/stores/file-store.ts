@@ -162,7 +162,7 @@ export const useFileStore = create<FileState>()((set, get) => ({
 
   getCurrentFile: () => get().currentFile,
 
-  // Legacy computed properties for backward compatibility
+  // 向后兼容的旧计算属性
   get tabs() {
     const current = get().currentFile;
     return current ? [current] : [];

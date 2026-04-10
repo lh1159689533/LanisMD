@@ -104,7 +104,7 @@ function insertHr(view: EditorView) {
   const parent = $from.parent;
   const paragraphType = schema.nodes.paragraph;
 
-  // If paragraph is empty, replace; otherwise insert after
+  // 如果段落为空则替换；否则在后面插入
   if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
     const from = $from.before();
     const to = $from.after();

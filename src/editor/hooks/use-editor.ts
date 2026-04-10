@@ -72,7 +72,7 @@ export function useEditor() {
         editorRef.current = null;
       }
     };
-    // Re-create editor when currentFileId or mode changes
+    // 文件 ID 或编辑模式变化时重新创建编辑器
   }, [currentFileId, mode, updateStats]);
 
   return { rootRef, editorRef };

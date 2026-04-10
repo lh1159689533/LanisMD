@@ -84,7 +84,7 @@ async function openImageDialogForInlineEdit(
   view.focus();
 }
 
-// Register the function with the toolbar plugin
+// 将函数注册到工具栏插件
 setOpenImageDialogForInlineEdit(openImageDialogForInlineEdit);
 
 export function createEditor(root: HTMLElement, defaultValue: string) {

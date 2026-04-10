@@ -23,7 +23,7 @@ import { isRelativePath, buildAbsolutePath } from './types';
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 import { setOpenImageDialogForEdit } from './toolbar';
 
-// Re-export all sub-modules
+// 重新导出所有子模块
 export { extendedImageBlockSchema, remarkHtmlImagePlugin } from './schema-extend';
 export { imageBlockClickPlugin } from './click-handler';
 export { imageInputRulePlugin } from './input-rule';
@@ -33,7 +33,7 @@ export { imageBlockToolbarPlugin } from './toolbar';
 export { imageUploadProgressPlugin, insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 export { imageViewPlugin } from './view';
 
-// Re-export types
+// 重新导出类型
 export type { ImageDialogResult } from './types';
 export { isRelativePath, buildAbsolutePath } from './types';
 
@@ -42,28 +42,28 @@ export { isRelativePath, buildAbsolutePath } from './types';
 // ---------------------------------------------------------------------------
 
 /**
- * Save a File object (from paste/drag/upload) to the assets directory.
- * Returns the relative path like `./assets/image_xxxx.png`.
- * Uses the Tauri backend command to bypass frontend fs scope restrictions.
+ * 将 File 对象（来自粘贴/拖拽/上传）保存到 assets 目录
+ * 返回类似 `./assets/image_xxxx.png` 的相对路径
+ * 使用 Tauri 后端命令绕过前端 fs scope 限制
  */
 async function saveFileToAssets(file: File): Promise<string> {
   const currentFile = useFileStore.getState().currentFile;
   if (!currentFile?.filePath) {
-    // Fallback: return a blob URL (won't persist, but at least shows the image)
+    // 回退：返回 blob URL（不会持久化，但至少能显示图片）
     return URL.createObjectURL(file);
   }
 
   try {
-    // Read file data as Uint8Array
+    // 将文件数据读取为 Uint8Array
     const arrayBuffer = await file.arrayBuffer();
     const uint8 = new Uint8Array(arrayBuffer);
 
-    // Generate a unique filename
+    // 生成唯一文件名
     const ext = file.name.split('.').pop() || 'png';
     const timestamp = Date.now();
     const fileName = `image_${timestamp}.${ext}`;
 
-    // Use Tauri backend command to save (no fs scope issues)
+    // 使用 Tauri 后端命令保存（无 fs scope 问题）
     const relativePath = await fileService.saveImageBytesToAssets(uint8, fileName, currentFile.filePath);
     return relativePath;
   } catch (err) {
@@ -73,7 +73,7 @@ async function saveFileToAssets(file: File): Promise<string> {
 }
 
 /**
- * Open the image dialog (reuse the existing design) and return the result.
+ * 打开图片对话框（复用现有设计）并返回结果
  */
 function openImageDialog(): Promise<{ src: string; alt: string } | null> {
   return new Promise((resolve) => {
@@ -118,7 +118,7 @@ function openImageDialog(): Promise<{ src: string; alt: string } | null> {
 
     overlay.appendChild(dialog);
 
-    // Tab switching
+    // Tab 切换
     const tabBtns = dialog.querySelectorAll('.milkdown-tooltip-dialog-tab') as NodeListOf<HTMLButtonElement>;
     const uploadPanel = dialog.querySelector('[data-panel="upload"]') as HTMLElement;
     const urlPanel = dialog.querySelector('[data-panel="url"]') as HTMLElement;
@@ -226,28 +226,28 @@ function openImageDialog(): Promise<{ src: string; alt: string } | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Image Block Loading Overlay Helpers
+// 图片块加载遮罩辅助函数
 // ---------------------------------------------------------------------------
 
 /**
- * Find the currently active (empty) image-block element in the DOM.
- * When a user drags/picks a file in the upload bar, the image-block
- * element is the one with a visible `.image-edit` child (empty state).
+ * 在 DOM 中查找当前活动的（空）image-block 元素
+ * 当用户在上传栏中拖拽/选择文件时，image-block
+ * 元素是具有可见 `.image-edit` 子元素（空状态）的元素
  */
 function findActiveImageBlock(): HTMLElement | null {
-  // Strategy 1: Find from the currently focused element
+  // 策略 1：从当前聚焦的元素查找
   const active = document.activeElement;
   if (active) {
     const block = active.closest('.milkdown-image-block');
     if (block) return block as HTMLElement;
   }
 
-  // Strategy 2: Find the image-block with a visible upload bar (.image-edit)
+  // 策略 2：查找具有可见上传栏（.image-edit）的 image-block
   const allBlocks = document.querySelectorAll('.milkdown-image-block');
   for (const block of allBlocks) {
     const editBar = block.querySelector('.image-edit') as HTMLElement | null;
     if (editBar) {
-      // Check if the edit bar is visible (not hidden by CSS)
+      // 检查编辑栏是否可见（未被 CSS 隐藏）
       const style = window.getComputedStyle(editBar);
       if (style.display !== 'none' && style.visibility !== 'hidden') {
         return block as HTMLElement;
@@ -255,7 +255,7 @@ function findActiveImageBlock(): HTMLElement | null {
     }
   }
 
-  // Strategy 3: Find image-block that has the 'selected' class
+  // 策略 3：查找具有 'selected' 类的 image-block
   const selected = document.querySelector('.milkdown-image-block.selected');
   if (selected) return selected as HTMLElement;
 
@@ -263,10 +263,10 @@ function findActiveImageBlock(): HTMLElement | null {
 }
 
 /**
- * Show a loading overlay on an image-block element.
+ * 在 image-block 元素上显示加载遮罩
  */
 function showImageBlockLoading(el: HTMLElement): void {
-  // Don't add multiple overlays
+  // 不添加多个遮罩
   if (el.querySelector('.image-block-loading-overlay')) return;
 
   const overlay = document.createElement('div');
@@ -282,7 +282,7 @@ function showImageBlockLoading(el: HTMLElement): void {
 }
 
 /**
- * Remove the loading overlay from an image-block element.
+ * 从 image-block 元素移除加载遮罩
  */
 function hideImageBlockLoading(el: HTMLElement): void {
   const overlay = el.querySelector('.image-block-loading-overlay');
@@ -290,7 +290,7 @@ function hideImageBlockLoading(el: HTMLElement): void {
 }
 
 // ---------------------------------------------------------------------------
-// Image Block Configuration
+// 图片块配置
 // ---------------------------------------------------------------------------
 
 import { convertFileSrc } from '@tauri-apps/api/core';
@@ -304,9 +304,9 @@ export function configureImageBlock(ctx: Ctx) {
     confirmButton: '确认 ⏎',
     uploadPlaceholderText: '或粘贴图片链接…',
     captionPlaceholderText: '添加图片说明…',
-    // Handle file upload (drag & drop, paste, or upload button click)
+    // 处理文件上传（拖放、粘贴或上传按钮点击）
     onUpload: async (file: File): Promise<string> => {
-      // Find the image-block element that triggered the upload and show loading overlay
+      // 找到触发上传的 image-block 元素并显示加载遮罩
       const imageBlockEl = findActiveImageBlock();
       if (imageBlockEl) {
         showImageBlockLoading(imageBlockEl);
@@ -320,7 +320,7 @@ export function configureImageBlock(ctx: Ctx) {
         }
       }
     },
-    // Proxy local relative paths to Tauri asset protocol URLs
+    // 将本地相对路径代理到 Tauri asset protocol URL
     proxyDomURL: (url: string): string => {
       if (isRelativePath(url)) {
         const absolutePath = buildAbsolutePath(url);
@@ -337,25 +337,25 @@ export function configureImageBlock(ctx: Ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers: upload with loading placeholder
+// 辅助函数：带加载占位符的上传
 // ---------------------------------------------------------------------------
 
 /**
- * Enhanced version of openImageDialog that shows a loading placeholder
- * in the editor while the image is being copied to assets.
- * The dialog closes immediately and the placeholder is shown.
+ * openImageDialog 的增强版本，在图片复制到 assets 时
+ * 在编辑器中显示加载占位符
+ * 对话框立即关闭并显示占位符
  */
 export function openImageDialogWithProgress(
   view: EditorView,
   onComplete: (src: string) => void,
 ): void {
-  // We wrap the dialog to intercept the submit flow
+  // 我们包装对话框以拦截提交流程
   openImageDialogAsync(view, onComplete);
 }
 
 /**
- * Internal: open dialog, on submit close dialog immediately,
- * insert loading placeholder, then save file and replace.
+ * 内部：打开对话框，提交时立即关闭对话框，
+ * 插入加载占位符，然后保存文件并替换
  */
 function openImageDialogAsync(
   view: EditorView,
@@ -442,20 +442,20 @@ function openImageDialogAsync(
         return;
       }
 
-      // Close dialog immediately
+      // 立即关闭对话框
       close();
 
-      // Insert loading placeholder in editor
+      // 在编辑器中插入加载占位符
       const placeholderId = insertLoadingPlaceholder(view);
 
-      // Copy image to assets in background
+      // 在后台将图片复制到 assets
       try {
         const relativePath = await fileService.copyImageToAssets(localFilePath, currentFile.filePath);
         replaceLoadingWithImage(view, placeholderId, relativePath);
         onComplete(relativePath);
       } catch (err) {
         console.error('Failed to copy image to assets:', err);
-        // Remove the placeholder on error
+        // 出错时移除占位符
         replaceLoadingWithImage(view, placeholderId, '');
       }
     } else {
@@ -515,13 +515,13 @@ function openImageDialogAsync(
 }
 
 // ---------------------------------------------------------------------------
-// Edit existing image-block (no new node insertion)
+// 编辑现有 image-block（不插入新节点）
 // ---------------------------------------------------------------------------
 
 /**
- * Open image dialog for editing an existing image-block node.
- * Only updates the existing node's `src` attribute via `setNodeMarkup`.
- * Does NOT insert a new node or loading placeholder.
+ * 打开图片对话框以编辑现有 image-block 节点
+ * 仅通过 `setNodeMarkup` 更新现有节点的 `src` 属性
+ * 不插入新节点或加载占位符
  */
 export async function openImageDialogForEdit(
   view: EditorView,

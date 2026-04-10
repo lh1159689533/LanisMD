@@ -26,10 +26,10 @@ export const useRecentFoldersStore = create<RecentFoldersState>()(
           folderPath;
 
         set(() => {
-          // Remove existing entry for this path
+          // 移除该路径的已有条目
           const filtered = get().recentFolders.filter((f) => f.path !== folderPath);
 
-          // Add to front
+          // 添加到列表头部
           const updated = [{ path: folderPath, name, timestamp: Date.now() }, ...filtered].slice(
             0,
             MAX_RECENT_FOLDERS,

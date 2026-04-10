@@ -86,7 +86,7 @@ class BrowserStorageService {
   }
 
   /**
-   * Load the current document content
+   * 加载当前文档内容
    */
   async loadDocument(): Promise<string | null> {
     await this.init();

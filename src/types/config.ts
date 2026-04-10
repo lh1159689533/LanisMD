@@ -109,7 +109,7 @@ export interface AppConfig {
     width: number;
   };
   recentFolders: {
-    /** Whether clicking outside the recent-folders panel closes it */
+    /** 点击最近文件夹面板外部时是否关闭 */
     closeOnClickOutside: boolean;
   };
   keyBindings?: Record<string, string>;

@@ -23,7 +23,7 @@ const addIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" str
 const dragIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="10" r="1.5"/><circle cx="15" cy="10" r="1.5"/><circle cx="9" cy="15" r="1.5"/><circle cx="15" cy="15" r="1.5"/><circle cx="9" cy="20" r="1.5"/><circle cx="15" cy="20" r="1.5"/></svg>`;
 
 // ---------------------------------------------------------------------------
-// Block Handle DOM builder
+// Block Handle DOM 构建器
 // ---------------------------------------------------------------------------
 
 function createBlockHandle(): HTMLElement {

@@ -129,7 +129,7 @@ export function useAutoSave(options?: AutoSaveOptions) {
     };
   }, [scheduleSave]);
 
-  // Save on window/document blur (focus loss)
+  // 窗口/文档失焦时保存（失去焦点）
   useEffect(() => {
     const handleBlur = () => {
       const file = useFileStore.getState().currentFile;

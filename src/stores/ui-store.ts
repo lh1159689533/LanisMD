@@ -15,9 +15,9 @@ interface UIState {
   toasts: Toast[];
 
   toggleSidebar: () => void;
-  /** Atomically close sidebar and set the width for next open */
+  /** 原子地关闭侧边栏并设置下次打开的宽度 */
   collapseSidebar: (nextWidth: number) => void;
-  /** Atomically open sidebar with a given width */
+  /** 原子地以给定宽度打开侧边栏 */
   expandSidebar: (width: number) => void;
   setSidebarPanel: (panel: 'outline' | 'files' | 'search') => void;
   setSidebarWidth: (width: number) => void;

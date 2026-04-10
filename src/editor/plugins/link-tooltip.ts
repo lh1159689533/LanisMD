@@ -51,12 +51,12 @@ class LinkTooltipView {
   constructor() {
     this.container = document.createElement('div');
     this.container.className = 'milkdown-link-tooltip';
-    // We'll manage visibility ourselves — start hidden
+    // 自己管理可见性 — 初始隐藏
     this.container.style.display = 'none';
     this.container.style.position = 'fixed';
     this.container.style.zIndex = '50';
 
-    // Prevent the tooltip from stealing focus / closing on click
+    // 阻止 tooltip 抢占焦点/点击时关闭
     this.container.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();

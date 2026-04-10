@@ -34,7 +34,7 @@ export function EditorCore() {
     return (
       <div
         ref={containerRef}
-        className="editor-wrapper relative mx-auto py-6 pl-16 pr-8 outline-none"
+        className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
         style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
       >
         <SourceEditor />
@@ -46,7 +46,7 @@ export function EditorCore() {
   return (
     <div
       ref={containerRef}
-      className="editor-wrapper relative mx-auto py-6 pl-16 pr-8 outline-none"
+      className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
       style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
     >
       <div

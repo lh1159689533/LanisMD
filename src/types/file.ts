@@ -23,7 +23,7 @@ export interface EditorTab {
   createdAt: number;
 }
 
-/** Save status for the auto-save indicator */
+/** 自动保存指示器的保存状态 */
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface RecentFile {
@@ -56,6 +56,6 @@ export interface FileTreeNode {
   path: string;
   isDir: boolean;
   children?: FileTreeNode[];
-  /** File modified time as Unix timestamp in milliseconds (undefined for directories) */
+  /** 文件修改时间，Unix 时间戳（毫秒），目录为 undefined */
   modifiedTime?: number | null;
 }

@@ -3,35 +3,35 @@ import type { FileTreeNode } from '@/types';
 import { fileService } from '@/services/tauri';
 
 interface FileTreeState {
-  /** Root folder path */
+  /** 根文件夹路径 */
   rootPath: string | null;
-  /** File tree data */
+  /** 文件树数据 */
   tree: FileTreeNode[];
-  /** Set of expanded directory paths */
+  /** 已展开的目录路径集合 */
   expandedDirs: Set<string>;
-  /** Currently selected file path in the tree */
+  /** 树中当前选中的文件路径 */
   selectedFile: string | null;
-  /** Currently selected directory path (for new file/folder target) */
+  /** 当前选中的目录路径（用于新建文件/文件夹目标） */
   selectedDir: string | null;
-  /** Loading state */
+  /** 加载状态 */
   isLoading: boolean;
-  /** Timestamp of the last user-initiated file operation (create/rename/delete/duplicate).
-   *  Used by the file watcher to skip redundant tree refreshes. */
+  /** 最后一次用户发起的文件操作（创建/重命名/删除/复制）的时间戳
+   *  用于文件监视器跳过冗余的树刷新 */
   lastUserOpTimestamp: number;
 
-  /** Open a folder and load the tree */
+  /** 打开文件夹并加载树 */
   openFolder: (path: string) => Promise<void>;
-  /** Refresh the current folder tree */
+  /** 刷新当前文件夹树 */
   refreshTree: () => Promise<void>;
-  /** Close the current folder */
+  /** 关闭当前文件夹 */
   closeFolder: () => void;
-  /** Toggle a directory's expanded state */
+  /** 切换目录的展开状态 */
   toggleDir: (path: string) => void;
-  /** Select a file in the tree */
+  /** 在树中选择文件 */
   selectFile: (path: string | null) => void;
-  /** Select a directory in the tree */
+  /** 在树中选择目录 */
   selectDir: (path: string | null) => void;
-  /** Mark that the user just performed a file operation, so watcher can skip tree refresh */
+  /** 标记用户刚执行了文件操作，以便监视器可以跳过树刷新 */
   notifyUserOp: () => void;
 }
 

@@ -199,7 +199,7 @@ export function configureCodeBlock(ctx: Ctx) {
 export { codeBlockComponent };
 
 // ---------------------------------------------------------------------------
-// Dynamic extension rebuild (for theme/setting changes)
+// 动态扩展重建（用于主题/设置变更）
 // ---------------------------------------------------------------------------
 
 /**

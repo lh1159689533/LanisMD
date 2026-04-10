@@ -23,12 +23,12 @@ import { fileService } from '@/services/tauri';
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-block';
 
 // ---------------------------------------------------------------------------
-// Helper Functions
+// 辅助函数
 // ---------------------------------------------------------------------------
 
 /**
- * Check if the selection is a CellSelection (table row/column/multi-cell selection)
- * CellSelection is from prosemirror-tables and has $anchorCell and $headCell properties
+ * 检查选区是否为 CellSelection（表格行/列/多单元格选区）
+ * CellSelection 来自 prosemirror-tables，具有 $anchorCell 和 $headCell 属性
  */
 function isCellSelection(selection: Selection): boolean {
   return (
@@ -39,7 +39,7 @@ function isCellSelection(selection: Selection): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// SVG Icons
+// SVG 图标
 // ---------------------------------------------------------------------------
 
 const icons = {
@@ -74,7 +74,7 @@ function isMarkActive(state: EditorState, markType: MarkType): boolean {
 }
 
 /**
- * Toggle a mark on the current selection
+ * 在当前选区上切换 mark
  */
 function toggleMarkCommand(view: EditorView, markType: MarkType) {
   const cmd = toggleMark(markType);
@@ -83,7 +83,7 @@ function toggleMarkCommand(view: EditorView, markType: MarkType) {
 }
 
 /**
- * Remove all marks from the current selection
+ * 移除当前选区的所有 marks
  */
 function clearAllMarks(view: EditorView) {
   const { state, dispatch } = view;
@@ -91,7 +91,7 @@ function clearAllMarks(view: EditorView) {
   if (from === to) return;
 
   let tr = state.tr;
-  // Remove all marks in the selection
+  // 移除选区中的所有 marks
   const marks = new Set<MarkType>();
   state.doc.nodesBetween(from, to, (node) => {
     node.marks.forEach((mark) => marks.add(mark.type));
@@ -105,7 +105,7 @@ function clearAllMarks(view: EditorView) {
 }
 
 // ---------------------------------------------------------------------------
-// Link Dialog
+// 链接对话框
 // ---------------------------------------------------------------------------
 
 export function createLinkDialog(
@@ -184,7 +184,7 @@ export function createLinkDialog(
 }
 
 // ---------------------------------------------------------------------------
-// Image Dialog
+// 图片对话框
 // ---------------------------------------------------------------------------
 
 function createImageDialog(
@@ -240,28 +240,28 @@ function createImageDialog(
 
   overlay.appendChild(dialog);
 
-  // Tab elements
+  // Tab 元素
   const tabBtns = dialog.querySelectorAll('.milkdown-tooltip-dialog-tab') as NodeListOf<HTMLButtonElement>;
   const uploadPanel = dialog.querySelector('[data-panel="upload"]') as HTMLElement;
   const urlPanel = dialog.querySelector('[data-panel="url"]') as HTMLElement;
 
-  // Upload tab elements
+  // 上传 Tab 元素
   const pickLocalBtn = dialog.querySelector('[data-action="pick-local"]') as HTMLButtonElement;
   const fileNameDisplay = dialog.querySelector('[data-field="file-name"]') as HTMLDivElement;
   const uploadAltInput = dialog.querySelector('[data-field="upload-alt"]') as HTMLInputElement;
 
-  // URL tab elements
+  // URL Tab 元素
   const srcInput = dialog.querySelector('[data-field="src"]') as HTMLInputElement;
   const urlAltInput = dialog.querySelector('[data-field="url-alt"]') as HTMLInputElement;
 
   const cancelBtn = dialog.querySelector('.cancel') as HTMLButtonElement;
   const confirmBtn = dialog.querySelector('.confirm') as HTMLButtonElement;
 
-  // Track active tab and picked local file path
+  // 跟踪活动 Tab 和选中的本地文件路径
   let activeTab = 'upload';
   let localFilePath: string | null = null;
 
-  // Tab switching
+  // Tab 切换
   function switchTab(tabName: string) {
     activeTab = tabName;
     tabBtns.forEach((btn) => {
@@ -270,7 +270,7 @@ function createImageDialog(
     uploadPanel.style.display = tabName === 'upload' ? '' : 'none';
     urlPanel.style.display = tabName === 'url' ? '' : 'none';
 
-    // Auto-focus the right input
+    // 自动聚焦正确的输入框
     if (tabName === 'url') {
       setTimeout(() => srcInput.focus(), 50);
     }
@@ -298,7 +298,7 @@ function createImageDialog(
         close();
         return;
       }
-      // Close dialog immediately so user sees loading in the editor
+      // 立即关闭对话框，让用户在编辑器中看到加载状态
       close();
       try {
         const relativePath = await fileService.copyImageToAssets(localFilePath, currentFile.filePath);
@@ -316,7 +316,7 @@ function createImageDialog(
     }
   }
 
-  // Handle "Pick Local File" button
+  // 处理"选择本地文件"按钮
   pickLocalBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -359,7 +359,7 @@ function createImageDialog(
     if (e.target === overlay) close();
   });
 
-  // Keyboard shortcuts
+  // 键盘快捷键
   srcInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -386,21 +386,21 @@ function createImageDialog(
 }
 
 // ---------------------------------------------------------------------------
-// Toolbar Button Definition
+// 工具栏按钮定义
 // ---------------------------------------------------------------------------
 
 interface ToolbarButton {
   id: string;
   icon: string;
   title: string;
-  /** Mark type name in schema (null for special actions) */
+  /** schema 中的 mark 类型名称（特殊操作为 null） */
   markName: string | null;
-  /** Custom action handler (overrides default toggleMark) */
+  /** 自定义操作处理器（覆盖默认的 toggleMark） */
   action?: (view: EditorView) => void;
 }
 
 // ---------------------------------------------------------------------------
-// Tooltip Toolbar View
+// Tooltip 工具栏视图
 // ---------------------------------------------------------------------------
 
 class TooltipToolbarView {
@@ -454,7 +454,7 @@ class TooltipToolbarView {
     this.container = document.createElement('div');
     this.container.className = 'milkdown-tooltip';
     this.container.addEventListener('mousedown', (e) => {
-      // Prevent the toolbar from stealing focus
+      // 阻止工具栏抢占焦点
       e.preventDefault();
     });
 
@@ -495,7 +495,7 @@ class TooltipToolbarView {
           }
         }
 
-        // Update active states after action
+        // 操作后更新激活状态
         this.updateActiveStates();
         // this.provider?.hide();
       });
@@ -506,7 +506,7 @@ class TooltipToolbarView {
   }
 
   /**
-   * Update which buttons appear "active" based on current selection marks
+   * 根据当前选区的 marks 更新哪些按钮显示为"激活"
    */
   updateActiveStates() {
     if (!this.view) return;
@@ -523,7 +523,7 @@ class TooltipToolbarView {
         const active = isMarkActive(state, markType);
         btn.dataset.active = String(active);
       } else {
-        // Mark not available in schema, disable button
+        // schema 中没有该 mark，禁用按钮
         btn.disabled = true;
         btn.style.opacity = '0.3';
         btn.style.cursor = 'not-allowed';
@@ -532,14 +532,14 @@ class TooltipToolbarView {
   }
 
   /**
-   * Handle link button: show dialog to input text & URL
+   * 处理链接按钮：显示对话框输入文本和 URL
    */
   private handleLinkAction(view: EditorView) {
     const { state } = view;
     const { from, to } = state.selection;
     const selectedText = state.doc.textBetween(from, to, ' ');
 
-    // Check if there's already a link mark on the selection
+    // 检查选区上是否已有链接 mark
     const linkType = state.schema.marks.link;
     let existingHref = '';
     if (linkType) {
@@ -561,10 +561,10 @@ class TooltipToolbarView {
 
       let tr = currentState.tr;
 
-      // Remove existing link marks first
+      // 先移除已有的链接 marks
       tr = tr.removeMark(curFrom, curTo, linkType);
 
-      // If the text changed, replace the text content
+      // 如果文本改变，替换文本内容
       if (text !== currentState.doc.textBetween(curFrom, curTo, ' ')) {
         tr = tr.insertText(text, curFrom, curTo);
         const newTo = curFrom + text.length;
@@ -578,7 +578,7 @@ class TooltipToolbarView {
     });
 
     document.body.appendChild(dialog);
-    // Focus the first input after rendering
+    // 渲染后聚焦第一个输入框
     setTimeout(() => {
       const firstInput = dialog.querySelector('input') as HTMLInputElement;
       if (firstInput) firstInput.focus();
@@ -586,8 +586,8 @@ class TooltipToolbarView {
   }
 
   /**
-   * Handle image button: insert an empty image-block (shows upload bar)
-   * or open image dialog if image-block not available.
+   * 处理图片按钮：插入空的 image-block（显示上传栏）
+   * 或在 image-block 不可用时打开图片对话框
    */
   private handleImageAction(view: EditorView) {
     // Hide the tooltip while dialog is open
@@ -598,32 +598,32 @@ class TooltipToolbarView {
     const imageBlockType = schema.nodes['image-block'] || schema.nodes.image_block;
 
     if (imageBlockType) {
-      // First delete the selected text, then insert image-block at the correct block position
+      // 先删除选中的文本，然后在正确的块位置插入 image-block
       const { from, to } = state.selection;
       let tr = state.tr;
 
-      // Delete the selected content first
+      // 先删除选中的内容
       if (from !== to) {
         tr = tr.delete(from, to);
       }
 
-      // After deletion, resolve the position to find the parent block boundary
+      // 删除后，解析位置以找到父块边界
       const mappedPos = tr.mapping.map(from);
       const $pos = tr.doc.resolve(mappedPos);
 
-      // Find the end of the current block (paragraph) to insert the image-block after it
-      // If the current block becomes empty after deletion, replace it entirely
+      // 找到当前块（段落）的末尾，在其后插入 image-block
+      // 如果当前块在删除后变空，则完全替换它
       const parentNode = $pos.parent;
 
       const imageBlock = imageBlockType.create({ src: '', caption: '', ratio: 1 });
 
       if (parentNode.content.size === 0 || parentNode.textContent.trim() === '') {
-        // Parent block is empty after deletion — replace it with the image-block
+        // 删除后父块为空 — 用 image-block 替换它
         const blockStart = $pos.before($pos.depth);
         const blockEnd = $pos.after($pos.depth);
         tr = tr.replaceWith(blockStart, blockEnd, imageBlock);
       } else {
-        // Parent block still has content — insert image-block after the current block
+        // 父块仍有内容 — 在当前块后插入 image-block
         const blockEnd = $pos.after($pos.depth);
         tr = tr.insert(blockEnd, imageBlock);
       }
@@ -631,9 +631,9 @@ class TooltipToolbarView {
       dispatch(tr.scrollIntoView());
       view.focus();
     } else {
-      // Fallback: use the old dialog approach with loading placeholder
+      // 回退：使用带加载占位符的旧对话框方式
       const dialog = createImageDialog(view, (src, alt) => {
-        // For URL input, just insert directly
+        // 对于 URL 输入，直接插入
         if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
           const imageType = state.schema.nodes.image;
           if (!imageType) return;
@@ -642,9 +642,9 @@ class TooltipToolbarView {
           dispatch(tr);
           view.focus();
         } else {
-          // For local file upload, show loading placeholder
+          // 对于本地文件上传，显示加载占位符
           const placeholderId = insertLoadingPlaceholder(view);
-          // The src is already a relative path from createImageDialog's upload handler
+          // src 已经是 createImageDialog 上传处理器返回的相对路径
           replaceLoadingWithImage(view, placeholderId, src);
         }
       });
@@ -667,7 +667,7 @@ class TooltipToolbarView {
 }
 
 // ---------------------------------------------------------------------------
-// Factory & exports
+// 工厂和导出
 // ---------------------------------------------------------------------------
 
 export const tooltip = tooltipFactory('tooltip');
@@ -679,7 +679,7 @@ export function configureTooltip(ctx: Ctx) {
     view: (view: EditorView) => {
       toolbarView.setView(view);
 
-      // Track mouse button state so we only show tooltip after selection completes
+      // 跟踪鼠标按钮状态，只在选区完成后显示 tooltip
       let isMouseDown = false;
 
       const handleMouseDown = () => {
@@ -687,7 +687,7 @@ export function configureTooltip(ctx: Ctx) {
       };
       const handleMouseUp = () => {
         isMouseDown = false;
-        // Trigger a provider update after mouseup so tooltip can appear
+        // mouseup 后触发 provider 更新，以便 tooltip 可以出现
         provider.update(view);
       };
 
@@ -698,36 +698,36 @@ export function configureTooltip(ctx: Ctx) {
         content: toolbarView.element,
         debounce: 50,
         shouldShow(view: EditorView, _prevState?: EditorState) {
-          // Don't show while the mouse button is still held (still selecting)
+          // 鼠标按钮仍按下时不显示（仍在选择）
           if (isMouseDown) return false;
 
-          // Don't show if the view is not focused
+          // 视图未聚焦时不显示
           if (!view.hasFocus()) return false;
 
           const { state } = view;
           const { selection } = state;
           const { empty, from, to } = selection;
 
-          // Only show when there's a non-empty text selection
+          // 仅在有非空文本选区时显示
           if (empty || from === to) return false;
 
-          // Don't show for NodeSelection (when a node is selected, not text)
-          // NodeSelection happens when clicking on node boundaries or draggable nodes
+          // 对于 NodeSelection 不显示（选中的是节点而非文本）
+          // NodeSelection 发生在点击节点边界或可拖拽节点时
           if (selection instanceof NodeSelection) return false;
 
-          // Don't show for CellSelection (table row/column/multi-cell selection)
-          // CellSelection happens when clicking row/column handles or selecting multiple cells
+          // 对于 CellSelection 不显示（表格行/列/多单元格选区）
+          // CellSelection 发生在点击行/列手柄或选择多个单元格时
           if (isCellSelection(selection)) return false;
 
-          // Don't show if selection is entirely within a code block
+          // 如果选区完全在代码块内不显示
           const $from = state.doc.resolve(from);
           if ($from.parent.type.name === 'code_block') return false;
 
-          // Check that the selection contains actual text content
+          // 检查选区是否包含实际文本内容
           const text = state.doc.textBetween(from, to, ' ');
           if (!text.trim()) return false;
 
-          // Update active button states
+          // 更新活动按钮状态
           toolbarView.updateActiveStates();
 
           return true;

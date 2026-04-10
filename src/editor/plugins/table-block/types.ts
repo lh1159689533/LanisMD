@@ -42,7 +42,7 @@ export interface DragState {
   previewHeight: number;
 }
 
-/** Selection highlight state for Decoration */
+/** 用于 Decoration 的选中高亮状态 */
 export interface SelectionHighlightState {
   type: HandleType | null;
   index: number | null;

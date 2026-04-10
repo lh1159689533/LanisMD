@@ -7,17 +7,17 @@ export function useFile() {
   const { openFile, createUntitledFile, getCurrentFile } = useFileStore();
 
   /**
-   * Open a file from disk (single file mode).
-   * - If current file has a path and is dirty → auto-save first, then switch
-   * - If current file is Untitled and dirty → prompt "Save As" before switching
+   * 从磁盘打开文件（单文件模式）
+   * - 如果当前文件有路径且未保存 → 先自动保存，再切换
+   * - 如果当前文件是未命名且未保存 → 切换前提示"另存为"
    */
   const openFileFromDisk = useCallback(async () => {
     const current = getCurrentFile();
 
-    // Handle unsaved changes before opening a new file
+    // 打开新文件前处理未保存的更改
     if (current?.isDirty) {
       if (current.filePath) {
-        // Has a path → silent auto-save
+        // 有路径 → 静默自动保存
         try {
           await fileService.writeFile({
             path: current.filePath,
@@ -29,7 +29,7 @@ export function useFile() {
           console.error('Failed to auto-save before opening:', err);
         }
       } else {
-        // Untitled with changes → prompt Save As
+        // 未命名文件有更改 → 提示另存为
         const savePath = await tauriSave({
           defaultPath: `${current.fileName}.md`,
           filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
@@ -46,11 +46,11 @@ export function useFile() {
             console.error('Failed to save untitled file:', err);
           }
         }
-        // If user cancels Save As, we still proceed to open the new file
+        // 如果用户取消另存为，仍继续打开新文件
       }
     }
 
-    // Now open the file dialog (single file only)
+    // 现在打开文件对话框（仅单文件）
     const selected = await tauriOpen({
       multiple: false,
       filters: [
@@ -67,7 +67,7 @@ export function useFile() {
 
     if (!selected) return;
 
-    // Extract path from selection
+    // 从选择中提取路径
     let filePath: string | null = null;
     if (typeof selected === 'string') {
       filePath = selected;
@@ -90,10 +90,10 @@ export function useFile() {
   const newFile = useCallback(async () => {
     const current = getCurrentFile();
 
-    // Handle unsaved changes before creating new file
+    // 创建新文件前处理未保存的更改
     if (current?.isDirty) {
       if (current.filePath) {
-        // Has a path → silent auto-save
+        // 有路径 → 静默自动保存
         try {
           await fileService.writeFile({
             path: current.filePath,
@@ -105,7 +105,7 @@ export function useFile() {
           console.error('Failed to auto-save before new file:', err);
         }
       } else if (current.content !== '') {
-        // Untitled with content → prompt Save As
+        // 未命名文件有内容 → 提示另存为
         const savePath = await tauriSave({
           defaultPath: `${current.fileName}.md`,
           filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],

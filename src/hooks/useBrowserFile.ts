@@ -91,12 +91,12 @@ export function useBrowserFile() {
     };
   }, [currentFile, saveToStorage]);
 
-  // Save before page unload
+  // 页面卸载前保存
   useEffect(() => {
     const handleBeforeUnload = () => {
       const file = useFileStore.getState().currentFile;
       if (file && file.content !== lastSavedContentRef.current) {
-        // Synchronous save attempt (may not always work)
+        // 同步保存尝试（可能不总是成功）
         browserStorageService.saveDocument(file.content).catch(console.error);
       }
     };

@@ -32,14 +32,14 @@ export function useExport() {
 }
 
 function markdownToHtml(markdown: string, title: string, standalone = false): string {
-  // Simple markdown to HTML conversion for export
-  // In a production app, this would use a proper markdown parser
+  // 简单的 markdown 转 HTML，用于导出
+  // 在生产应用中，应使用专业的 markdown 解析器
   let html = markdown;
 
-  // Escape HTML entities (basic)
+  // 转义 HTML 实体（基本）
   html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // Headings
+  // 标题
   html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
   html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
   html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
@@ -47,14 +47,14 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
   html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
   html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
 
-  // Bold, Italic, Strikethrough, Inline Code
+  // 粗体、斜体、删除线、行内代码
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
   html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-  // Code blocks
+  // 代码块
   html = html.replace(/```[\s\S]*?```/g, (match) => {
     const content = match
       .replace(/```\w*\n?/, '')
@@ -63,21 +63,21 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
     return `<pre><code>${content}</code></pre>`;
   });
 
-  // Links and Images
+  // 链接和图片
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
-  // Blockquotes
+  // 引用
   html = html.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
 
-  // Horizontal Rule
+  // 水平线
   html = html.replace(/^---$/gm, '<hr />');
 
-  // Unordered lists
+  // 无序列表
   html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
   html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
 
-  // Paragraphs
+  // 段落
   html = html.replace(/\n\n/g, '</p><p>');
   html = `<p>${html}</p>`;
   html = html.replace(/<p><\/p>/g, '');

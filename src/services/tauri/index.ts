@@ -55,8 +55,8 @@ class FileService {
   }
 
   /**
-   * Copy a local image file into the `assets` folder next to the document.
-   * Returns the relative path (e.g. `./assets/image.png`) for Markdown usage.
+   * 将本地图片文件复制到文档旁边的 `assets` 文件夹
+   * 返回用于 Markdown 的相对路径（如 `./assets/image.png`）
    */
   async copyImageToAssets(imagePath: string, docPath: string): Promise<string> {
     return invoke<string>('copy_image_to_assets', { imagePath, docPath });
