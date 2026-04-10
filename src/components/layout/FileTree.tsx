@@ -1154,13 +1154,33 @@ export function FileTree() {
 
   if (!rootPath) {
     return (
-      <div className="file-tree-empty">
+      <div ref={fileTreeRootRef} className="file-tree-empty">
         <RiFolderAddLine size={32} className="file-tree-empty-icon" />
         <p className="file-tree-empty-text">打开文件夹以浏览 Markdown 文件</p>
-        <button onClick={handleOpenFolder} className="file-tree-empty-btn">
-          <RiFolderOpenLine size={14} />
-          打开文件夹
-        </button>
+        <div className="file-tree-empty-actions">
+          <button onClick={handleOpenFolder} className="file-tree-empty-btn">
+            <RiFolderOpenLine size={14} />
+            打开文件夹
+          </button>
+          <button
+            ref={recentFoldersBtnRef}
+            onClick={() => setShowRecentFolders((v) => !v)}
+            className="file-tree-empty-btn"
+          >
+            <RiHistoryLine size={14} />
+            最近打开
+          </button>
+        </div>
+
+        {/* Recent Folders Panel — bottom overlay in empty state */}
+        {showRecentFolders && (
+          <RecentFoldersPanel
+            containerRef={fileTreeRootRef}
+            toggleBtnRef={recentFoldersBtnRef}
+            onClose={() => setShowRecentFolders(false)}
+            onSwitchFolder={handleSwitchToFolder}
+          />
+        )}
       </div>
     );
   }

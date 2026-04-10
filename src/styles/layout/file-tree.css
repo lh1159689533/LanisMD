@@ -350,6 +350,7 @@
 
 /* ===== 空状态 ===== */
 .file-tree-empty {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -372,9 +373,17 @@
   user-select: none;
 }
 
+.file-tree-empty-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--lanismd-spacing-sm);
+}
+
 .file-tree-empty-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--lanismd-spacing-sm);
   padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-lg);
   border: 1px solid var(--lanismd-editor-border);

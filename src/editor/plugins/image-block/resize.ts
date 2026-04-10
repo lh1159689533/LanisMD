@@ -21,6 +21,22 @@ const HANDLES_ATTR = 'data-corner-handles';
 const CORNERS = ['nw', 'ne', 'sw', 'se'] as const;
 type Corner = typeof CORNERS[number];
 
+// Threshold for small image detection (width in pixels)
+const SMALL_IMAGE_WIDTH_THRESHOLD = 200;
+
+/**
+ * Update the small-image class based on image width
+ * Used for toolbar positioning (inside vs above image)
+ */
+function updateSmallImageClass(blockEl: HTMLElement, imgEl: HTMLImageElement) {
+  const width = imgEl.getBoundingClientRect().width;
+  if (width < SMALL_IMAGE_WIDTH_THRESHOLD) {
+    blockEl.classList.add('small-image');
+  } else {
+    blockEl.classList.remove('small-image');
+  }
+}
+
 /**
  * Create corner resize handles container
  */
@@ -182,6 +198,9 @@ function handleResizeEnd() {
   // Remove resizing class
   blockEl.classList.remove('image-resizing');
 
+  // Update small-image class for toolbar positioning
+  updateSmallImageClass(blockEl, imgEl);
+
   // Calculate the ratio based on container width
   const containerWidth = blockEl.parentElement?.clientWidth || 800;
   const newWidth = imgEl.getBoundingClientRect().width;
@@ -220,11 +239,18 @@ function selectImageBlock(blockEl: HTMLElement) {
   if (selectedBlockEl && selectedBlockEl !== blockEl) {
     selectedBlockEl.classList.remove('image-selected');
     selectedBlockEl.classList.remove('toolbar-hidden');
+    selectedBlockEl.classList.remove('small-image');
   }
   
   blockEl.classList.add('image-selected');
   blockEl.classList.remove('toolbar-hidden'); // Ensure toolbar is visible when selecting
   selectedBlockEl = blockEl;
+
+  // Update small-image class for toolbar positioning
+  const imgEl = blockEl.querySelector('.image-wrapper img') as HTMLImageElement;
+  if (imgEl) {
+    updateSmallImageClass(blockEl, imgEl);
+  }
 }
 
 /**
@@ -234,6 +260,7 @@ function deselectImageBlock() {
   if (selectedBlockEl) {
     selectedBlockEl.classList.remove('image-selected');
     selectedBlockEl.classList.remove('toolbar-hidden');
+    selectedBlockEl.classList.remove('small-image');
     selectedBlockEl = null;
   }
 }

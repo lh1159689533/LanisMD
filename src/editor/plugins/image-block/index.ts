@@ -35,6 +35,7 @@ export { imageViewPlugin } from './view';
 
 // Re-export types
 export type { ImageDialogResult } from './types';
+export { isRelativePath, buildAbsolutePath } from './types';
 
 // ---------------------------------------------------------------------------
 // Helpers
