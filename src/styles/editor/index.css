@@ -44,5 +44,6 @@
 
 /* Special */
 @import './math.css';
+@import './mermaid-block.css';
 @import './loading.css';
 @import './source-editor.css';

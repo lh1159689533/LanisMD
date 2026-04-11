@@ -1,0 +1,237 @@
+/**
+ * LanisMD Editor - Mermaid Block
+ * Mermaid 图表块样式
+ */
+
+/* ===== 容器 ===== */
+.milkdown-editor-root .lanismd-mermaid-block {
+  position: relative;
+  margin: 1em 0;
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: var(--lanismd-radius-lg);
+  background: var(--lanismd-mermaid-bg, transparent);
+  transition: border-color var(--lanismd-transition-normal),
+    box-shadow var(--lanismd-transition-normal);
+  overflow: hidden;
+}
+
+.milkdown-editor-root .lanismd-mermaid-block:hover {
+  border-color: var(--lanismd-mermaid-primary, var(--lanismd-accent));
+}
+
+.milkdown-editor-root .lanismd-mermaid-block.is-selected {
+  border-color: var(--lanismd-mermaid-primary, var(--lanismd-accent));
+  box-shadow: 0 0 0 2px
+    rgba(
+      var(--lanismd-accent-rgb, 37, 99, 235),
+      0.15
+    );
+}
+
+.milkdown-editor-root .lanismd-mermaid-block.is-editing {
+  border-color: var(--lanismd-mermaid-primary, var(--lanismd-accent));
+}
+
+/* ===== 悬浮工具栏 ===== */
+.lanismd-mermaid-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--lanismd-tooltip-bg, var(--lanismd-bg-color));
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: var(--lanismd-radius-md);
+  box-shadow: var(--lanismd-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--lanismd-transition-normal),
+    visibility var(--lanismd-transition-normal);
+  pointer-events: none;
+}
+
+.lanismd-mermaid-toolbar.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* 编辑状态下工具栏始终可见 */
+.lanismd-mermaid-toolbar.is-editing {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.lanismd-mermaid-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm);
+  background: transparent;
+  color: var(--lanismd-text-color);
+  font-size: var(--lanismd-font-size-xs);
+  font-family: var(--lanismd-font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--lanismd-transition-fast),
+    color var(--lanismd-transition-fast);
+  line-height: 1;
+}
+
+.lanismd-mermaid-toolbar-btn:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+  color: var(--lanismd-mermaid-primary, var(--lanismd-accent));
+}
+
+.lanismd-mermaid-toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lanismd-mermaid-toolbar-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.lanismd-mermaid-toolbar-label {
+  font-size: var(--lanismd-font-size-xs);
+}
+
+/* ===== 预览容器 ===== */
+.lanismd-mermaid-preview {
+  padding: var(--lanismd-spacing-xl);
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.lanismd-mermaid-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== 编辑容器 ===== */
+.lanismd-mermaid-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 编辑区标题栏 */
+.lanismd-mermaid-editor-header {
+  padding: 6px 12px;
+  font-size: var(--lanismd-font-size-xs);
+  font-family: var(--lanismd-font-mono);
+  color: var(--lanismd-text-muted, #64748b);
+  background: var(--lanismd-codeblock-toolbar-bg, rgba(0, 0, 0, 0.03));
+  border-bottom: 1px solid var(--lanismd-border-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  user-select: none;
+}
+
+.dark .lanismd-mermaid-editor-header {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 代码编辑区容器 */
+.lanismd-mermaid-code-wrapper {
+  border-bottom: 1px solid var(--lanismd-border-color);
+}
+
+/* 代码编辑区 */
+.lanismd-mermaid-code {
+  margin: 0;
+  padding: 12px 16px;
+  font-family: var(--lanismd-font-mono);
+  font-size: var(--lanismd-cm-font-size, 0.875rem);
+  line-height: var(--lanismd-cm-line-height, 1.6);
+  color: var(--lanismd-text-color);
+  background: var(--lanismd-cm-bg, var(--lanismd-bg-color));
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  outline: none;
+  min-height: 60px;
+  max-height: 400px;
+  overflow-y: auto;
+  tab-size: 2;
+}
+
+.lanismd-mermaid-code:focus {
+  background: var(--lanismd-cm-bg, var(--lanismd-bg-color));
+}
+
+/* ===== 实时预览区域 ===== */
+.lanismd-mermaid-live-preview {
+  padding: var(--lanismd-spacing-lg);
+  text-align: center;
+  min-height: 40px;
+  background: var(--lanismd-sidebar-bg, rgba(0, 0, 0, 0.01));
+  border-top: 1px dashed var(--lanismd-border-color);
+  overflow-x: auto;
+}
+
+.dark .lanismd-mermaid-live-preview {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lanismd-mermaid-live-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.lanismd-mermaid-live-preview.has-error {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.dark .lanismd-mermaid-live-preview.has-error {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ===== 空状态 ===== */
+.lanismd-mermaid-empty {
+  color: var(--lanismd-text-muted, #94a3b8);
+  font-size: var(--lanismd-font-size-sm);
+  font-style: italic;
+  padding: var(--lanismd-spacing-xl);
+}
+
+/* ===== 错误提示 ===== */
+.lanismd-mermaid-error-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef4444;
+  font-size: var(--lanismd-font-size-sm);
+  font-family: var(--lanismd-font-mono);
+  padding: var(--lanismd-spacing-md);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lanismd-mermaid-error-msg svg {
+  flex-shrink: 0;
+}
+
+.lanismd-mermaid-error-msg span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-mermaid-preview.has-error {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.dark .lanismd-mermaid-preview.has-error {
+  background: rgba(239, 68, 68, 0.08);
+}

@@ -12,6 +12,8 @@ import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import { openImageDialog } from './image-block';
+import { createLinkDialog } from './tooltip-toolbar';
+import type { GfmAlertType } from './gfm-alert/types';
 
 // ---------------------------------------------------------------------------
 // Slash command definitions
@@ -28,6 +30,8 @@ export interface SlashCommand {
   keywords: string[];
   /** Execute: receives the ProseMirror view */
   execute: (view: EditorView) => void;
+  /** 子命令列表（用于二级菜单） */
+  children?: SlashCommand[];
 }
 
 /**
@@ -285,6 +289,100 @@ function insertCodeBlock(view: EditorView) {
 }
 
 /**
+ * 插入一个 language="mermaid" 的空代码块，并自动进入编辑模式。
+ */
+function insertMermaidBlock(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const codeBlock = schema.nodes.code_block;
+  if (!codeBlock) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  const mermaidBlock = codeBlock.create({ language: 'mermaid' });
+
+  if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, mermaidBlock);
+    // 光标定位到代码块内部
+    const cursorPos = from + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  } else {
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, mermaidBlock);
+    const cursorPos = insertPos + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
+/**
+ * 插入一个带有指定 alertType 的 blockquote（GFM Alert）。
+ */
+function insertGfmAlert(view: EditorView, alertType: GfmAlertType) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const blockquoteType = schema.nodes.blockquote;
+  const paragraph = schema.nodes.paragraph;
+  if (!blockquoteType || !paragraph) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  if (parent.type === paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(
+      from,
+      to,
+      blockquoteType.create({ alertType }, paragraph.create()),
+    );
+    // 光标定位到 blockquote 内的段落: blockquote(+1) > paragraph(+1)
+    const cursorPos = from + 2;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
+/**
+ * 打开链接对话框，插入一个超链接。
+ */
+function insertLink(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state } = view;
+  const schema = state.schema;
+  const linkType = schema.marks.link;
+  if (!linkType) return;
+
+  const overlay = createLinkDialog(view, '', '', (text, href) => {
+    const { state: currentState, dispatch } = view;
+    const { from } = currentState.selection;
+    const linkMark = linkType.create({ href });
+    const textNode = schema.text(text, [linkMark]);
+    const tr = currentState.tr.insert(from, textNode);
+    dispatch(tr.scrollIntoView());
+    view.focus();
+  });
+
+  document.body.appendChild(overlay);
+  // 聚焦到文本输入框
+  requestAnimationFrame(() => {
+    const textInput = overlay.querySelector('[data-field="text"]') as HTMLInputElement | null;
+    textInput?.focus();
+  });
+}
+
+/**
  * Insert an empty image-block node (shows the upload bar).
  * If image-block is not available, fallback to opening the image dialog.
  */
@@ -323,7 +421,11 @@ function insertImage(view: EditorView) {
       if (!imageType) return;
 
       const { from, to } = state.selection;
-      const tr = state.tr.replaceWith(from, to, imageType.create({ src: result.src, alt: result.alt }));
+      const tr = state.tr.replaceWith(
+        from,
+        to,
+        imageType.create({ src: result.src, alt: result.alt }),
+      );
       dispatch(tr.scrollIntoView());
       view.focus();
     });
@@ -354,6 +456,21 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   table:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
+  mermaid:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="5" rx="1"/><rect x="15" y="2" width="7" height="5" rx="1"/><rect x="8.5" y="17" width="7" height="5" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="11"/><line x1="18.5" y1="7" x2="18.5" y2="11"/><line x1="5.5" y1="11" x2="18.5" y2="11"/><line x1="12" y1="11" x2="12" y2="17"/></svg>',
+  alert:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  alertNote:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  alertTip:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>',
+  alertImportant:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="11"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg>',
+  alertWarning:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  alertCaution:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -435,6 +552,67 @@ export const slashCommands: SlashCommand[] = [
     keywords: ['table', 'grid', '表格', 'bg'],
     execute: (view) => insertTable(view),
   },
+  {
+    label: '图表',
+    icon: icons.mermaid,
+    keywords: [
+      'mermaid',
+      'diagram',
+      'chart',
+      'graph',
+      'flowchart',
+      '图表',
+      '流程图',
+      '序列图',
+      '甘特图',
+      'tb',
+    ],
+    execute: (view) => insertMermaidBlock(view),
+  },
+  {
+    label: '提示块',
+    icon: icons.alert,
+    keywords: ['alert', 'callout', 'admonition', '提示', '警告', '注意', 'tsk'],
+    execute: () => {}, // 有子菜单时不直接执行
+    children: [
+      {
+        label: 'Note',
+        icon: icons.alertNote,
+        keywords: ['note', '备注', '信息'],
+        execute: (view) => insertGfmAlert(view, 'note'),
+      },
+      {
+        label: 'Tip',
+        icon: icons.alertTip,
+        keywords: ['tip', '建议', '提示'],
+        execute: (view) => insertGfmAlert(view, 'tip'),
+      },
+      {
+        label: 'Important',
+        icon: icons.alertImportant,
+        keywords: ['important', '重要'],
+        execute: (view) => insertGfmAlert(view, 'important'),
+      },
+      {
+        label: 'Warning',
+        icon: icons.alertWarning,
+        keywords: ['warning', '警告'],
+        execute: (view) => insertGfmAlert(view, 'warning'),
+      },
+      {
+        label: 'Caution',
+        icon: icons.alertCaution,
+        keywords: ['caution', '危险', '注意'],
+        execute: (view) => insertGfmAlert(view, 'caution'),
+      },
+    ],
+  },
+  {
+    label: '链接',
+    icon: icons.link,
+    keywords: ['link', 'url', 'href', '链接', '超链接', 'lj'],
+    execute: (view) => insertLink(view),
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -443,17 +621,35 @@ export const slashCommands: SlashCommand[] = [
 
 class SlashMenuView {
   private container: HTMLElement;
+  /** 内层滚动容器，菜单项挂载在这里 */
+  private listContainer: HTMLElement;
   private items: HTMLElement[] = [];
   private activeIndex = 0;
   private filteredCommands: SlashCommand[] = [...slashCommands];
   private view: EditorView | null = null;
   private provider: SlashProvider | null = null;
 
+  /** 当前展开的子菜单容器 */
+  private submenu: HTMLElement | null = null;
+  /** 子菜单对应的父级索引 */
+  private submenuParentIndex = -1;
+  /** 子菜单中高亮的索引，-1 表示未进入子菜单 */
+  private submenuActiveIndex = -1;
+  /** 子菜单项 DOM 列表 */
+  private submenuItems: HTMLElement[] = [];
+  /** 是否正在子菜单中导航 */
+  private inSubmenu = false;
+
   constructor() {
     this.container = document.createElement('div');
     this.container.className = 'milkdown-slash';
     // SlashProvider 通过 data-show 属性控制显示/隐藏
     this.container.dataset.show = 'false';
+
+    // 内层滚动容器
+    this.listContainer = document.createElement('div');
+    this.listContainer.className = 'milkdown-slash-list';
+    this.container.appendChild(this.listContainer);
 
     this.renderItems();
   }
@@ -463,8 +659,10 @@ class SlashMenuView {
   }
 
   private renderItems() {
-    this.container.innerHTML = '';
+    this.listContainer.innerHTML = '';
     this.items = [];
+    this.hideSubmenu();
+
     this.filteredCommands.forEach((cmd, index) => {
       const item = document.createElement('div');
       item.className = 'milkdown-slash-item';
@@ -481,7 +679,14 @@ class SlashMenuView {
       item.appendChild(iconSpan);
       item.appendChild(labelSpan);
 
-      if (cmd.shortcut) {
+      // 有子菜单时显示展开箭头
+      if (cmd.children && cmd.children.length > 0) {
+        const arrowSpan = document.createElement('span');
+        arrowSpan.className = 'milkdown-slash-arrow';
+        arrowSpan.innerHTML =
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+        item.appendChild(arrowSpan);
+      } else if (cmd.shortcut) {
         const shortcutSpan = document.createElement('span');
         shortcutSpan.className = 'milkdown-slash-shortcut';
         shortcutSpan.textContent = cmd.shortcut;
@@ -490,19 +695,130 @@ class SlashMenuView {
 
       item.addEventListener('mouseenter', () => {
         this.setActive(index);
+        // 如果有子菜单则展开
+        if (cmd.children && cmd.children.length > 0) {
+          this.showSubmenu(index, item);
+        } else {
+          this.hideSubmenu();
+        }
       });
 
       item.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        // 有子菜单的项不直接执行
+        if (cmd.children && cmd.children.length > 0) return;
         this.executeItem(index);
       });
 
-      this.container.appendChild(item);
+      this.listContainer.appendChild(item);
       this.items.push(item);
     });
 
     this.setActive(0);
+  }
+
+  /** 展示右侧子菜单 */
+  private showSubmenu(parentIndex: number, anchorEl: HTMLElement) {
+    // 如果已经是同一个子菜单，不重复创建
+    if (this.submenuParentIndex === parentIndex && this.submenu) return;
+
+    this.hideSubmenu();
+
+    const cmd = this.filteredCommands[parentIndex];
+    if (!cmd?.children || cmd.children.length === 0) return;
+
+    this.submenuParentIndex = parentIndex;
+    this.submenuActiveIndex = -1;
+    this.submenuItems = [];
+    this.inSubmenu = false;
+
+    const submenu = document.createElement('div');
+    submenu.className = 'milkdown-slash-submenu';
+
+    cmd.children.forEach((child, childIndex) => {
+      const item = document.createElement('div');
+      item.className = 'milkdown-slash-item';
+      item.dataset.subindex = String(childIndex);
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'milkdown-slash-icon';
+      iconSpan.innerHTML = child.icon;
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'milkdown-slash-label';
+      labelSpan.textContent = child.label;
+
+      item.appendChild(iconSpan);
+      item.appendChild(labelSpan);
+
+      item.addEventListener('mouseenter', () => {
+        this.setSubmenuActive(childIndex);
+        this.inSubmenu = true;
+      });
+
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.executeSubmenuItem(childIndex);
+      });
+
+      submenu.appendChild(item);
+      this.submenuItems.push(item);
+    });
+
+    // 鼠标离开子菜单时退出子菜单状态
+    submenu.addEventListener('mouseleave', () => {
+      this.inSubmenu = false;
+      this.submenuActiveIndex = -1;
+      this.submenuItems.forEach((el) => {
+        el.dataset.active = 'false';
+      });
+    });
+
+    // 定位子菜单：在锚元素右侧，挂载到外层 container（不受 overflow 裁剪）
+    this.container.appendChild(submenu);
+
+    // 用 requestAnimationFrame 确保 DOM 已渲染，才能正确获取尺寸
+    requestAnimationFrame(() => {
+      const listRect = this.listContainer.getBoundingClientRect();
+      const containerRect = this.container.getBoundingClientRect();
+      const anchorRect = anchorEl.getBoundingClientRect();
+      const submenuRect = submenu.getBoundingClientRect();
+
+      // 子菜单默认在 listContainer 右侧展开
+      let left = listRect.width - 4; // 稍微重叠一点
+      let top = anchorRect.top - containerRect.top;
+
+      // 如果右侧空间不够，改为左侧展开
+      const viewportWidth = window.innerWidth;
+      if (listRect.right + submenuRect.width > viewportWidth) {
+        left = -submenuRect.width + 4;
+      }
+
+      // 如果底部溢出，向上调整
+      const viewportHeight = window.innerHeight;
+      if (containerRect.top + top + submenuRect.height > viewportHeight) {
+        top = Math.max(0, viewportHeight - containerRect.top - submenuRect.height - 8);
+      }
+
+      submenu.style.left = `${left}px`;
+      submenu.style.top = `${top}px`;
+    });
+
+    this.submenu = submenu;
+  }
+
+  /** 隐藏子菜单 */
+  private hideSubmenu() {
+    if (this.submenu) {
+      this.submenu.remove();
+      this.submenu = null;
+    }
+    this.submenuParentIndex = -1;
+    this.submenuActiveIndex = -1;
+    this.submenuItems = [];
+    this.inSubmenu = false;
   }
 
   private setActive(index: number) {
@@ -519,10 +835,29 @@ class SlashMenuView {
     }
   }
 
+  private setSubmenuActive(index: number) {
+    if (this.submenuItems.length === 0) return;
+    this.submenuActiveIndex = Math.max(0, Math.min(index, this.submenuItems.length - 1));
+    this.submenuItems.forEach((item, i) => {
+      item.dataset.active = String(i === this.submenuActiveIndex);
+    });
+  }
+
   private executeItem(index: number) {
     const cmd = this.filteredCommands[index];
     if (!cmd || !this.view) return;
     cmd.execute(this.view);
+    this.hideSubmenu();
+    this.provider?.hide();
+  }
+
+  private executeSubmenuItem(childIndex: number) {
+    const parent = this.filteredCommands[this.submenuParentIndex];
+    if (!parent?.children || !this.view) return;
+    const child = parent.children[childIndex];
+    if (!child) return;
+    child.execute(this.view);
+    this.hideSubmenu();
     this.provider?.hide();
   }
 
@@ -532,15 +867,24 @@ class SlashMenuView {
     if (!q) {
       this.filteredCommands = [...slashCommands];
     } else {
+      // 搜索时同时匹配主命令和子命令的关键词
       this.filteredCommands = slashCommands.filter(
-        (cmd) => cmd.label.toLowerCase().includes(q) || cmd.keywords.some((k) => k.includes(q)),
+        (cmd) =>
+          cmd.label.toLowerCase().includes(q) ||
+          cmd.keywords.some((k) => k.includes(q)) ||
+          (cmd.children &&
+            cmd.children.some(
+              (child) =>
+                child.label.toLowerCase().includes(q) ||
+                child.keywords.some((k) => k.includes(q)),
+            )),
       );
     }
     this.renderItems();
 
     // Show "no results" if empty
     if (this.filteredCommands.length === 0) {
-      this.container.innerHTML = '<div class="milkdown-slash-empty">没有匹配的命令</div>';
+      this.listContainer.innerHTML = '<div class="milkdown-slash-empty">没有匹配的命令</div>';
     }
   }
 
@@ -554,28 +898,114 @@ class SlashMenuView {
       return false;
     }
 
+    // 如果在子菜单中导航
+    if (this.inSubmenu && this.submenuItems.length > 0) {
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          this.setSubmenuActive(
+            this.submenuActiveIndex >= this.submenuItems.length - 1
+              ? 0
+              : this.submenuActiveIndex + 1,
+          );
+          return true;
+        case 'ArrowUp':
+          event.preventDefault();
+          this.setSubmenuActive(
+            this.submenuActiveIndex <= 0
+              ? this.submenuItems.length - 1
+              : this.submenuActiveIndex - 1,
+          );
+          return true;
+        case 'Enter':
+          event.preventDefault();
+          if (this.submenuActiveIndex >= 0) {
+            this.executeSubmenuItem(this.submenuActiveIndex);
+          }
+          return true;
+        case 'ArrowLeft':
+        case 'Escape':
+          event.preventDefault();
+          // 退出子菜单，回到主菜单
+          this.inSubmenu = false;
+          this.submenuActiveIndex = -1;
+          this.submenuItems.forEach((el) => {
+            el.dataset.active = 'false';
+          });
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    // 主菜单导航
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
         this.setActive(
           this.activeIndex >= this.filteredCommands.length - 1 ? 0 : this.activeIndex + 1,
         );
+        // 切换主菜单项时，如果新项有子菜单则展开，否则关闭
+        this.updateSubmenuForActiveItem();
         return true;
       case 'ArrowUp':
         event.preventDefault();
         this.setActive(
           this.activeIndex <= 0 ? this.filteredCommands.length - 1 : this.activeIndex - 1,
         );
+        this.updateSubmenuForActiveItem();
         return true;
+      case 'ArrowRight': {
+        // 如果当前项有子菜单，进入子菜单
+        const activeCmd = this.filteredCommands[this.activeIndex];
+        if (activeCmd?.children && activeCmd.children.length > 0) {
+          event.preventDefault();
+          const activeItem = this.items[this.activeIndex];
+          if (activeItem) {
+            this.showSubmenu(this.activeIndex, activeItem);
+          }
+          this.inSubmenu = true;
+          this.setSubmenuActive(0);
+          return true;
+        }
+        return false;
+      }
       case 'Enter':
         event.preventDefault();
-        this.executeItem(this.activeIndex);
+        {
+          const cmd = this.filteredCommands[this.activeIndex];
+          if (cmd?.children && cmd.children.length > 0) {
+            // 有子菜单的项，Enter 进入子菜单
+            const activeItem = this.items[this.activeIndex];
+            if (activeItem) {
+              this.showSubmenu(this.activeIndex, activeItem);
+            }
+            this.inSubmenu = true;
+            this.setSubmenuActive(0);
+          } else {
+            this.executeItem(this.activeIndex);
+          }
+        }
         return true;
       case 'Escape':
+        this.hideSubmenu();
         this.provider?.hide();
         return true;
       default:
         return false;
+    }
+  }
+
+  /** 根据当前高亮的主菜单项更新子菜单显示状态 */
+  private updateSubmenuForActiveItem() {
+    const cmd = this.filteredCommands[this.activeIndex];
+    if (cmd?.children && cmd.children.length > 0) {
+      const activeItem = this.items[this.activeIndex];
+      if (activeItem) {
+        this.showSubmenu(this.activeIndex, activeItem);
+      }
+    } else {
+      this.hideSubmenu();
     }
   }
 

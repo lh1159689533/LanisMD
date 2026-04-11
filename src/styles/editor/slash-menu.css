@@ -6,15 +6,21 @@
 .milkdown-slash {
   display: none;
   position: absolute;
+  min-width: 200px;
+  z-index: 50;
+  /* 外层不裁剪，子菜单需要溢出显示 */
+  overflow: visible;
+}
+
+/* 内层滚动容器：承担背景、边框、滚动 */
+.milkdown-slash-list {
   background: var(--lanismd-editor-bg);
   border: 1px solid var(--lanismd-editor-border);
   border-radius: var(--lanismd-radius-lg);
   box-shadow: var(--lanismd-shadow-md);
   padding: var(--lanismd-spacing-sm);
-  min-width: 200px;
   max-height: 280px;
   overflow-y: auto;
-  z-index: 50;
 }
 
 /* SlashProvider 通过 data-show 属性控制显示/隐藏 */
@@ -23,15 +29,15 @@
 }
 
 /* Scrollbar */
-.milkdown-slash::-webkit-scrollbar {
+.milkdown-slash-list::-webkit-scrollbar {
   width: 4px;
 }
 
-.milkdown-slash::-webkit-scrollbar-track {
+.milkdown-slash-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.milkdown-slash::-webkit-scrollbar-thumb {
+.milkdown-slash-list::-webkit-scrollbar-thumb {
   background: var(--lanismd-scrollbar-thumb);
   border-radius: 2px;
 }
@@ -83,4 +89,44 @@
   font-size: var(--lanismd-font-size-base);
   color: var(--lanismd-text-muted);
   text-align: center;
+}
+
+/* 展开箭头（有子菜单的项） */
+.milkdown-slash-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--lanismd-text-muted);
+  flex-shrink: 0;
+  transition: color var(--lanismd-transition-fast);
+}
+
+.milkdown-slash-item:hover .milkdown-slash-arrow,
+.milkdown-slash-item[data-active='true'] .milkdown-slash-arrow {
+  color: var(--lanismd-editor-text);
+}
+
+/* 右侧展开子菜单 */
+.milkdown-slash-submenu {
+  position: absolute;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  padding: var(--lanismd-spacing-sm);
+  min-width: 160px;
+  z-index: 51;
+  animation: lanismd-submenu-in 0.12s ease-out;
+}
+
+@keyframes lanismd-submenu-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

@@ -47,6 +47,7 @@ import {
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import { tableHandlePlugin, extendedTableSchema } from './plugins/table-block';
 import { remarkGfmAlertPlugin, gfmAlertSchema } from './plugins/gfm-alert';
+import { mermaidBlockPlugin } from './plugins/mermaid-block';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
@@ -142,6 +143,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(codeBlockComponent)
     .use(extendedTableSchema)
     .use(tableHandlePlugin)
+    .use(mermaidBlockPlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
