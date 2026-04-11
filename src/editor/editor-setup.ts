@@ -16,7 +16,13 @@ import { imageInlineComponent } from '@milkdown/kit/component/image-inline';
 import { slash, configureSlash } from './plugins/slash-menu';
 import { block, configureBlock } from './plugins/block-handle';
 import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
-import { linkTooltip, configureLinkTooltip } from './plugins/link-tooltip';
+import {
+  linkInputRulePlugin,
+  linkBlurPlugin,
+  linkPastePlugin,
+  linkTooltip,
+  configureLinkTooltip,
+} from './plugins/link';
 import { underlineMarkSchema } from './plugins/underline-mark';
 import {
   imageBlockComponent,
@@ -121,10 +127,13 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(imageInlineComponent)
     .use(extendedImageBlockSchema)
     .use(remarkHtmlImagePlugin)
+    .use(linkPastePlugin)
     .use(imageBlockPastePlugin)
     .use(imageBlockToolbarPlugin)
     .use(imageUploadProgressPlugin)
     .use(imageInputRulePlugin)
+    .use(linkInputRulePlugin)
+    .use(linkBlurPlugin)
     .use(imageResizePlugin)
     .use(imageBlockClickPlugin)
     .use(imageInlineToolbarPlugin)

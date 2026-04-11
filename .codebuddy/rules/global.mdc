@@ -1,0 +1,59 @@
+---
+# 注意不要修改本文头文件，如修改，CodeBuddy（内网版）将按照默认逻辑设置
+alwaysApply: true
+---
+# LanisMD 开发规范
+
+## 技术栈
+- **框架**: Tauri 2.x + React 18 + TypeScript
+- **编辑器**: Milkdown 7.x (ProseMirror)
+- **构建**: Vite 5.x
+- **状态管理**: Zustand 5.x
+- **样式**: TailwindCSS 3.x + CSS Variables
+
+## 强制规则
+
+### 必须
+- 所有注释使用中文
+- 路径别名使用 `@/*` 指向 `src/*`
+
+### 禁止
+- 代码中不允许夹带 emoji
+- 生成的 markdown 文件名禁止以 `f-` 开头
+- 禁止主动输出文档（除非用户明确要求）
+
+## Tauri 交互规范
+- 前端通过 `@tauri-apps/api` 调用 Rust 命令
+- 命令定义在 `src-tauri/src/commands/` 下，按模块分文件
+- 前端服务层封装在 `src/services/`，一个 Rust 模块对应一个 TS 服务文件
+- 错误统一返回 `Result<T, String>`，前端用 try-catch 处理
+
+## Milkdown 插件规范
+- 单文件插件: 直接放在 `src/editor/plugins/<plugin-name>.ts`
+- 多文件插件: 必须创建目录 `src/editor/plugins/<plugin-name>/`
+  - 入口文件: `index.ts`
+  - 类型定义: `types.ts`（如需要）
+  - 功能模块按职责拆分
+- 样式文件: `src/styles/editor/<plugin-name>.css`
+- 样式类名前缀: `.lanismd-<plugin-name>`
+- **增量开发时必须遵守**: 当向已有插件添加新功能导致文件数量从 1 个变为多个时，必须先重构为目录结构，再添加新功能
+
+## Zustand 状态规范
+- Store 文件: `src/stores/<domain>-store.ts`
+- 命名: `use<Domain>Store`，如 `useFileStore`
+- 导出统一入口: `src/stores/index.ts`
+
+## 样式规范
+- 全局变量定义在 `src/styles/variables.css`，前缀 `--lanismd-`
+- 主题相关样式使用 `.dark` 选择器
+- 组件样式按目录组织: `styles/editor/`、`styles/layout/`、`styles/themes/`
+- TailwindCSS 类名超过 80 字符时，使用 `cn()` 函数按语义分组拆分（`@/utils/cn`）
+
+## 命名规范
+- 组件/类型: `PascalCase`
+- 函数/变量: `camelCase`
+- 常量: `UPPER_SNAKE_CASE`
+- 文件: `kebab-case`（组件文件可用 `PascalCase`）
+
+## 导入顺序
+1. React 相关 -> 2. 第三方库 -> 3. `@/*` 别名 -> 4. 相对路径

@@ -38,9 +38,12 @@ const toolbarIcons = {
 const TOOLBAR_CLASS = 'image-inline-toolbar';
 
 // Forward declaration - will be set by editor-setup.ts
-let openImageDialogForInlineEditFn: ((view: EditorView, nodePos: number) => Promise<void>) | null = null;
+let openImageDialogForInlineEditFn: ((view: EditorView, nodePos: number) => Promise<void>) | null =
+  null;
 
-export function setOpenImageDialogForInlineEdit(fn: (view: EditorView, nodePos: number) => Promise<void>) {
+export function setOpenImageDialogForInlineEdit(
+  fn: (view: EditorView, nodePos: number) => Promise<void>,
+) {
   openImageDialogForInlineEditFn = fn;
 }
 
@@ -114,11 +117,7 @@ function createToolbar(view: EditorView, wrapperEl: HTMLElement, nodePos: number
   return toolbar;
 }
 
-function createToolbarButton(
-  icon: string,
-  title: string,
-  onClick: () => void,
-): HTMLElement {
+function createToolbarButton(icon: string, title: string, onClick: () => void): HTMLElement {
   const btn = document.createElement('button');
   btn.className = 'operation-item';
   btn.innerHTML = icon;
@@ -170,7 +169,7 @@ function convertToBlockImage(view: EditorView, nodePos: number, align: string) {
     // Find the paragraph containing this image
     let paragraphStart = nodePos;
     let paragraphEnd = nodePos + node.nodeSize;
-    
+
     for (let d = $pos.depth; d >= 0; d--) {
       const parentNode = $pos.node(d);
       if (parentNode.type.name === 'paragraph') {
@@ -306,7 +305,9 @@ export const imageInlineToolbarPlugin = $prose(() => {
         }
 
         // Don't hide if clicking on a selected inline image
-        const inlineImage = target.closest('.milkdown-image-inline.selected, .milkdown-image-inline.toolbar-visible');
+        const inlineImage = target.closest(
+          '.milkdown-image-inline.selected, .milkdown-image-inline.toolbar-visible',
+        );
         if (inlineImage) {
           return;
         }
@@ -329,55 +330,40 @@ export const imageInlineToolbarPlugin = $prose(() => {
         update(view) {
           // Check if an inline image is selected
           const selection = view.state.selection;
-          
-          console.log('[ImageInlineToolbar] Selection update:', {
-            selectionType: selection.constructor.name,
-            isNodeSelection: selection instanceof NodeSelection,
-            from: selection.from,
-            to: selection.to,
-          });
-          
+
           // Check for NodeSelection on image (use instanceof instead of constructor.name)
           if (selection instanceof NodeSelection) {
             const node = selection.node;
-            console.log('[ImageInlineToolbar] NodeSelection detected, node type:', node?.type?.name);
-            
+
             if (node && node.type.name === 'image') {
               // Find the DOM element - use nodeDOM for NodeSelection
               try {
                 // Method 1: Use view.nodeDOM to get the actual node's DOM element
                 const nodeDOM = view.nodeDOM(selection.from);
-                console.log('[ImageInlineToolbar] nodeDOM:', nodeDOM, nodeDOM?.nodeName);
-                
+
                 let wrapperEl: HTMLElement | null = null;
-                
+
                 if (nodeDOM) {
                   // nodeDOM might be the wrapper span or the img itself
                   if ((nodeDOM as HTMLElement).classList?.contains('milkdown-image-inline')) {
                     wrapperEl = nodeDOM as HTMLElement;
                   } else {
-                    wrapperEl = (nodeDOM as HTMLElement).closest?.('.milkdown-image-inline') as HTMLElement;
+                    wrapperEl = (nodeDOM as HTMLElement).closest?.(
+                      '.milkdown-image-inline',
+                    ) as HTMLElement;
                   }
                 }
-                
+
                 // Method 2: Fallback - find by position using domAtPos and child nodes
                 if (!wrapperEl) {
                   const domAtPos = view.domAtPos(selection.from);
                   const parentEl = domAtPos.node as HTMLElement;
                   const offset = domAtPos.offset;
-                  
-                  console.log('[ImageInlineToolbar] Fallback - DOM at pos:', {
-                    parentEl,
-                    nodeName: parentEl?.nodeName,
-                    offset,
-                    childNodes: parentEl?.childNodes?.length,
-                  });
-                  
+
                   // Try to find the child at the offset
                   if (parentEl.childNodes && offset < parentEl.childNodes.length) {
                     const childAtOffset = parentEl.childNodes[offset] as HTMLElement;
-                    console.log('[ImageInlineToolbar] Child at offset:', childAtOffset, childAtOffset?.nodeName);
-                    
+
                     if (childAtOffset?.classList?.contains('milkdown-image-inline')) {
                       wrapperEl = childAtOffset;
                     } else if (childAtOffset) {
@@ -385,9 +371,7 @@ export const imageInlineToolbarPlugin = $prose(() => {
                     }
                   }
                 }
-                
-                console.log('[ImageInlineToolbar] Found wrapper:', wrapperEl);
-                
+
                 if (wrapperEl) {
                   showToolbar(view, wrapperEl, selection.from);
                   return;

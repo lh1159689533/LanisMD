@@ -405,7 +405,7 @@
   --lanismd-dialog-shadow: var(--lanismd-shadow-lg);
   --lanismd-dialog-header-bg: transparent;
   --lanismd-dialog-header-border: 1px solid var(--lanismd-border-color);
-  --lanismd-dialog-width: 60%;
+  --lanismd-dialog-width: 75%;
   --lanismd-dialog-max-width: 900px;
   --lanismd-dialog-max-height: 80%;
   --lanismd-dialog-nav-width: 160px;

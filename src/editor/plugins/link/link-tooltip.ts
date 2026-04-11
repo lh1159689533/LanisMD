@@ -15,7 +15,7 @@ import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import type { EditorState } from '@milkdown/kit/prose/state';
 import { open as shellOpen } from '@tauri-apps/plugin-shell';
-import { createLinkDialog } from './tooltip-toolbar';
+import { createLinkDialog } from '../tooltip-toolbar';
 
 // ---------------------------------------------------------------------------
 // SVG Icons
@@ -344,6 +344,9 @@ export function configureLinkTooltip(ctx: Ctx) {
       /** Whether the mouse is currently over the tooltip element */
       let isOverTooltip = false;
 
+      // 调试用：带时间戳的日志
+      let timerId = 0;
+
       function clearHideTimer() {
         if (hideTimer) {
           clearTimeout(hideTimer);
@@ -351,14 +354,15 @@ export function configureLinkTooltip(ctx: Ctx) {
         }
       }
 
-      function scheduleHide() {
+      function scheduleHide(source: string) {
         clearHideTimer();
+        const id = ++timerId;
         hideTimer = setTimeout(() => {
           if (!isOverTooltip) {
             currentLink = null;
             tooltipView.hide();
           }
-        }, 200);
+        }, 150);
       }
 
       // Track mouse entering/leaving the tooltip element itself
@@ -368,7 +372,7 @@ export function configureLinkTooltip(ctx: Ctx) {
       });
       tooltipView.container.addEventListener('mouseleave', () => {
         isOverTooltip = false;
-        scheduleHide();
+        scheduleHide('container-mouseleave');
       });
 
       const handleMouseMove = (event: MouseEvent) => {
@@ -394,29 +398,29 @@ export function configureLinkTooltip(ctx: Ctx) {
           } else {
             // <a> found but no link mark (shouldn't happen, but be safe)
             if (currentLink) {
-              scheduleHide();
+              scheduleHide('mousemove-no-link-mark');
             }
           }
         } else {
           // Mouse is NOT over any <a> element — schedule hide
           if (currentLink) {
-            scheduleHide();
+            scheduleHide('mousemove-no-anchor');
           }
         }
       };
 
       const handleMouseLeave = () => {
-        scheduleHide();
+        scheduleHide('view-mouseleave');
       };
 
       view.dom.addEventListener('mousemove', handleMouseMove);
       view.dom.addEventListener('mouseleave', handleMouseLeave);
 
       return {
-        update: (updatedView: EditorView, _prevState: EditorState) => {
+        update: (updatedView: EditorView, prevState: EditorState) => {
           tooltipView.setView(updatedView);
-          // If the doc changes, hide the tooltip (link positions may have shifted)
-          if (currentLink) {
+          // 仅在文档实际变更时才隐藏（选区/焦点变化不应影响 tooltip）
+          if (currentLink && !updatedView.state.doc.eq(prevState.doc)) {
             currentLink = null;
             tooltipView.hide();
           }
