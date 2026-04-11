@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Git 快速提交工具。将工作区变更自动 add 并生成语义化 commit message 后提交（不 push）。当用户提到以下关键词时使用：git commit、提交代码、提交变更、commit、暂存提交
+description: Git 快速提交工具。将工作区变更自动 add 并生成语义化 commit message 后提交（不 push）。当用户提到以下关键词时使用：git commit、提交、提交代码、提交变更、commit、暂存提交
 allowed-tools:
   - Bash
 disable: false
@@ -9,6 +9,7 @@ disable: false
 # Git 快速提交技能
 
 将当前工作区的变更自动暂存（git add）并根据变更内容生成语义化的 commit message 后提交，不执行 push。
+如果暂存区已经有变更，则仅提交暂存区内容，不执行 add，不纳入未暂存和未跟踪的文件。
 
 ## 使用场景
 
@@ -19,18 +20,32 @@ disable: false
 ## 工作流程
 
 ```
-Step 1: 检查工作区状态 → Step 2: 分析变更内容 → Step 3: 生成 commit message → Step 4: 执行 add + commit
+Step 1: 检查工作区状态并判断提交模式 → Step 2: 分析变更内容 → Step 3: 生成 commit message → Step 4: 执行提交
 ```
 
-### Step 1: 检查工作区状态
+### Step 1: 检查工作区状态并判断提交模式
 
-执行 `git status` 和 `git diff --stat` 查看当前变更概况。
+执行 `git status` 查看当前变更概况，并判断提交模式：
 
-如果没有任何变更，告知用户工作区是干净的，无需提交。
+- **暂存区有变更** → 进入「暂存提交模式」，仅针对暂存区内容提交，不执行 add
+- **暂存区无变更，工作区有变更** → 进入「全量提交模式」，执行 add 后提交
+- **无任何变更** → 告知用户工作区是干净的，无需提交
 
 ### Step 2: 分析变更内容
 
-使用以下命令获取变更详情：
+根据 Step 1 判断的模式，使用不同的命令获取变更详情：
+
+**暂存提交模式（暂存区有变更）：**
+
+```bash
+# 仅查看暂存区的变更摘要和具体内容
+git diff --cached --stat
+git diff --cached
+```
+
+> 注意：此模式下不扫描未跟踪文件和工作区变更，提交范围严格限定为暂存区内容。
+
+**全量提交模式（暂存区无变更）：**
 
 ```bash
 # 查看已跟踪文件的变更摘要
@@ -39,9 +54,8 @@ git diff --stat
 # 查看未跟踪的新文件
 git ls-files --others --exclude-standard
 
-# 查看具体变更内容（用于生成 commit message）
+# 查看具体变更内容
 git diff
-git diff --cached
 ```
 
 ### Step 3: 生成 Commit Message
@@ -109,11 +123,20 @@ refactor: 将通用的表格 Hooks 提取至共享包
 
 ### Step 4: 执行提交
 
+**暂存提交模式（暂存区有变更）：**
+
+```bash
+# 直接提交暂存区内容，不执行 add
+git commit -m "<generated message>"
+```
+
+**全量提交模式（暂存区无变更）：**
+
 ```bash
 # 暂存所有变更
 git add -A
 
-# 提交（使用生成的 commit message）
+# 提交
 git commit -m "<generated message>"
 ```
 
@@ -127,10 +150,12 @@ git commit -m "<generated message>"
 
 ## 交互流程
 
-1. 执行 `git status` 展示变更概况
-2. 分析变更内容，生成 commit message
+1. 执行 `git status` 展示变更概况，判断提交模式
+2. 根据提交模式分析变更内容，生成 commit message
 3. 向用户展示：
-   - 变更文件列表
+   - 变更文件列表（标注提交模式）
    - 生成的 commit message
-4. 用户确认后执行 `git add -A && git commit -m "..."`
+4. 用户确认后执行提交：
+   - 暂存提交模式：`git commit -m "..."`
+   - 全量提交模式：`git add -A && git commit -m "..."`
 5. 展示提交结果
