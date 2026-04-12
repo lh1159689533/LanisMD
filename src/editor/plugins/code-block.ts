@@ -43,19 +43,23 @@ let lastClickedCopyButton: HTMLElement | null = null;
 
 // 设置全局点击事件监听，追踪复制按钮点击
 function setupCopyButtonTracking() {
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    const copyButton = target.closest('.copy-button') as HTMLElement | null;
-    if (copyButton) {
-      lastClickedCopyButton = copyButton;
-      // 短暂保持引用，避免内存泄漏
-      setTimeout(() => {
-        if (lastClickedCopyButton === copyButton) {
-          lastClickedCopyButton = null;
-        }
-      }, 1000);
-    }
-  }, true); // 使用捕获阶段，确保在其他处理之前执行
+  document.addEventListener(
+    'click',
+    (e) => {
+      const target = e.target as HTMLElement;
+      const copyButton = target.closest('.copy-button') as HTMLElement | null;
+      if (copyButton) {
+        lastClickedCopyButton = copyButton;
+        // 短暂保持引用，避免内存泄漏
+        setTimeout(() => {
+          if (lastClickedCopyButton === copyButton) {
+            lastClickedCopyButton = null;
+          }
+        }, 1000);
+      }
+    },
+    true,
+  ); // 使用捕获阶段，确保在其他处理之前执行
 }
 
 // 初始化追踪
@@ -88,9 +92,10 @@ const editorTheme = EditorView.theme({
   '.cm-cursor, .cm-dropCursor': {
     borderLeftColor: 'var(--lanismd-cm-cursor)',
   },
-  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
-    backgroundColor: 'var(--lanismd-cm-selection)',
-  },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection, .cm-selectionMatch':
+    {
+      background: 'var(--lanismd-cm-selection) !important',
+    },
   '.cm-matchingBracket, .cm-nonmatchingBracket': {
     backgroundColor: 'var(--lanismd-cm-bracket-match)',
     outline: '1px solid var(--lanismd-cm-bracket-outline)',
@@ -107,7 +112,10 @@ const highlightStyle = HighlightStyle.define([
   { tag: tags.string, color: 'var(--lanismd-syntax-string)' },
   { tag: tags.number, color: 'var(--lanismd-syntax-number)' },
   { tag: tags.variableName, color: 'var(--lanismd-syntax-variable)' },
-  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: 'var(--lanismd-syntax-function)' },
+  {
+    tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
+    color: 'var(--lanismd-syntax-function)',
+  },
   { tag: tags.typeName, color: 'var(--lanismd-syntax-type)' },
   { tag: tags.className, color: 'var(--lanismd-syntax-class)' },
   { tag: tags.definition(tags.variableName), color: 'var(--lanismd-syntax-definition)' },
@@ -170,7 +178,7 @@ export function configureCodeBlock(ctx: Ctx) {
     onCopy: (_text: string) => {
       // 使用之前追踪到的复制按钮
       const copyButton = lastClickedCopyButton;
-      
+
       if (copyButton) {
         const iconContainer = copyButton.querySelector('.milkdown-icon');
         if (iconContainer) {
@@ -178,7 +186,7 @@ export function configureCodeBlock(ctx: Ctx) {
           // 切换为勾选图标
           iconContainer.innerHTML = checkIcon;
           copyButton.classList.add('copied');
-          
+
           // 2秒后恢复
           setTimeout(() => {
             iconContainer.innerHTML = originalIcon;

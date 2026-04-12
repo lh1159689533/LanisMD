@@ -440,6 +440,9 @@ const icons = {
   h1: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M17 12l3-2v8"/></svg>',
   h2: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/></svg>',
   h3: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2"/><path d="M17 17.5c2 1.5 4 .3 4-1.5a2 2 0 0 0-2-2"/></svg>',
+  h4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M17 10v4h4"/><path d="M21 10v8"/></svg>',
+  h5: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 10h-4v4"/><path d="M17 14h2.5a2.5 2.5 0 0 1 0 5H18a2 2 0 0 1-2-2"/></svg>',
+  h6: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><circle cx="19" cy="16" r="2"/><path d="M21 10c-1-1-3-.5-4 1.5L17 16"/></svg>',
   bulletList:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>',
   orderedList:
@@ -498,6 +501,27 @@ export const slashCommands: SlashCommand[] = [
     shortcut: '###',
     keywords: ['heading', 'h3', '标题', 'title', 'bt'],
     execute: (view) => wrapBlock(view, 'heading', { level: 3 }),
+  },
+  {
+    label: '标题 4',
+    icon: icons.h4,
+    shortcut: '####',
+    keywords: ['heading', 'h4', '标题', 'title', 'bt'],
+    execute: (view) => wrapBlock(view, 'heading', { level: 4 }),
+  },
+  {
+    label: '标题 5',
+    icon: icons.h5,
+    shortcut: '#####',
+    keywords: ['heading', 'h5', '标题', 'title', 'bt'],
+    execute: (view) => wrapBlock(view, 'heading', { level: 5 }),
+  },
+  {
+    label: '标题 6',
+    icon: icons.h6,
+    shortcut: '######',
+    keywords: ['heading', 'h6', '标题', 'title', 'bt'],
+    execute: (view) => wrapBlock(view, 'heading', { level: 6 }),
   },
   {
     label: '无序列表',
@@ -875,8 +899,7 @@ class SlashMenuView {
           (cmd.children &&
             cmd.children.some(
               (child) =>
-                child.label.toLowerCase().includes(q) ||
-                child.keywords.some((k) => k.includes(q)),
+                child.label.toLowerCase().includes(q) || child.keywords.some((k) => k.includes(q)),
             )),
       );
     }

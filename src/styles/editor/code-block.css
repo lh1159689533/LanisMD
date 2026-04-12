@@ -34,8 +34,8 @@
 }
 
 /* ===== 窗口装饰 - macOS 风格 ===== */
-.milkdown-editor-root .tools[data-window-controls="macos"]::before,
-.milkdown-editor-root [data-window-controls="macos"] .tools::before {
+.milkdown-editor-root .tools[data-window-controls='macos']::before,
+.milkdown-editor-root [data-window-controls='macos'] .tools::before {
   content: '';
   display: block;
   position: absolute;
@@ -44,16 +44,32 @@
   transform: translateY(-50%);
   width: calc(var(--lanismd-codeblock-dot-size) * 3 + var(--lanismd-codeblock-dot-spacing) * 2);
   height: var(--lanismd-codeblock-dot-size);
-  background: 
-    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) / 2), var(--lanismd-codeblock-dot-red) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2)),
-    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) * 1.5 + var(--lanismd-codeblock-dot-spacing)), var(--lanismd-codeblock-dot-yellow) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2)),
-    radial-gradient(circle at calc(var(--lanismd-codeblock-dot-size) * 2.5 + var(--lanismd-codeblock-dot-spacing) * 2), var(--lanismd-codeblock-dot-green) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px), transparent calc(var(--lanismd-codeblock-dot-size) / 2));
+  background:
+    radial-gradient(
+      circle at calc(var(--lanismd-codeblock-dot-size) / 2),
+      var(--lanismd-codeblock-dot-red) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px),
+      transparent calc(var(--lanismd-codeblock-dot-size) / 2)
+    ),
+    radial-gradient(
+      circle at calc(var(--lanismd-codeblock-dot-size) * 1.5 + var(--lanismd-codeblock-dot-spacing)),
+      var(--lanismd-codeblock-dot-yellow) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px),
+      transparent calc(var(--lanismd-codeblock-dot-size) / 2)
+    ),
+    radial-gradient(
+      circle at
+        calc(var(--lanismd-codeblock-dot-size) * 2.5 + var(--lanismd-codeblock-dot-spacing) * 2),
+      var(--lanismd-codeblock-dot-green) calc(var(--lanismd-codeblock-dot-size) / 2 - 1px),
+      transparent calc(var(--lanismd-codeblock-dot-size) / 2)
+    );
 }
 
 /* 当显示窗口装饰时，调整工具栏内容位置 */
-.milkdown-editor-root .tools[data-window-controls="macos"],
-.milkdown-editor-root [data-window-controls="macos"] .tools {
-  padding-left: calc(var(--lanismd-codeblock-dot-size) * 3 + var(--lanismd-codeblock-dot-spacing) * 2 + var(--lanismd-spacing-2xl));
+.milkdown-editor-root .tools[data-window-controls='macos'],
+.milkdown-editor-root [data-window-controls='macos'] .tools {
+  padding-left: calc(
+    var(--lanismd-codeblock-dot-size) * 3 + var(--lanismd-codeblock-dot-spacing) * 2 +
+      var(--lanismd-spacing-2xl)
+  );
 }
 
 /* ===== Language selector button ===== */
@@ -373,7 +389,7 @@
   color: var(--lanismd-cm-text);
   border-radius: var(--lanismd-radius-lg);
   padding: var(--lanismd-spacing-xl) var(--lanismd-spacing-2xl);
-  margin: 1em 0;
+  /* margin: 1em 0; */
   overflow-x: auto;
   font-family: var(--lanismd-font-mono);
   font-size: 0.875rem;

@@ -62,9 +62,6 @@ export class MermaidNodeView implements NodeView {
   /** 状态切换保护（防止 deselectNode 闪回） */
   private switchingState = false;
 
-  /** 实例 ID（调试用） */
-  private instanceId = Math.random().toString(36).slice(2, 6);
-
   /** ProseMirror EditorView */
   private view: EditorView;
 
@@ -145,10 +142,6 @@ export class MermaidNodeView implements NodeView {
   // -------------------------------------------------------------------------
 
   private bindEvents(): void {
-    // 调试：监听所有鼠标事件
-    this.dom.addEventListener('mousedown', (e) => {}, true);
-    this.dom.addEventListener('dblclick', (e) => {}, true);
-
     // 双击进入编辑
     this.previewContainer.addEventListener('dblclick', (e) => {
       e.preventDefault();
@@ -228,10 +221,7 @@ export class MermaidNodeView implements NodeView {
             this.view.focus();
             return;
           } catch (err) {
-            console.warn(
-              `[MermaidBlock:${this.instanceId}] enterEdit rAF: PM focus failed, fallback`,
-              err,
-            );
+            console.warn(`[MermaidBlock: enterEdit rAF: PM focus failed, fallback`, err);
           }
         }
 

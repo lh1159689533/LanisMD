@@ -24,7 +24,7 @@ const editorTheme = EditorView.theme({
     borderLeftColor: 'var(--lanismd-accent)',
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'var(--lanismd-cm-selection)',
+    background: 'var(--lanismd-cm-selection) !important',
   },
   '.cm-activeLine': {
     backgroundColor: 'var(--lanismd-cm-line-active)',

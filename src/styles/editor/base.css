@@ -53,13 +53,16 @@
 } */
 
 /* ===== Placeholder ===== */
-.milkdown-editor-root .ProseMirror p.is-editor-empty:first-child::before {
+/* 光标聚焦到空段落时显示的占位提示 */
+.milkdown-editor-root .ProseMirror .lanismd-placeholder::before {
   content: attr(data-placeholder);
   float: left;
   color: var(--lanismd-sidebar-text);
   pointer-events: none;
   height: 0;
-  opacity: 0.5;
+  opacity: 0.4;
+  font-style: normal;
+  user-select: none;
 }
 
 /* ===== Editor Wrapper Animation ===== */
