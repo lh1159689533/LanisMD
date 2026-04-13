@@ -23,7 +23,12 @@ import {
   linkTooltip,
   configureLinkTooltip,
 } from './plugins/link';
-import { underlineMarkSchema } from './plugins/underline-mark';
+import { underlineMarkSchema, remarkUnderlinePlugin } from './plugins/underline-mark';
+import {
+  highlightMarkSchema,
+  remarkHighlightPlugin,
+  highlightInputRulePlugin,
+} from './plugins/highlight-mark';
 import {
   imageBlockComponent,
   configureImageBlock,
@@ -123,6 +128,10 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(commonmark)
     .use(gfm)
     .use(underlineMarkSchema)
+    .use(remarkUnderlinePlugin)
+    .use(highlightMarkSchema)
+    .use(remarkHighlightPlugin)
+    .use(highlightInputRulePlugin)
     .use(gfmAlertSchema)
     .use(remarkGfmAlertPlugin)
     .use(listItemBlockComponent)

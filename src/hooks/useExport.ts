@@ -52,6 +52,7 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
   html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
   // 代码块
@@ -97,6 +98,7 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
     pre code { background: none; padding: 0; }
     blockquote { border-left: 4px solid #2563eb; padding-left: 16px; color: #475569; margin: 1em 0; }
     a { color: #2563eb; }
+    mark { background: rgba(255, 235, 59, 0.5); padding: 0.1em 0.2em; border-radius: 2px; }
     img { max-width: 100%; border-radius: 8px; }
     table { border-collapse: collapse; width: 100%; margin: 1em 0; }
     th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
@@ -121,6 +123,7 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
   pre code { background: none; padding: 0; }
   blockquote { border-left: 4px solid #2563eb; padding-left: 16px; }
   a { color: #2563eb; }
+  mark { background: rgba(255, 235, 59, 0.5); padding: 0.1em 0.2em; border-radius: 2px; }
   img { max-width: 100%; }
   @media print { body { margin: 0; } }
 </style>
