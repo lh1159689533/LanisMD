@@ -1,0 +1,31 @@
+/**
+ * Search Highlight Styles
+ *
+ * 搜索匹配项的高亮样式。
+ * - .lanismd-search-match: 所有匹配项的背景色
+ * - .lanismd-search-match-active: 当前激活匹配项的背景色（更醒目）
+ */
+
+/* 所有匹配项 - 半透明黄色背景 */
+.lanismd-search-match {
+  background-color: var(--lanismd-search-match-bg, rgba(255, 213, 0, 0.35));
+  border-radius: 2px;
+}
+
+/* 当前激活匹配项 - 更醒目的橙色背景 */
+.lanismd-search-match-active {
+  background-color: var(--lanismd-search-match-active-bg, rgba(255, 150, 0, 0.55));
+  border-radius: 2px;
+  outline: 2px solid var(--lanismd-search-match-active-outline, rgba(255, 150, 0, 0.7));
+  outline-offset: -1px;
+}
+
+/* 暗色主题下的搜索高亮 */
+.dark .lanismd-search-match {
+  background-color: var(--lanismd-search-match-bg, rgba(255, 213, 0, 0.25));
+}
+
+.dark .lanismd-search-match-active {
+  background-color: var(--lanismd-search-match-active-bg, rgba(255, 150, 0, 0.45));
+  outline-color: var(--lanismd-search-match-active-outline, rgba(255, 150, 0, 0.6));
+}

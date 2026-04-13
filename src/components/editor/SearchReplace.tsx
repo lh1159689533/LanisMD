@@ -1,198 +1,329 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { RiSearchLine, RiCloseLine, RiArrowUpLine, RiArrowDownLine } from 'react-icons/ri';
+/**
+ * SearchReplace - 文档内搜索替换面板
+ *
+ * 连接 search-store，通过 ProseMirror 插件实现实时搜索高亮、
+ * 匹配导航和文本替换。
+ *
+ * 布局参考 VS Code 风格：
+ * - 搜索行：输入框（内嵌 Aa/ab/.* 选项按钮）+ 匹配计数 + 上下导航 + 展开替换 + 关闭
+ * - 替换行（可折叠）：输入框 + 替换 + 全部替换
+ */
+
+import { useCallback, useEffect, useRef } from 'react';
+import {
+  RiCloseLine,
+  RiArrowUpLine,
+  RiArrowDownLine,
+  RiArrowDownSLine,
+  RiArrowRightSLine,
+} from 'react-icons/ri';
 import { cn } from '@/utils/cn';
+import { useSearchStore } from '@/stores/search-store';
 
 interface SearchReplaceProps {
-  onClose: () => void;
-  content: string;
-  onReplace?: (search: string, replace: string) => void;
-  onReplaceAll?: (search: string, replace: string) => void;
+  /** 滚动到指定位置的回调（由父组件提供，用于将匹配项滚动到可视区域） */
+  onScrollToMatch?: (from: number, to: number) => void;
+  /** 替换当前匹配的回调 */
+  onReplace?: (from: number, to: number, replaceText: string) => void;
+  /** 替换全部匹配的回调 */
+  onReplaceAll?: (replaceText: string) => void;
 }
 
-export function SearchReplace({ onClose, content, onReplace, onReplaceAll }: SearchReplaceProps) {
-  const [searchText, setSearchText] = useState('');
-  const [replaceText, setReplaceText] = useState('');
-  const [caseSensitive, setCaseSensitive] = useState(false);
-  const [useRegex, setUseRegex] = useState(false);
-  const [matchCount, setMatchCount] = useState(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
+/**
+ * 选项图标按钮（内嵌在输入框右侧）
+ */
+function OptionButton({
+  active,
+  title,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[11px] font-medium',
+        'transition-colors',
+        active
+          ? 'bg-[var(--lanismd-accent)] text-white'
+          : 'text-[var(--lanismd-sidebar-text)] opacity-60 hover:opacity-100',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: SearchReplaceProps) {
+  const {
+    searchText,
+    replaceText,
+    caseSensitive,
+    wholeWord,
+    useRegex,
+    showReplace,
+    matches,
+    currentIndex,
+    setSearchText,
+    setReplaceText,
+    setCaseSensitive,
+    setWholeWord,
+    setUseRegex,
+    toggleReplace,
+    navigateNext,
+    navigatePrev,
+    closeSearch,
+  } = useSearchStore();
+
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 打开时自动聚焦搜索输入框
   useEffect(() => {
-    inputRef.current?.focus();
+    // 延迟一帧确保 DOM 已渲染
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
   }, []);
 
+  // 当 currentIndex 变化时滚动到对应匹配位置
   useEffect(() => {
-    if (!searchText) {
-      setMatchCount(0);
-      setCurrentIndex(0);
-      return;
+    if (currentIndex >= 0 && currentIndex < matches.length) {
+      const match = matches[currentIndex];
+      onScrollToMatch?.(match.from, match.to);
     }
+  }, [currentIndex, matches, onScrollToMatch]);
 
-    try {
-      const flags = caseSensitive ? 'g' : 'gi';
-      const pattern = useRegex ? searchText : searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(pattern, flags);
-      const matches = content.match(regex);
-      setMatchCount(matches ? matches.length : 0);
-      setCurrentIndex(matches && matches.length > 0 ? 1 : 0);
-    } catch {
-      setMatchCount(0);
-      setCurrentIndex(0);
+  const handleNavigateNext = useCallback(() => {
+    navigateNext();
+  }, [navigateNext]);
+
+  const handleNavigatePrev = useCallback(() => {
+    navigatePrev();
+  }, [navigatePrev]);
+
+  const handleReplace = useCallback(() => {
+    if (currentIndex >= 0 && currentIndex < matches.length) {
+      const match = matches[currentIndex];
+      onReplace?.(match.from, match.to, replaceText);
     }
-  }, [searchText, content, caseSensitive, useRegex]);
+  }, [currentIndex, matches, replaceText, onReplace]);
 
-  const navigateMatch = useCallback(
-    (direction: 'next' | 'prev') => {
-      setCurrentIndex((prev) => {
-        if (direction === 'next') {
-          return prev >= matchCount ? 1 : prev + 1;
-        }
-        return prev <= 1 ? matchCount : prev - 1;
-      });
-    },
-    [matchCount],
-  );
+  const handleReplaceAll = useCallback(() => {
+    onReplaceAll?.(replaceText);
+  }, [replaceText, onReplaceAll]);
 
-  const handleKeyDown = useCallback(
+  const handleSearchKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (e.shiftKey) {
-          navigateMatch('prev');
+          handleNavigatePrev();
         } else {
-          navigateMatch('next');
+          handleNavigateNext();
         }
       }
       if (e.key === 'Escape') {
-        onClose();
+        closeSearch();
       }
     },
-    [navigateMatch, onClose],
+    [handleNavigateNext, handleNavigatePrev, closeSearch],
   );
+
+  const handleReplaceKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleReplace();
+      }
+      if (e.key === 'Escape') {
+        closeSearch();
+      }
+    },
+    [handleReplace, closeSearch],
+  );
+
+  // 显示匹配计数文本
+  const matchCountText = matches.length > 0
+    ? `${currentIndex + 1}/${matches.length}`
+    : searchText ? '无结果' : '';
+
+  // 匹配计数颜色
+  const matchCountColor = searchText && matches.length === 0
+    ? 'text-red-400'
+    : 'text-[var(--lanismd-sidebar-text)]';
 
   return (
     <div
       className={cn(
-        'absolute right-4 top-12 z-50 w-80 p-3',
-        'rounded-lg border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-editor-bg)] shadow-lg',
+        'lanismd-search-panel',
+        'sticky top-2 z-50 float-right mr-4',
+        'rounded-lg border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-editor-bg)] shadow-lg',
+        'p-2',
       )}
+      // 阻止点击事件冒泡到编辑器
+      onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="mb-2 flex items-center gap-1.5">
-        <div className="relative flex-1">
-          <RiSearchLine
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--lanismd-lanismd-sidebar-text)]"
-            size={13}
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="搜索..."
-            className={cn(
-              'h-7 w-full pl-7 pr-2',
-              'rounded-md border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-sidebar-bg)]',
-              'text-xs text-[var(--lanismd-lanismd-editor-text)] outline-none focus:border-[var(--lanismd-lanismd-accent)]',
-            )}
-          />
-        </div>
-        <span className="min-w-[40px] text-center text-[10px] text-[var(--lanismd-lanismd-sidebar-text)]">
-          {matchCount > 0 ? `${currentIndex}/${matchCount}` : '0'}
-        </span>
+      <div className="flex items-start gap-1">
+        {/* 展开/折叠替换行的箭头 */}
         <button
-          onClick={() => navigateMatch('prev')}
-          disabled={matchCount === 0}
-          className="rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+          type="button"
+          onClick={toggleReplace}
+          title={showReplace ? '折叠替换' : '展开替换'}
+          className={cn(
+            'mt-[5px] flex h-5 w-5 shrink-0 items-center justify-center rounded',
+            'text-[var(--lanismd-sidebar-text)] transition-colors',
+            'hover:bg-black/5 dark:hover:bg-white/10',
+          )}
         >
-          <RiArrowUpLine size={14} />
+          {showReplace ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
         </button>
-        <button
-          onClick={() => navigateMatch('next')}
-          disabled={matchCount === 0}
-          className="rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
-        >
-          <RiArrowDownLine size={14} />
-        </button>
-        <button
-          onClick={onClose}
-          className="rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          <RiCloseLine size={14} />
-        </button>
-      </div>
 
-      <div className="mb-2 flex items-center gap-1.5">
-        <div className="relative flex-1">
-          <RiSearchLine
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--lanismd-lanismd-sidebar-text)] opacity-50"
-            size={13}
-          />
-          <input
-            type="text"
-            value={replaceText}
-            onChange={(e) => setReplaceText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="替换..."
-            className={cn(
-              'h-7 w-full pl-7 pr-2',
-              'rounded-md border border-[var(--lanismd-lanismd-editor-border)] bg-[var(--lanismd-lanismd-sidebar-bg)]',
-              'text-xs text-[var(--lanismd-lanismd-editor-text)] outline-none focus:border-[var(--lanismd-lanismd-accent)]',
-            )}
-          />
-        </div>
-        <button
-          onClick={() => onReplace?.(searchText, replaceText)}
-          disabled={matchCount === 0}
-          className={cn(
-            'h-7 rounded-md bg-[var(--lanismd-lanismd-accent)] px-2 text-[10px] text-white',
-            'transition-colors hover:bg-[var(--lanismd-lanismd-accent-hover)] disabled:opacity-30',
-          )}
-        >
-          替换
-        </button>
-        <button
-          onClick={() => onReplaceAll?.(searchText, replaceText)}
-          disabled={matchCount === 0}
-          className={cn(
-            'h-7 rounded-md bg-[var(--lanismd-lanismd-accent)] px-2 text-[10px] text-white',
-            'transition-colors hover:bg-[var(--lanismd-lanismd-accent-hover)] disabled:opacity-30',
-          )}
-        >
-          全部
-        </button>
-      </div>
+        {/* 右侧主体内容 */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {/* 搜索行 */}
+          <div className="flex items-center gap-1">
+            {/* 搜索输入框（内嵌选项按钮） */}
+            <div
+              className={cn(
+                'flex h-7 min-w-0 flex-1 items-center gap-0.5 overflow-hidden',
+                'rounded-md border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-sidebar-bg)]',
+                'focus-within:border-[var(--lanismd-accent)]',
+              )}
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="搜索..."
+                className={cn(
+                  'h-full min-w-0 flex-1 bg-transparent px-2',
+                  'text-xs text-[var(--lanismd-editor-text)] outline-none',
+                )}
+              />
+              {/* 选项按钮组：区分大小写 / 全词匹配 / 正则 */}
+              <div className="flex shrink-0 items-center gap-0.5 pr-1">
+                <OptionButton
+                  active={caseSensitive}
+                  title="区分大小写"
+                  onClick={() => setCaseSensitive(!caseSensitive)}
+                >
+                  Aa
+                </OptionButton>
+                <OptionButton
+                  active={wholeWord}
+                  title="全词匹配"
+                  onClick={() => setWholeWord(!wholeWord)}
+                >
+                  <span className="underline decoration-1 underline-offset-2">ab</span>
+                </OptionButton>
+                <OptionButton
+                  active={useRegex}
+                  title="正则表达式"
+                  onClick={() => setUseRegex(!useRegex)}
+                >
+                  .*
+                </OptionButton>
+              </div>
+            </div>
 
-      <div className="flex items-center gap-3">
-        <label
-          className={cn(
-            'flex cursor-pointer items-center gap-1',
-            'select-none text-[10px] text-[var(--lanismd-sidebar-text)]',
+            {/* 匹配计数 */}
+            <span className={cn('min-w-[44px] shrink-0 text-center text-[10px]', matchCountColor)}>
+              {matchCountText}
+            </span>
+
+            {/* 导航按钮 */}
+            <button
+              type="button"
+              onClick={handleNavigatePrev}
+              disabled={matches.length === 0}
+              title="上一个 (Shift+Enter)"
+              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+            >
+              <RiArrowUpLine size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNavigateNext}
+              disabled={matches.length === 0}
+              title="下一个 (Enter)"
+              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+            >
+              <RiArrowDownLine size={14} />
+            </button>
+
+            {/* 关闭按钮 */}
+            <button
+              type="button"
+              onClick={closeSearch}
+              title="关闭 (Escape)"
+              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <RiCloseLine size={14} />
+            </button>
+          </div>
+
+          {/* 替换行（可折叠） */}
+          {showReplace && (
+            <div className="flex items-center gap-1">
+              <div
+                className={cn(
+                  'flex h-7 min-w-0 flex-1 items-center overflow-hidden',
+                  'rounded-md border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-sidebar-bg)]',
+                  'focus-within:border-[var(--lanismd-accent)]',
+                )}
+              >
+                <input
+                  type="text"
+                  value={replaceText}
+                  onChange={(e) => setReplaceText(e.target.value)}
+                  onKeyDown={handleReplaceKeyDown}
+                  placeholder="替换..."
+                  className={cn(
+                    'h-full min-w-0 flex-1 bg-transparent px-2',
+                    'text-xs text-[var(--lanismd-editor-text)] outline-none',
+                  )}
+                />
+              </div>
+              {/* 替换按钮 */}
+              <button
+                type="button"
+                onClick={handleReplace}
+                disabled={matches.length === 0}
+                title="替换当前匹配 (Enter)"
+                className={cn(
+                  'flex h-7 shrink-0 items-center rounded-md px-2',
+                  'text-[10px] text-[var(--lanismd-sidebar-text)]',
+                  'transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10',
+                )}
+              >
+                替换
+              </button>
+              <button
+                type="button"
+                onClick={handleReplaceAll}
+                disabled={matches.length === 0}
+                title="替换全部匹配"
+                className={cn(
+                  'flex h-7 shrink-0 items-center rounded-md px-2',
+                  'text-[10px] text-[var(--lanismd-sidebar-text)]',
+                  'transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10',
+                )}
+              >
+                全部
+              </button>
+            </div>
           )}
-        >
-          <input
-            type="checkbox"
-            checked={caseSensitive}
-            onChange={(e) => setCaseSensitive(e.target.checked)}
-            className="h-3 w-3 accent-[var(--lanismd-accent)]"
-          />
-          区分大小写
-        </label>
-        <label
-          className={cn(
-            'flex cursor-pointer items-center gap-1',
-            'select-none text-[10px] text-[var(--lanismd-sidebar-text)]',
-          )}
-        >
-          <input
-            type="checkbox"
-            checked={useRegex}
-            onChange={(e) => setUseRegex(e.target.checked)}
-            className="h-3 w-3 accent-[var(--lanismd-accent)]"
-          />
-          正则
-        </label>
+        </div>
       </div>
     </div>
   );

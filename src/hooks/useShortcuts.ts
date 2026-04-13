@@ -10,16 +10,27 @@ export function useShortcuts(handlers?: {
   onToggleSidebar?: () => void;
   onToggleOutline?: () => void;
   onOpenSettings?: () => void;
+  onToggleSearch?: () => void;
 }) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-
     const h = handlersRef.current;
     if (!h) return;
+
+    const target = e.target as HTMLElement;
+    const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+
+    // Cmd+F: 搜索替换 - 在所有上下文中都应该响应（包括编辑器和输入框）
+    if (e[modKey] && e.key === 'f' && !e.shiftKey) {
+      e.preventDefault();
+      h.onToggleSearch?.();
+      return;
+    }
+
+    // 其他快捷键：在 INPUT/TEXTAREA 中不响应
+    if (isInputField) return;
 
     // Cmd+N: New file
     if (e[modKey] && e.key === 'n' && !e.shiftKey) {

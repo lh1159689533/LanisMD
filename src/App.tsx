@@ -6,6 +6,7 @@ import { BrowserLayout } from './components/layout/BrowserLayout';
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { ToastContainer } from './components/common/ToastContainer';
 import { useUIStore } from './stores/ui-store';
+import { useSearchStore } from './stores/search-store';
 import { useTheme } from './hooks/useTheme';
 import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -40,6 +41,8 @@ function TauriApp() {
     }
   }, [setSidebarPanel]);
 
+  const toggleSearch = useSearchStore((s) => s.toggleSearch);
+
   useShortcuts({
     onNewFile: newFile,
     onOpenFile: openFileFromDisk,
@@ -47,6 +50,7 @@ function TauriApp() {
     onToggleSidebar: toggleSidebar,
     onToggleOutline: toggleOutline,
     onOpenSettings: () => openSettings('general'),
+    onToggleSearch: toggleSearch,
   });
 
   return (
