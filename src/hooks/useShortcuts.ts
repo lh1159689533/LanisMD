@@ -11,6 +11,7 @@ export function useShortcuts(handlers?: {
   onToggleOutline?: () => void;
   onOpenSettings?: () => void;
   onToggleSearch?: () => void;
+  onQuickOpen?: () => void;
 }) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
@@ -21,6 +22,13 @@ export function useShortcuts(handlers?: {
 
     const target = e.target as HTMLElement;
     const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+
+    // Cmd+P: 快速打开 - 在所有上下文中都应该响应
+    if (e[modKey] && e.key === 'p' && !e.shiftKey) {
+      e.preventDefault();
+      h.onQuickOpen?.();
+      return;
+    }
 
     // Cmd+F: 搜索替换 - 在所有上下文中都应该响应（包括编辑器和输入框）
     if (e[modKey] && e.key === 'f' && !e.shiftKey) {

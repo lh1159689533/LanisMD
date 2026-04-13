@@ -155,4 +155,38 @@
   --lanismd-syntax-attr-value: #9ece6a;
   --lanismd-syntax-meta: #565f89;
   --lanismd-syntax-definition: #e0af68;
+
+  /* ===== 4. 快速打开面板 (QuickOpen) ===== */
+  --lanismd-quick-open-bg: #1f2335;
+  --lanismd-quick-open-border: 1px solid #292e42;
+  --lanismd-quick-open-shadow: 0 16px 70px rgba(0, 0, 0, 0.4), 0 0 1px rgba(0, 0, 0, 0.3);
+  --lanismd-quick-open-overlay-bg: rgba(0, 0, 0, 0.45);
+  /* 输入区域 */
+  --lanismd-quick-open-input-border: 1px solid #292e42;
+  --lanismd-quick-open-input-text: #c0caf5;
+  --lanismd-quick-open-input-placeholder: #565f89;
+  --lanismd-quick-open-input-icon-color: #565f89;
+  /* 列表项 */
+  --lanismd-quick-open-item-hover-bg: rgba(122, 162, 247, 0.12);
+  --lanismd-quick-open-item-active-bg: rgba(122, 162, 247, 0.08);
+  --lanismd-quick-open-item-text: #c0caf5;
+  --lanismd-quick-open-item-icon-color: #565f89;
+  --lanismd-quick-open-item-path-color: #565f89;
+  /* 高亮匹配 */
+  --lanismd-quick-open-highlight-color: #7aa2f7;
+  /* 分组标签 */
+  --lanismd-quick-open-group-label-text: #565f89;
+  /* 空状态 */
+  --lanismd-quick-open-empty-text: #565f89;
+  /* Footer */
+  --lanismd-quick-open-footer-border: 1px solid #292e42;
+  --lanismd-quick-open-footer-text: #565f89;
+  /* Kbd 键帽 */
+  --lanismd-quick-open-kbd-bg: #292e42;
+  --lanismd-quick-open-kbd-border: 1px solid #3b4261;
+  --lanismd-quick-open-kbd-text: #a9b1d6;
+  /* 文件夹图标色 */
+  --lanismd-quick-open-folder-icon-color: #7aa2f7;
+  /* 滚动条 */
+  --lanismd-quick-open-scrollbar-thumb: rgba(255, 255, 255, 0.15);
 }

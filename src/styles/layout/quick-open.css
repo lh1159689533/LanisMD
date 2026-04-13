@@ -1,0 +1,192 @@
+/* QuickOpen 快速打开面板 */
+
+.lanismd-quick-open-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  padding-top: 12vh;
+  background-color: var(--lanismd-quick-open-overlay-bg);
+}
+
+.lanismd-quick-open-panel {
+  width: var(--lanismd-quick-open-width);
+  max-height: var(--lanismd-quick-open-max-height);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--lanismd-quick-open-border-radius);
+  background-color: var(--lanismd-quick-open-bg);
+  border: var(--lanismd-quick-open-border);
+  box-shadow: var(--lanismd-quick-open-shadow);
+  overflow: hidden;
+  animation: lanismd-quick-open-appear 0.12s ease-out;
+}
+
+@keyframes lanismd-quick-open-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 搜索输入区域 */
+.lanismd-quick-open-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: var(--lanismd-quick-open-input-border);
+  gap: 8px;
+}
+
+.lanismd-quick-open-input-icon {
+  flex-shrink: 0;
+  color: var(--lanismd-quick-open-input-icon-color);
+}
+
+.lanismd-quick-open-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: var(--lanismd-quick-open-input-bg);
+  font-size: var(--lanismd-font-size-md);
+  color: var(--lanismd-quick-open-input-text);
+  line-height: 1.5;
+}
+
+.lanismd-quick-open-input::placeholder {
+  color: var(--lanismd-quick-open-input-placeholder);
+}
+
+/* 结果列表 */
+.lanismd-quick-open-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.lanismd-quick-open-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lanismd-quick-open-list::-webkit-scrollbar-thumb {
+  background: var(--lanismd-quick-open-scrollbar-thumb);
+  border-radius: 3px;
+}
+
+/* 列表项 */
+.lanismd-quick-open-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  cursor: pointer;
+  gap: 10px;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-quick-open-item:hover,
+.lanismd-quick-open-item--active {
+  background-color: var(--lanismd-quick-open-item-hover-bg);
+}
+
+.lanismd-quick-open-item-icon {
+  flex-shrink: 0;
+  color: var(--lanismd-quick-open-item-icon-color);
+}
+
+.lanismd-quick-open-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lanismd-quick-open-item-name {
+  font-size: var(--lanismd-font-size-md);
+  color: var(--lanismd-quick-open-item-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lanismd-quick-open-item-path {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-quick-open-item-path-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 模糊匹配高亮 */
+.lanismd-quick-open-highlight {
+  color: var(--lanismd-quick-open-highlight-color);
+  font-weight: 600;
+}
+
+/* 分组标签 */
+.lanismd-quick-open-group-label {
+  padding: 6px 14px 4px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-quick-open-group-label-text);
+  background-color: var(--lanismd-quick-open-group-label-bg);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+/* 空状态 */
+.lanismd-quick-open-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: var(--lanismd-quick-open-empty-text);
+  font-size: var(--lanismd-font-size-sm);
+  gap: 8px;
+  text-align: center;
+}
+
+.lanismd-quick-open-empty-icon {
+  font-size: 28px;
+  opacity: 0.5;
+}
+
+/* 快捷键提示 */
+.lanismd-quick-open-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 14px;
+  border-top: var(--lanismd-quick-open-footer-border);
+  background-color: var(--lanismd-quick-open-footer-bg);
+  gap: 12px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-quick-open-footer-text);
+}
+
+.lanismd-quick-open-footer kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background-color: var(--lanismd-quick-open-kbd-bg);
+  border: var(--lanismd-quick-open-kbd-border);
+  color: var(--lanismd-quick-open-kbd-text);
+  font-family: var(--lanismd-font-sans);
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* 文件夹项目（最近打开的文件夹模式） */
+.lanismd-quick-open-item--folder .lanismd-quick-open-item-icon {
+  color: var(--lanismd-quick-open-folder-icon-color);
+}

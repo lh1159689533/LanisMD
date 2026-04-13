@@ -589,6 +589,22 @@ export function FileTree() {
   // Inline editing state
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
 
+  // 监听 selectedFile 变化，自动滚动到对应的文件树节点
+  const selectedFile = useFileTreeStore((s) => s.selectedFile);
+  useEffect(() => {
+    if (!selectedFile || !fileTreeRootRef.current) return;
+    // 等待 DOM 更新（目录展开后节点才会渲染）
+    requestAnimationFrame(() => {
+      const contentEl = fileTreeRootRef.current?.querySelector('.file-tree-content');
+      if (!contentEl) return;
+      // 查找 selected 状态的按钮节点
+      const selectedEl = contentEl.querySelector('.file-tree-node-item.selected, .file-list-item.selected');
+      if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  }, [selectedFile]);
+
   /** Flat file list sorted by modified time (newest first) for list view */
   const flatFiles = useMemo(() => {
     if (!rootPath) return [];

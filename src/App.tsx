@@ -4,6 +4,7 @@ import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
 
 import { SettingsDialog } from './components/settings/SettingsDialog';
+import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
@@ -27,6 +28,7 @@ function TauriApp() {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const setSidebarPanel = useUIStore((s) => s.setSidebarPanel);
   const openSettings = useUIStore((s) => s.openSettings);
+  const openCommandPalette = useUIStore((s) => s.openCommandPalette);
   const { openFileFromDisk, newFile } = useFile();
   const { notifySelfWrite } = useFileWatcher();
   const { saveNow } = useAutoSave({ onAfterSave: notifySelfWrite });
@@ -51,6 +53,7 @@ function TauriApp() {
     onToggleOutline: toggleOutline,
     onOpenSettings: () => openSettings('general'),
     onToggleSearch: toggleSearch,
+    onQuickOpen: openCommandPalette,
   });
 
   return (
@@ -58,6 +61,7 @@ function TauriApp() {
       <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
       <MainLayout />
       {settingsOpen && <SettingsDialog />}
+      <QuickOpen />
       <ToastContainer />
     </>
   );

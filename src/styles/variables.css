@@ -411,6 +411,46 @@
   --lanismd-dialog-nav-width: 160px;
   --lanismd-dialog-nav-bg: var(--lanismd-sidebar-bg);
 
+  /* 快速打开面板 (QuickOpen) */
+  --lanismd-quick-open-bg: var(--lanismd-editor-bg);
+  --lanismd-quick-open-border: 1px solid var(--lanismd-border-color);
+  --lanismd-quick-open-border-radius: var(--lanismd-radius-lg);
+  --lanismd-quick-open-shadow: 0 16px 70px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+  --lanismd-quick-open-width: 520px;
+  --lanismd-quick-open-max-height: 420px;
+  --lanismd-quick-open-overlay-bg: rgba(0, 0, 0, 0.25);
+  /* 输入区域 */
+  --lanismd-quick-open-input-bg: transparent;
+  --lanismd-quick-open-input-border: 1px solid var(--lanismd-border-color);
+  --lanismd-quick-open-input-text: var(--lanismd-editor-text);
+  --lanismd-quick-open-input-placeholder: #94a3b8;
+  --lanismd-quick-open-input-icon-color: #94a3b8;
+  /* 列表项 */
+  --lanismd-quick-open-item-hover-bg: var(--lanismd-hover-bg);
+  --lanismd-quick-open-item-active-bg: var(--lanismd-selected-bg);
+  --lanismd-quick-open-item-text: var(--lanismd-editor-text);
+  --lanismd-quick-open-item-icon-color: #94a3b8;
+  --lanismd-quick-open-item-path-color: #94a3b8;
+  /* 高亮匹配 */
+  --lanismd-quick-open-highlight-color: var(--lanismd-accent, #3b82f6);
+  /* 分组标签 */
+  --lanismd-quick-open-group-label-text: #94a3b8;
+  --lanismd-quick-open-group-label-bg: transparent;
+  /* 空状态 */
+  --lanismd-quick-open-empty-text: #94a3b8;
+  /* Footer */
+  --lanismd-quick-open-footer-bg: transparent;
+  --lanismd-quick-open-footer-border: 1px solid var(--lanismd-border-color);
+  --lanismd-quick-open-footer-text: #94a3b8;
+  /* Kbd 键帽 */
+  --lanismd-quick-open-kbd-bg: #f1f5f9;
+  --lanismd-quick-open-kbd-border: 1px solid var(--lanismd-border-color);
+  --lanismd-quick-open-kbd-text: inherit;
+  /* 文件夹图标色 */
+  --lanismd-quick-open-folder-icon-color: var(--lanismd-accent, #3b82f6);
+  /* 滚动条 */
+  --lanismd-quick-open-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+
   /* 斜杠菜单 */
   --lanismd-slash-menu-bg: var(--lanismd-editor-bg);
   --lanismd-slash-menu-border: 1px solid var(--lanismd-border-color);

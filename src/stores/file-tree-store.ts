@@ -31,6 +31,8 @@ interface FileTreeState {
   selectFile: (path: string | null) => void;
   /** 在树中选择目录 */
   selectDir: (path: string | null) => void;
+  /** 在文件树中定位文件：展开所有父目录 + 选中文件 */
+  revealFile: (filePath: string) => void;
   /** 标记用户刚执行了文件操作，以便监视器可以跳过树刷新 */
   notifyUserOp: () => void;
 }
@@ -104,6 +106,35 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
 
   selectDir: (path: string | null) => {
     set({ selectedDir: path });
+  },
+
+  revealFile: (filePath: string) => {
+    const { rootPath, expandedDirs } = get();
+    if (!rootPath || !filePath.startsWith(rootPath)) {
+      // 文件不在当前根目录下，仅选中
+      set({ selectedFile: filePath, selectedDir: null });
+      return;
+    }
+
+    // 计算文件路径与根路径之间的所有中间目录
+    const sep = filePath.includes('/') ? '/' : '\\';
+    const relativePart = filePath.slice(rootPath.length).replace(/^[/\\]/, '');
+    const segments = relativePart.split(sep);
+    // 去掉最后一个（文件名），只保留目录部分
+    segments.pop();
+
+    const newExpanded = new Set(expandedDirs);
+    let current = rootPath;
+    for (const seg of segments) {
+      current = current + sep + seg;
+      newExpanded.add(current);
+    }
+
+    set({
+      expandedDirs: newExpanded,
+      selectedFile: filePath,
+      selectedDir: null,
+    });
   },
 
   notifyUserOp: () => {
