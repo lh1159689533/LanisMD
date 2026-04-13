@@ -3,6 +3,8 @@ export interface OutlineItem {
   level: number;
   text: string;
   anchor: string;
+  /** 在文档所有标题中的序号索引（从 0 开始），用于精准匹配重复标题 */
+  index: number;
   children: OutlineItem[];
 }
 

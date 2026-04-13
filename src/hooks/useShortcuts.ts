@@ -8,6 +8,7 @@ export function useShortcuts(handlers?: {
   onOpenFile?: () => void;
   onSaveFile?: () => void;
   onToggleSidebar?: () => void;
+  onToggleOutline?: () => void;
   onOpenSettings?: () => void;
 }) {
   const handlersRef = useRef(handlers);
@@ -42,6 +43,12 @@ export function useShortcuts(handlers?: {
     if (e[modKey] && e.shiftKey && e.key === 'b') {
       e.preventDefault();
       h.onToggleSidebar?.();
+    }
+
+    // Cmd+Shift+L: Toggle outline panel
+    if (e[modKey] && e.shiftKey && e.key === 'l') {
+      e.preventDefault();
+      h.onToggleOutline?.();
     }
 
     // Cmd+,: Open settings

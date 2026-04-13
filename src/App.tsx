@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
@@ -23,16 +24,28 @@ const IS_TAURI = isTauri();
 function TauriApp() {
   const { settingsOpen } = useUIStore();
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const setSidebarPanel = useUIStore((s) => s.setSidebarPanel);
   const openSettings = useUIStore((s) => s.openSettings);
   const { openFileFromDisk, newFile } = useFile();
   const { notifySelfWrite } = useFileWatcher();
   const { saveNow } = useAutoSave({ onAfterSave: notifySelfWrite });
+
+  // 切换大纲面板：如果当前已在大纲面板则关闭侧边栏，否则打开大纲面板
+  const toggleOutline = useCallback(() => {
+    const state = useUIStore.getState();
+    if (state.sidebarOpen && state.sidebarPanel === 'outline') {
+      state.toggleSidebar();
+    } else {
+      setSidebarPanel('outline');
+    }
+  }, [setSidebarPanel]);
 
   useShortcuts({
     onNewFile: newFile,
     onOpenFile: openFileFromDisk,
     onSaveFile: saveNow,
     onToggleSidebar: toggleSidebar,
+    onToggleOutline: toggleOutline,
     onOpenSettings: () => openSettings('general'),
   });
 

@@ -1,12 +1,13 @@
 import type { OutlineItem } from '@/types';
 
 /**
- * Parse markdown text to generate outline items (headings)
+ * 解析 Markdown 文本，生成大纲层级目录树
  */
 export function parseOutline(markdown: string): OutlineItem[] {
   const lines = markdown.split('\n');
   const root: OutlineItem[] = [];
   const stack: OutlineItem[] = [];
+  let headingIndex = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -28,8 +29,10 @@ export function parseOutline(markdown: string): OutlineItem[] {
       level,
       text,
       anchor,
+      index: headingIndex,
       children: [],
     };
+    headingIndex++;
 
     while (stack.length > 0 && stack[stack.length - 1].level >= level) {
       stack.pop();

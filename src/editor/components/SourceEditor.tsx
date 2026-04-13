@@ -154,12 +154,16 @@ export function SourceEditor() {
 
     viewRef.current = view;
 
+    // 注册 EditorView 到 store，供大纲同步等功能使用
+    useEditorStore.getState().setSourceView(view);
+
     // 初始化光标位置
     handleSelectionChange(view);
 
     return () => {
       view.destroy();
       viewRef.current = null;
+      useEditorStore.getState().setSourceView(null);
     };
     // 主题变化时重建编辑器以应用新的 CSS 变量
     // eslint-disable-next-line react-hooks/exhaustive-deps

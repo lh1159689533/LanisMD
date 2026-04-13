@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { EditorView as CMEditorView } from '@codemirror/view';
 import type { OutlineItem } from '@/types';
 
 interface EditorState {
@@ -10,15 +11,23 @@ interface EditorState {
   lineCount: number;
   readingTime: number;
   outline: OutlineItem[];
+  /** 当前激活（高亮）的大纲标题 ID */
+  activeHeadingId: string | null;
   cursorLine: number;
   cursorColumn: number;
+  /** 源码模式下的 CodeMirror EditorView 实例引用 */
+  sourceView: CMEditorView | null;
 
   setMode: (mode: 'wysiwyg' | 'source') => void;
   toggleFocusMode: () => void;
   toggleTypewriterMode: () => void;
   updateStats: (content: string) => void;
   updateOutline: (items: OutlineItem[]) => void;
+  /** 设置当前激活的大纲标题 ID（用于滚动/光标同步高亮） */
+  setActiveHeadingId: (id: string | null) => void;
   updateCursor: (line: number, column: number) => void;
+  /** 注册/注销源码模式的 CodeMirror EditorView */
+  setSourceView: (view: CMEditorView | null) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -30,8 +39,10 @@ export const useEditorStore = create<EditorState>()((set) => ({
   lineCount: 0,
   readingTime: 0,
   outline: [],
+  activeHeadingId: null,
   cursorLine: 1,
   cursorColumn: 1,
+  sourceView: null,
 
   setMode: (mode) => set({ mode }),
   toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
@@ -51,5 +62,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   },
 
   updateOutline: (items) => set({ outline: items }),
+  setActiveHeadingId: (id) => set({ activeHeadingId: id }),
   updateCursor: (line, column) => set({ cursorLine: line, cursorColumn: column }),
+  setSourceView: (view) => set({ sourceView: view }),
 }));

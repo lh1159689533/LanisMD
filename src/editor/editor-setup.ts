@@ -49,6 +49,7 @@ import { tableHandlePlugin, extendedTableSchema } from './plugins/table-block';
 import { remarkGfmAlertPlugin, gfmAlertSchema } from './plugins/gfm-alert';
 import { mermaidBlockPlugin } from './plugins/mermaid-block';
 import { placeholderPlugin } from './plugins/placeholder';
+import { outlineSyncPlugin } from './plugins/outline-sync';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
@@ -146,6 +147,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(tableHandlePlugin)
     .use(mermaidBlockPlugin)
     .use(placeholderPlugin)
+    .use(outlineSyncPlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
