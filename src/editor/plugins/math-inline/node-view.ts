@@ -198,10 +198,10 @@ export class MathInlineNodeView implements NodeView {
         break;
 
       case 'Backspace':
-        // input 为空时按 Backspace，删除节点
+        // input 为空时按 Backspace，保持编辑态（不删除、不退出）
+        // 用户需要通过 Esc/方向键/Enter 主动退出编辑，退出时空公式自动删除
         if (this.inputEl.value === '') {
           e.preventDefault();
-          this.deleteNode();
         }
         break;
 

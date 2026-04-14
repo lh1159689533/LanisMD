@@ -60,12 +60,12 @@ import {
   mathInlineInputRulePlugin,
   mathInlineSelectionPlugin,
   mathInlineKeymapPlugin,
+  mathInlineDollarTriggerPlugin,
 } from './plugins/math-inline';
 import {
   remarkMathBlock,
   mathBlockSchema,
   mathBlockView,
-  mathBlockInputRulePlugin,
 } from './plugins/math-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
@@ -175,12 +175,12 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(remarkMathInline)
     .use(mathInlineView)
     .use(mathInlineInputRulePlugin)
+    .use(mathInlineDollarTriggerPlugin)
     .use(mathInlineSelectionPlugin)
     .use(mathInlineKeymapPlugin)
     .use(mathBlockSchema)
     .use(remarkMathBlock)
     .use(mathBlockView)
-    .use(mathBlockInputRulePlugin)
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)

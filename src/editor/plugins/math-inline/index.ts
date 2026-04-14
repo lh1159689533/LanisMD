@@ -4,8 +4,10 @@
  * 为 Milkdown 编辑器添加内联数学公式支持：
  * - 自定义 remark 插件解析 $...$ 语法
  * - 自定义 ProseMirror Node schema（atom: true，公式内容存在 attrs.value 中）
- * - InputRule 实现输入 $ 自动创建空节点进入编辑态
- * - InputRule 保留 $text$ 完整匹配兼容快速输入
+ * - 输入 $ 自动补全为 $$，光标在中间，不立即触发公式
+ * - 在 $$ 之间输入字符时立即触发内联公式编辑态
+ * - 光标移出空的 $$ 后按 Enter 创建块级公式
+ * - 保留 $text$ 完整匹配兼容粘贴和快速输入
  * - NodeView 实现 Typora 风格的编辑/预览切换
  * - Markdown 序列化输出 $formula$ 语法
  *
@@ -17,13 +19,17 @@
 
 import { $nodeSchema, $remark, $prose, $view } from '@milkdown/kit/utils';
 import { InputRule, inputRules } from '@milkdown/kit/prose/inputrules';
-import { NodeSelection } from '@milkdown/kit/prose/state';
 import { keymap } from '@milkdown/kit/prose/keymap';
 import type { Root } from 'mdast';
 import { visit } from 'unist-util-visit';
 import { MathInlineNodeView } from './node-view';
 import { createMathInlineSelectionPlugin } from './selection-plugin';
 import { mathInlineBackspaceCmd } from './backspace-cmd';
+import {
+  createDollarAutoCompleteRule,
+  createDollarTriggerPlugin,
+  dollarBlockEnterCmd,
+} from './dollar-trigger';
 
 // ---------------------------------------------------------------------------
 // Remark 插件：解析 $...$ 语法
@@ -187,11 +193,11 @@ export const mathInlineView = $view(mathInlineSchema.node, () => {
 
 /**
  * 输入规则：
- * 1. 输入 $ 自动创建空 math_inline 节点并进入编辑态
+ * 1. 输入 $ 自动补全为 $$，光标在中间，不触发任何公式
  * 2. 保留 $text$ 完整匹配兼容粘贴和快速输入
  */
 export const mathInlineInputRulePlugin = $prose(() => {
-  // 规则 1: 输入 $text$ 完整匹配（优先级高于单 $ 规则）
+  // 规则 1: 输入 $text$ 完整匹配（兼容粘贴和快速输入）
   const fullRule = new InputRule(
     /(?:^|[^$\\])\$([^$\s][^$]*[^$\s])\$$/,
     (state, match, start, end) => {
@@ -213,28 +219,23 @@ export const mathInlineInputRulePlugin = $prose(() => {
     },
   );
 
-  // 规则 2: 输入 $ 自动创建空 math_inline 节点
-  const dollarRule = new InputRule(/\$$/, (state, _match, start, end) => {
-    const schema = state.schema;
-    const mathInlineType = schema.nodes.math_inline;
-    if (!mathInlineType) return null;
+  // 规则 2: 输入 $ 自动补全为 $$，光标在中间
+  const dollarAutoCompleteRule = createDollarAutoCompleteRule();
 
-    // 排除 $$（块级公式）的触发：检查前一个字符是否也是 $
-    const before = state.doc.textBetween(Math.max(0, start - 1), start, '\0');
-    if (before === '$') return null;
+  // fullRule 在前（$text$ 优先匹配），dollarAutoCompleteRule 在后（单 $ 触发补全）
+  return inputRules({ rules: [fullRule, dollarAutoCompleteRule] });
+});
 
-    // 创建空的 math_inline 节点
-    const mathNode = mathInlineType.create({ value: '' });
-    const tr = state.tr.replaceWith(start, end, mathNode);
+// ---------------------------------------------------------------------------
+// Dollar Trigger Plugin：监听 $$ 之间输入触发内联公式
+// ---------------------------------------------------------------------------
 
-    // 将光标定位到新节点上（触发 selectNode -> 进入编辑态）
-    tr.setSelection(NodeSelection.create(tr.doc, start));
-
-    return tr;
-  });
-
-  // fullRule 在前（$text$ 优先匹配），dollarRule 在后（单 $ 触发）
-  return inputRules({ rules: [fullRule, dollarRule] });
+/**
+ * 监听插件：检测 $X$ 模式（用户在 $$ 之间输入了字符），
+ * 自动替换为 math_inline 节点并进入编辑态
+ */
+export const mathInlineDollarTriggerPlugin = $prose(() => {
+  return createDollarTriggerPlugin();
 });
 
 // ---------------------------------------------------------------------------
@@ -250,17 +251,19 @@ export const mathInlineSelectionPlugin = $prose(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Backspace Keymap Plugin
+// Keymap Plugin
 // ---------------------------------------------------------------------------
 
 /**
- * Backspace keymap 插件：
- * 光标在 math_inline 右边界时按 Backspace 进入编辑而不是删除节点
- * 需要在默认 Backspace 之前注册（优先级更高）
+ * 数学公式 Keymap 插件：
+ * - Backspace：光标在 math_inline 右边界时进入编辑而不是删除节点
+ * - Enter：检测段落内容为 $$ 时，替换为块级公式（math_block）
+ * 需要在默认 keymap 之前注册（优先级更高）
  */
 export const mathInlineKeymapPlugin = $prose(() => {
   return keymap({
     Backspace: mathInlineBackspaceCmd,
+    Enter: dollarBlockEnterCmd,
   });
 });
 

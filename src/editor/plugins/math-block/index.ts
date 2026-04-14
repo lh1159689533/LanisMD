@@ -5,21 +5,17 @@
  * - 自定义 remark 插件解析 $$...$$ 语法
  * - 自定义 ProseMirror Node schema（block 级别，content: "text*"）
  * - NodeView 实现编辑/预览切换（参考 Mermaid Block 交互）
- * - InputRule 实现输入 $$ 后按回车创建数学块
+ * - 块级公式通过 $$ + Enter 创建（由 math-inline/dollar-trigger 的 Enter keymap 触发）
  * - Markdown 序列化输出 $$...$$ 语法
  *
  * 实现原理：
  * - 使用 $nodeSchema 创建 math_block 节点类型（block，content: "text*"）
  * - 使用 $remark 注册自定义 remark 插件处理 $$...$$ 语法
  * - 使用 $view 注册 NodeView
- * - 使用 $prose 注册 InputRule
  */
 
-import { $nodeSchema, $remark, $prose, $view } from '@milkdown/kit/utils';
-import { InputRule, inputRules } from '@milkdown/kit/prose/inputrules';
-import { TextSelection } from '@milkdown/kit/prose/state';
+import { $nodeSchema, $remark, $view } from '@milkdown/kit/utils';
 import type { Root } from 'mdast';
-import { visit } from 'unist-util-visit';
 import { MathBlockNodeView } from './node-view';
 
 // ---------------------------------------------------------------------------
@@ -211,37 +207,6 @@ export const mathBlockView = $view(mathBlockSchema.node, () => {
   return (node, view, getPos) => {
     return new MathBlockNodeView(node, view, getPos);
   };
-});
-
-// ---------------------------------------------------------------------------
-// InputRule
-// ---------------------------------------------------------------------------
-
-/**
- * 输入 $$ 后按空格或换行创建数学块
- * 在行首输入 $$ 自动创建
- */
-export const mathBlockInputRulePlugin = $prose(() => {
-  const rule = new InputRule(
-    /^\$\$\s$/,
-    (state, _match, start, end) => {
-      const schema = state.schema;
-      const mathBlockType = schema.nodes.math_block;
-      if (!mathBlockType) return null;
-
-      // 创建空的 math_block 节点
-      const mathNode = mathBlockType.create();
-      const tr = state.tr.replaceWith(start, end, mathNode);
-
-      // 将光标移到新建节点内部
-      const resolvedPos = tr.doc.resolve(start + 1);
-      tr.setSelection(TextSelection.near(resolvedPos));
-
-      return tr;
-    },
-  );
-
-  return inputRules({ rules: [rule] });
 });
 
 // ---------------------------------------------------------------------------
