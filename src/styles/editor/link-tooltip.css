@@ -7,10 +7,10 @@
   /* display is controlled by JS (none / flex) */
   align-items: center;
   gap: var(--lanismd-spacing-xs);
-  background: var(--lanismd-editor-bg);
-  border: 1px solid var(--lanismd-editor-border);
-  border-radius: var(--lanismd-radius-lg);
-  box-shadow: var(--lanismd-shadow-md);
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  border-radius: var(--lanismd-tooltip-border-radius);
+  box-shadow: var(--lanismd-tooltip-shadow);
   padding: var(--lanismd-spacing-sm) 6px;
   animation: linkTooltipIn var(--lanismd-transition-fast);
 }

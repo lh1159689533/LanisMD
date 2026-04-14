@@ -53,10 +53,25 @@ import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import { tableHandlePlugin, extendedTableSchema } from './plugins/table-block';
 import { remarkGfmAlertPlugin, gfmAlertSchema } from './plugins/gfm-alert';
 import { mermaidBlockPlugin } from './plugins/mermaid-block';
+import {
+  remarkMathInline,
+  mathInlineSchema,
+  mathInlineView,
+  mathInlineInputRulePlugin,
+  mathInlineSelectionPlugin,
+  mathInlineKeymapPlugin,
+} from './plugins/math-inline';
+import {
+  remarkMathBlock,
+  mathBlockSchema,
+  mathBlockView,
+  mathBlockInputRulePlugin,
+} from './plugins/math-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
+import 'katex/dist/katex.min.css';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
 export type EditorListener = {
@@ -156,6 +171,16 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(extendedTableSchema)
     .use(tableHandlePlugin)
     .use(mermaidBlockPlugin)
+    .use(mathInlineSchema)
+    .use(remarkMathInline)
+    .use(mathInlineView)
+    .use(mathInlineInputRulePlugin)
+    .use(mathInlineSelectionPlugin)
+    .use(mathInlineKeymapPlugin)
+    .use(mathBlockSchema)
+    .use(remarkMathBlock)
+    .use(mathBlockView)
+    .use(mathBlockInputRulePlugin)
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)

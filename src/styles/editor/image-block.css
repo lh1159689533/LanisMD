@@ -198,31 +198,14 @@
   align-items: center;
   gap: var(--lanismd-spacing-sm);
   padding: var(--lanismd-spacing-sm);
-  border-radius: var(--lanismd-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  border-radius: var(--lanismd-tooltip-border-radius);
+  box-shadow: var(--lanismd-tooltip-shadow);
   z-index: 10;
   opacity: 0;
   transition: opacity var(--lanismd-transition-medium);
   white-space: nowrap;
-}
-
-/* Light theme: frosted glass with light background */
-.image-toolbar-base {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Dark theme: frosted glass with dark background */
-.dark .image-toolbar-base {
-  background: rgba(30, 30, 30, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* --- Toolbar positioning: default (inside image, top-right) --- */
@@ -308,14 +291,8 @@
   flex-shrink: 0;
 }
 
-/* Light theme separator */
 .image-toolbar-base > .operation-separator {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-/* Dark theme separator */
-.dark .image-toolbar-base > .operation-separator {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--lanismd-border-color);
 }
 
 /* ===== Block Image Toolbar ===== */
@@ -325,9 +302,10 @@
   align-items: center;
   gap: var(--lanismd-spacing-sm);
   padding: var(--lanismd-spacing-sm);
-  border-radius: var(--lanismd-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  border-radius: var(--lanismd-tooltip-border-radius);
+  box-shadow: var(--lanismd-tooltip-shadow);
   z-index: 10;
   opacity: 0;
   transition: opacity var(--lanismd-transition-medium);
@@ -335,21 +313,6 @@
   /* Default positioning: inside image, top-right */
   right: var(--lanismd-spacing-md);
   top: var(--lanismd-spacing-md);
-  /* Light theme */
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Dark theme */
-.dark .milkdown-image-block > .image-wrapper .image-block-toolbar {
-  background: rgba(30, 30, 30, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Small image: toolbar positioned above */
@@ -431,13 +394,7 @@
   height: 20px;
   margin: var(--lanismd-spacing-sm) var(--lanismd-spacing-xs);
   flex-shrink: 0;
-  /* Light theme */
-  background: rgba(0, 0, 0, 0.12);
-}
-
-/* Dark theme separator */
-.dark .milkdown-image-block > .image-wrapper .image-block-toolbar > .operation-separator {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--lanismd-border-color);
 }
 
 /* Hide the original operation buttons from the component (if any) */
@@ -719,29 +676,15 @@
   align-items: center;
   gap: var(--lanismd-spacing-sm);
   padding: var(--lanismd-spacing-sm);
-  border-radius: var(--lanismd-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  border-radius: var(--lanismd-tooltip-border-radius);
+  box-shadow: var(--lanismd-tooltip-shadow);
   z-index: 100;
   white-space: nowrap;
   /* Default positioning: inside image, top-right */
   right: var(--lanismd-spacing-md);
   top: var(--lanismd-spacing-md);
-  /* Light theme */
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Dark theme */
-.dark .image-inline-toolbar {
-  background: rgba(30, 30, 30, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Small image: toolbar positioned above */
@@ -817,13 +760,7 @@
   width: 1px;
   height: 20px;
   margin: var(--lanismd-spacing-sm) var(--lanismd-spacing-xs);
-  /* Light theme */
-  background: rgba(0, 0, 0, 0.12);
-}
-
-/* Dark theme separator */
-.dark .image-inline-toolbar .operation-separator {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--lanismd-border-color);
 }
 
 /* ===== Image Inline Corner Handles ===== */
