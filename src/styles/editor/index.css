@@ -18,6 +18,8 @@
  * - loading.css: 加载状态
  * - link-tooltip.css: 链接悬浮提示
  * - source-editor.css: 源码编辑器
+ * - search-highlight.css: 搜索高亮装饰
+ * - search-replace.css: 编辑器内搜索替换面板
  */
 
 /* Base & Typography */
@@ -48,3 +50,4 @@
 @import './loading.css';
 @import './source-editor.css';
 @import './search-highlight.css';
+@import './search-replace.css';

@@ -10,6 +10,8 @@ interface SearchMatch {
 interface SearchState {
   /** 搜索面板是否打开 */
   isOpen: boolean;
+  /** 仅高亮模式：不显示搜索面板 UI，仅在编辑器中高亮关键词（用于全局搜索跳转） */
+  highlightOnly: boolean;
   /** 替换行是否展开 */
   showReplace: boolean;
   /** 搜索关键词 */
@@ -44,12 +46,17 @@ interface SearchState {
   navigateNext: () => void;
   /** 导航到上一个匹配 */
   navigatePrev: () => void;
+  /** 启用仅高亮模式（全局搜索跳转时调用） */
+  enableHighlightOnly: (text: string, caseSensitive: boolean, wholeWord: boolean, useRegex: boolean, activeIndex: number) => void;
+  /** 关闭仅高亮模式 */
+  disableHighlightOnly: () => void;
   /** 重置搜索状态（关闭时调用） */
   reset: () => void;
 }
 
 export const useSearchStore = create<SearchState>()((set, get) => ({
   isOpen: false,
+  highlightOnly: false,
   showReplace: false,
   searchText: '',
   replaceText: '',
@@ -59,10 +66,11 @@ export const useSearchStore = create<SearchState>()((set, get) => ({
   matches: [],
   currentIndex: -1,
 
-  openSearch: () => set({ isOpen: true }),
+  openSearch: () => set({ isOpen: true, highlightOnly: false }),
   closeSearch: () => {
     set({
       isOpen: false,
+      highlightOnly: false,
       searchText: '',
       replaceText: '',
       matches: [],
@@ -104,10 +112,30 @@ export const useSearchStore = create<SearchState>()((set, get) => ({
     const prev = currentIndex <= 0 ? matches.length - 1 : currentIndex - 1;
     set({ currentIndex: prev });
   },
+  enableHighlightOnly: (text, cs, ww, re, activeIndex) => {
+    set({
+      highlightOnly: true,
+      isOpen: false,
+      searchText: text,
+      caseSensitive: cs,
+      wholeWord: ww,
+      useRegex: re,
+      currentIndex: activeIndex,
+    });
+  },
+  disableHighlightOnly: () => {
+    set({
+      highlightOnly: false,
+      searchText: '',
+      matches: [],
+      currentIndex: -1,
+    });
+  },
   reset: () => set({
     searchText: '',
     replaceText: '',
     matches: [],
     currentIndex: -1,
+    highlightOnly: false,
   }),
 }));

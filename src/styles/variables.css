@@ -501,6 +501,25 @@
   /* ===============================================
    * 大纲（需组件改造支持）
    * =============================================== */
+
+  /* ===== 全局搜索面板 ===== */
+  --lanismd-search-input-bg: var(--lanismd-editor-bg);
+  --lanismd-search-input-border: var(--lanismd-editor-border);
+  --lanismd-search-input-text: var(--lanismd-editor-text);
+  --lanismd-search-option-active-bg: rgba(37, 99, 235, 0.1);
+  --lanismd-search-filter-bg: transparent;
+  --lanismd-search-filter-border: var(--lanismd-editor-border);
+  --lanismd-search-error-bg: rgba(239, 68, 68, 0.1);
+  --lanismd-search-error-text: var(--lanismd-danger, #ef4444);
+  --lanismd-search-separator: var(--lanismd-border-color);
+  --lanismd-search-badge-bg: rgba(37, 99, 235, 0.12);
+  --lanismd-search-badge-text: var(--lanismd-accent, #2563eb);
+  --lanismd-search-highlight-bg: rgba(255, 235, 59, 0.35);
+  --lanismd-search-highlight-text: inherit;
+
+  /* ===============================================
+   * 大纲样式（原有）
+   * =============================================== */
   --lanismd-outline-text: #475569;
   --lanismd-outline-hover-bg: rgba(0, 0, 0, 0.04);
   --lanismd-outline-active-bg: rgba(37, 99, 235, 0.08);

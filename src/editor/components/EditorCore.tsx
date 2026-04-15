@@ -53,6 +53,7 @@ export function EditorCore() {
   // 获取当前编辑模式
   const mode = useEditorStore((s) => s.mode);
   const searchIsOpen = useSearchStore((s) => s.isOpen);
+  const highlightOnly = useSearchStore((s) => s.highlightOnly);
 
   // 监听代码块设置变化
   const showLineNumbers = useSettingsStore(
@@ -92,15 +93,15 @@ export function EditorCore() {
     view.dispatch(tr);
   }, [searchText, caseSensitive, wholeWord, useRegex, currentIndex, mode, editorRef]);
 
-  // 搜索面板关闭时清除高亮
+  // 搜索面板关闭且非仅高亮模式时清除高亮
   useEffect(() => {
-    if (!searchIsOpen && mode !== 'source') {
+    if (!searchIsOpen && !highlightOnly && mode !== 'source') {
       const view = getMilkdownView(editorRef);
       if (!view) return;
       const tr = view.state.tr.setMeta(searchHighlightPluginKey, { trigger: true });
       view.dispatch(tr);
     }
-  }, [searchIsOpen, mode, editorRef]);
+  }, [searchIsOpen, highlightOnly, mode, editorRef]);
 
   // -------------------------------------------------------------------
   // 搜索回调：滚动到匹配位置

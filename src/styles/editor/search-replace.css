@@ -1,0 +1,200 @@
+/**
+ * 编辑器内搜索替换面板样式
+ * 类名前缀: .lanismd-editor-search-
+ * CSS 变量驱动，自动适配所有主题
+ *
+ * 注意：此文件使用 lanismd-editor-search- 前缀，
+ * 与全局搜索面板的 lanismd-search- 前缀严格区分，避免样式冲突。
+ */
+
+/* ===== 面板容器 ===== */
+.lanismd-editor-search-panel {
+  position: sticky;
+  top: 8px;
+  z-index: 50;
+  float: right;
+  margin-right: 16px;
+  padding: 8px;
+  border-radius: var(--lanismd-radius-lg, 8px);
+  border: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-editor-bg);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+/* ===== 主体布局 ===== */
+.lanismd-editor-search-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.lanismd-editor-search-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== 搜索行/替换行 ===== */
+.lanismd-editor-search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===== 展开/折叠替换箭头 ===== */
+.lanismd-editor-search-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-editor-search-toggle:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+/* ===== 输入框容器 ===== */
+.lanismd-editor-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-sidebar-bg);
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.lanismd-editor-search-input-wrapper:focus-within {
+  border-color: var(--lanismd-accent);
+}
+
+/* ===== 输入框 ===== */
+.lanismd-editor-search-input {
+  height: 100%;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-editor-search-input::placeholder {
+  color: var(--lanismd-text-muted);
+}
+
+/* ===== 选项按钮组（输入框内嵌） ===== */
+.lanismd-editor-search-options {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-right: 4px;
+}
+
+.lanismd-editor-search-option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--lanismd-font-mono);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.lanismd-editor-search-option-btn:hover {
+  opacity: 1;
+}
+
+.lanismd-editor-search-option-btn.active {
+  opacity: 1;
+  background-color: var(--lanismd-accent);
+  color: white;
+}
+
+/* 全词匹配下划线 */
+.lanismd-editor-search-whole-word {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ===== 匹配计数 ===== */
+.lanismd-editor-search-count {
+  min-width: 44px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--lanismd-sidebar-text);
+}
+
+.lanismd-editor-search-count.no-result {
+  color: var(--lanismd-danger, #ef4444);
+}
+
+/* ===== 导航/操作按钮 ===== */
+.lanismd-editor-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-editor-search-btn:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-editor-search-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ===== 替换按钮 ===== */
+.lanismd-editor-search-replace-btn {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: 10px;
+  color: var(--lanismd-sidebar-text);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-editor-search-replace-btn:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-editor-search-replace-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}

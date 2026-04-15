@@ -125,8 +125,9 @@ export const searchHighlightPlugin = $prose(() => {
     state: {
       init(_, state): SearchPluginState {
         const store = useSearchStore.getState();
-        // 仅在搜索面板打开时执行搜索
-        const regex = store.isOpen
+        // 在搜索面板打开或仅高亮模式下执行搜索
+        const shouldHighlight = store.isOpen || store.highlightOnly;
+        const regex = shouldHighlight
           ? buildSearchRegex(store.searchText, store.caseSensitive, store.wholeWord, store.useRegex)
           : null;
         const matches = regex ? findMatchesInDoc(state.doc, regex) : [];
@@ -147,10 +148,10 @@ export const searchHighlightPlugin = $prose(() => {
 
       apply(tr, pluginState, _oldState, newState): SearchPluginState {
         const store = useSearchStore.getState();
-        const { searchText, caseSensitive, wholeWord, useRegex, currentIndex, isOpen } = store;
+        const { searchText, caseSensitive, wholeWord, useRegex, currentIndex, isOpen, highlightOnly } = store;
 
-        // 搜索面板关闭时清除所有装饰
-        if (!isOpen) {
+        // 搜索面板关闭且非仅高亮模式时清除所有装饰
+        if (!isOpen && !highlightOnly) {
           if (pluginState.matches.length > 0) {
             store.setMatches([]);
           }

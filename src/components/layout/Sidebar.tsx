@@ -13,6 +13,7 @@ import { parseOutline } from '@/utils/toc';
 import { scrollToHeadingByIndex, scrollToHeadingInSource } from '@/editor/plugins/outline-sync';
 import { cn } from '@/utils/cn';
 import { FileTree } from './FileTree';
+import { SearchPanel } from './SearchPanel';
 import type { OutlineItem } from '@/types';
 
 import '../../styles/layout/sidebar.css';
@@ -242,7 +243,6 @@ export function Sidebar() {
   /** 拖拽过程中内容面板是否折叠（吸附行为） */
   const snapCollapsedRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [searchText, setSearchText] = useState('');
 
   // Sync width ref when store changes (e.g. sidebar toggled back open)
   useEffect(() => {
@@ -407,18 +407,7 @@ export function Sidebar() {
             </div>
           )}
           {sidebarPanel === 'files' && <FileTree />}
-          {sidebarPanel === 'search' && (
-            <div className="search-panel">
-              <p className="search-panel-title">搜索</p>
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="在文件中搜索..."
-                className="search-panel-input"
-              />
-            </div>
-          )}
+          {sidebarPanel === 'search' && <SearchPanel />}
         </div>
       </div>
 

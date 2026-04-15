@@ -114,12 +114,15 @@ function InlineEditInput({
   onCancel,
   depth,
   icon,
+  confirmOnUnchanged = false,
 }: {
   value: string;
   onConfirm: (newValue: string) => void;
   onCancel: () => void;
   depth?: number;
   icon?: React.ReactNode;
+  /** 为 true 时，即使输入值与初始值相同也调用 onConfirm（用于新建文件/文件夹场景） */
+  confirmOnUnchanged?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
@@ -143,8 +146,13 @@ function InlineEditInput({
       const trimmed = inputValue.trim();
       if (trimmed && trimmed !== value) {
         onConfirm(trimmed);
-      } else if (trimmed === value) {
-        onCancel();
+      } else if (trimmed && trimmed === value) {
+        // 值未变：新建场景仍然需要确认创建，重命名场景则取消
+        if (confirmOnUnchanged) {
+          onConfirm(trimmed);
+        } else {
+          onCancel();
+        }
       }
     } else if (e.key === 'Escape') {
       onCancel();
@@ -154,6 +162,9 @@ function InlineEditInput({
   const handleBlur = () => {
     const trimmed = inputValue.trim();
     if (trimmed && trimmed !== value) {
+      onConfirm(trimmed);
+    } else if (trimmed && confirmOnUnchanged) {
+      // 新建场景：失焦时也应确认创建
       onConfirm(trimmed);
     } else {
       onCancel();
@@ -388,6 +399,7 @@ function FileTreeItem({
           onConfirm={handleNewEntryConfirm}
           onCancel={onFinishInlineEdit}
           depth={depth + 1}
+          confirmOnUnchanged
           icon={
             inlineEdit!.mode === 'new-folder' ? (
               <RiFolderLine size={14} className="file-tree-node-icon folder" />
@@ -1274,6 +1286,7 @@ export function FileTree() {
                 onConfirm={handleNewEntryFromRootConfirm}
                 onCancel={handleFinishInlineEdit}
                 depth={0}
+                confirmOnUnchanged
                 icon={
                   inlineEdit!.mode === 'new-folder' ? (
                     <RiFolderLine size={14} className="file-tree-node-icon folder" />

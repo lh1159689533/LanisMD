@@ -1,0 +1,370 @@
+/**
+ * 全局搜索面板样式
+ * 类名前缀: .lanismd-search-
+ * CSS 变量驱动，自动适配所有主题
+ */
+
+/* ===== 面板容器 ===== */
+.lanismd-search-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+/* ===== 标题栏 ===== */
+.lanismd-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--lanismd-spacing-md);
+  flex-shrink: 0;
+}
+
+.lanismd-search-title {
+  font-weight: 500;
+}
+
+.lanismd-search-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.lanismd-search-filter-toggle:hover {
+  opacity: 1;
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-search-filter-toggle.active {
+  opacity: 1;
+  color: var(--lanismd-accent);
+}
+
+/* ===== 搜索输入行 ===== */
+.lanismd-search-input-row {
+  display: flex;
+  gap: var(--lanismd-spacing-sm);
+  align-items: flex-start;
+  margin-bottom: var(--lanismd-spacing-md);
+  flex-shrink: 0;
+}
+
+/* 输入框容器 - 内嵌选项按钮风格，与编辑器搜索一致 */
+.lanismd-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  overflow: hidden;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-search-input-border, var(--lanismd-editor-border));
+  background-color: var(--lanismd-search-input-bg, var(--lanismd-editor-bg));
+  transition: border-color var(--lanismd-transition-fast),
+    box-shadow var(--lanismd-transition-fast);
+}
+
+.lanismd-search-input-wrapper:focus-within {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring);
+}
+
+.lanismd-search-input {
+  height: 100%;
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--lanismd-spacing-md);
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--lanismd-search-input-text, var(--lanismd-editor-text));
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.lanismd-search-input::placeholder {
+  color: var(--lanismd-text-muted);
+}
+
+/* 选项按钮组 - 内嵌在输入框内 */
+.lanismd-search-options {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-right: 2px;
+}
+
+.lanismd-search-option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--lanismd-font-mono);
+  color: var(--lanismd-sidebar-text);
+  opacity: 0.6;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.lanismd-search-option-btn:hover {
+  opacity: 1;
+}
+
+.lanismd-search-option-btn.active {
+  opacity: 1;
+  background-color: var(--lanismd-accent);
+  color: white;
+}
+
+/* 全词匹配按钮下划线效果 */
+.lanismd-search-whole-word {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* 清除按钮 */
+.lanismd-search-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-right: 2px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-muted);
+  opacity: 0.6;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.lanismd-search-clear-btn:hover {
+  opacity: 1;
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+/* ===== 文件夹过滤区域 ===== */
+.lanismd-search-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  margin-bottom: var(--lanismd-spacing-md);
+  flex-shrink: 0;
+}
+
+.lanismd-search-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lanismd-search-filter-label {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+.lanismd-search-filter-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-search-input-border, var(--lanismd-editor-border));
+  border-radius: var(--lanismd-radius-md);
+  background-color: var(--lanismd-search-input-bg, var(--lanismd-editor-bg));
+  color: var(--lanismd-search-input-text, var(--lanismd-editor-text));
+  font-size: var(--lanismd-font-size-sm);
+  outline: none;
+  transition: border-color var(--lanismd-transition-fast),
+    box-shadow var(--lanismd-transition-fast);
+}
+
+.lanismd-search-filter-input:focus {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring);
+}
+
+.lanismd-search-filter-input::placeholder {
+  color: var(--lanismd-text-muted);
+}
+
+/* ===== 状态信息 ===== */
+.lanismd-search-error {
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  margin-bottom: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-sm);
+  background-color: var(--lanismd-search-error-bg, rgba(239, 68, 68, 0.1));
+  color: var(--lanismd-search-error-text, var(--lanismd-danger, #ef4444));
+  font-size: var(--lanismd-font-size-xs);
+  flex-shrink: 0;
+}
+
+.lanismd-search-status {
+  padding: var(--lanismd-spacing-sm) 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  flex-shrink: 0;
+}
+
+.lanismd-search-stats {
+  padding: var(--lanismd-spacing-sm) 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  flex-shrink: 0;
+}
+
+.lanismd-search-empty {
+  padding: var(--lanismd-spacing-lg) 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  text-align: center;
+}
+
+/* ===== 搜索结果列表 ===== */
+.lanismd-search-results {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 calc(-1 * var(--lanismd-spacing-lg));
+  padding: 0;
+}
+
+/* 自定义滚动条 */
+.lanismd-search-results::-webkit-scrollbar {
+  width: var(--lanismd-scrollbar-width, 6px);
+}
+
+.lanismd-search-results::-webkit-scrollbar-track {
+  background: var(--lanismd-scrollbar-track-bg, transparent);
+}
+
+.lanismd-search-results::-webkit-scrollbar-thumb {
+  background: var(--lanismd-scrollbar-thumb, rgba(0, 0, 0, 0.15));
+  border-radius: var(--lanismd-scrollbar-thumb-radius, 3px);
+}
+
+.lanismd-search-results::-webkit-scrollbar-thumb:hover {
+  background: var(--lanismd-scrollbar-thumb-hover, rgba(0, 0, 0, 0.25));
+}
+
+/* ===== 文件分组 ===== */
+.lanismd-search-file-group {
+  border-bottom: 1px solid var(--lanismd-search-separator, var(--lanismd-editor-border));
+}
+
+.lanismd-search-file-group:last-child {
+  border-bottom: none;
+}
+
+/* 文件名行 */
+.lanismd-search-file-header {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  width: 100%;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-lg);
+  text-align: left;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+  transition: background-color var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.lanismd-search-file-header:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-search-chevron {
+  flex-shrink: 0;
+  transition: transform var(--lanismd-transition-fast);
+}
+
+.lanismd-search-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.lanismd-search-file-name {
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lanismd-search-file-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  margin-left: var(--lanismd-spacing-sm);
+}
+
+.lanismd-search-match-count {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background-color: var(--lanismd-search-badge-bg, rgba(122, 162, 247, 0.15));
+  color: var(--lanismd-search-badge-text, var(--lanismd-accent));
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* ===== 匹配项 ===== */
+.lanismd-search-match-list {
+  padding: 0;
+}
+
+.lanismd-search-match-item {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
+  padding: 2px var(--lanismd-spacing-lg);
+  padding-left: calc(var(--lanismd-spacing-lg) + 16px);
+  text-align: left;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  transition: background-color var(--lanismd-transition-fast);
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lanismd-search-match-item:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-search-match-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-search-context {
+  color: var(--lanismd-sidebar-text);
+}
+
+.lanismd-search-highlight {
+  background-color: var(--lanismd-search-highlight-bg, rgba(255, 170, 0, 0.4));
+  color: var(--lanismd-search-highlight-text, inherit);
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 1px;
+}

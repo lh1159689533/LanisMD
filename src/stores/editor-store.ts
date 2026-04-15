@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { EditorView as CMEditorView } from '@codemirror/view';
+import type { EditorView as PMEditorView } from '@milkdown/kit/prose/view';
 import type { OutlineItem } from '@/types';
 
 interface EditorState {
@@ -17,6 +18,8 @@ interface EditorState {
   cursorColumn: number;
   /** 源码模式下的 CodeMirror EditorView 实例引用 */
   sourceView: CMEditorView | null;
+  /** WYSIWYG 模式下的 ProseMirror EditorView 实例引用 */
+  wysiwygView: PMEditorView | null;
 
   setMode: (mode: 'wysiwyg' | 'source') => void;
   toggleFocusMode: () => void;
@@ -28,6 +31,8 @@ interface EditorState {
   updateCursor: (line: number, column: number) => void;
   /** 注册/注销源码模式的 CodeMirror EditorView */
   setSourceView: (view: CMEditorView | null) => void;
+  /** 注册/注销 WYSIWYG 模式的 ProseMirror EditorView */
+  setWysiwygView: (view: PMEditorView | null) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -43,6 +48,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   cursorLine: 1,
   cursorColumn: 1,
   sourceView: null,
+  wysiwygView: null,
 
   setMode: (mode) => set({ mode }),
   toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
@@ -65,4 +71,5 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setActiveHeadingId: (id) => set({ activeHeadingId: id }),
   updateCursor: (line, column) => set({ cursorLine: line, cursorColumn: column }),
   setSourceView: (view) => set({ sourceView: view }),
+  setWysiwygView: (view) => set({ wysiwygView: view }),
 }));

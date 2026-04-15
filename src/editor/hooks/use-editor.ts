@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Editor } from '@milkdown/kit/core';
+import { editorViewCtx } from '@milkdown/kit/core';
 import { createEditor, setupEditorListeners, type EditorListener } from '../editor-setup';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
@@ -32,6 +33,8 @@ export function useEditor() {
       editorRef.current.destroy();
       editorRef.current = null;
     }
+    // 清理旧的 ProseMirror EditorView 引用
+    useEditorStore.getState().setWysiwygView(null);
 
     const listeners: EditorListener = {
       onMarkdownUpdated: (markdown) => {
@@ -58,6 +61,16 @@ export function useEditor() {
         editorRef.current = editor;
         setupEditorListeners(editor, listeners);
         updateStats(file.content);
+
+        // 注册 ProseMirror EditorView 到 store，供全局搜索跳转等功能使用
+        try {
+          editor.action((ctx) => {
+            const view = ctx.get(editorViewCtx);
+            useEditorStore.getState().setWysiwygView(view);
+          });
+        } catch {
+          // 编辑器可能还没完全初始化
+        }
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -67,6 +80,7 @@ export function useEditor() {
 
     return () => {
       cancelled = true;
+      useEditorStore.getState().setWysiwygView(null);
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;

@@ -7,6 +7,8 @@
  * 布局参考 VS Code 风格：
  * - 搜索行：输入框（内嵌 Aa/ab/.* 选项按钮）+ 匹配计数 + 上下导航 + 展开替换 + 关闭
  * - 替换行（可折叠）：输入框 + 替换 + 全部替换
+ *
+ * 样式类名前缀: lanismd-editor-search-（与全局搜索 lanismd-search- 严格区分）
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -27,38 +29,6 @@ interface SearchReplaceProps {
   onReplace?: (from: number, to: number, replaceText: string) => void;
   /** 替换全部匹配的回调 */
   onReplaceAll?: (replaceText: string) => void;
-}
-
-/**
- * 选项图标按钮（内嵌在输入框右侧）
- */
-function OptionButton({
-  active,
-  title,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  title: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={cn(
-        'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[11px] font-medium',
-        'transition-colors',
-        active
-          ? 'bg-[var(--lanismd-accent)] text-white'
-          : 'text-[var(--lanismd-sidebar-text)] opacity-60 hover:opacity-100',
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
 export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: SearchReplaceProps) {
@@ -155,49 +125,32 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
     ? `${currentIndex + 1}/${matches.length}`
     : searchText ? '无结果' : '';
 
-  // 匹配计数颜色
-  const matchCountColor = searchText && matches.length === 0
-    ? 'text-red-400'
-    : 'text-[var(--lanismd-sidebar-text)]';
+  // 匹配计数是否无结果
+  const noResult = !!(searchText && matches.length === 0);
 
   return (
     <div
-      className={cn(
-        'lanismd-search-panel',
-        'sticky top-2 z-50 float-right mr-4',
-        'rounded-lg border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-editor-bg)] shadow-lg',
-        'p-2',
-      )}
+      className="lanismd-editor-search-panel"
       // 阻止点击事件冒泡到编辑器
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="flex items-start gap-1">
+      <div className="lanismd-editor-search-body">
         {/* 展开/折叠替换行的箭头 */}
         <button
           type="button"
           onClick={toggleReplace}
           title={showReplace ? '折叠替换' : '展开替换'}
-          className={cn(
-            'mt-[5px] flex h-5 w-5 shrink-0 items-center justify-center rounded',
-            'text-[var(--lanismd-sidebar-text)] transition-colors',
-            'hover:bg-black/5 dark:hover:bg-white/10',
-          )}
+          className="lanismd-editor-search-toggle"
         >
           {showReplace ? <RiArrowDownSLine size={14} /> : <RiArrowRightSLine size={14} />}
         </button>
 
         {/* 右侧主体内容 */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="lanismd-editor-search-content">
           {/* 搜索行 */}
-          <div className="flex items-center gap-1">
+          <div className="lanismd-editor-search-row">
             {/* 搜索输入框（内嵌选项按钮） */}
-            <div
-              className={cn(
-                'flex h-7 min-w-0 flex-1 items-center gap-0.5 overflow-hidden',
-                'rounded-md border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-sidebar-bg)]',
-                'focus-within:border-[var(--lanismd-accent)]',
-              )}
-            >
+            <div className="lanismd-editor-search-input-wrapper">
               <input
                 ref={inputRef}
                 type="text"
@@ -205,39 +158,40 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="搜索..."
-                className={cn(
-                  'h-full min-w-0 flex-1 bg-transparent px-2',
-                  'text-xs text-[var(--lanismd-editor-text)] outline-none',
-                )}
+                className="lanismd-editor-search-input"
+                spellCheck={false}
               />
               {/* 选项按钮组：区分大小写 / 全词匹配 / 正则 */}
-              <div className="flex shrink-0 items-center gap-0.5 pr-1">
-                <OptionButton
-                  active={caseSensitive}
-                  title="区分大小写"
+              <div className="lanismd-editor-search-options">
+                <button
+                  type="button"
                   onClick={() => setCaseSensitive(!caseSensitive)}
+                  title="区分大小写"
+                  className={cn('lanismd-editor-search-option-btn', caseSensitive && 'active')}
                 >
                   Aa
-                </OptionButton>
-                <OptionButton
-                  active={wholeWord}
-                  title="全词匹配"
+                </button>
+                <button
+                  type="button"
                   onClick={() => setWholeWord(!wholeWord)}
+                  title="全词匹配"
+                  className={cn('lanismd-editor-search-option-btn', wholeWord && 'active')}
                 >
-                  <span className="underline decoration-1 underline-offset-2">ab</span>
-                </OptionButton>
-                <OptionButton
-                  active={useRegex}
-                  title="正则表达式"
+                  <span className="lanismd-editor-search-whole-word">ab</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setUseRegex(!useRegex)}
+                  title="正则表达式"
+                  className={cn('lanismd-editor-search-option-btn', useRegex && 'active')}
                 >
                   .*
-                </OptionButton>
+                </button>
               </div>
             </div>
 
             {/* 匹配计数 */}
-            <span className={cn('min-w-[44px] shrink-0 text-center text-[10px]', matchCountColor)}>
+            <span className={cn('lanismd-editor-search-count', noResult && 'no-result')}>
               {matchCountText}
             </span>
 
@@ -247,7 +201,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
               onClick={handleNavigatePrev}
               disabled={matches.length === 0}
               title="上一个 (Shift+Enter)"
-              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+              className="lanismd-editor-search-btn"
             >
               <RiArrowUpLine size={14} />
             </button>
@@ -256,7 +210,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
               onClick={handleNavigateNext}
               disabled={matches.length === 0}
               title="下一个 (Enter)"
-              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10"
+              className="lanismd-editor-search-btn"
             >
               <RiArrowDownLine size={14} />
             </button>
@@ -266,7 +220,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
               type="button"
               onClick={closeSearch}
               title="关闭 (Escape)"
-              className="shrink-0 rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+              className="lanismd-editor-search-btn"
             >
               <RiCloseLine size={14} />
             </button>
@@ -274,24 +228,16 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
 
           {/* 替换行（可折叠） */}
           {showReplace && (
-            <div className="flex items-center gap-1">
-              <div
-                className={cn(
-                  'flex h-7 min-w-0 flex-1 items-center overflow-hidden',
-                  'rounded-md border border-[var(--lanismd-editor-border)] bg-[var(--lanismd-sidebar-bg)]',
-                  'focus-within:border-[var(--lanismd-accent)]',
-                )}
-              >
+            <div className="lanismd-editor-search-row">
+              <div className="lanismd-editor-search-input-wrapper">
                 <input
                   type="text"
                   value={replaceText}
                   onChange={(e) => setReplaceText(e.target.value)}
                   onKeyDown={handleReplaceKeyDown}
                   placeholder="替换..."
-                  className={cn(
-                    'h-full min-w-0 flex-1 bg-transparent px-2',
-                    'text-xs text-[var(--lanismd-editor-text)] outline-none',
-                  )}
+                  className="lanismd-editor-search-input"
+                  spellCheck={false}
                 />
               </div>
               {/* 替换按钮 */}
@@ -300,11 +246,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
                 onClick={handleReplace}
                 disabled={matches.length === 0}
                 title="替换当前匹配 (Enter)"
-                className={cn(
-                  'flex h-7 shrink-0 items-center rounded-md px-2',
-                  'text-[10px] text-[var(--lanismd-sidebar-text)]',
-                  'transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10',
-                )}
+                className="lanismd-editor-search-replace-btn"
               >
                 替换
               </button>
@@ -313,11 +255,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
                 onClick={handleReplaceAll}
                 disabled={matches.length === 0}
                 title="替换全部匹配"
-                className={cn(
-                  'flex h-7 shrink-0 items-center rounded-md px-2',
-                  'text-[10px] text-[var(--lanismd-sidebar-text)]',
-                  'transition-colors hover:bg-black/5 disabled:opacity-30 dark:hover:bg-white/10',
-                )}
+                className="lanismd-editor-search-replace-btn"
               >
                 全部
               </button>

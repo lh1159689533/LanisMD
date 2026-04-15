@@ -189,4 +189,19 @@
   --lanismd-quick-open-folder-icon-color: #7aa2f7;
   /* 滚动条 */
   --lanismd-quick-open-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+
+  /* ===== 5. 全局搜索面板 ===== */
+  --lanismd-search-input-bg: #1a1b26;
+  --lanismd-search-input-border: #292e42;
+  --lanismd-search-input-text: #c0caf5;
+  --lanismd-search-option-active-bg: rgba(122, 162, 247, 0.15);
+  --lanismd-search-filter-bg: rgba(255, 255, 255, 0.02);
+  --lanismd-search-filter-border: #292e42;
+  --lanismd-search-error-bg: rgba(247, 118, 142, 0.12);
+  --lanismd-search-error-text: #f7768e;
+  --lanismd-search-separator: #292e42;
+  --lanismd-search-badge-bg: rgba(122, 162, 247, 0.18);
+  --lanismd-search-badge-text: #7aa2f7;
+  --lanismd-search-highlight-bg: rgba(224, 175, 104, 0.3);
+  --lanismd-search-highlight-text: #e0af68;
 }
