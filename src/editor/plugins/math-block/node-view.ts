@@ -80,6 +80,7 @@ export class MathBlockNodeView implements NodeView {
     // 创建工具栏
     const callbacks: ToolbarCallbacks = {
       onToggleEdit: () => this.toggleEdit(),
+      onDelete: () => this.deleteBlock(),
     };
     this.toolbar = createToolbar(callbacks);
     this.dom.appendChild(this.toolbar);
@@ -123,6 +124,26 @@ export class MathBlockNodeView implements NodeView {
 
     // 初始渲染
     this.renderToPreview(this.getCode());
+
+    // 自动进入编辑模式（通过斜杠菜单或 $$ + Enter 创建时触发）
+    if (node.attrs.autoEdit) {
+      // 清除 autoEdit 标记，避免文档重新加载时再次触发
+      requestAnimationFrame(() => {
+        const pos = this.getPos();
+        if (pos !== undefined) {
+          try {
+            const tr = this.view.state.tr.setNodeMarkup(pos, undefined, {
+              ...this.node.attrs,
+              autoEdit: false,
+            });
+            this.view.dispatch(tr);
+          } catch {
+            // 忽略清除标记失败
+          }
+        }
+        this.enterEdit();
+      });
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -263,6 +284,20 @@ export class MathBlockNodeView implements NodeView {
 
     this.toolbar.classList.remove('is-visible');
     updateToolbarState(this.toolbar, 'preview');
+  }
+
+  // -------------------------------------------------------------------------
+  // 删除
+  // -------------------------------------------------------------------------
+
+  /** 删除整个块节点 */
+  private deleteBlock(): void {
+    const pos = this.getPos();
+    if (pos === undefined) return;
+
+    const tr = this.view.state.tr;
+    tr.delete(pos, pos + this.node.nodeSize);
+    this.view.dispatch(tr);
   }
 
   // -------------------------------------------------------------------------

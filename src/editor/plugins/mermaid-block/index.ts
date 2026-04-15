@@ -30,6 +30,31 @@ import { MermaidNodeView } from './node-view';
 import { startThemeObserver, stopThemeObserver } from './theme';
 
 // ---------------------------------------------------------------------------
+// 自动编辑标记：用于标记新创建的 Mermaid 块需要直接进入编辑模式
+// ---------------------------------------------------------------------------
+
+/** 标记下一个创建的 Mermaid NodeView 需要自动进入编辑模式 */
+let pendingAutoEdit = false;
+
+/**
+ * 设置下一个 Mermaid 块自动进入编辑模式
+ * 在 slash-menu 等创建逻辑中调用
+ */
+export function setMermaidAutoEdit(): void {
+  pendingAutoEdit = true;
+}
+
+/**
+ * 消费 autoEdit 标记（内部使用）
+ * 返回当前值并重置为 false
+ */
+function consumeAutoEdit(): boolean {
+  const val = pendingAutoEdit;
+  pendingAutoEdit = false;
+  return val;
+}
+
+// ---------------------------------------------------------------------------
 // 标记：主题观察器是否已启动
 // ---------------------------------------------------------------------------
 
@@ -62,7 +87,8 @@ export const mermaidBlockPlugin = $view(codeBlockSchema.node, () => {
   return (node, view, getPos, decorations, innerDecorations) => {
     // 仅处理 language="mermaid" 的代码块
     if (node.attrs.language === 'mermaid') {
-      return new MermaidNodeView(node, view, getPos);
+      const autoEdit = consumeAutoEdit();
+      return new MermaidNodeView(node, view, getPos, autoEdit);
     }
 
     // 其他语言：委托给原始的 CodeMirror 代码块工厂

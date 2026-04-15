@@ -14,7 +14,8 @@
  * - 使用 $view 注册 NodeView
  */
 
-import { $nodeSchema, $remark, $view } from '@milkdown/kit/utils';
+import { $nodeSchema, $remark, $view, $prose } from '@milkdown/kit/utils';
+import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import type { Root } from 'mdast';
 import { MathBlockNodeView } from './node-view';
 
@@ -39,6 +40,8 @@ export const remarkMathBlockPlugin = $remark('remarkMathBlock', () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ?.map((c: any) => c.value ?? '')
             .join('') ?? node.value ?? '';
+          // 空公式序列化为 $$\n$$（不加多余空行），避免 remark 将其拆为两个独立段落
+          if (!value) return `$$\n$$`;
           return `$$\n${value}\n$$`;
         },
       },
@@ -117,7 +120,7 @@ function extractTextContent(node: any): string {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleMultiNodeMathBlock(children: any[]): void {
-  for (let i = 0; i < children.length - 2; i++) {
+  for (let i = 0; i < children.length - 1; i++) {
     const first = children[i];
     if (first.type !== 'paragraph') continue;
 
@@ -163,6 +166,9 @@ export const mathBlockSchema = $nodeSchema('math_block', () => ({
   atom: false,
   code: true,
   isolating: true,
+  attrs: {
+    autoEdit: { default: false },
+  },
   parseDOM: [
     {
       tag: 'div.math-block',
@@ -207,6 +213,96 @@ export const mathBlockView = $view(mathBlockSchema.node, () => {
   return (node, view, getPos) => {
     return new MathBlockNodeView(node, view, getPos);
   };
+});
+
+// ---------------------------------------------------------------------------
+// 保护插件：阻止 joinTextblocksAround 合并内容到 math_block
+// ---------------------------------------------------------------------------
+
+/**
+ * 当删除与 math_block 相邻的节点（如 code_block/mermaid）时，ProseMirror
+ * 的 ReplaceStep 会调用 joinTextblocksAround 尝试合并相邻 textblock。
+ * 由于 math_block (content: "text*") 与 code_block (content: "text*")
+ * 的内容模型兼容，joinTextblocksAround 会将被删除节点的文本合并到 math_block 中。
+ *
+ * 此插件通过 appendTransaction 检测并回滚这种非法合并：
+ * 如果 math_block 的内容在用户未主动编辑的情况下突然从空变为非空，
+ * 则清空 math_block 恢复原状。
+ */
+const mathBlockGuardKey = new PluginKey('math-block-guard');
+
+export const mathBlockGuardPlugin = $prose(() => {
+  return new Plugin({
+    key: mathBlockGuardKey,
+
+    appendTransaction(transactions, oldState, newState) {
+      // 只处理有文档变更的事务
+      const docChanged = transactions.some((tr) => tr.docChanged);
+      if (!docChanged) return null;
+
+      // 检查旧文档中的 math_block 节点，收集它们的位置和内容
+      const oldMathBlocks = new Map<number, string>();
+      oldState.doc.descendants((node, pos) => {
+        if (node.type.name === 'math_block') {
+          oldMathBlocks.set(pos, node.textContent);
+        }
+      });
+
+      // 如果旧文档中没有 math_block，无需处理
+      if (oldMathBlocks.size === 0) return null;
+
+      // 检查旧 selection 是否在某个 math_block 内部（表示用户正在编辑它）
+      const oldSelFrom = oldState.selection.from;
+      let userEditingMathBlockPos: number | null = null;
+      oldState.doc.descendants((node, pos) => {
+        if (node.type.name === 'math_block') {
+          const nodeEnd = pos + node.nodeSize;
+          if (oldSelFrom > pos && oldSelFrom < nodeEnd) {
+            userEditingMathBlockPos = pos;
+          }
+        }
+      });
+
+      // 遍历新文档中的 math_block，检查是否有非法内容注入
+      let tr = newState.tr;
+      let needsFix = false;
+
+      newState.doc.descendants((node, pos) => {
+        if (node.type.name !== 'math_block') return;
+        if (node.textContent === '') return; // 内容为空，无需处理
+
+        // 尝试通过 mapping 找到对应的旧 math_block
+        // 遍历旧的 math_block 位置，查找映射后匹配当前 pos 的
+        for (const [oldPos, oldText] of oldMathBlocks) {
+          let mappedPos: number;
+          try {
+            mappedPos = transactions.reduce(
+              (p, t) => t.mapping.map(p),
+              oldPos,
+            );
+          } catch {
+            continue;
+          }
+
+          if (mappedPos === pos && oldText === '' && node.textContent !== '') {
+            // 旧的 math_block 是空的，现在却有了内容
+            // 且用户不是在这个 math_block 内部编辑
+            if (userEditingMathBlockPos !== oldPos) {
+              // 非法合并！清空 math_block 的内容
+              const contentStart = pos + 1; // math_block 内容起始位置
+              const contentEnd = pos + node.nodeSize - 1; // math_block 内容结束位置
+              if (contentStart < contentEnd) {
+                tr = tr.delete(contentStart, contentEnd);
+                needsFix = true;
+              }
+            }
+          }
+        }
+      });
+
+      return needsFix ? tr : null;
+    },
+  });
 });
 
 // ---------------------------------------------------------------------------

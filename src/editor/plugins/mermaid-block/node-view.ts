@@ -71,7 +71,7 @@ export class MermaidNodeView implements NodeView {
   /** 当前节点 */
   private node: Node;
 
-  constructor(node: Node, view: EditorView, getPos: () => number | undefined) {
+  constructor(node: Node, view: EditorView, getPos: () => number | undefined, autoEdit = false) {
     this.node = node;
     this.view = view;
     this.getPos = getPos;
@@ -86,6 +86,7 @@ export class MermaidNodeView implements NodeView {
       onToggleEdit: () => this.toggleEdit(),
       onExportPng: () => this.handleExportPng(),
       onExportSvg: () => this.handleExportSvg(),
+      onDelete: () => this.deleteBlock(),
     };
     this.toolbar = createToolbar(callbacks);
     this.dom.appendChild(this.toolbar);
@@ -135,6 +136,13 @@ export class MermaidNodeView implements NodeView {
 
     // 初始渲染
     this.initialRender();
+
+    // 自动进入编辑模式（通过斜杠菜单创建时触发）
+    if (autoEdit) {
+      requestAnimationFrame(() => {
+        this.enterEdit();
+      });
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -236,6 +244,7 @@ export class MermaidNodeView implements NodeView {
     if (this.state === 'preview') return;
 
     const code = this.getCode();
+
     this.state = 'preview';
     this.dom.classList.remove('is-editing');
     this.dom.classList.add('is-preview');
@@ -374,6 +383,20 @@ export class MermaidNodeView implements NodeView {
     } else {
       await this.updateLivePreview(code);
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // 删除
+  // -------------------------------------------------------------------------
+
+  /** 删除整个块节点 */
+  private deleteBlock(): void {
+    const pos = this.getPos();
+    if (pos === undefined) return;
+
+    const tr = this.view.state.tr;
+    tr.delete(pos, pos + this.node.nodeSize);
+    this.view.dispatch(tr);
   }
 
   // -------------------------------------------------------------------------

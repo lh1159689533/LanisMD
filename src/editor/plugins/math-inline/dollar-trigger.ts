@@ -219,7 +219,7 @@ export function dollarBlockEnterCmd(
     const parentPos = $from.before(); // 段落的起始位置
     const parentEnd = $from.after(); // 段落的结束位置
 
-    const mathNode = mathBlockType.create();
+    const mathNode = mathBlockType.create({ autoEdit: true });
     const tr = state.tr.replaceWith(parentPos, parentEnd, mathNode);
 
     // 光标定位到 math_block 内部

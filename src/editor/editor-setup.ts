@@ -66,6 +66,7 @@ import {
   remarkMathBlock,
   mathBlockSchema,
   mathBlockView,
+  mathBlockGuardPlugin,
 } from './plugins/math-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
@@ -181,6 +182,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(mathBlockSchema)
     .use(remarkMathBlock)
     .use(mathBlockView)
+    .use(mathBlockGuardPlugin)
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)

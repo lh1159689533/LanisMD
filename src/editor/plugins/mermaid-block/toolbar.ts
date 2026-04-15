@@ -19,6 +19,7 @@ export interface ToolbarCallbacks {
   onToggleEdit: () => void;
   onExportPng: () => void;
   onExportSvg: () => void;
+  onDelete: () => void;
 }
 
 /**
@@ -64,9 +65,22 @@ export function createToolbar(callbacks: ToolbarCallbacks): HTMLElement {
     callbacks.onExportSvg();
   });
 
+  // 删除按钮
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = `${CSS_PREFIX}-toolbar-btn ${CSS_PREFIX}-toolbar-btn-delete`;
+  deleteBtn.type = 'button';
+  deleteBtn.innerHTML = `<span class="${CSS_PREFIX}-toolbar-icon">${ICONS.delete}</span><span class="${CSS_PREFIX}-toolbar-label">删除</span>`;
+  deleteBtn.title = '删除此块';
+  deleteBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callbacks.onDelete();
+  });
+
   toolbar.appendChild(toggleBtn);
   toolbar.appendChild(pngBtn);
   toolbar.appendChild(svgBtn);
+  toolbar.appendChild(deleteBtn);
 
   return toolbar;
 }

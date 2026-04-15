@@ -2,7 +2,7 @@
  * Slash Command Menu Plugin
  *
  * 输入 `/` 触发命令菜单，支持：
- * - 标题 1-3、无序列表、有序列表、任务列表、代码块、引用、分割线
+ * - 标题 1-3、无序列表、有序列表、任务列表、代码块、引用、分割线、数学公式
  * - 键盘导航（↑↓ 选择，Enter 执行，Esc 关闭）
  * - 输入过滤（输入 /h 只显示标题相关项）
  */
@@ -13,6 +13,7 @@ import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import { openImageDialog } from './image-block';
 import { createLinkDialog } from './tooltip-toolbar';
+import { setMermaidAutoEdit } from './mermaid-block';
 import type { GfmAlertType } from './gfm-alert/types';
 
 // ---------------------------------------------------------------------------
@@ -304,6 +305,9 @@ function insertMermaidBlock(view: EditorView) {
 
   const mermaidBlock = codeBlock.create({ language: 'mermaid' });
 
+  // 标记下一个 Mermaid NodeView 自动进入编辑模式
+  setMermaidAutoEdit();
+
   if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
     const from = $from.before();
     const to = $from.after();
@@ -315,6 +319,41 @@ function insertMermaidBlock(view: EditorView) {
   } else {
     const insertPos = $from.after();
     const tr = state.tr.insert(insertPos, mermaidBlock);
+    const cursorPos = insertPos + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
+/**
+ * 插入一个空的 math_block 节点，并将光标定位到块内部。
+ */
+function insertMathBlock(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const mathBlock = schema.nodes.math_block;
+  if (!mathBlock) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  // 带 autoEdit 标记，NodeView 创建后自动进入编辑模式
+  const mathNode = mathBlock.create({ autoEdit: true });
+
+  if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, mathNode);
+    // 光标定位到 math_block 内部
+    const cursorPos = from + 1;
+    tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
+    dispatch(tr.scrollIntoView());
+  } else {
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, mathNode);
     const cursorPos = insertPos + 1;
     tr.setSelection(TextSelection.near(tr.doc.resolve(cursorPos)));
     dispatch(tr.scrollIntoView());
@@ -474,6 +513,7 @@ const icons = {
   alertCaution:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
   link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  math: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L20 4"/><path d="M4 4l4 16"/><path d="M16 4l4 16"/><path d="M2 12h6"/><path d="M16 12h6"/></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -592,6 +632,13 @@ export const slashCommands: SlashCommand[] = [
       'tb',
     ],
     execute: (view) => insertMermaidBlock(view),
+  },
+  {
+    label: '数学公式',
+    icon: icons.math,
+    shortcut: '$$',
+    keywords: ['math', 'formula', 'equation', 'latex', 'katex', '数学', '公式', '方程', 'sx', 'gs'],
+    execute: (view) => insertMathBlock(view),
   },
   {
     label: '提示块',
