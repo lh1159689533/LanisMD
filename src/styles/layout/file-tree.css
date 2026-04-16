@@ -411,3 +411,23 @@
   color: var(--lanismd-sidebar-text);
   opacity: 0.6;
 }
+
+/* ===== 拖拽反馈样式 ===== */
+
+/** 被拖动的文件节点 - 半透明 */
+.file-tree-node-item.dragging {
+  opacity: 0.4;
+}
+
+/** 拖放目标文件夹 - 高亮边框 */
+.file-tree-node-item.drag-over {
+  background-color: var(--lanismd-drag-over-bg, rgba(59, 130, 246, 0.08));
+  outline: 2px solid var(--lanismd-accent);
+  outline-offset: -2px;
+  border-radius: var(--lanismd-radius-sm);
+}
+
+/** 空白区域拖放 - 整个内容区高亮 */
+.file-tree-content.drag-over-root {
+  background-color: var(--lanismd-drag-over-bg, rgba(59, 130, 246, 0.04));
+}

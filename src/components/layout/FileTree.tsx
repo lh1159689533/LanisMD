@@ -21,6 +21,7 @@ import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { save as tauriSave } from '@tauri-apps/plugin-dialog';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useFileStore } from '@/stores/file-store';
+import { useUIStore } from '@/stores/ui-store';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
@@ -200,6 +201,14 @@ function FileTreeItem({
   onContextMenu,
   onStartInlineEdit,
   onFinishInlineEdit,
+  dragOverPath,
+  isDragging,
+  dragSourcePath,
+  onDragOverChange,
+  onDragStateChange,
+  onStartDragExpandTimer,
+  onClearDragExpandTimer,
+  onMoveFile,
 }: {
   node: FileTreeNode;
   depth: number;
@@ -208,6 +217,22 @@ function FileTreeItem({
   onContextMenu: (e: React.MouseEvent, node: FileTreeNode) => void;
   onStartInlineEdit: (edit: InlineEditState) => void;
   onFinishInlineEdit: () => void;
+  /** 当前拖放高亮的目标路径 */
+  dragOverPath: string | null;
+  /** 是否正在拖拽中 */
+  isDragging: boolean;
+  /** 当前被拖拽的文件路径 */
+  dragSourcePath: string | null;
+  /** 更新拖放高亮目标 */
+  onDragOverChange: (path: string | null) => void;
+  /** 通知拖拽状态变化 */
+  onDragStateChange: (dragging: boolean, sourcePath: string | null) => void;
+  /** 启动悬停自动展开计时器 */
+  onStartDragExpandTimer: (dirPath: string) => void;
+  /** 清除悬停自动展开计时器 */
+  onClearDragExpandTimer: () => void;
+  /** 执行文件移动 */
+  onMoveFile: (sourcePath: string, targetDir: string) => Promise<void>;
 }) {
   const expandedDirs = useFileTreeStore((s) => s.expandedDirs);
   const selectedFile = useFileTreeStore((s) => s.selectedFile);
@@ -308,6 +333,74 @@ function FileTreeItem({
     [node, onContextMenu],
   );
 
+  // ─── 拖拽事件处理 ───
+
+  /** 文件节点：开始拖拽 */
+  const handleDragStart = useCallback((e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', node.path);
+    e.dataTransfer.effectAllowed = 'move';
+    onDragStateChange(true, node.path);
+  }, [node.path, onDragStateChange]);
+
+  /** 文件节点：拖拽结束 */
+  const handleDragEnd = useCallback(() => {
+    onDragStateChange(false, null);
+    onDragOverChange(null);
+    onClearDragExpandTimer();
+  }, [onDragStateChange, onDragOverChange, onClearDragExpandTimer]);
+
+  /** 文件夹节点：dragOver（允许放置） */
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  // 用计数器解决 dragEnter/dragLeave 在子元素间冒泡的经典问题
+  const dragEnterCountRef = useRef(0);
+
+  /** 文件夹节点：dragEnter（高亮 + 启动自动展开计时器） */
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragEnterCountRef.current++;
+    onDragOverChange(node.path);
+
+    // 如果文件夹未展开，启动 500ms 自动展开计时器
+    if (!expandedDirs.has(node.path)) {
+      onStartDragExpandTimer(node.path);
+    }
+  }, [node.path, expandedDirs, onDragOverChange, onStartDragExpandTimer]);
+
+  /** 文件夹节点：dragLeave（取消高亮 + 清除计时器） */
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragEnterCountRef.current--;
+    if (dragEnterCountRef.current <= 0) {
+      dragEnterCountRef.current = 0;
+      // 仅当 dragOverPath 仍指向当前文件夹时才清除，避免覆盖其他文件夹的高亮
+      if (dragOverPath === node.path) {
+        onDragOverChange(null);
+      }
+      onClearDragExpandTimer();
+    }
+  }, [node.path, dragOverPath, onDragOverChange, onClearDragExpandTimer]);
+
+  /** 文件夹节点：drop（执行移动） */
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragEnterCountRef.current = 0;
+    onDragOverChange(null);
+    onClearDragExpandTimer();
+
+    const sourcePath = e.dataTransfer.getData('text/plain');
+    if (!sourcePath || sourcePath === node.path) return;
+
+    await onMoveFile(sourcePath, node.path);
+  }, [node.path, onDragOverChange, onClearDragExpandTimer, onMoveFile]);
+
   if (isBeingRenamed) {
     return (
       <div
@@ -336,6 +429,10 @@ function FileTreeItem({
           <div
             className="file-tree-node-children"
             style={{ '--depth': depth } as React.CSSProperties}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             {node.children.map((child, index) => (
               <FileTreeItem
@@ -347,6 +444,14 @@ function FileTreeItem({
                 onContextMenu={onContextMenu}
                 onStartInlineEdit={onStartInlineEdit}
                 onFinishInlineEdit={onFinishInlineEdit}
+                dragOverPath={dragOverPath}
+                isDragging={isDragging}
+                dragSourcePath={dragSourcePath}
+                onDragOverChange={onDragOverChange}
+                onDragStateChange={onDragStateChange}
+                onStartDragExpandTimer={onStartDragExpandTimer}
+                onClearDragExpandTimer={onClearDragExpandTimer}
+                onMoveFile={onMoveFile}
               />
             ))}
           </div>
@@ -363,7 +468,19 @@ function FileTreeItem({
       <button
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        className={cn('file-tree-node-item', isSelected && !node.isDir && 'selected')}
+        draggable={!node.isDir}
+        onDragStart={!node.isDir ? handleDragStart : undefined}
+        onDragEnd={!node.isDir ? handleDragEnd : undefined}
+        onDragOver={node.isDir ? handleDragOver : undefined}
+        onDragEnter={node.isDir ? handleDragEnter : undefined}
+        onDragLeave={node.isDir ? handleDragLeave : undefined}
+        onDrop={node.isDir ? handleDrop : undefined}
+        className={cn(
+          'file-tree-node-item',
+          isSelected && !node.isDir && 'selected',
+          isDragging && !node.isDir && dragSourcePath === node.path && 'dragging',
+          node.isDir && dragOverPath === node.path && 'drag-over',
+        )}
         style={{ paddingLeft: `${8 + depth * 20}px` }}
         title={node.path}
       >
@@ -414,6 +531,10 @@ function FileTreeItem({
         <div
           className="file-tree-node-children"
           style={{ '--depth': depth } as React.CSSProperties}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
           {node.children.map((child, index) => (
             <FileTreeItem
@@ -425,6 +546,14 @@ function FileTreeItem({
               onContextMenu={onContextMenu}
               onStartInlineEdit={onStartInlineEdit}
               onFinishInlineEdit={onFinishInlineEdit}
+              dragOverPath={dragOverPath}
+              isDragging={isDragging}
+              dragSourcePath={dragSourcePath}
+              onDragOverChange={onDragOverChange}
+              onDragStateChange={onDragStateChange}
+              onStartDragExpandTimer={onStartDragExpandTimer}
+              onClearDragExpandTimer={onClearDragExpandTimer}
+              onMoveFile={onMoveFile}
             />
           ))}
         </div>
@@ -600,6 +729,12 @@ export function FileTree() {
 
   // Inline editing state
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
+
+  // ─── 拖拽状态管理 ──────────────────────────────────────
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragSourcePath, setDragSourcePath] = useState<string | null>(null);
+  const dragExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 监听 selectedFile 变化，自动滚动到对应的文件树节点
   const selectedFile = useFileTreeStore((s) => s.selectedFile);
@@ -1152,6 +1287,90 @@ export function FileTree() {
     setInlineEdit(null);
   }, []);
 
+  // ─── 拖拽辅助回调 ────────────────────────────────────
+
+  /** 通知拖拽状态变化 */
+  const handleDragStateChange = useCallback((dragging: boolean, sourcePath: string | null) => {
+    setIsDragging(dragging);
+    setDragSourcePath(sourcePath);
+    if (!dragging) {
+      setDragOverPath(null);
+    }
+  }, []);
+
+  /** 启动悬停自动展开计时器 */
+  const startDragExpandTimer = useCallback((dirPath: string) => {
+    if (dragExpandTimerRef.current) {
+      clearTimeout(dragExpandTimerRef.current);
+    }
+    dragExpandTimerRef.current = setTimeout(() => {
+      const { expandedDirs, toggleDir } = useFileTreeStore.getState();
+      if (!expandedDirs.has(dirPath)) {
+        toggleDir(dirPath);
+      }
+      dragExpandTimerRef.current = null;
+    }, 500);
+  }, []);
+
+  /** 清除悬停自动展开计时器 */
+  const clearDragExpandTimer = useCallback(() => {
+    if (dragExpandTimerRef.current) {
+      clearTimeout(dragExpandTimerRef.current);
+      dragExpandTimerRef.current = null;
+    }
+  }, []);
+
+  /** 执行文件移动 */
+  const handleMoveFile = useCallback(async (sourcePath: string, targetDir: string) => {
+    try {
+      useFileTreeStore.getState().notifyUserOp();
+      const newPath = await fileService.moveFile(sourcePath, targetDir);
+      await refreshTree();
+
+      // 如果移动的是当前打开的文件，更新编辑器路径
+      const currentFile = useFileStore.getState().currentFile;
+      if (currentFile?.filePath === sourcePath) {
+        const newName = newPath.split('/').pop() ?? newPath.split('\\').pop() ?? '';
+        useFileStore.getState().updateFilePath(newPath, newName);
+      }
+
+      // 更新文件树选中状态
+      useFileTreeStore.getState().selectFile(newPath);
+    } catch (err) {
+      // 同名冲突等错误 -> toast 提示
+      const message = err instanceof Error
+        ? err.message
+        : typeof err === 'string'
+          ? err
+          : '移动文件失败';
+      useUIStore.getState().addToast({
+        type: 'error',
+        message,
+      });
+    }
+  }, [refreshTree]);
+
+  /** 空白区域：允许放置 */
+  const handleBlankDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverPath('__root__');
+  }, []);
+
+  /** 空白区域：放置到根目录 */
+  const handleBlankDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverPath(null);
+    setIsDragging(false);
+    setDragSourcePath(null);
+
+    if (!rootPath) return;
+    const sourcePath = e.dataTransfer.getData('text/plain');
+    if (!sourcePath) return;
+
+    await handleMoveFile(sourcePath, rootPath);
+  }, [rootPath, handleMoveFile]);
+
   // ─── New entry inline edit from root (for blank-area new file/folder) ──
 
   const handleNewEntryFromRootConfirm = useCallback(
@@ -1272,7 +1491,15 @@ export function FileTree() {
       </div>
 
       {/* Content area */}
-      <div className="file-tree-content" onContextMenu={handleBlankContextMenu}>
+      <div
+        className={cn(
+          'file-tree-content',
+          dragOverPath === '__root__' && 'drag-over-root',
+        )}
+        onContextMenu={handleBlankContextMenu}
+        onDragOver={handleBlankDragOver}
+        onDrop={handleBlankDrop}
+      >
         {tree.length === 0 ? (
           <div className="file-tree-no-files">
             <span className="file-tree-no-files-text">未找到 Markdown 文件</span>
@@ -1306,6 +1533,14 @@ export function FileTree() {
                 onContextMenu={handleTreeNodeContextMenu}
                 onStartInlineEdit={setInlineEdit}
                 onFinishInlineEdit={handleFinishInlineEdit}
+                dragOverPath={dragOverPath}
+                isDragging={isDragging}
+                dragSourcePath={dragSourcePath}
+                onDragOverChange={setDragOverPath}
+                onDragStateChange={handleDragStateChange}
+                onStartDragExpandTimer={startDragExpandTimer}
+                onClearDragExpandTimer={clearDragExpandTimer}
+                onMoveFile={handleMoveFile}
               />
             ))}
           </>

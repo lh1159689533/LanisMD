@@ -257,6 +257,41 @@ impl FileSystemService {
         Ok(format!("./assets/{}", final_name))
     }
 
+    /// 将文件移动到目标目录，返回移动后的新路径
+    pub fn move_file(source_path: &str, target_dir: &str) -> AppResult<String> {
+        let source = Path::new(source_path);
+        let target = Path::new(target_dir);
+
+        if !source.exists() {
+            return Err(AppError::FileNotFound(source_path.to_string()));
+        }
+        if !source.is_file() {
+            return Err(AppError::InvalidPath("Only files can be moved".to_string()));
+        }
+        if !target.exists() || !target.is_dir() {
+            return Err(AppError::InvalidPath("Target directory does not exist".to_string()));
+        }
+
+        let file_name = source.file_name()
+            .ok_or_else(|| AppError::InvalidPath("Cannot determine file name".to_string()))?;
+
+        // 同目录无需移动
+        if source.parent() == Some(target) {
+            return Ok(source_path.to_string());
+        }
+
+        let new_path = target.join(file_name);
+        if new_path.exists() {
+            return Err(AppError::InvalidPath(format!(
+                "目标文件夹已存在同名文件 \"{}\"",
+                file_name.to_string_lossy()
+            )));
+        }
+
+        fs::rename(source, &new_path).map_err(AppError::Io)?;
+        Ok(new_path.to_string_lossy().to_string())
+    }
+
     /// Move file or directory to system trash
     pub fn move_to_trash(path: &str) -> AppResult<()> {
         let p = Path::new(path);

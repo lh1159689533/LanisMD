@@ -254,6 +254,24 @@ pub async fn duplicate_file(path: String) -> AppResult<String> {
     crate::services::fs_service::FileSystemService::duplicate_file(&path)
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MoveFileParams {
+    /// 源文件的完整路径
+    pub source_path: String,
+    /// 目标目录的完整路径
+    pub target_dir: String,
+}
+
+/// 将文件移动到目标目录
+#[tauri::command]
+pub async fn move_file(params: MoveFileParams) -> AppResult<String> {
+    crate::services::fs_service::FileSystemService::move_file(
+        &params.source_path,
+        &params.target_dir,
+    )
+}
+
 /// Move a file or directory to the system trash
 #[tauri::command]
 pub async fn move_to_trash(path: String) -> AppResult<()> {

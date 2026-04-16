@@ -71,6 +71,13 @@ class FileService {
     return invoke<string>('save_image_bytes_to_assets', { data: Array.from(data), fileName, docPath });
   }
 
+  /** 移动文件到目标目录，返回新路径 */
+  async moveFile(sourcePath: string, targetDir: string): Promise<string> {
+    return invoke<string>('move_file', {
+      params: { sourcePath, targetDir },
+    });
+  }
+
 }
 
 class ConfigService {

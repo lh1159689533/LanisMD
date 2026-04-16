@@ -52,6 +52,7 @@ pub fn run() {
             file_commands::create_entry,
             file_commands::rename_entry,
             file_commands::duplicate_file,
+            file_commands::move_file,
             file_commands::move_to_trash,
             file_commands::copy_image_to_assets,
             file_commands::save_image_bytes_to_assets,
