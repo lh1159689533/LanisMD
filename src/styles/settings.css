@@ -218,9 +218,68 @@
   justify-content: center;
 }
 
-/* ===== 快捷键提示 ===== */
-.settings-shortcuts-hint {
+/* ===== 快捷键列表 ===== */
+.settings-shortcuts .settings-section-title:first-child {
+  padding-top: 0;
+  border-top: none;
+  margin-bottom: 0;
+}
+
+.settings-shortcut-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-shortcut-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-radius: var(--lanismd-radius-sm);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.settings-shortcut-row:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.settings-shortcut-label {
+  font-size: var(--lanismd-font-size-sm);
   color: var(--lanismd-sidebar-text);
+}
+
+.settings-shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.settings-shortcut-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--lanismd-radius-sm);
+  border: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-code-bg, rgba(0, 0, 0, 0.04));
+  font-family: var(--lanismd-font-mono);
+  font-size: 11px;
+  color: var(--lanismd-editor-text);
+  box-shadow: 0 1px 0 var(--lanismd-editor-border);
+}
+
+.settings-shortcut-plus {
+  font-size: 10px;
+  color: var(--lanismd-text-muted);
+  margin: 0 1px;
 }
 
 /* ===== 按钮样式 ===== */

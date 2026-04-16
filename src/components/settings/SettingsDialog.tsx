@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   RiCloseLine,
   RiSunLine,
@@ -16,6 +16,74 @@ import { BUILTIN_THEME_LIST, isCustomTheme, type BuiltinTheme } from '@/types/co
 import type { ThemeMode } from '@/types';
 
 import '../../styles/settings.css';
+
+// ---------------------------------------------------------------------------
+// 快捷键数据定义
+// ---------------------------------------------------------------------------
+
+interface ShortcutItem {
+  /** 功能名称 */
+  label: string;
+  /** macOS 快捷键 */
+  mac: string;
+  /** Windows/Linux 快捷键 */
+  win: string;
+}
+
+interface ShortcutGroup {
+  /** 分组标题 */
+  title: string;
+  /** 该组的快捷键列表 */
+  items: ShortcutItem[];
+}
+
+/** 完整的快捷键参考数据 */
+const SHORTCUT_GROUPS: ShortcutGroup[] = [
+  {
+    title: '段落格式',
+    items: [
+      { label: '标题 1', mac: 'Cmd+1', win: 'Ctrl+1' },
+      { label: '标题 2', mac: 'Cmd+2', win: 'Ctrl+2' },
+      { label: '标题 3', mac: 'Cmd+3', win: 'Ctrl+3' },
+      { label: '标题 4', mac: 'Cmd+4', win: 'Ctrl+4' },
+      { label: '标题 5', mac: 'Cmd+5', win: 'Ctrl+5' },
+      { label: '标题 6', mac: 'Cmd+6', win: 'Ctrl+6' },
+      { label: '段落（取消标题）', mac: 'Cmd+0', win: 'Ctrl+0' },
+      { label: '增加标题级别', mac: 'Cmd+=', win: 'Ctrl+=' },
+      { label: '减小标题级别', mac: 'Cmd+-', win: 'Ctrl+-' },
+      { label: '引用', mac: 'Cmd+Option+Q', win: 'Ctrl+Shift+Q' },
+      { label: '有序列表', mac: 'Cmd+Option+O', win: 'Ctrl+Shift+[' },
+      { label: '无序列表', mac: 'Cmd+Option+U', win: 'Ctrl+Shift+]' },
+      { label: '表格', mac: 'Cmd+Option+T', win: 'Ctrl+T' },
+      { label: '代码块', mac: 'Cmd+Option+C', win: 'Ctrl+Shift+K' },
+      { label: '代码块（备选）', mac: 'Cmd+Shift+`', win: 'Ctrl+Shift+`' },
+      { label: '数学公式块', mac: 'Cmd+Option+B', win: 'Ctrl+Shift+M' },
+    ],
+  },
+  {
+    title: '文本格式',
+    items: [
+      { label: '加粗', mac: 'Cmd+B', win: 'Ctrl+B' },
+      { label: '斜体', mac: 'Cmd+I', win: 'Ctrl+I' },
+      { label: '下划线', mac: 'Cmd+U', win: 'Ctrl+U' },
+      { label: '删除线', mac: 'Cmd+Shift+X', win: 'Alt+Shift+5' },
+      { label: '行内代码', mac: 'Cmd+E', win: 'Ctrl+E' },
+      { label: '高亮', mac: 'Cmd+Option+H', win: 'Ctrl+Shift+H' },
+      { label: '超链接', mac: 'Cmd+K', win: 'Ctrl+K' },
+      { label: '图片', mac: 'Cmd+Option+I', win: 'Ctrl+Shift+I' },
+      { label: '清除格式', mac: 'Cmd+\\', win: 'Ctrl+\\' },
+    ],
+  },
+  {
+    title: '通用',
+    items: [
+      { label: '撤销', mac: 'Cmd+Z', win: 'Ctrl+Z' },
+      { label: '重做', mac: 'Cmd+Shift+Z', win: 'Ctrl+Shift+Z' },
+      { label: '增加缩进', mac: 'Tab', win: 'Tab' },
+      { label: '减少缩进', mac: 'Shift+Tab', win: 'Shift+Tab' },
+    ],
+  },
+];
 
 // 内置主题图标映射
 const BUILTIN_THEME_ICONS: Record<BuiltinTheme | 'system', React.ReactNode> = {
@@ -50,6 +118,26 @@ const SECTIONS = [
   { id: 'editor', label: '编辑器' },
   { id: 'shortcuts', label: '快捷键' },
 ];
+
+/** 当前平台是否为 macOS */
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent);
+
+/**
+ * 渲染快捷键组合，将 "Cmd+Shift+X" 拆分为多个 <kbd> 标签
+ */
+function ShortcutKeys({ shortcut }: { shortcut: string }) {
+  const parts = useMemo(() => shortcut.split('+'), [shortcut]);
+  return (
+    <span className="settings-shortcut-keys">
+      {parts.map((part, index) => (
+        <span key={index}>
+          <kbd className="settings-shortcut-kbd">{part}</kbd>
+          {index < parts.length - 1 && <span className="settings-shortcut-plus">+</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export function SettingsDialog() {
   const { closeSettings, settingsActiveSection } = useUIStore();
@@ -241,8 +329,20 @@ export function SettingsDialog() {
           )}
 
           {settingsActiveSection === 'shortcuts' && (
-            <div className="settings-shortcuts-hint">
-              <p>快捷键设置将在后续版本中提供。</p>
+            <div className="settings-section settings-shortcuts">
+              {SHORTCUT_GROUPS.map((group) => (
+                <div key={group.title} className="settings-shortcut-group">
+                  <div className="settings-section-title">{group.title}</div>
+                  <div className="settings-shortcut-list">
+                    {group.items.map((item) => (
+                      <div key={item.label} className="settings-shortcut-row">
+                        <span className="settings-shortcut-label">{item.label}</span>
+                        <ShortcutKeys shortcut={isMac ? item.mac : item.win} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

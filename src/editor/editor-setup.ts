@@ -71,6 +71,7 @@ import {
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
+import { editorKeymapPlugin } from './plugins/editor-keymap';
 import '@milkdown/kit/prose/view/style/prosemirror.css';
 import 'katex/dist/katex.min.css';
 import type { EditorView } from '@milkdown/kit/prose/view';
@@ -186,6 +187,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)
+    .use(editorKeymapPlugin)
     .use(history)
     .use(listener)
     .use(clipboard)
