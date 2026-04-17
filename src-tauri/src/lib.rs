@@ -16,15 +16,36 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .setup(|_app| {
-            // macOS: 在 dev 模式下设置 Dock 图标
+        .setup(|app| {
+            // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式
             #[cfg(target_os = "macos")]
             {
-                use cocoa::appkit::{NSApp, NSApplication, NSImage};
-                use cocoa::base::nil;
+                use tauri::Manager;
+                use cocoa::appkit::{NSApp, NSApplication, NSImage, NSWindow, NSWindowTitleVisibility};
+                use cocoa::base::{nil, YES};
                 use cocoa::foundation::NSData;
                 use objc::runtime::Object;
 
+                // 恢复窗口装饰和 Overlay 标题栏
+                if let Some(window) = app.get_webview_window("main") {
+                    let ns_window = window.ns_window().unwrap() as cocoa::base::id;
+                    unsafe {
+                        // 显示窗口装饰（红绿灯按钮）
+                        ns_window.setHasShadow_(YES);
+                        // 设置标题栏透明 + 全尺寸内容视图（Overlay 效果）
+                        let masks = ns_window.styleMask()
+                            | cocoa::appkit::NSWindowStyleMask::NSFullSizeContentViewWindowMask
+                            | cocoa::appkit::NSWindowStyleMask::NSTitledWindowMask
+                            | cocoa::appkit::NSWindowStyleMask::NSClosableWindowMask
+                            | cocoa::appkit::NSWindowStyleMask::NSMiniaturizableWindowMask
+                            | cocoa::appkit::NSWindowStyleMask::NSResizableWindowMask;
+                        ns_window.setStyleMask_(masks);
+                        ns_window.setTitlebarAppearsTransparent_(YES);
+                        ns_window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+                    }
+                }
+
+                // 设置 Dock 图标
                 let icon_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                     .join("icons/128x128@2x.png");
                 
@@ -36,8 +57,8 @@ pub fn run() {
                             icon_data.len() as u64,
                         );
                         let nsimage: *mut Object = NSImage::initWithData_(NSImage::alloc(nil), data);
-                        let app = NSApp();
-                        app.setApplicationIconImage_(nsimage);
+                        let app_instance = NSApp();
+                        app_instance.setApplicationIconImage_(nsimage);
                     }
                 }
             }
