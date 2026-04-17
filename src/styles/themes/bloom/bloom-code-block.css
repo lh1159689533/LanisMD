@@ -15,7 +15,7 @@
   position: relative;
 }
 
-/* 红黄绿圆点装饰 */
+/* 红黄绿圆点装饰（当未注入真实 DOM 圆点时的后备方案） */
 [class*="theme-bloom"] .milkdown-editor-root .ProseMirror code-block::before,
 [class*="theme-bloom"] .milkdown-editor-root .ProseMirror [data-type="code_block"]::before {
   content: "";
@@ -34,10 +34,22 @@
   pointer-events: none;
 }
 
+/* 当注入了真实圆点 DOM 时，隐藏伪元素 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror code-block:has(.lanismd-window-dots)::before,
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror [data-type="code_block"]:has(.lanismd-window-dots)::before {
+  display: none !important;
+}
+
 /* 调整工具栏位置以适应窗口装饰 */
 [class*="theme-bloom"] .milkdown-editor-root .ProseMirror code-block .tools,
 [class*="theme-bloom"] .milkdown-editor-root .ProseMirror [data-type="code_block"] .tools {
   padding-left: 72px; /* 为红黄绿圆点预留空间 */
+}
+
+/* 当注入了真实圆点 DOM 时，取消 padding-left 偏移 */
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror code-block .tools[data-fold-injected='true'],
+[class*="theme-bloom"] .milkdown-editor-root .ProseMirror [data-type="code_block"] .tools[data-fold-injected='true'] {
+  padding-left: var(--lanismd-codeblock-toolbar-padding);
 }
 
 /* ===== 代码块工具栏增强 ===== */

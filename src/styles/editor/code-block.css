@@ -74,7 +74,7 @@
 
 /* ===== Language selector button ===== */
 .milkdown-editor-root .language-button {
-  position: relative;
+  position: static;
   display: flex;
   align-items: center;
   gap: var(--lanismd-spacing-sm);
@@ -103,10 +103,13 @@
 }
 
 /* ===== Language picker dropdown ===== */
+/* 注意：Milkdown 内部使用 computePosition (Floating UI) 通过内联 style 设置 left/top，
+   当 language-button 被折叠插件移到右侧后计算出的 left 会超出容器边界，
+   因此用 !important 强制覆盖内联值，改为右对齐定位 */
 .milkdown-editor-root .language-picker {
   position: absolute;
-  top: 100%;
-  left: 0;
+  left: auto !important;
+  right: 0 !important;
   z-index: 10;
   min-width: 200px;
   max-width: 280px;
@@ -238,6 +241,7 @@
   display: flex;
   align-items: center;
   gap: var(--lanismd-spacing-sm);
+  margin-left: auto;
 }
 
 /* ===== Copy button ===== */
@@ -402,4 +406,137 @@
   padding: 0;
   border-radius: 0;
   font-size: inherit;
+}
+
+/* ===== Code Block Fold - macOS 圆点折叠 ===== */
+
+/* --- 窗口圆点容器 --- */
+.milkdown-editor-root .lanismd-window-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-codeblock-dot-spacing);
+  flex-shrink: 0;
+  margin-right: var(--lanismd-spacing-md);
+}
+
+/* --- 圆点基础样式 --- */
+.milkdown-editor-root .lanismd-dot {
+  width: var(--lanismd-codeblock-dot-size);
+  height: var(--lanismd-codeblock-dot-size);
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.milkdown-editor-root .lanismd-dot-red {
+  background: var(--lanismd-codeblock-dot-red);
+}
+
+.milkdown-editor-root .lanismd-dot-yellow {
+  background: var(--lanismd-codeblock-dot-yellow);
+  cursor: pointer;
+  transition: box-shadow var(--lanismd-transition-fast);
+  /* 为 hover 横线做容器 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.milkdown-editor-root .lanismd-dot-green {
+  background: var(--lanismd-codeblock-dot-green);
+}
+
+/* --- 黄色圆点 hover 横线效果 --- */
+.milkdown-editor-root .lanismd-dot-yellow::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 1.5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-fast);
+}
+
+.milkdown-editor-root .lanismd-dot-yellow:hover::after {
+  opacity: 1;
+}
+
+/* 暗色模式下横线用浅色 */
+.dark .milkdown-editor-root .lanismd-dot-yellow::after {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+
+
+/* --- 当注入了真实圆点 DOM 时，隐藏 CSS 伪元素装饰 --- */
+.milkdown-editor-root .tools[data-fold-injected='true']::before {
+  display: none !important;
+}
+
+/* 同时隐藏 data-window-controls 的伪元素 */
+.milkdown-editor-root .tools[data-fold-injected='true'][data-window-controls='macos']::before,
+.milkdown-editor-root [data-window-controls='macos'] .tools[data-fold-injected='true']::before {
+  display: none !important;
+}
+
+/* 当注入了真实圆点，取消 padding-left 偏移（由真实 DOM 占位） */
+.milkdown-editor-root .tools[data-fold-injected='true'][data-window-controls='macos'],
+.milkdown-editor-root [data-window-controls='macos'] .tools[data-fold-injected='true'] {
+  padding-left: var(--lanismd-codeblock-toolbar-padding);
+}
+
+/* --- 折叠动画：代码区内容容器 --- */
+.milkdown-editor-root .lanismd-fold-content {
+  overflow: hidden;
+  transition: max-height 250ms ease-in-out, opacity 200ms ease-in-out;
+  opacity: 1;
+}
+
+/* 折叠中（收缩动画进行时） */
+.milkdown-editor-root .lanismd-fold-content.is-collapsing {
+  max-height: 0 !important;
+  opacity: 0;
+}
+
+/* 折叠完成（静态折叠态） */
+.milkdown-editor-root .lanismd-fold-content.is-collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* 展开中（展开动画进行时），max-height 由 JS 设置 */
+.milkdown-editor-root .lanismd-fold-content.is-expanding {
+  opacity: 1;
+}
+
+/* --- 折叠状态：隐藏工具栏底部边框 --- */
+.milkdown-editor-root .milkdown-code-block.is-folded .tools,
+.milkdown-editor-root code-block.is-folded .tools,
+.milkdown-editor-root [data-type='code_block'].is-folded .tools {
+  border-bottom: none;
+  transition: border-bottom-color 200ms ease-in-out;
+}
+
+/* --- 折叠行数标签动画 --- */
+.milkdown-editor-root .lanismd-fold-lines {
+  font-size: var(--lanismd-font-size-xs);
+  font-family: var(--lanismd-font-mono);
+  color: var(--lanismd-codeblock-lang-color);
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+  transition: opacity 200ms ease-in-out;
+}
+
+.milkdown-editor-root .lanismd-fold-lines.is-visible {
+  opacity: 0.7;
+}
+
+.milkdown-editor-root .lanismd-fold-lines.is-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
