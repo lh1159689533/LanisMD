@@ -31,9 +31,7 @@ export function mathInlineBackspaceCmd(
   if (dispatch) {
     // 选中该 math_inline 节点（触发 selectNode -> 进入编辑）
     const nodePos = $from.pos - nodeBefore.nodeSize;
-    const tr = state.tr.setSelection(
-      NodeSelection.create(state.doc, nodePos),
-    );
+    const tr = state.tr.setSelection(NodeSelection.create(state.doc, nodePos));
     dispatch(tr);
   }
 

@@ -76,15 +76,25 @@
 /* ===== 内容区 ===== */
 .settings-dialog-content {
   flex: 1;
-  overflow: auto;
-  padding: var(--lanismd-spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .settings-dialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+  padding: var(--lanismd-spacing-2xl) var(--lanismd-spacing-2xl) 0;
   margin-bottom: var(--lanismd-spacing-xl);
+}
+
+/* 面板内容滚动区 */
+.settings-dialog-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0 var(--lanismd-spacing-2xl) var(--lanismd-spacing-2xl);
 }
 
 .settings-dialog-title {

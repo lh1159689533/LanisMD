@@ -189,6 +189,7 @@ export function SettingsDialog() {
             </button>
           </div>
 
+          <div className="settings-dialog-body">
           {settingsActiveSection === 'general' && (
             <div className="settings-section">
               <div className="settings-item-description">
@@ -345,6 +346,7 @@ export function SettingsDialog() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
