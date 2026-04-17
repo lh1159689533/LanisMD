@@ -45,6 +45,7 @@
 @import './link-tooltip.css';
 
 /* Special */
+@import './front-matter.css';
 @import './math.css';
 @import './mermaid-block.css';
 @import './loading.css';

@@ -12,7 +12,7 @@ export function useEditor() {
   const currentFile = useFileStore((s) => s.currentFile);
   const currentFileId = currentFile?.id ?? null;
   const updateStats = useEditorStore((s) => s.updateStats);
-  
+
   // 监听编辑模式变化，用于在切换回 wysiwyg 时重新创建编辑器
   const mode = useEditorStore((s) => s.mode);
 

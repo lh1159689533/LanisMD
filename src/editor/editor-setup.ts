@@ -68,6 +68,12 @@ import {
   mathBlockView,
   mathBlockGuardPlugin,
 } from './plugins/math-block';
+import {
+  remarkFrontMatter,
+  frontMatterSchema,
+  frontMatterView,
+  frontMatterGuardPlugin,
+} from './plugins/front-matter';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
@@ -145,6 +151,10 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .config(configureCodeBlock)
     .use(commonmark)
     .use(gfm)
+    .use(frontMatterSchema)
+    .use(remarkFrontMatter)
+    .use(frontMatterView)
+    .use(frontMatterGuardPlugin)
     .use(underlineMarkSchema)
     .use(remarkUnderlinePlugin)
     .use(highlightMarkSchema)
