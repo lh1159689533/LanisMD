@@ -5,12 +5,35 @@
  *
  * 当光标从一个段落移动到另一个段落时，扫描离开的段落，
  * 如果发现未转换的 [text](url) 语法，自动转换为带 link mark 的文本。
+ *
+ * 实现方式：使用 Plugin.view 的 update 回调检测段落切换。
+ * 相比 appendTransaction 方案，view.update 在所有事务完全应用后才被调用，
+ * 能正确拿到最终的 state（包括回车 splitBlock 后的新选区位置），
+ * 彻底避免了事务批处理导致的中间状态问题。
  */
 
 import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
+import type { EditorState } from '@milkdown/kit/prose/state';
 import type { Node as ProseMirrorNode } from '@milkdown/kit/prose/model';
+import type { EditorView } from '@milkdown/kit/prose/view';
 import { LINK_SCAN_REGEX, normalizeUrl } from './utils';
+
+/**
+ * 获取选区所在的最内层 block 节点（段落）的起始位置
+ * 返回 null 表示无法确定（如选区不在段落中）
+ */
+function getParagraphStart(state: EditorState): number | null {
+  const $from = state.selection.$from;
+  // 从当前 depth 向上查找 paragraph 节点
+  for (let d = $from.depth; d >= 1; d--) {
+    const node = $from.node(d);
+    if (node.type.name === 'paragraph') {
+      return $from.start(d);
+    }
+  }
+  return null;
+}
 
 /**
  * 检测段落中是否包含未转换的链接语法
@@ -71,75 +94,113 @@ function findUnconvertedLinks(
   return results;
 }
 
+/**
+ * 在指定的段落中扫描并转换未处理的链接语法
+ *
+ * @param view 编辑器视图
+ * @param paragraphStart 段落在文档中的起始位置（段落内容的 start）
+ * @param paragraph 段落节点
+ */
+function convertLinksInParagraph(
+  view: EditorView,
+  paragraphStart: number,
+  paragraph: ProseMirrorNode,
+): void {
+  const { state } = view;
+  const links = findUnconvertedLinks(paragraph, state.schema);
+  if (links.length === 0) return;
+
+  const linkType = state.schema.marks.link;
+  if (!linkType) return;
+
+  const tr = state.tr;
+
+  // 从后往前替换，避免位置偏移
+  for (let i = links.length - 1; i >= 0; i--) {
+    const link = links[i];
+    const from = paragraphStart + link.from;
+    const to = paragraphStart + link.to;
+
+    const linkMark = linkType.create({ href: link.href });
+    const textNode = state.schema.text(link.text, [linkMark]);
+
+    tr.replaceWith(from, to, textNode);
+  }
+
+  if (tr.steps.length > 0) {
+    view.dispatch(tr);
+  }
+}
+
 const linkBlurPluginKey = new PluginKey('linkBlurPlugin');
 
 export const linkBlurPlugin = $prose((_ctx) => {
   return new Plugin({
     key: linkBlurPluginKey,
 
-    state: {
-      init() {
-        return { lastParagraphPos: null as number | null };
-      },
-      apply(tr, value, _oldState, newState) {
-        // 如果选区没有变化，保持原状态
-        if (!tr.selectionSet) return value;
+    view() {
+      // 记录上一次选区所在的段落起始位置
+      let lastParagraphStart: number | null = null;
 
-        // 获取新选区所在的段落位置
-        const $pos = newState.selection.$from;
-        const paragraphPos = $pos.start($pos.depth);
+      return {
+        update(view: EditorView, _prevState: EditorState) {
+          const { state } = view;
 
-        return { lastParagraphPos: paragraphPos };
-      },
-    },
+          // 获取当前选区所在段落的起始位置
+          const currentParagraphStart = getParagraphStart(state);
 
-    appendTransaction(transactions, oldState, newState) {
-      // 检查是否有选区变化的事务
-      const selectionChanged = transactions.some((tr) => tr.selectionSet);
-      if (!selectionChanged) return null;
+          // 获取上一次选区所在段落的起始位置
+          // 使用缓存的值（而非从 prevState 计算），因为 prevState 可能是中间状态
+          const prevStart = lastParagraphStart;
 
-      // 获取旧选区和新选区所在的段落
-      const oldPos = oldState.selection.$from;
-      const newPos = newState.selection.$from;
+          // 更新缓存
+          lastParagraphStart = currentParagraphStart;
 
-      // 获取段落的起始位置来判断是否是同一个段落
-      const oldParagraphStart = oldPos.start(oldPos.depth);
-      const newParagraphStart = newPos.start(newPos.depth);
+          // 如果没有上一次的段落位置，跳过（首次初始化）
+          if (prevStart === null) return;
 
-      // 如果在同一个段落内移动，不处理
-      if (oldParagraphStart === newParagraphStart) return null;
+          // 如果段落位置没变，不处理
+          if (prevStart === currentParagraphStart) return;
 
-      // 获取离开的段落节点
-      const oldParagraph = oldPos.node(oldPos.depth);
-      if (!oldParagraph || oldParagraph.type.name !== 'paragraph') return null;
+          // 段落切换了，检查之前的段落
+          // 需要在当前文档（state.doc）中找到之前段落的对应位置
+          // 如果文档结构变了（如回车分裂），prevStart 可能需要调整
 
-      // 扫描离开的段落，查找未转换的链接语法
-      const links = findUnconvertedLinks(oldParagraph, newState.schema);
-      if (links.length === 0) return null;
+          // 尝试解析 prevStart 在当前文档中的位置
+          try {
+            // 确保位置在有效范围内
+            if (prevStart < 0 || prevStart > state.doc.content.size) return;
 
-      // 创建事务来转换链接
-      const tr = newState.tr;
-      const linkType = newState.schema.marks.link;
+            const $resolved = state.doc.resolve(prevStart);
+            // 从 resolved 位置向上查找段落
+            for (let d = $resolved.depth; d >= 1; d--) {
+              const node = $resolved.node(d);
+              if (node.type.name === 'paragraph') {
+                const paragraphContentStart = $resolved.start(d);
+                convertLinksInParagraph(view, paragraphContentStart, node);
+                return;
+              }
+            }
+            // 如果 resolved 深度为 0（doc 层级），检查该位置处的子节点
+            if ($resolved.depth === 0) {
+              const nodeAfter = $resolved.nodeAfter;
+              if (nodeAfter && nodeAfter.type.name === 'paragraph') {
+                // prevStart 指向段落的 content start，
+                // 而 nodeAfter 是从 prevStart 位置开始的节点
+                // 需要获取该段落的 content start = prevStart + 1（进入段落内部）
+                convertLinksInParagraph(view, prevStart, nodeAfter);
+                return;
+              }
+            }
+          } catch {
+            // 位置无效（文档结构变化较大），安全忽略
+          }
+        },
 
-      if (!linkType) return null;
-
-      // 需要从后往前处理，避免位置偏移问题
-      // 计算段落在文档中的绝对位置
-      const paragraphStart = oldParagraphStart;
-
-      // 从后往前替换，避免位置偏移
-      for (let i = links.length - 1; i >= 0; i--) {
-        const link = links[i];
-        const from = paragraphStart + link.from;
-        const to = paragraphStart + link.to;
-
-        const linkMark = linkType.create({ href: link.href });
-        const textNode = newState.schema.text(link.text, [linkMark]);
-
-        tr.replaceWith(from, to, textNode);
-      }
-
-      return tr;
+        destroy() {
+          lastParagraphStart = null;
+        },
+      };
     },
   });
 });
