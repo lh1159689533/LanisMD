@@ -362,6 +362,35 @@ function insertMathBlock(view: EditorView) {
 }
 
 /**
+ * 插入一个 toc_block 节点。
+ */
+function insertTocBlock(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const tocBlock = schema.nodes.toc_block;
+  if (!tocBlock) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  const tocNode = tocBlock.create();
+
+  if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, tocNode);
+    dispatch(tr.scrollIntoView());
+  } else {
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, tocNode);
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
+/**
  * 插入一个带有指定 alertType 的 blockquote（GFM Alert）。
  */
 function insertGfmAlert(view: EditorView, alertType: GfmAlertType) {
@@ -514,6 +543,7 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
   link: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
   math: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L20 4"/><path d="M4 4l4 16"/><path d="M16 4l4 16"/><path d="M2 12h6"/><path d="M16 12h6"/></svg>',
+  toc: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -605,6 +635,19 @@ export const slashCommands: SlashCommand[] = [
     execute: (view) => insertHr(view),
   },
   {
+    label: '数学公式',
+    icon: icons.math,
+    shortcut: '$$',
+    keywords: ['math', 'formula', 'equation', 'latex', 'katex', '数学', '公式', '方程', 'sx', 'gs'],
+    execute: (view) => insertMathBlock(view),
+  },
+  {
+    label: '链接',
+    icon: icons.link,
+    keywords: ['link', 'url', 'href', '链接', '超链接', 'lj'],
+    execute: (view) => insertLink(view),
+  },
+  {
     label: '图片',
     icon: icons.image,
     keywords: ['image', 'img', 'picture', 'photo', '图片', '图像', 'tp'],
@@ -634,11 +677,10 @@ export const slashCommands: SlashCommand[] = [
     execute: (view) => insertMermaidBlock(view),
   },
   {
-    label: '数学公式',
-    icon: icons.math,
-    shortcut: '$$',
-    keywords: ['math', 'formula', 'equation', 'latex', 'katex', '数学', '公式', '方程', 'sx', 'gs'],
-    execute: (view) => insertMathBlock(view),
+    label: '目录',
+    icon: icons.toc,
+    keywords: ['toc', 'table of contents', '目录', '导航', 'ml'],
+    execute: (view) => insertTocBlock(view),
   },
   {
     label: '提示块',
@@ -677,12 +719,6 @@ export const slashCommands: SlashCommand[] = [
         execute: (view) => insertGfmAlert(view, 'caution'),
       },
     ],
-  },
-  {
-    label: '链接',
-    icon: icons.link,
-    keywords: ['link', 'url', 'href', '链接', '超链接', 'lj'],
-    execute: (view) => insertLink(view),
   },
 ];
 

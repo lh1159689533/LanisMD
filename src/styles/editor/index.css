@@ -46,6 +46,7 @@
 
 /* Special */
 @import './front-matter.css';
+@import './toc-block.css';
 @import './math.css';
 @import './mermaid-block.css';
 @import './loading.css';

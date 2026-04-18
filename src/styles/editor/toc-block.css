@@ -1,0 +1,239 @@
+/**
+ * LanisMD Editor - TOC Block
+ * [TOC] 目录块样式
+ */
+
+/* ===== 容器 ===== */
+.milkdown-editor-root .lanismd-toc {
+  position: relative;
+  margin: 1em 0 1.5em 0;
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: var(--lanismd-radius-lg);
+  background: var(--lanismd-toc-bg, transparent);
+  transition:
+    border-color var(--lanismd-transition-normal),
+    box-shadow var(--lanismd-transition-normal);
+  overflow: hidden;
+  user-select: none;
+}
+
+.milkdown-editor-root .lanismd-toc:hover {
+  border-color: var(--lanismd-toc-primary, var(--lanismd-accent));
+}
+
+.milkdown-editor-root .lanismd-toc.is-selected {
+  border-color: var(--lanismd-toc-primary, var(--lanismd-accent));
+  box-shadow: 0 0 0 2px rgba(var(--lanismd-accent-rgb, 37, 99, 235), 0.15);
+}
+
+/* ===== 标题栏 ===== */
+.lanismd-toc-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: var(--lanismd-font-size-xs);
+  font-family: var(--lanismd-font-mono);
+  color: var(--lanismd-text-muted, #64748b);
+  background: var(--lanismd-codeblock-toolbar-bg, rgba(0, 0, 0, 0.03));
+  border-bottom: 1px solid var(--lanismd-border-color);
+  user-select: none;
+}
+
+/* 标题栏可点击样式 */
+.lanismd-toc-header-clickable {
+  cursor: pointer;
+  transition: background var(--lanismd-transition-fast);
+}
+
+.lanismd-toc-header-clickable:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.dark .lanismd-toc-header-clickable:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark .lanismd-toc-header {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* 折叠时移除标题栏底部边框 */
+.lanismd-toc-collapsed .lanismd-toc-header {
+  border-bottom-color: transparent;
+}
+
+/* 标题栏图标 */
+.lanismd-toc-header-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.lanismd-toc-header-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 标题栏标签 */
+.lanismd-toc-header-label {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ===== 操作按钮区域 ===== */
+.lanismd-toc-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-normal);
+}
+
+.lanismd-toc:hover .lanismd-toc-actions,
+.lanismd-toc.is-selected .lanismd-toc-actions {
+  opacity: 1;
+}
+
+.lanismd-toc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm);
+  background: transparent;
+  color: var(--lanismd-text-muted, #64748b);
+  cursor: pointer;
+  transition:
+    background var(--lanismd-transition-fast),
+    color var(--lanismd-transition-fast);
+}
+
+.lanismd-toc-action-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.lanismd-toc-action-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lanismd-toc-action-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== 目录列表 ===== */
+.lanismd-toc-list {
+  padding: 8px 0;
+  overflow: hidden;
+  transition: height var(--lanismd-transition-normal);
+}
+
+/* 折叠状态：隐藏列表内边距 */
+.lanismd-toc-collapsed .lanismd-toc-list {
+  padding: 0;
+}
+
+/* 空状态 */
+.lanismd-toc-empty {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-muted, #94a3b8);
+  font-style: italic;
+}
+
+/* 目录项 */
+.lanismd-toc-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition:
+    background var(--lanismd-transition-fast),
+    color var(--lanismd-transition-fast);
+  line-height: 1.5;
+}
+
+.lanismd-toc-item:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.04));
+}
+
+.dark .lanismd-toc-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* 层级圆点指示器 */
+.lanismd-toc-item-dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--lanismd-toc-dot, var(--lanismd-accent, #3b82f6));
+  opacity: 0.6;
+  transition: opacity var(--lanismd-transition-fast);
+}
+
+.lanismd-toc-item:hover .lanismd-toc-item-dot {
+  opacity: 1;
+}
+
+/* 不同层级的圆点大小差异 */
+.lanismd-toc-item[data-level="1"] .lanismd-toc-item-dot {
+  width: 6px;
+  height: 6px;
+  opacity: 0.9;
+}
+
+.lanismd-toc-item[data-level="2"] .lanismd-toc-item-dot {
+  width: 5px;
+  height: 5px;
+  opacity: 0.7;
+}
+
+.lanismd-toc-item[data-level="3"] .lanismd-toc-item-dot,
+.lanismd-toc-item[data-level="4"] .lanismd-toc-item-dot,
+.lanismd-toc-item[data-level="5"] .lanismd-toc-item-dot,
+.lanismd-toc-item[data-level="6"] .lanismd-toc-item-dot {
+  width: 4px;
+  height: 4px;
+  opacity: 0.5;
+}
+
+/* 目录项文本 */
+.lanismd-toc-item-text {
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-toc-text, var(--lanismd-accent, #3b82f6));
+  transition: color var(--lanismd-transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lanismd-toc-item:hover .lanismd-toc-item-text {
+  color: var(--lanismd-toc-text-hover, var(--lanismd-accent-hover, #2563eb));
+  text-decoration: underline;
+}
+
+/* 一级标题加粗 */
+.lanismd-toc-item[data-level="1"] .lanismd-toc-item-text {
+  font-weight: 600;
+  font-size: var(--lanismd-font-size-base, 0.9375rem);
+}
+
+/* 二级标题中等粗细 */
+.lanismd-toc-item[data-level="2"] .lanismd-toc-item-text {
+  font-weight: 500;
+}
+
+/* 深层标题更小更淡 */
+.lanismd-toc-item[data-level="4"] .lanismd-toc-item-text,
+.lanismd-toc-item[data-level="5"] .lanismd-toc-item-text,
+.lanismd-toc-item[data-level="6"] .lanismd-toc-item-text {
+  font-size: var(--lanismd-font-size-xs);
+  opacity: 0.85;
+}

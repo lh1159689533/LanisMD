@@ -74,6 +74,13 @@ import {
   frontMatterView,
   frontMatterGuardPlugin,
 } from './plugins/front-matter';
+import {
+  remarkTocPlugin,
+  tocBlockSchema,
+  tocBlockView,
+  tocUpdatePlugin,
+  tocInputRulePlugin,
+} from './plugins/toc-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
@@ -155,6 +162,11 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(remarkFrontMatter)
     .use(frontMatterView)
     .use(frontMatterGuardPlugin)
+    .use(tocBlockSchema)
+    .use(remarkTocPlugin)
+    .use(tocBlockView)
+    .use(tocUpdatePlugin)
+    .use(tocInputRulePlugin)
     .use(underlineMarkSchema)
     .use(remarkUnderlinePlugin)
     .use(highlightMarkSchema)
