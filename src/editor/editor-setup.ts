@@ -33,6 +33,7 @@ import {
   linkPastePlugin,
   linkTooltip,
   configureLinkTooltip,
+  linkClickPlugin,
 } from './plugins/link';
 import { underlineMarkSchema, remarkUnderlinePlugin } from './plugins/underline-mark';
 import {
@@ -238,6 +239,7 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(imageInputRulePlugin)
     .use(linkInputRulePlugin)
     .use(linkBlurPlugin)
+    .use(linkClickPlugin)
     .use(imageResizePlugin)
     .use(imageBlockClickPlugin)
     .use(imageInlineToolbarPlugin)

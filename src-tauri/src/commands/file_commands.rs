@@ -290,6 +290,96 @@ pub async fn save_image_bytes_to_assets(data: Vec<u8>, file_name: String, doc_pa
     crate::services::fs_service::FileSystemService::save_image_bytes_to_assets(&data, &file_name, &doc_path)
 }
 
+/// Markdown 文件扩展名列表（用于链接路径解析时自动补全）
+const RESOLVE_MD_EXTENSIONS: &[&str] = &["md", "markdown", "mdx"];
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolvedLinkPath {
+    /// 解析后的绝对路径（文件存在时返回）
+    pub resolved_path: Option<String>,
+    /// 文件是否存在
+    pub exists: bool,
+    /// 是否为 Markdown 文件
+    pub is_markdown: bool,
+}
+
+/// 解析链接路径：支持相对路径、绝对路径、file:// 协议
+/// 自动补全 .md 扩展名
+#[tauri::command]
+pub async fn resolve_link_path(href: String, current_file_dir: String) -> AppResult<ResolvedLinkPath> {
+    let href = href.trim();
+
+    // 处理 file:// 协议
+    let path_str = if href.starts_with("file:///") {
+        href.strip_prefix("file://").unwrap_or(href).to_string()
+    } else if href.starts_with("file://") {
+        href.strip_prefix("file://").unwrap_or(href).to_string()
+    } else {
+        href.to_string()
+    };
+
+    let path = Path::new(&path_str);
+
+    // 判断是绝对路径还是相对路径
+    let candidate = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        Path::new(&current_file_dir).join(path)
+    };
+
+    // 规范化路径（解析 .. 和 .）
+    let candidate = candidate.canonicalize().unwrap_or_else(|_| {
+        // canonicalize 需要路径存在，如果不存在就手动处理
+        let mut components = Vec::new();
+        for comp in candidate.components() {
+            match comp {
+                std::path::Component::ParentDir => { components.pop(); },
+                std::path::Component::CurDir => {},
+                other => components.push(other.as_os_str().to_owned()),
+            }
+        }
+        let mut result = std::path::PathBuf::new();
+        for c in components {
+            result.push(c);
+        }
+        result
+    });
+
+    // 如果路径直接存在
+    if candidate.exists() {
+        let is_md = is_markdown_file(&candidate);
+        return Ok(ResolvedLinkPath {
+            resolved_path: Some(candidate.to_string_lossy().to_string()),
+            exists: true,
+            is_markdown: is_md,
+        });
+    }
+
+    // 尝试自动补全 Markdown 扩展名
+    if candidate.extension().is_none() || !RESOLVE_MD_EXTENSIONS.contains(
+        &candidate.extension().unwrap_or_default().to_str().unwrap_or_default().to_lowercase().as_str()
+    ) {
+        for ext in RESOLVE_MD_EXTENSIONS {
+            let with_ext = candidate.with_extension(ext);
+            if with_ext.exists() {
+                return Ok(ResolvedLinkPath {
+                    resolved_path: Some(with_ext.to_string_lossy().to_string()),
+                    exists: true,
+                    is_markdown: true,
+                });
+            }
+        }
+    }
+
+    // 文件不存在
+    Ok(ResolvedLinkPath {
+        resolved_path: None,
+        exists: false,
+        is_markdown: false,
+    })
+}
+
 /// Reveal file in system file manager (Finder on macOS)
 #[tauri::command]
 pub async fn reveal_in_finder(path: String) -> AppResult<()> {

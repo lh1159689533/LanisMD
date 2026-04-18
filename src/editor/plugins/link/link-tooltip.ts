@@ -14,7 +14,7 @@ import { tooltipFactory } from '@milkdown/kit/plugin/tooltip';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import type { EditorState } from '@milkdown/kit/prose/state';
-import { open as shellOpen } from '@tauri-apps/plugin-shell';
+import { navigateLink } from './click';
 import { createLinkDialog } from '../tooltip-toolbar';
 
 // ---------------------------------------------------------------------------
@@ -144,9 +144,7 @@ class LinkTooltipView {
 
   private handleOpen() {
     if (this.linkHref) {
-      shellOpen(this.linkHref).catch((err) => {
-        console.error('Failed to open link:', err);
-      });
+      navigateLink(this.linkHref, this.view ?? undefined);
     }
   }
 

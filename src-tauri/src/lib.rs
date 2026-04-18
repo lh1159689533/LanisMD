@@ -78,6 +78,7 @@ pub fn run() {
             file_commands::copy_image_to_assets,
             file_commands::save_image_bytes_to_assets,
             file_commands::reveal_in_finder,
+            file_commands::resolve_link_path,
             config_commands::get_config,
             config_commands::set_config,
             config_commands::get_recent_files,
