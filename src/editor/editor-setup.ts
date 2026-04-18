@@ -1,6 +1,17 @@
 import { Editor, rootCtx, defaultValueCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
-import { gfm } from '@milkdown/kit/preset/gfm';
+import {
+  remarkGFMPlugin,
+  schema as gfmSchema,
+  inputRules as gfmInputRules,
+  pasteRules as gfmPasteRules,
+  keymap as gfmKeymap,
+  commands as gfmCommands,
+  plugins as gfmPlugins,
+  strikethroughSchema,
+} from '@milkdown/kit/preset/gfm';
+import { markRule } from '@milkdown/kit/prose';
+import { $inputRule } from '@milkdown/kit/utils';
 import { history } from '@milkdown/kit/plugin/history';
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
 import { clipboard } from '@milkdown/kit/plugin/clipboard';
@@ -29,6 +40,16 @@ import {
   remarkHighlightPlugin,
   highlightInputRulePlugin,
 } from './plugins/highlight-mark';
+import {
+  superscriptMarkSchema,
+  remarkSuperscriptPlugin,
+  superscriptInputRulePlugin,
+} from './plugins/superscript-mark';
+import {
+  subscriptMarkSchema,
+  remarkSubscriptPlugin,
+  subscriptInputRulePlugin,
+} from './plugins/subscript-mark';
 import {
   imageBlockComponent,
   configureImageBlock,
@@ -89,6 +110,28 @@ import '@milkdown/kit/prose/view/style/prosemirror.css';
 import 'katex/dist/katex.min.css';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+// ---------------------------------------------------------------------------
+// 自定义删除线 InputRule：仅匹配双波浪线 ~~text~~
+// ---------------------------------------------------------------------------
+// GFM 自带的 strikethroughInputRule 使用 ~{1,2} 同时匹配单/双波浪线，
+// 与下标插件的 ~text~ 语法冲突。此处替换为仅匹配 ~~text~~ 的版本。
+// remarkGFMPlugin 的 singleTilde: false 仅影响 remark 解析层，
+// 不影响 ProseMirror InputRule 层，因此必须在 InputRule 层也做限制。
+const strikethroughDoubleTildeInputRule = $inputRule((ctx) => {
+  return markRule(/(?<![\w:/])~~(.+?)~~$/, strikethroughSchema.type(ctx));
+});
+
+// 组合 GFM 插件（排除 markInputRules，用自定义版本替代）
+const gfm = [
+  gfmSchema,
+  gfmInputRules,
+  gfmPasteRules,
+  [strikethroughDoubleTildeInputRule],
+  gfmKeymap,
+  gfmCommands,
+  gfmPlugins,
+].flat();
+
 export type EditorListener = {
   onMarkdownUpdated?: (markdown: string, prevMarkdown: string) => void;
   onDocUpdated?: () => void;
@@ -148,6 +191,9 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
           return checkBoxUncheckedIcon;
         },
       });
+      // 禁用 GFM strikethrough 的 singleTilde，使 ~text~ 不被当作删除线解析。
+      // 删除线仅使用 ~~text~~（双波浪线），为 subscript 下标语法 ~text~ 让出空间。
+      ctx.set(remarkGFMPlugin.options.key, { singleTilde: false });
     })
     .config(configureSlash)
     .config(configureBlock)
@@ -172,6 +218,12 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(highlightMarkSchema)
     .use(remarkHighlightPlugin)
     .use(highlightInputRulePlugin)
+    .use(superscriptMarkSchema)
+    .use(remarkSuperscriptPlugin)
+    .use(superscriptInputRulePlugin)
+    .use(subscriptMarkSchema)
+    .use(remarkSubscriptPlugin)
+    .use(subscriptInputRulePlugin)
     .use(gfmAlertSchema)
     .use(remarkGfmAlertPlugin)
     .use(listItemBlockComponent)

@@ -173,6 +173,14 @@
   --lanismd-mark-border-radius: 2px;
 
   /* ===============================================
+   * 上标/下标
+   * =============================================== */
+  --lanismd-sup-font-size: 0.75em;
+  --lanismd-sup-color: inherit;
+  --lanismd-sub-font-size: 0.75em;
+  --lanismd-sub-color: inherit;
+
+  /* ===============================================
    * 行内代码增强
    * =============================================== */
   --lanismd-inline-code-padding: 0.15em 0.4em;

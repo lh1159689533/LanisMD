@@ -175,6 +175,22 @@
   border-radius: var(--lanismd-mark-border-radius);
 }
 
+/* ===== Superscript ===== */
+.milkdown-editor-root .ProseMirror sup {
+  font-size: var(--lanismd-sup-font-size);
+  vertical-align: super;
+  line-height: 0;
+  color: var(--lanismd-sup-color);
+}
+
+/* ===== Subscript ===== */
+.milkdown-editor-root .ProseMirror sub {
+  font-size: var(--lanismd-sub-font-size);
+  vertical-align: sub;
+  line-height: 0;
+  color: var(--lanismd-sub-color);
+}
+
 /* ===== Inline Code ===== */
 .milkdown-editor-root .ProseMirror code {
   background-color: var(--lanismd-inline-code-bg);

@@ -651,6 +651,12 @@ export const editorKeymapPlugin = $prose(() => {
     keys['Mod-Shift-h'] = toggleMarkByName('highlight');
   }
 
+  // 上标：Mod+Shift+.（与 Typora 一致）
+  keys['Mod-Shift-.'] = toggleMarkByName('superscript');
+
+  // 下标：Mod+Shift+,（与 Typora 一致）
+  keys['Mod-Shift-,'] = toggleMarkByName('subscript');
+
   // 清除格式：Mod+\
   keys['Mod-\\'] = clearAllMarksCommand();
 
