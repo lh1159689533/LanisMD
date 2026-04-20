@@ -8,6 +8,7 @@ import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
+import { useEditorStore } from './stores/editor-store';
 import { useTheme } from './hooks/useTheme';
 import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -44,6 +45,8 @@ function TauriApp() {
   }, [setSidebarPanel]);
 
   const toggleSearch = useSearchStore((s) => s.toggleSearch);
+  const toggleFocusMode = useEditorStore((s) => s.toggleFocusMode);
+  const toggleTypewriterMode = useEditorStore((s) => s.toggleTypewriterMode);
 
   useShortcuts({
     onNewFile: newFile,
@@ -54,6 +57,8 @@ function TauriApp() {
     onOpenSettings: () => openSettings('general'),
     onToggleSearch: toggleSearch,
     onQuickOpen: openCommandPalette,
+    onToggleFocusMode: toggleFocusMode,
+    onToggleTypewriterMode: toggleTypewriterMode,
   });
 
   return (

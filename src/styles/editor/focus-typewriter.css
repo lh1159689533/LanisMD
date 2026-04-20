@@ -1,0 +1,42 @@
+/**
+ * LanisMD Editor - Focus Mode & Typewriter Mode
+ * 专注模式：淡化非当前块级元素
+ * 打字机模式：相关样式辅助
+ */
+
+/* ===== WYSIWYG 专注模式 ===== */
+
+/* 专注模式下的非活跃块（ProseMirror 顶层节点） */
+.milkdown-editor-root .ProseMirror .lanismd-focus-blur {
+  opacity: var(--lanismd-focus-mode-blur-opacity, 0.4);
+  transition: var(--lanismd-focus-mode-transition, opacity 0.3s ease);
+}
+
+/* 当前活跃块保持正常显示 */
+.milkdown-editor-root .ProseMirror > *:not(.lanismd-focus-blur) {
+  opacity: 1;
+  transition: var(--lanismd-focus-mode-transition, opacity 0.3s ease);
+}
+
+/* ===== 源码模式专注模式 ===== */
+
+/* 专注模式下的非活跃行 */
+.source-editor-root .cm-editor .cm-line.lanismd-focus-blur {
+  opacity: var(--lanismd-focus-mode-blur-opacity, 0.4);
+  transition: var(--lanismd-focus-mode-transition, opacity 0.3s ease);
+}
+
+/* 当前活跃行保持正常 */
+.source-editor-root .cm-editor .cm-line:not(.lanismd-focus-blur) {
+  transition: var(--lanismd-focus-mode-transition, opacity 0.3s ease);
+}
+
+/* ===== 打字机模式辅助 ===== */
+
+/* 打字机模式下编辑器内容区域增加底部 padding，
+   使得文档末行也能滚动到屏幕中央。
+   不添加 padding-top：文档从顶部自然开始显示，
+   避免打开文件时出现大片空白。 */
+.editor-content.lanismd-typewriter-active .editor-wrapper {
+  padding-bottom: 45vh;
+}

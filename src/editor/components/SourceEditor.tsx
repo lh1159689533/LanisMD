@@ -8,6 +8,7 @@ import { tags } from '@lezer/highlight';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { typewriterScrollForSource } from '../plugins/typewriter-mode';
 
 // 统一的 CodeMirror 主题（消费 CSS 变量）
 const editorTheme = EditorView.theme({
@@ -64,6 +65,42 @@ const markdownHighlightStyle = HighlightStyle.define([
   { tag: tags.processingInstruction, color: 'var(--lanismd-text-muted)' },
 ]);
 
+/**
+ * 源码模式专注模式：为非当前行添加淡化类名
+ * 通过直接操作 DOM class 实现，性能优于 Decoration
+ */
+function updateFocusModeLines(view: EditorView): void {
+  const { focusMode } = useEditorStore.getState();
+  const lines = view.dom.querySelectorAll('.cm-line');
+
+  if (!focusMode) {
+    // 关闭时清除所有 blur 类
+    lines.forEach((line) => line.classList.remove('lanismd-focus-blur'));
+    return;
+  }
+
+  // 获取当前光标所在行号
+  const pos = view.state.selection.main.head;
+  const currentLineNumber = view.state.doc.lineAt(pos).number;
+
+  lines.forEach((lineEl) => {
+    // 通过 posAtDOM 从 DOM 元素反查文档位置，再获取行号进行精确比较
+    try {
+      const linePos = view.posAtDOM(lineEl, 0);
+      const lineNumber = view.state.doc.lineAt(linePos).number;
+
+      if (lineNumber === currentLineNumber) {
+        lineEl.classList.remove('lanismd-focus-blur');
+      } else {
+        lineEl.classList.add('lanismd-focus-blur');
+      }
+    } catch {
+      // posAtDOM 可能在某些边界情况下抛出异常，安全忽略
+      lineEl.classList.add('lanismd-focus-blur');
+    }
+  });
+}
+
 export function SourceEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -74,6 +111,9 @@ export function SourceEditor() {
   const updateStats = useEditorStore((s) => s.updateStats);
   const updateCursor = useEditorStore((s) => s.updateCursor);
   const theme = useSettingsStore((s) => s.config.theme);
+  const editorFontSize = useSettingsStore((s) => s.config.editor.fontSize);
+  const editorLineHeight = useSettingsStore((s) => s.config.editor.lineHeight);
+  const editorWordWrap = useSettingsStore((s) => s.config.editor.wordWrap);
 
   // 内容变更处理
   const handleDocChange = useCallback(
@@ -125,19 +165,28 @@ export function SourceEditor() {
         }
         if (update.selectionSet) {
           handleSelectionChange(update.view);
+          // 打字机模式：选区变化时滚动光标到视口中央
+          typewriterScrollForSource(update.view);
+          // 专注模式：更新行级淡化
+          updateFocusModeLines(update.view);
         }
       }),
 
-      // 编辑器样式
+      // 编辑器样式（消费 CSS 变量，跟随设置面板配置）
       EditorView.theme({
         '&': {
           height: '100%',
-          fontSize: '16px',
-          lineHeight: '1.75',
+          fontSize: 'var(--lanismd-editor-font-size, 16px)',
+          lineHeight: 'var(--lanismd-editor-line-height, 1.75)',
         },
         '.cm-scroller': {
           overflow: 'auto',
           fontFamily: 'var(--lanismd-font-mono)',
+        },
+        '.cm-content': {
+          wordWrap: 'var(--lanismd-editor-word-wrap, normal)',
+          overflowWrap: 'var(--lanismd-editor-word-wrap, normal)',
+          overflowX: 'var(--lanismd-editor-overflow-x, hidden)',
         },
       }),
     ];
@@ -165,9 +214,9 @@ export function SourceEditor() {
       viewRef.current = null;
       useEditorStore.getState().setSourceView(null);
     };
-    // 主题变化时重建编辑器以应用新的 CSS 变量
+    // 主题/编辑器配置变化时重建编辑器以应用新的 CSS 变量
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile?.id, theme]);
+  }, [currentFile?.id, theme, editorFontSize, editorLineHeight, editorWordWrap]);
 
   // 同步外部内容变更到编辑器
   useEffect(() => {

@@ -53,3 +53,6 @@
 @import './source-editor.css';
 @import './search-highlight.css';
 @import './search-replace.css';
+
+/* Modes */
+@import './focus-typewriter.css';
