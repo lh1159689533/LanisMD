@@ -15,6 +15,11 @@
   word-wrap: var(--lanismd-editor-word-wrap, normal);
   overflow-wrap: var(--lanismd-editor-word-wrap, normal);
   overflow-x: var(--lanismd-editor-overflow-x, hidden);
+  /* 为 block-handle 预留左侧可见缓冲区（handle 定位在内容左外侧约 -62px 处，
+     此处给 80px padding 让其落入 padding 区，再用等量负 margin 保持内容视觉位置不变；
+     overflow-x 继续生效，长代码块等仍会被裁剪 */
+  padding-inline-start: 80px;
+  margin-inline-start: -80px;
 }
 
 .milkdown-editor-root:focus {
@@ -55,6 +60,30 @@
   background-color: var(--lanismd-accent);
   color: white;
 } */
+
+/* ===== NodeSelection (块级节点选中样式) =====
+ * 覆盖 prosemirror-view 内置 .ProseMirror-selectednode 的默认样式：
+ *   1. 原默认 outline 颜色为硬编码 #8cf，未适配主题，这里改用主题变量。
+ *   2. 原默认 outline-offset 为 0，outline 绘制在元素盒子外侧 2px 处，
+ *      会超出 .milkdown-editor-root 右边缘而被 overflow-x: hidden 裁剪，
+ *      导致\"选中块右侧边框缺失\"。使用 outline-offset: -2px 将描边内置
+ *      到元素盒内，既保证完整显示也不改变原有布局。 */
+.milkdown-editor-root .ProseMirror-selectednode {
+  outline: 2px solid var(--lanismd-accent);
+  outline-offset: -2px;
+  border-radius: var(--lanismd-radius-sm);
+}
+
+/* 列表项使用伪元素做选中边框（prosemirror-view 默认实现），
+ * 同样需覆盖颜色并收回右侧溢出避免被父容器裁剪。 */
+.milkdown-editor-root li.ProseMirror-selectednode {
+  outline: none;
+}
+
+.milkdown-editor-root li.ProseMirror-selectednode::after {
+  border-color: var(--lanismd-accent);
+  right: 0;
+}
 
 /* ===== Placeholder ===== */
 /* 光标聚焦到空段落时显示的占位提示 */

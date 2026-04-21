@@ -12,7 +12,7 @@ import { BlockProvider } from '@milkdown/kit/plugin/block';
 import { block } from '@milkdown/kit/plugin/block';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
-import { NodeSelection, TextSelection } from '@milkdown/kit/prose/state';
+import { TextSelection } from '@milkdown/kit/prose/state';
 
 // ---------------------------------------------------------------------------
 // SVG icons
@@ -30,24 +30,20 @@ function createBlockHandle(): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'milkdown-block-handle';
 
-  // Add button
-  const addBtn = document.createElement('button');
-  addBtn.className = 'milkdown-block-btn milkdown-block-add';
-  addBtn.innerHTML = addIcon;
-  addBtn.setAttribute('aria-label', '添加块');
-  addBtn.setAttribute('data-tooltip', '点击添加块');
-  addBtn.type = 'button';
-
   // Drag handle
+  // 说明：此按钮仅作为可视化的"拖拽抓手"，真正的拖拽事件由 Milkdown
+  // BlockProvider 在根元素（.milkdown-block-handle）上统一监听并处理。
+  // 因此这里不设置 draggable，也不注册 dragstart/dragend，避免子元素
+  // 先捕获事件后阻止冒泡，导致 Milkdown 的 dragstart 逻辑（设置
+  // view.dragging 与 dataTransfer 的 text/html slice）无法执行，
+  // 最终造成"松开鼠标后节点没有移动"的问题。
   const dragBtn = document.createElement('button');
   dragBtn.className = 'milkdown-block-btn milkdown-block-drag';
   dragBtn.innerHTML = dragIcon;
   dragBtn.setAttribute('aria-label', '拖拽移动');
   dragBtn.setAttribute('data-tooltip', '拖拽移动块');
-  dragBtn.setAttribute('draggable', 'true');
   dragBtn.type = 'button';
 
-  wrapper.appendChild(addBtn);
   wrapper.appendChild(dragBtn);
 
   return wrapper;
@@ -86,10 +82,7 @@ export function configureBlock(ctx: Ctx) {
       const paragraph = schema.nodes.paragraph;
       if (!paragraph) return;
 
-      const tr = state.tr.insert(
-        blockEnd + 1,
-        paragraph.create(null, schema.text('/')),
-      );
+      const tr = state.tr.insert(blockEnd + 1, paragraph.create(null, schema.text('/')));
       dispatch(tr.scrollIntoView());
 
       // Focus and move cursor to end of the "/" text
@@ -105,63 +98,17 @@ export function configureBlock(ctx: Ctx) {
     });
   }
 
-  // ---- Drag handle: real drag & drop ----
-  const dragBtn = handleEl.querySelector('.milkdown-block-drag') as HTMLElement | null;
-  if (dragBtn) {
-    dragBtn.addEventListener('dragstart', (e) => {
-      e.stopPropagation();
-      if (!currentView || !blockProvider) return;
-      const active = blockProvider.active;
-      if (!active) return;
-
-      const { $pos, node } = active;
-      const { state } = currentView;
-
-      // For top-level blocks, use $pos.before() to get the node start position
-      const nodeFrom = $pos.before($pos.depth);
-      const nodeTo = nodeFrom + node.nodeSize;
-
-      // Set drag data
-      if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', '');
-        e.dataTransfer.setData(
-          'application/x-milkdown-block',
-          JSON.stringify({ from: nodeFrom, to: nodeTo }),
-        );
-      }
-
-      // Add a dragging class for visual feedback
-      handleEl.classList.add('dragging');
-      const blockDom = active.el;
-      if (blockDom) {
-        blockDom.classList.add('milkdown-block-dragging');
-      }
-
-      // Select the node to enable ProseMirror's built-in drag & drop
-      try {
-        currentView.dispatch(
-          state.tr.setSelection(NodeSelection.create(state.doc, nodeFrom)),
-        );
-      } catch {
-        // Fallback: keep current selection if NodeSelection fails
-      }
-
-      // Set the drag image
-      if (blockDom && e.dataTransfer) {
-        const rect = blockDom.getBoundingClientRect();
-        e.dataTransfer.setDragImage(blockDom, rect.width / 2, 20);
-      }
-    });
-
-    dragBtn.addEventListener('dragend', () => {
-      handleEl.classList.remove('dragging');
-      // Clean up dragging styles from all elements
-      document.querySelectorAll('.milkdown-block-dragging').forEach((el) => {
-        el.classList.remove('milkdown-block-dragging');
-      });
-    });
-  }
+  // ---- Drag handle ----
+  // 不再自行处理 dragstart/dragend。Milkdown BlockProvider 会把
+  // dragstart/dragend 监听器挂在 handleEl（即 .milkdown-block-handle 根元素）
+  // 上并设置 handleEl.draggable = true，在其 dragstart 中：
+  //   1. 基于 mousedown 时建立的 NodeSelection，把 slice 序列化写入
+  //      dataTransfer 的 text/html 与 text/plain；
+  //   2. 设置 view.dragging = { slice, move: true }，让 ProseMirror 内置
+  //      drop handler 在释放时执行"移动节点"操作。
+  // 我们此前在子元素 .milkdown-block-drag 上调用 stopPropagation()，恰好
+  // 阻断了上述流程，导致 drop 时 view.dragging 为空、dataTransfer 无有效
+  // slice，节点不会移动。
 
   ctx.set(block.key, {
     view: (view: EditorView) => {
