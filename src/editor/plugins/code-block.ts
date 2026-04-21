@@ -16,10 +16,11 @@ import type { Ctx } from '@milkdown/kit/ctx';
 import { languages } from '@codemirror/language-data';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { keymap, lineNumbers, EditorView } from '@codemirror/view';
-import { HighlightStyle, syntaxHighlighting, bracketMatching } from '@codemirror/language';
+import { HighlightStyle, syntaxHighlighting, bracketMatching, indentUnit } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import type { Extension } from '@codemirror/state';
+import { useSettingsStore } from '@/stores/settings-store';
 
 // ---------------------------------------------------------------------------
 // SVG Icons
@@ -135,10 +136,15 @@ const highlightStyle = HighlightStyle.define([
 // ---------------------------------------------------------------------------
 
 function getCodeMirrorExtensions(): Extension[] {
+  const config = useSettingsStore.getState().config.editor;
+  // 安全回退：持久化恢复时旧版配置可能缺少 tabSize，避免空字符串导致 CodeMirror 报错
+  const tabSize = config.tabSize || 4;
+
   const extensions: Extension[] = [
     keymap.of(defaultKeymap.concat(indentWithTab)),
     basicSetup,
-    bracketMatching(),
+    ...(config.bracketMatching !== false ? [bracketMatching()] : []),
+    indentUnit.of(' '.repeat(tabSize)),
     EditorView.lineWrapping,
     lineNumbers(), // 始终加载行号，通过 CSS 控制显示/隐藏
     // 统一的主题和语法高亮（使用 CSS 变量，自动跟随主题切换）

@@ -8,6 +8,8 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
+  RiFocus3Line,
+  RiAlignCenter,
 } from 'react-icons/ri';
 import { TbLeaf, TbSnowflake, TbFlower } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
@@ -207,8 +209,10 @@ function CustomThemeSubmenu({ themes, currentTheme, onSelect, parentRef }: Custo
 }
 
 export function StatusBar() {
-  const { wordCount, charCount, lineCount, cursorLine, cursorColumn, mode, setMode } =
-    useEditorStore();
+  const {
+    wordCount, charCount, lineCount, cursorLine, cursorColumn,
+    mode, setMode, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode,
+  } = useEditorStore();
   const { config, setConfig } = useSettingsStore();
   const currentFile = useFileStore((s) => s.currentFile);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -339,6 +343,32 @@ export function StatusBar() {
       <div className="flex items-center gap-3">
         {currentFile && (
           <>
+            {/* 专注模式切换 */}
+            <button
+              onClick={toggleFocusMode}
+              className={cn(
+                'flex items-center gap-1 transition-colors',
+                focusMode
+                  ? 'text-[var(--lanismd-accent)]'
+                  : 'hover:text-[var(--lanismd-accent)]',
+              )}
+              title={`专注模式 (${navigator.userAgent.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+F)`}
+            >
+              <RiFocus3Line size={13} />
+            </button>
+            {/* 打字机模式切换 */}
+            <button
+              onClick={toggleTypewriterMode}
+              className={cn(
+                'flex items-center gap-1 transition-colors',
+                typewriterMode
+                  ? 'text-[var(--lanismd-accent)]'
+                  : 'hover:text-[var(--lanismd-accent)]',
+              )}
+              title={`打字机模式 (${navigator.userAgent.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+9)`}
+            >
+              <RiAlignCenter size={13} />
+            </button>
             <button
               onClick={toggleMode}
               className={cn(

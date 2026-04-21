@@ -108,7 +108,9 @@ export function useTheme() {
           // 加载用户自定义 CSS 覆盖
           await themeLoader.loadUserCSS(themeId);
         } else {
-          console.error(`[useTheme] Failed to load custom theme: ${themeId}, falling back to light`);
+          console.error(
+            `[useTheme] Failed to load custom theme: ${themeId}, falling back to light`,
+          );
           applyBuiltinTheme('light');
         }
       } catch (err) {
@@ -143,7 +145,42 @@ export function useTheme() {
     }
   }, [config.theme]);
 
+  // 编辑器配置 -> CSS 变量同步
   useEffect(() => {
-    document.documentElement.style.setProperty('--editor-max-width', `${config.editor.maxWidth}px`);
-  }, [config.editor.maxWidth]);
+    const root = document.documentElement;
+
+    // 最大宽度（修正变量名为 --lanismd-editor-max-width）
+    root.style.setProperty('--lanismd-editor-max-width', `${config.editor.maxWidth}px`);
+
+    // 字体大小
+    root.style.setProperty('--lanismd-editor-font-size', `${config.editor.fontSize}px`);
+
+    // 行高
+    root.style.setProperty('--lanismd-editor-line-height', `${config.editor.lineHeight}`);
+
+    // 字体映射
+    const fontFamilyMap: Record<string, string> = {
+      system: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+      serif: '"Georgia", "Times New Roman", "Songti SC", serif',
+      'sans-serif': 'system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif',
+      monospace: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+    };
+    const resolvedFont = fontFamilyMap[config.editor.fontFamily] || fontFamilyMap.system;
+    root.style.setProperty('--lanismd-editor-font-family', resolvedFont);
+
+    // 自动换行
+    // soft: 按容器宽度自动换行（CSS默认行为）
+    // hard: 插入实际换行符（编辑器层面处理，CSS 层面与 soft 相同）
+    // off: 不换行，显示水平滚动条
+    const wordWrapValue = config.editor.wordWrap === 'off' ? 'nowrap' : 'normal';
+    const overflowXValue = config.editor.wordWrap === 'off' ? 'auto' : 'hidden';
+    root.style.setProperty('--lanismd-editor-word-wrap', wordWrapValue);
+    root.style.setProperty('--lanismd-editor-overflow-x', overflowXValue);
+  }, [
+    config.editor.maxWidth,
+    config.editor.fontSize,
+    config.editor.lineHeight,
+    config.editor.fontFamily,
+    config.editor.wordWrap,
+  ]);
 }

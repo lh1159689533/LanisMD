@@ -96,6 +96,18 @@ export interface AppConfig {
     lineHeight: number;
     wordWrap: 'soft' | 'hard' | 'off';
     showLineNumbers: boolean;
+    /** 自动保存延迟时间（毫秒） */
+    autoSaveDelay: number;
+    /** Tab 缩进宽度（空格数） */
+    tabSize: number;
+    /** 代码块/源码模式括号匹配 */
+    bracketMatching: boolean;
+    /** 默认编辑模式 */
+    defaultMode: 'wysiwyg' | 'source';
+    /** 默认开启打字机模式 */
+    defaultTypewriterMode: boolean;
+    /** 默认开启专注模式 */
+    defaultFocusMode: boolean;
     codeBlock: {
       showLineNumbers: boolean;
     };

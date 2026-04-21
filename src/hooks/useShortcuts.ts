@@ -12,6 +12,8 @@ export function useShortcuts(handlers?: {
   onOpenSettings?: () => void;
   onToggleSearch?: () => void;
   onQuickOpen?: () => void;
+  onToggleFocusMode?: () => void;
+  onToggleTypewriterMode?: () => void;
 }) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
@@ -74,6 +76,18 @@ export function useShortcuts(handlers?: {
     if (e[modKey] && e.key === ',' && !e.shiftKey) {
       e.preventDefault();
       h.onOpenSettings?.();
+    }
+
+    // Cmd+Shift+F: 专注模式
+    if (e[modKey] && e.shiftKey && e.key === 'f') {
+      e.preventDefault();
+      h.onToggleFocusMode?.();
+    }
+
+    // Cmd+Shift+9: 打字机模式
+    if (e[modKey] && e.shiftKey && e.key === '9') {
+      e.preventDefault();
+      h.onToggleTypewriterMode?.();
     }
   }, []);
 

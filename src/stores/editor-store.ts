@@ -2,6 +2,17 @@ import { create } from 'zustand';
 import type { EditorView as CMEditorView } from '@codemirror/view';
 import type { EditorView as PMEditorView } from '@milkdown/kit/prose/view';
 import type { OutlineItem } from '@/types';
+import { useSettingsStore } from '@/stores/settings-store';
+
+/** 从设置中获取编辑器默认值 */
+function getEditorDefaults() {
+  const config = useSettingsStore.getState().config.editor;
+  return {
+    mode: config.defaultMode as 'wysiwyg' | 'source',
+    focusMode: config.defaultFocusMode,
+    typewriterMode: config.defaultTypewriterMode,
+  };
+}
 
 interface EditorState {
   mode: 'wysiwyg' | 'source';
@@ -35,10 +46,13 @@ interface EditorState {
   setWysiwygView: (view: PMEditorView | null) => void;
 }
 
-export const useEditorStore = create<EditorState>()((set) => ({
-  mode: 'wysiwyg',
-  focusMode: false,
-  typewriterMode: false,
+export const useEditorStore = create<EditorState>()((set) => {
+  const defaults = getEditorDefaults();
+
+  return {
+    mode: defaults.mode,
+    focusMode: defaults.focusMode,
+    typewriterMode: defaults.typewriterMode,
   wordCount: 0,
   charCount: 0,
   lineCount: 0,
@@ -51,7 +65,30 @@ export const useEditorStore = create<EditorState>()((set) => ({
   wysiwygView: null,
 
   setMode: (mode) => set({ mode }),
-  toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
+  toggleFocusMode: () => set((s) => {
+    const newValue = !s.focusMode;
+    // 切换后通知编辑器刷新装饰
+    requestAnimationFrame(() => {
+      const state = useEditorStore.getState();
+      // WYSIWYG 模式：通知 ProseMirror 刷新装饰
+      if (state.wysiwygView) {
+        const tr = state.wysiwygView.state.tr.setMeta('focusModeToggle', true);
+        state.wysiwygView.dispatch(tr);
+      }
+      // 源码模式：清除或重建行级 blur class
+      if (state.sourceView) {
+        const lines = state.sourceView.dom.querySelectorAll('.cm-line');
+        if (!newValue) {
+          lines.forEach((line) => line.classList.remove('lanismd-focus-blur'));
+        } else {
+          // 触发一次选区变化来重建装饰
+          const pos = state.sourceView.state.selection.main.head;
+          state.sourceView.dispatch({ selection: { anchor: pos } });
+        }
+      }
+    });
+    return { focusMode: newValue };
+  }),
   toggleTypewriterMode: () => set((s) => ({ typewriterMode: !s.typewriterMode })),
 
   updateStats: (content) => {
@@ -72,4 +109,4 @@ export const useEditorStore = create<EditorState>()((set) => ({
   updateCursor: (line, column) => set({ cursorLine: line, cursorColumn: column }),
   setSourceView: (view) => set({ sourceView: view }),
   setWysiwygView: (view) => set({ wysiwygView: view }),
-}));
+}; });

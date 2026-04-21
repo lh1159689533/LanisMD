@@ -3,7 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, highlightActiveLine, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
-import { HighlightStyle, syntaxHighlighting, bracketMatching } from '@codemirror/language';
+import { HighlightStyle, syntaxHighlighting, bracketMatching, indentUnit } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
@@ -114,6 +114,8 @@ export function SourceEditor() {
   const editorFontSize = useSettingsStore((s) => s.config.editor.fontSize);
   const editorLineHeight = useSettingsStore((s) => s.config.editor.lineHeight);
   const editorWordWrap = useSettingsStore((s) => s.config.editor.wordWrap);
+  const editorTabSize = useSettingsStore((s) => s.config.editor.tabSize);
+  const editorBracketMatching = useSettingsStore((s) => s.config.editor.bracketMatching);
 
   // 内容变更处理
   const handleDocChange = useCallback(
@@ -145,8 +147,12 @@ export function SourceEditor() {
       // 基础功能
       history(),
       drawSelection(),
-      bracketMatching(),
+      ...(editorBracketMatching ? [bracketMatching()] : []),
       highlightActiveLine(),
+
+      // 缩进宽度配置
+      indentUnit.of(' '.repeat(editorTabSize)),
+      EditorState.tabSize.of(editorTabSize),
 
       // 键盘映射
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
@@ -216,7 +222,7 @@ export function SourceEditor() {
     };
     // 主题/编辑器配置变化时重建编辑器以应用新的 CSS 变量
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile?.id, theme, editorFontSize, editorLineHeight, editorWordWrap]);
+  }, [currentFile?.id, theme, editorFontSize, editorLineHeight, editorWordWrap, editorTabSize, editorBracketMatching]);
 
   // 同步外部内容变更到编辑器
   useEffect(() => {

@@ -14,6 +14,13 @@ import { themeLoader, type ThemeMetadata } from '@/services';
 import { cn } from '@/utils/cn';
 import { BUILTIN_THEME_LIST, isCustomTheme, type BuiltinTheme } from '@/types/config';
 import type { ThemeMode } from '@/types';
+import {
+  SettingsSlider,
+  SettingsSelect,
+  SettingsTextInput,
+  SettingsNumberInput,
+  SettingsSegmentedControl,
+} from './SettingsControls';
 
 import '../../styles/settings.css';
 
@@ -116,6 +123,7 @@ const SECTIONS = [
   { id: 'general', label: '通用' },
   { id: 'appearance', label: '外观' },
   { id: 'editor', label: '编辑器' },
+  { id: 'image', label: '图片' },
   { id: 'shortcuts', label: '快捷键' },
 ];
 
@@ -192,9 +200,49 @@ export function SettingsDialog() {
           <div className="settings-dialog-body">
           {settingsActiveSection === 'general' && (
             <div className="settings-section">
-              <div className="settings-item-description">
-                <p>自动保存始终开启。停止编辑 1 秒后将自动保存更改。</p>
+              {/* G - 自动保存延迟 */}
+              <div className="settings-item">
+                <label className="settings-item-label">自动保存延迟</label>
+                <SettingsSlider
+                  value={config.editor.autoSaveDelay}
+                  min={500}
+                  max={5000}
+                  step={500}
+                  suffix="ms"
+                  onChange={(v) => setNestedConfig('editor.autoSaveDelay', v)}
+                />
               </div>
+              <div className="settings-item-hint">
+                <p>停止编辑后等待指定时间自动保存更改。</p>
+              </div>
+
+              {/* G1 - 恢复上次会话 */}
+              <div className="settings-item">
+                <label className="settings-item-label">启动时恢复上次会话</label>
+                <button
+                  onClick={() => setConfig('restoreSession', !config.restoreSession)}
+                  className={cn(
+                    'settings-toggle',
+                    config.restoreSession && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+
+              {/* G5 - 最近文件数量上限 */}
+              <div className="settings-item">
+                <label className="settings-item-label">最近文件数量上限</label>
+                <SettingsNumberInput
+                  value={config.recentFiles.maxCount}
+                  min={5}
+                  max={50}
+                  step={5}
+                  onChange={(v) => setNestedConfig('recentFiles.maxCount', v)}
+                />
+              </div>
+
+              {/* G8 - 面板行为 */}
               <div className="settings-item">
                 <label className="settings-item-label">点击外部区域关闭"最近文件夹"面板</label>
                 <button
@@ -289,22 +337,156 @@ export function SettingsDialog() {
                   <span>打开目录</span>
                 </button>
               </div>
+
+              {/* A3 - 侧边栏位置 */}
+              <div className="settings-section-title">布局</div>
+              <div className="settings-item">
+                <label className="settings-item-label">侧边栏位置</label>
+                <SettingsSegmentedControl
+                  value={config.sidebar.position}
+                  options={[
+                    { value: 'left', label: '左侧' },
+                    { value: 'right', label: '右侧' },
+                  ]}
+                  onChange={(v) => setNestedConfig('sidebar.position', v)}
+                />
+              </div>
             </div>
           )}
 
           {settingsActiveSection === 'editor' && (
             <div className="settings-section">
+              {/* E1 - 编辑器字体大小 */}
               <div className="settings-item">
                 <label className="settings-item-label">字体大小</label>
-                <span className="settings-item-value">{config.editor.fontSize}px</span>
+                <SettingsSlider
+                  value={config.editor.fontSize}
+                  min={12}
+                  max={24}
+                  step={1}
+                  suffix="px"
+                  onChange={(v) => setNestedConfig('editor.fontSize', v)}
+                />
               </div>
+
+              {/* E2 - 编辑器字体 */}
+              <div className="settings-item">
+                <label className="settings-item-label">字体</label>
+                <SettingsSelect
+                  value={config.editor.fontFamily}
+                  options={[
+                    { value: 'system', label: '系统默认' },
+                    { value: 'serif', label: '衬线体 (Serif)' },
+                    { value: 'sans-serif', label: '无衬线体 (Sans-serif)' },
+                    { value: 'monospace', label: '等宽字体 (Monospace)' },
+                  ]}
+                  onChange={(v) => setNestedConfig('editor.fontFamily', v)}
+                />
+              </div>
+
+              {/* E3 - 编辑器最大宽度 */}
               <div className="settings-item">
                 <label className="settings-item-label">最大宽度</label>
-                <span className="settings-item-value">{config.editor.maxWidth}px</span>
+                <SettingsSlider
+                  value={config.editor.maxWidth}
+                  min={600}
+                  max={1200}
+                  step={50}
+                  suffix="px"
+                  onChange={(v) => setNestedConfig('editor.maxWidth', v)}
+                />
               </div>
+
+              {/* E4 - 编辑器行高 */}
               <div className="settings-item">
                 <label className="settings-item-label">行高</label>
-                <span className="settings-item-value">{config.editor.lineHeight}</span>
+                <SettingsSlider
+                  value={config.editor.lineHeight}
+                  min={1.2}
+                  max={2.5}
+                  step={0.05}
+                  formatValue={(v) => v.toFixed(2)}
+                  onChange={(v) => setNestedConfig('editor.lineHeight', v)}
+                />
+              </div>
+
+              {/* E5 - 自动换行模式 */}
+              <div className="settings-item">
+                <label className="settings-item-label">自动换行</label>
+                <SettingsSelect
+                  value={config.editor.wordWrap}
+                  options={[
+                    { value: 'soft', label: '软换行' },
+                    { value: 'hard', label: '硬换行' },
+                    { value: 'off', label: '关闭' },
+                  ]}
+                  onChange={(v) => setNestedConfig('editor.wordWrap', v)}
+                />
+              </div>
+
+              {/* P1-12 - Tab 缩进宽度 */}
+              <div className="settings-item">
+                <label className="settings-item-label">Tab 缩进宽度</label>
+                <SettingsSegmentedControl
+                  value={String(config.editor.tabSize)}
+                  options={[
+                    { value: '2', label: '2' },
+                    { value: '4', label: '4' },
+                    { value: '8', label: '8' },
+                  ]}
+                  onChange={(v) => setNestedConfig('editor.tabSize', Number(v))}
+                />
+              </div>
+
+              {/* P1-14 - 默认编辑模式 */}
+              <div className="settings-item">
+                <label className="settings-item-label">默认编辑模式</label>
+                <SettingsSelect
+                  value={config.editor.defaultMode}
+                  options={[
+                    { value: 'wysiwyg', label: '所见即所得' },
+                    { value: 'source', label: '源码模式' },
+                  ]}
+                  onChange={(v) => setNestedConfig('editor.defaultMode', v)}
+                />
+              </div>
+
+              {/* P1-15 - 默认打字机模式 */}
+              <div className="settings-item">
+                <label className="settings-item-label">默认开启打字机模式</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'editor.defaultTypewriterMode',
+                      !config.editor.defaultTypewriterMode,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.editor.defaultTypewriterMode && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+
+              {/* P1-16 - 默认专注模式 */}
+              <div className="settings-item">
+                <label className="settings-item-label">默认开启专注模式</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'editor.defaultFocusMode',
+                      !config.editor.defaultFocusMode,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.editor.defaultFocusMode && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
               </div>
 
               {/* Code Block Settings */}
@@ -325,6 +507,56 @@ export function SettingsDialog() {
                 >
                   <span className="settings-toggle-thumb" />
                 </button>
+              </div>
+
+              {/* P1-13 - 括号匹配 */}
+              <div className="settings-item">
+                <label className="settings-item-label">括号匹配</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'editor.bracketMatching',
+                      !config.editor.bracketMatching,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.editor.bracketMatching !== false && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {settingsActiveSection === 'image' && (
+            <div className="settings-section">
+              {/* I1 - 图片插入行为 */}
+              <div className="settings-item">
+                <label className="settings-item-label">插入图片时</label>
+                <SettingsSelect
+                  value={config.image.insertAction}
+                  options={[
+                    { value: 'copy-to-assets', label: '复制到资源目录' },
+                    { value: 'relative-path', label: '使用相对路径' },
+                    { value: 'absolute-path', label: '使用绝对路径' },
+                  ]}
+                  onChange={(v) => setNestedConfig('image.insertAction', v)}
+                />
+              </div>
+
+              {/* I2 - 图片资源目录名 */}
+              <div className="settings-item">
+                <label className="settings-item-label">资源目录名称</label>
+                <SettingsTextInput
+                  value={config.image.assetsFolderName}
+                  placeholder="assets"
+                  onChange={(v) => setNestedConfig('image.assetsFolderName', v)}
+                />
+              </div>
+              <div className="settings-item-hint">
+                <p>插入图片选择"复制到资源目录"时，图片将被复制到当前文件同级的此目录中。</p>
               </div>
             </div>
           )}

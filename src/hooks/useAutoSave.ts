@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useFileStore } from '@/stores/file-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { fileService } from '@/services/tauri';
 import { save as tauriSave } from '@tauri-apps/plugin-dialog';
-
-const AUTO_SAVE_DELAY = 1000; // 1 second debounce
 
 interface AutoSaveOptions {
   /** Called after a successful save to disk (used by file watcher to ignore self-writes) */
@@ -19,6 +18,9 @@ export function useAutoSave(options?: AutoSaveOptions) {
   const isSavingRef = useRef(false);
   const onAfterSaveRef = useRef(options?.onAfterSave);
   onAfterSaveRef.current = options?.onAfterSave;
+
+  // 从配置中读取自动保存延迟时间
+  const autoSaveDelay = useSettingsStore((s) => s.config.editor.autoSaveDelay);
 
   /** Perform the actual save to disk */
   const performSave = useCallback(async () => {
@@ -58,8 +60,8 @@ export function useAutoSave(options?: AutoSaveOptions) {
     timerRef.current = setTimeout(() => {
       timerRef.current = null;
       performSave();
-    }, AUTO_SAVE_DELAY);
-  }, [performSave]);
+    }, autoSaveDelay);
+  }, [performSave, autoSaveDelay]);
 
   /** Immediately save (for Cmd+S and focus loss) */
   const saveNow = useCallback(async () => {

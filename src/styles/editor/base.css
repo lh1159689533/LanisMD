@@ -7,10 +7,14 @@
 .milkdown-editor-root {
   min-height: 100%;
   outline: none;
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: var(--lanismd-editor-font-size, 16px);
+  line-height: var(--lanismd-editor-line-height, 1.75);
+  font-family: var(--lanismd-editor-font-family, system-ui, -apple-system, "Segoe UI", sans-serif);
   color: var(--lanismd-editor-text);
   caret-color: var(--lanismd-accent);
+  word-wrap: var(--lanismd-editor-word-wrap, normal);
+  overflow-wrap: var(--lanismd-editor-word-wrap, normal);
+  overflow-x: var(--lanismd-editor-overflow-x, hidden);
 }
 
 .milkdown-editor-root:focus {
