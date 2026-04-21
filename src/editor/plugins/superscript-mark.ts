@@ -138,6 +138,10 @@ export const remarkSuperscriptPlugin = $remark('remarkSuperscript', () => {
  */
 export const superscriptMarkSchema = $markSchema('superscript', () => ({
   attrs: {},
+  // 关键：inclusive: false 使得光标位于 mark 末尾时，新输入的字符不会继承该 mark，
+  // 从而允许用户在上标结束后直接输入正文（如 dd^2dd^ 后继续输入 abc 不会被套上 <sup>）。
+  // 参考 ProseMirror 内置 link mark 的相同处理方式。
+  inclusive: false,
   parseDOM: [
     { tag: 'sup' },
     {

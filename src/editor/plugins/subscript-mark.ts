@@ -151,6 +151,10 @@ export const remarkSubscriptPlugin = $remark('remarkSubscript', () => {
  */
 export const subscriptMarkSchema = $markSchema('subscript', () => ({
   attrs: {},
+  // 关键：inclusive: false 使得光标位于 mark 末尾时，新输入的字符不会继承该 mark，
+  // 从而允许用户在下标结束后直接输入正文（如 H~2~ 后继续输入 O 不会被套上 <sub>）。
+  // 参考 ProseMirror 内置 link mark 的相同处理方式。
+  inclusive: false,
   parseDOM: [
     { tag: 'sub' },
     {
