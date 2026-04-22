@@ -43,11 +43,8 @@ interface SettingsState {
  * 深度合并工具：将 source 中缺失的字段用 defaults 填充。
  * 仅处理普通对象，数组和其他类型直接取 source 值。
  */
-function deepMergeDefaults<T extends Record<string, unknown>>(
-  defaults: T,
-  source: Record<string, unknown>,
-): T {
-  const result = { ...defaults };
+function deepMergeDefaults<T>(defaults: T, source: Record<string, unknown>): T {
+  const result = { ...(defaults as Record<string, unknown>) };
   for (const key of Object.keys(source)) {
     const srcVal = source[key];
     const defVal = (defaults as Record<string, unknown>)[key];
@@ -60,16 +57,16 @@ function deepMergeDefaults<T extends Record<string, unknown>>(
       !Array.isArray(defVal)
     ) {
       // 递归合并嵌套对象
-      (result as Record<string, unknown>)[key] = deepMergeDefaults(
+      result[key] = deepMergeDefaults(
         defVal as Record<string, unknown>,
         srcVal as Record<string, unknown>,
       );
     } else {
       // source 中存在的字段优先使用 source 的值
-      (result as Record<string, unknown>)[key] = srcVal;
+      result[key] = srcVal;
     }
   }
-  return result;
+  return result as T;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -107,10 +104,7 @@ export const useSettingsStore = create<SettingsState>()(
         if (!persisted?.config) return currentState;
         return {
           ...currentState,
-          config: deepMergeDefaults(
-            DEFAULT_CONFIG as unknown as Record<string, unknown>,
-            persisted.config,
-          ) as AppConfig,
+          config: deepMergeDefaults(DEFAULT_CONFIG, persisted.config),
         };
       },
     },
