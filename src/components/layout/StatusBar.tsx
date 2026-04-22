@@ -8,15 +8,18 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
-  RiFocus3Line,
-  RiAlignCenter,
 } from 'react-icons/ri';
 import { TbLeaf, TbSnowflake, TbFlower } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
-import { BUILTIN_THEME_LIST, isCustomTheme, getCustomThemeId, type BuiltinTheme } from '@/types/config';
+import {
+  BUILTIN_THEME_LIST,
+  isCustomTheme,
+  getCustomThemeId,
+  type BuiltinTheme,
+} from '@/types/config';
 import type { ThemeMode, ThemeInfo } from '@/types';
 import { cn } from '@/utils/cn';
 
@@ -58,14 +61,12 @@ function getThemeIcon(theme: ThemeMode): React.ReactNode {
 }
 
 // 主题分组
-const BASE_THEMES = BUILTIN_THEME_LIST.filter(
-  (t) => !t.id.startsWith('bloom-')
-);
+const BASE_THEMES = BUILTIN_THEME_LIST.filter((t) => !t.id.startsWith('bloom-'));
 const BLOOM_LIGHT_THEMES = BUILTIN_THEME_LIST.filter(
-  (t) => t.id.startsWith('bloom-') && !t.id.endsWith('-dark')
+  (t) => t.id.startsWith('bloom-') && !t.id.endsWith('-dark'),
 );
 const BLOOM_DARK_THEMES = BUILTIN_THEME_LIST.filter(
-  (t) => t.id.startsWith('bloom-') && t.id.endsWith('-dark')
+  (t) => t.id.startsWith('bloom-') && t.id.endsWith('-dark'),
 );
 
 // Bloom 子菜单组件
@@ -77,18 +78,24 @@ interface BloomSubmenuProps {
   parentRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function BloomSubmenu({ lightThemes, darkThemes, currentTheme, onSelect, parentRef }: BloomSubmenuProps) {
+function BloomSubmenu({
+  lightThemes,
+  darkThemes,
+  currentTheme,
+  onSelect,
+  parentRef,
+}: BloomSubmenuProps) {
   const submenuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<'left' | 'right'>('left');
 
   // 自动检测展开方向
   useEffect(() => {
     if (!parentRef.current || !submenuRef.current) return;
-    
+
     const parentRect = parentRef.current.getBoundingClientRect();
     const submenuWidth = submenuRef.current.offsetWidth;
     const windowWidth = window.innerWidth;
-    
+
     // 如果右侧空间足够，向右展开；否则向左
     if (parentRect.right + submenuWidth + 8 < windowWidth) {
       setPosition('right');
@@ -114,7 +121,7 @@ function BloomSubmenu({ lightThemes, darkThemes, currentTheme, onSelect, parentR
           key={theme.id}
           onClick={() => onSelect(theme.id)}
           className={cn(
-            'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] whitespace-nowrap',
+            'flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-left text-[11px]',
             'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
             currentTheme === theme.id && 'bg-[var(--lanismd-sidebar-active)]',
           )}
@@ -124,17 +131,17 @@ function BloomSubmenu({ lightThemes, darkThemes, currentTheme, onSelect, parentR
           <span>{theme.name.replace('Bloom ', '')}</span>
         </button>
       ))}
-      
+
       {/* 分隔线 */}
       <div className="my-1 border-t border-[var(--lanismd-editor-border)]" />
-      
+
       {/* 深色主题 */}
       {darkThemes.map((theme) => (
         <button
           key={theme.id}
           onClick={() => onSelect(theme.id)}
           className={cn(
-            'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] whitespace-nowrap',
+            'flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-left text-[11px]',
             'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
             currentTheme === theme.id && 'bg-[var(--lanismd-sidebar-active)]',
           )}
@@ -156,18 +163,23 @@ interface CustomThemeSubmenuProps {
   parentRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function CustomThemeSubmenu({ themes, currentTheme, onSelect, parentRef }: CustomThemeSubmenuProps) {
+function CustomThemeSubmenu({
+  themes,
+  currentTheme,
+  onSelect,
+  parentRef,
+}: CustomThemeSubmenuProps) {
   const submenuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<'left' | 'right'>('left');
 
   // 自动检测展开方向
   useEffect(() => {
     if (!parentRef.current || !submenuRef.current) return;
-    
+
     const parentRect = parentRef.current.getBoundingClientRect();
     const submenuWidth = submenuRef.current.offsetWidth;
     const windowWidth = window.innerWidth;
-    
+
     if (parentRect.right + submenuWidth + 8 < windowWidth) {
       setPosition('right');
     } else {
@@ -194,7 +206,7 @@ function CustomThemeSubmenu({ themes, currentTheme, onSelect, parentRef }: Custo
           key={theme.id}
           onClick={() => onSelect(`custom:${theme.id}`)}
           className={cn(
-            'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] whitespace-nowrap',
+            'flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-left text-[11px]',
             'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
             isCustomThemeSelected(theme.id) && 'bg-[var(--lanismd-sidebar-active)]',
           )}
@@ -209,10 +221,8 @@ function CustomThemeSubmenu({ themes, currentTheme, onSelect, parentRef }: Custo
 }
 
 export function StatusBar() {
-  const {
-    wordCount, charCount, lineCount, cursorLine, cursorColumn,
-    mode, setMode, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode,
-  } = useEditorStore();
+  const { wordCount, charCount, lineCount, cursorLine, cursorColumn, mode, setMode } =
+    useEditorStore();
   const { config, setConfig } = useSettingsStore();
   const currentFile = useFileStore((s) => s.currentFile);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -343,32 +353,6 @@ export function StatusBar() {
       <div className="flex items-center gap-3">
         {currentFile && (
           <>
-            {/* 专注模式切换 */}
-            <button
-              onClick={toggleFocusMode}
-              className={cn(
-                'flex items-center gap-1 transition-colors',
-                focusMode
-                  ? 'text-[var(--lanismd-accent)]'
-                  : 'hover:text-[var(--lanismd-accent)]',
-              )}
-              title={`专注模式 (${navigator.userAgent.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+F)`}
-            >
-              <RiFocus3Line size={13} />
-            </button>
-            {/* 打字机模式切换 */}
-            <button
-              onClick={toggleTypewriterMode}
-              className={cn(
-                'flex items-center gap-1 transition-colors',
-                typewriterMode
-                  ? 'text-[var(--lanismd-accent)]'
-                  : 'hover:text-[var(--lanismd-accent)]',
-              )}
-              title={`打字机模式 (${navigator.userAgent.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+9)`}
-            >
-              <RiAlignCenter size={13} />
-            </button>
             <button
               onClick={toggleMode}
               className={cn(
@@ -421,7 +405,7 @@ export function StatusBar() {
                   onClick={() => handleThemeSelect(theme.id)}
                   onMouseEnter={handleOtherItemMouseEnter}
                   className={cn(
-                    'flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] whitespace-nowrap',
+                    'flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-left text-[11px]',
                     'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
                     config.theme === theme.id && 'bg-[var(--lanismd-sidebar-active)]',
                   )}
@@ -431,10 +415,10 @@ export function StatusBar() {
                   <span>{theme.name}</span>
                 </button>
               ))}
-              
+
               {/* 分隔线 */}
               <div className="my-1 border-t border-[var(--lanismd-editor-border)]" />
-              
+
               {/* Bloom 系列入口 */}
               <div
                 ref={bloomItemRef}
@@ -444,7 +428,7 @@ export function StatusBar() {
               >
                 <div
                   className={cn(
-                    'flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-[11px] cursor-default',
+                    'flex w-full cursor-default items-center justify-between gap-2 px-3 py-1.5 text-left text-[11px]',
                     'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
                     config.theme.startsWith('bloom-') && 'bg-[var(--lanismd-sidebar-active)]',
                   )}
@@ -455,7 +439,7 @@ export function StatusBar() {
                   </span>
                   <RiArrowRightSLine size={14} className="opacity-60" />
                 </div>
-                
+
                 {/* Bloom 子菜单 */}
                 {showBloomSubmenu && (
                   <BloomSubmenu
@@ -478,7 +462,7 @@ export function StatusBar() {
                 >
                   <div
                     className={cn(
-                      'flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-[11px] cursor-default',
+                      'flex w-full cursor-default items-center justify-between gap-2 px-3 py-1.5 text-left text-[11px]',
                       'transition-colors hover:bg-[var(--lanismd-sidebar-hover)]',
                       isCustomTheme(config.theme) && 'bg-[var(--lanismd-sidebar-active)]',
                     )}
@@ -489,7 +473,7 @@ export function StatusBar() {
                     </span>
                     <RiArrowRightSLine size={14} className="opacity-60" />
                   </div>
-                  
+
                   {/* 自定义主题子菜单 */}
                   {showCustomSubmenu && (
                     <CustomThemeSubmenu
