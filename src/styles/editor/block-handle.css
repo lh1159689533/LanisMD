@@ -14,6 +14,17 @@
   z-index: 40;
 }
 
+/* 未激活（Milkdown BlockProvider 尚未通过 show() 计算 top/left）时，
+   元素没有定位值，会以"静态位置"渲染在 .milkdown 末尾之后，
+   撑大祖先 .editor-content 的 scrollHeight，导致多出一条垂直滚动条。
+   通过 data-show="false" 完全移除渲染盒子即可规避。show() 时会先
+   computePosition 设置 top/left，再把 data-show 切为 "true"，顺序安全。 */
+.milkdown-block-handle[data-show='false'] {
+  display: none;
+  left: 0;
+  top: 0;
+}
+
 /* Show handle when hovering over the editor area */
 .editor-wrapper:hover .milkdown-block-handle {
   opacity: 0.4;
