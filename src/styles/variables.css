@@ -59,6 +59,12 @@
 
   /* ===== 状态色 ===== */
   --lanismd-info: #3b82f6;
+  --lanismd-success: #16a34a;
+  --lanismd-success-bg: rgba(22, 163, 74, 0.1);
+  --lanismd-success-border: rgba(22, 163, 74, 0.25);
+  --lanismd-danger: #dc2626;
+  --lanismd-danger-bg: rgba(220, 38, 38, 0.1);
+  --lanismd-danger-border: rgba(220, 38, 38, 0.25);
 
   /* ===== 侧边栏增强 ===== */
   --lanismd-sidebar-active-text: inherit;
@@ -481,6 +487,52 @@
   --lanismd-context-menu-shadow: var(--lanismd-shadow-lg);
   --lanismd-context-menu-item-hover-bg: var(--lanismd-hover-bg);
   --lanismd-context-menu-separator: var(--lanismd-border-color);
+
+  /* ===============================================
+   * AI 模块
+   * =============================================== */
+
+  /* AI 强调色（默认 indigo 系列） */
+  --lanismd-ai-accent: #6366f1;
+  --lanismd-ai-accent-hover: #4f46e5;
+  --lanismd-ai-accent-light: #a5b4fc;
+  --lanismd-ai-accent-bg: rgba(99, 102, 241, 0.08);
+  --lanismd-ai-accent-bg-hover: rgba(99, 102, 241, 0.12);
+
+  /* AI 行内生成 */
+  --lanismd-ai-inline-bg: rgba(99, 102, 241, 0.08);
+  --lanismd-ai-inline-color: #4f46e5;
+
+  /* AI diff 颜色 */
+  --lanismd-ai-diff-deleted-color: #ef4444;
+  --lanismd-ai-diff-deleted-bg: rgba(239, 68, 68, 0.1);
+  --lanismd-ai-diff-inserted-color: #22c55e;
+  --lanismd-ai-diff-inserted-bg: rgba(34, 197, 94, 0.1);
+  --lanismd-ai-diff-inserted-focus-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);
+
+  /* AI 弹窗/浮层阴影 */
+  --lanismd-ai-popup-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --lanismd-ai-dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --lanismd-ai-context-menu-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+  /* AI 遮罩 */
+  --lanismd-ai-overlay-bg: rgba(0, 0, 0, 0.05);
+  --lanismd-ai-guide-overlay-bg: rgba(0, 0, 0, 0.35);
+
+  /* AI 成功/错误状态色 */
+  --lanismd-ai-success-color: #22c55e;
+  --lanismd-ai-error-color: #ef4444;
+
+  /* AI 引导图标渐变 */
+  --lanismd-ai-guide-icon-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12));
+
+  /* AI focus-visible 阴影 */
+  --lanismd-ai-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  --lanismd-ai-input-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+
+  /* AI 暗色 hover 背景 */
+  --lanismd-ai-dark-hover-bg: rgba(255, 255, 255, 0.06);
+  --lanismd-ai-dark-cancel-hover-bg: rgba(255, 255, 255, 0.05);
 
   /* ===============================================
    * 专注模式

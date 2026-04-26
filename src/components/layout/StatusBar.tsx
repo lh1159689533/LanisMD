@@ -8,11 +8,14 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
+  RiSparklingLine,
 } from 'react-icons/ri';
 import { TbLeaf, TbSnowflake, TbFlower } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
+import { useUIStore } from '@/stores/ui-store';
+import { useAiStore } from '@/stores/ai-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
 import {
   BUILTIN_THEME_LIST,
@@ -225,6 +228,9 @@ export function StatusBar() {
     useEditorStore();
   const { config, setConfig } = useSettingsStore();
   const currentFile = useFileStore((s) => s.currentFile);
+  const toggleAiHistory = useUIStore((s) => s.toggleAiHistory);
+  const aiHistoryOpen = useUIStore((s) => s.aiHistoryOpen);
+  const historyCount = useAiStore((s) => s.history.length);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showBloomSubmenu, setShowBloomSubmenu] = useState(false);
   const [showCustomSubmenu, setShowCustomSubmenu] = useState(false);
@@ -378,6 +384,21 @@ export function StatusBar() {
             </span>
           </>
         )}
+        <div className="relative">
+          <button
+            onClick={toggleAiHistory}
+            className={cn(
+              'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+              aiHistoryOpen && 'text-[var(--lanismd-accent)]',
+            )}
+            title="AI 历史记录"
+          >
+            <RiSparklingLine size={13} />
+            {historyCount > 0 && (
+              <span className="text-[10px] opacity-70">{historyCount}</span>
+            )}
+          </button>
+        </div>
         <div className="relative">
           <button
             ref={themeButtonRef}

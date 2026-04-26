@@ -546,3 +546,114 @@
   color: var(--lanismd-text-muted);
   margin-top: calc(var(--lanismd-spacing-xs) * -1);
 }
+
+/* ===== AI 设置专属样式 ===== */
+
+/* Key 输入行：input + 保存按钮 */
+.settings-ai-key-row {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  flex-shrink: 0;
+}
+
+.settings-ai-key-row .settings-text-input {
+  min-width: 240px;
+  max-width: 280px;
+}
+
+/* 已配置状态行：徽标 + 删除按钮 */
+.settings-ai-key-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-key-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.settings-ai-key-badge.is-configured {
+  color: var(--lanismd-success);
+  background-color: var(--lanismd-success-bg);
+}
+
+.settings-ai-key-badge.is-not-configured {
+  color: var(--lanismd-danger);
+  background-color: var(--lanismd-danger-bg);
+}
+
+/* 测试连接结果提示条 */
+.settings-ai-test-result {
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.settings-ai-test-result.is-ok {
+  color: var(--lanismd-success);
+  background-color: var(--lanismd-success-bg);
+  border: 1px solid var(--lanismd-success-border);
+}
+
+.settings-ai-test-result.is-error {
+  color: var(--lanismd-danger);
+  background-color: var(--lanismd-danger-bg);
+  border: 1px solid var(--lanismd-danger-border);
+}
+
+/* loading 旋转 */
+.settings-ai-spin {
+  animation: lanismd-ai-spin 0.9s linear infinite;
+}
+
+@keyframes lanismd-ai-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 申请 Key 外链 */
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lanismd-accent);
+  text-decoration: none;
+  transition: opacity var(--lanismd-transition-fast);
+}
+
+.settings-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* 主色按钮（保存 Key） */
+.settings-button-primary {
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: var(--lanismd-accent);
+  border-color: var(--lanismd-accent);
+}
+
+.settings-button-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: var(--lanismd-accent);
+  border-color: var(--lanismd-accent);
+}
+
+.settings-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

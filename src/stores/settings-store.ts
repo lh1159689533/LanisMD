@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ThemeMode, AppConfig } from '@/types';
+import type { AppConfig } from '@/types';
 
 const DEFAULT_CONFIG: AppConfig = {
   theme: 'system',
@@ -29,6 +29,23 @@ const DEFAULT_CONFIG: AppConfig = {
   image: {
     insertAction: 'copy-to-assets',
     assetsFolderName: 'assets',
+  },
+  ai: {
+    enabled: true,
+    currentProvider: 'zhipu',
+    selectedModels: {
+      zhipu: '',
+      deepseek: '',
+      siliconflow: '',
+      custom: '',
+    },
+    temperature: 0.7,
+    maxTokens: 2000,
+    showInTooltip: true,
+    showInSlash: true,
+    customBaseUrl: '',
+    customPrompts: [],
+    maxHistoryCount: 200,
   },
 };
 

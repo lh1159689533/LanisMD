@@ -20,7 +20,7 @@
   display: flex;
 }
 
-.milkdown-tooltip button {
+.milkdown-tooltip > button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,11 +36,11 @@
   transition: background-color var(--lanismd-transition-normal);
 }
 
-.milkdown-tooltip button:hover {
+.milkdown-tooltip > button:hover {
   background-color: var(--lanismd-hover-bg);
 }
 
-.milkdown-tooltip button[data-active='true'] {
+.milkdown-tooltip > button[data-active='true'] {
   color: var(--lanismd-accent);
   background-color: var(--lanismd-accent-light);
 }

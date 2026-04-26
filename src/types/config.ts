@@ -129,6 +129,34 @@ export interface AppConfig {
     insertAction: 'copy-to-assets' | 'relative-path' | 'absolute-path';
     assetsFolderName: string;
   };
+  /** AI 助手配置 */
+  ai: {
+    enabled: boolean;
+    currentProvider: 'zhipu' | 'deepseek' | 'siliconflow' | 'custom';
+    /** 各 Provider 选中的模型 */
+    selectedModels: {
+      zhipu: string;
+      deepseek: string;
+      siliconflow: string;
+      custom: string;
+    };
+    temperature: number;
+    maxTokens: number;
+    /** 划词浮层是否显示 AI 按钮 */
+    showInTooltip: boolean;
+    /** 斜杠菜单是否显示 AI 指令 */
+    showInSlash: boolean;
+    /** Custom Provider 的 base URL */
+    customBaseUrl: string;
+    /** 用户自定义 Prompt 模板 */
+    customPrompts?: Array<{
+      id: string;
+      label: string;
+      prompt: string;
+    }>;
+    /** AI 历史记录最大条数 */
+    maxHistoryCount: number;
+  };
 }
 
 export type ErrorCode =

@@ -14,3 +14,6 @@ export type {
   FontFamilyGroup,
   GlobalFontsResult,
 } from './theme-loader';
+export * as aiService from './ai-service';
+export { PROVIDER_PRESETS, getProviderMeta } from './ai/providers';
+export { AI_COMMANDS, AI_COMMAND_ORDER } from './ai/commands';

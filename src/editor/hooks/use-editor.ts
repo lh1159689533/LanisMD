@@ -4,6 +4,7 @@ import { editorViewCtx } from '@milkdown/kit/core';
 import { createEditor, setupEditorListeners, type EditorListener } from '../editor-setup';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { registerContextMenu } from '../plugins/ai-edit';
 
 export function useEditor() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,8 @@ export function useEditor() {
 
     // 用于标记当前 effect 是否已被清理（处理 StrictMode 双重执行）
     let cancelled = false;
+    /** 右键菜单销毁函数 */
+    let destroyContextMenu: (() => void) | null = null;
 
     // 先清理旧实例
     if (editorRef.current) {
@@ -67,6 +70,8 @@ export function useEditor() {
           editor.action((ctx) => {
             const view = ctx.get(editorViewCtx);
             useEditorStore.getState().setWysiwygView(view);
+            // 注册自定义右键菜单
+            destroyContextMenu = registerContextMenu(view);
           });
         } catch {
           // 编辑器可能还没完全初始化
@@ -80,6 +85,7 @@ export function useEditor() {
 
     return () => {
       cancelled = true;
+      if (destroyContextMenu) destroyContextMenu();
       useEditorStore.getState().setWysiwygView(null);
       if (editorRef.current) {
         editorRef.current.destroy();

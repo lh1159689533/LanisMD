@@ -1,0 +1,875 @@
+/**
+ * ai-edit 插件样式
+ *
+ * 包含：占位浮层、行内 diff、就地弹窗、右键菜单、参数输入、首次引导
+ * 类名前缀：`.lanismd-ai-`
+ *
+ * 所有颜色均引用主题变量（--lanismd-ai-*），不再硬编码。
+ * 暗色主题通过 light.css / dark.css 中覆盖变量值自动适配。
+ */
+
+/* overlay 容器：和编辑器同层，不影响 ProseMirror */
+.lanismd-ai-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.lanismd-ai-inline {
+  position: absolute;
+  display: inline-flex;
+  align-items: baseline;
+  pointer-events: auto;
+  padding: 0 2px;
+  border-radius: 3px;
+  background-color: var(--lanismd-ai-inline-bg);
+  color: var(--lanismd-ai-inline-color);
+  font-style: italic;
+  line-height: inherit;
+  white-space: pre-wrap;
+  max-width: 80%;
+}
+
+.lanismd-ai-inline[data-status='error'] {
+  background-color: var(--lanismd-ai-diff-deleted-bg);
+  color: var(--lanismd-ai-error-color);
+}
+
+.lanismd-ai-inline-text {
+  white-space: pre-wrap;
+}
+
+.lanismd-ai-inline-caret {
+  display: inline-block;
+  margin-left: 1px;
+  color: currentColor;
+  opacity: 0.7;
+  animation: lanismd-ai-caret-blink 1s steps(2, start) infinite;
+}
+
+.lanismd-ai-inline[data-status='done'] .lanismd-ai-inline-caret,
+.lanismd-ai-inline[data-status='error'] .lanismd-ai-inline-caret {
+  display: none;
+}
+
+@keyframes lanismd-ai-caret-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Slash menu 中 AI 指令的视觉强调                                         */
+/* ---------------------------------------------------------------------- */
+
+.milkdown-slash-item.milkdown-slash-item-ai .milkdown-slash-icon {
+  color: var(--lanismd-ai-accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Tooltip 浮层中 AI 按钮（如"润色"）的视觉强调                           */
+/* ---------------------------------------------------------------------- */
+
+.milkdown-tooltip .milkdown-tooltip-btn-ai {
+  color: var(--lanismd-ai-accent);
+}
+
+.milkdown-tooltip .milkdown-tooltip-btn-ai:hover {
+  background-color: var(--lanismd-ai-accent-bg-hover);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 取消按钮：生成过程中允许中止                                           */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-inline-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 4px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-normal);
+  pointer-events: auto;
+}
+
+.lanismd-ai-inline-cancel:hover {
+  border-color: var(--lanismd-ai-accent);
+  color: var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent-bg);
+}
+
+/* 生成完成/出错时隐藏取消按钮 */
+.lanismd-ai-inline[data-status='done'] .lanismd-ai-inline-cancel,
+.lanismd-ai-inline[data-status='error'] .lanismd-ai-inline-cancel {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 操作按钮栏（完成/出错后显示重试、写入、丢弃按钮）                        */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-inline-actions {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.lanismd-ai-inline[data-status='done'] .lanismd-ai-inline-actions,
+.lanismd-ai-inline[data-status='error'] .lanismd-ai-inline-actions {
+  display: inline-flex;
+}
+
+/* 错误状态下隐藏"写入"按钮（没有有效内容可写入） */
+.lanismd-ai-inline[data-status='error'] .lanismd-ai-inline-commit {
+  display: none;
+}
+
+.lanismd-ai-inline-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 8px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 4px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-normal);
+  pointer-events: auto;
+}
+
+.lanismd-ai-inline-action-btn:hover {
+  border-color: var(--lanismd-ai-accent);
+  color: var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent-bg);
+}
+
+/* 写入按钮使用强调色 */
+.lanismd-ai-inline-commit {
+  border-color: var(--lanismd-ai-accent);
+  color: var(--lanismd-accent-contrast, #fff);
+  background: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-inline-commit:hover {
+  background: var(--lanismd-ai-accent-hover);
+  border-color: var(--lanismd-ai-accent-hover);
+  color: var(--lanismd-accent-contrast, #fff);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 参数输入浮层（requireArg 指令弹出的输入框）                             */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-arg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  /* 半透明背景，便于聚焦输入 */
+  background: var(--lanismd-ai-overlay-bg);
+}
+
+.lanismd-ai-arg-container {
+  width: 320px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  box-shadow: var(--lanismd-tooltip-shadow);
+  z-index: 101;
+}
+
+.lanismd-ai-arg-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-arg-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--lanismd-transition-normal);
+  box-sizing: border-box;
+}
+
+.lanismd-ai-arg-input:focus {
+  border-color: var(--lanismd-ai-accent);
+  box-shadow: var(--lanismd-ai-input-focus-shadow);
+}
+
+.lanismd-ai-arg-hint {
+  margin-top: 6px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary, var(--lanismd-text-muted));
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Tooltip AI 子菜单（hover 展开的 polish/translate/explain 列表）          */
+/* ---------------------------------------------------------------------- */
+
+.milkdown-tooltip-ai-submenu {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+  padding: 4px;
+  border-radius: var(--lanismd-tooltip-border-radius, 8px);
+  background: var(--lanismd-tooltip-bg);
+  border: var(--lanismd-tooltip-border);
+  box-shadow: var(--lanismd-tooltip-shadow);
+  z-index: 60;
+}
+
+.milkdown-tooltip-ai-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--lanismd-radius-md, 4px);
+  background: transparent;
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--lanismd-transition-normal);
+}
+
+.milkdown-tooltip-ai-submenu-item:hover {
+  background-color: var(--lanismd-ai-accent-bg);
+  color: var(--lanismd-ai-accent);
+}
+
+.milkdown-tooltip-ai-submenu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* AI 按钮上的小三角箭头 */
+.milkdown-tooltip-btn-arrow {
+  display: flex;
+  align-items: center;
+  margin-left: 1px;
+  opacity: 0.5;
+}
+
+.milkdown-tooltip-btn-ai .milkdown-tooltip-btn-arrow {
+  color: var(--lanismd-ai-accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 行内 diff 样式（润色功能）                                               */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-diff-container {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 15;
+  padding: 2px 0;
+  background: var(--lanismd-editor-bg);
+  border-radius: 3px;
+}
+
+.lanismd-ai-diff-content {
+  line-height: 1.6;
+  font-size: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lanismd-ai-diff-keep {
+  color: inherit;
+}
+
+.lanismd-ai-diff-deleted {
+  text-decoration: line-through;
+  color: var(--lanismd-ai-diff-deleted-color);
+  background-color: var(--lanismd-ai-diff-deleted-bg);
+}
+
+.lanismd-ai-diff-inserted {
+  color: var(--lanismd-ai-diff-inserted-color);
+  background-color: var(--lanismd-ai-diff-inserted-bg);
+  outline: none;
+  border-radius: 2px;
+}
+
+.lanismd-ai-diff-inserted:focus {
+  box-shadow: var(--lanismd-ai-diff-inserted-focus-shadow);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 润色弹窗（和编辑区等宽，浮在选区下方）                                    */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-polish-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: transparent;
+}
+
+.lanismd-polish-popup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  box-shadow: var(--lanismd-ai-popup-shadow);
+  animation: lanismd-polish-popup-in 0.15s ease-out;
+}
+
+@keyframes lanismd-polish-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 状态行 */
+.lanismd-polish-popup-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--lanismd-font-size-base);
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+}
+
+.lanismd-polish-popup[data-status='done'] .lanismd-polish-popup-status {
+  color: var(--lanismd-ai-success-color);
+}
+
+.lanismd-polish-popup[data-status='error'] .lanismd-polish-popup-status {
+  color: var(--lanismd-ai-error-color);
+}
+
+/* 加载动画 */
+.lanismd-polish-popup-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--lanismd-editor-border);
+  border-top-color: var(--lanismd-ai-accent);
+  border-radius: 50%;
+  animation: lanismd-polish-spinner 0.6s linear infinite;
+}
+
+.lanismd-polish-popup[data-status='done'] .lanismd-polish-popup-spinner,
+.lanismd-polish-popup[data-status='error'] .lanismd-polish-popup-spinner {
+  display: none;
+}
+
+@keyframes lanismd-polish-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 操作按钮区 */
+.lanismd-polish-popup-actions {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.lanismd-polish-popup[data-status='done'] .lanismd-polish-popup-actions {
+  display: flex;
+}
+
+.lanismd-polish-popup-btn {
+  padding: 4px 16px;
+  border-radius: 6px;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-normal);
+  outline: none;
+}
+
+.lanismd-polish-popup-btn:focus-visible {
+  box-shadow: var(--lanismd-ai-focus-shadow);
+}
+
+.lanismd-polish-popup-btn-accept {
+  border: 1px solid var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent);
+  color: var(--lanismd-accent-contrast, #fff);
+}
+
+.lanismd-polish-popup-btn-accept:hover {
+  background: var(--lanismd-ai-accent-hover);
+  border-color: var(--lanismd-ai-accent-hover);
+}
+
+.lanismd-polish-popup-btn-reject {
+  border: 1px solid var(--lanismd-editor-border);
+  background: transparent;
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+}
+
+.lanismd-polish-popup-btn-reject:hover {
+  border-color: var(--lanismd-ai-error-color);
+  color: var(--lanismd-ai-error-color);
+}
+
+/* ---------------------------------------------------------------------- */
+/* AI 就地弹窗（翻译/解释共用）- 和编辑区等宽的横条式弹窗                     */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: transparent;
+}
+
+.lanismd-ai-popup {
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+  border-radius: 8px;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  box-shadow: var(--lanismd-ai-popup-shadow);
+  overflow: hidden;
+  animation: lanismd-ai-popup-in 0.15s ease-out;
+}
+
+@keyframes lanismd-ai-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lanismd-ai-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  flex-shrink: 0;
+}
+
+.lanismd-ai-popup-title {
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 600;
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-popup-lang-select {
+  padding: 3px 8px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 5px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.lanismd-ai-popup-lang-select:focus {
+  border-color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-popup-status {
+  padding: 6px 16px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-secondary, var(--lanismd-text-muted));
+  font-style: italic;
+}
+
+.lanismd-ai-popup-status-error {
+  color: var(--lanismd-ai-error-color);
+  font-style: normal;
+}
+
+.lanismd-ai-popup-content {
+  flex: 1;
+  padding: 10px 16px;
+  overflow-y: auto;
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.65;
+  color: var(--lanismd-editor-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 40px;
+}
+
+.lanismd-ai-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--lanismd-editor-border);
+  flex-shrink: 0;
+}
+
+.lanismd-ai-popup-btn {
+  padding: 4px 16px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-normal);
+  outline: none;
+}
+
+.lanismd-ai-popup-btn:hover {
+  border-color: var(--lanismd-ai-accent);
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-popup-btn:focus-visible {
+  box-shadow: var(--lanismd-ai-focus-shadow);
+}
+
+.lanismd-ai-popup-btn-primary {
+  border-color: var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent);
+  color: var(--lanismd-accent-contrast, #fff);
+}
+
+.lanismd-ai-popup-btn-primary:hover {
+  background: var(--lanismd-ai-accent-hover);
+  border-color: var(--lanismd-ai-accent-hover);
+  color: var(--lanismd-accent-contrast, #fff);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 编辑器自定义右键菜单                                                     */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-context-menu {
+  min-width: 180px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--lanismd-tooltip-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  box-shadow: var(--lanismd-ai-context-menu-shadow);
+  animation: lanismd-ai-context-menu-in 0.1s ease-out;
+}
+
+@keyframes lanismd-ai-context-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.lanismd-ai-context-menu-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--lanismd-editor-border);
+}
+
+.lanismd-ai-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.1s ease;
+  text-align: left;
+}
+
+.lanismd-ai-context-menu-item:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.lanismd-ai-context-menu-item-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lanismd-ai-context-menu-item-disabled:hover {
+  background-color: transparent;
+}
+
+.lanismd-ai-context-menu-item-ai {
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-context-menu-item-ai:hover {
+  background-color: var(--lanismd-ai-accent-bg);
+}
+
+.lanismd-ai-context-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 首次使用引导对话框                                                       */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-ai-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--lanismd-ai-guide-overlay-bg);
+  backdrop-filter: blur(2px);
+}
+
+.lanismd-ai-guide-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 380px;
+  padding: 32px 28px 24px;
+  border-radius: 12px;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  box-shadow: var(--lanismd-ai-dialog-shadow);
+  text-align: center;
+  animation: lanismd-ai-guide-in 0.2s ease-out;
+}
+
+@keyframes lanismd-ai-guide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.lanismd-ai-guide-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--lanismd-ai-guide-icon-bg);
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-guide-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-ai-guide-desc {
+  margin: 0 0 8px;
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.6;
+  color: var(--lanismd-sidebar-text);
+}
+
+.lanismd-ai-guide-hint {
+  margin: 0 0 20px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-ai-accent);
+  opacity: 0.8;
+}
+
+.lanismd-ai-guide-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.lanismd-ai-guide-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: var(--lanismd-font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-normal);
+  outline: none;
+}
+
+.lanismd-ai-guide-btn:focus-visible {
+  box-shadow: var(--lanismd-ai-focus-shadow);
+}
+
+.lanismd-ai-guide-btn-cancel {
+  border: 1px solid var(--lanismd-editor-border);
+  background: transparent;
+  color: var(--lanismd-sidebar-text);
+}
+
+.lanismd-ai-guide-btn-cancel:hover {
+  background: var(--lanismd-hover-bg);
+}
+
+.lanismd-ai-guide-btn-go {
+  border: 1px solid var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent);
+  color: var(--lanismd-accent-contrast, #fff);
+}
+
+.lanismd-ai-guide-btn-go:hover {
+  background: var(--lanismd-ai-accent-hover);
+  border-color: var(--lanismd-ai-accent-hover);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 转图表/转公式 generator-popup 弹窗                                      */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-generator-popup {
+  max-height: min(520px, 80vh);
+  overflow-y: auto;
+}
+
+/* 输入区域 */
+.lanismd-generator-popup-input-area {
+  padding: 12px 16px 0;
+}
+
+/* 通用文本域基础样式 */
+.lanismd-generator-popup-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--lanismd-transition-normal);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.lanismd-generator-popup-textarea:focus {
+  border-color: var(--lanismd-ai-accent);
+  box-shadow: var(--lanismd-ai-input-focus-shadow);
+}
+
+/* 只读状态 */
+.lanismd-generator-popup-textarea-readonly {
+  background: var(--lanismd-hover-bg);
+  cursor: default;
+  opacity: 0.75;
+  resize: none;
+}
+
+/* 结果文本域 */
+.lanismd-generator-popup-textarea-result {
+  min-height: 120px;
+  max-height: 240px;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* 开始按钮区域 */
+.lanismd-generator-popup-start-area {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px 12px;
+}
+
+/* 结果区域 */
+.lanismd-generator-popup-result-area {
+  padding: 0 16px;
+}
+
+/* 状态提示 */
+.lanismd-generator-popup-status {
+  padding: 8px 0 6px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-secondary, var(--lanismd-text-muted));
+  font-style: italic;
+}
+
+.lanismd-generator-popup-status-error {
+  color: var(--lanismd-ai-error-color);
+  font-style: normal;
+}
+
+/* 操作按钮区 */
+.lanismd-generator-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 12px;
+  border-top: 1px solid var(--lanismd-editor-border);
+  margin-top: 8px;
+}

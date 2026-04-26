@@ -6,6 +6,7 @@ mod services;
 use commands::file_commands;
 use commands::config_commands;
 use commands::search_commands;
+use commands::ai_commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -84,6 +85,15 @@ pub fn run() {
             config_commands::get_recent_files,
             config_commands::add_recent_file,
             search_commands::global_search,
+            ai_commands::set_ai_api_key,
+            ai_commands::get_ai_key_status,
+            ai_commands::read_ai_config,
+            ai_commands::set_default_provider,
+            ai_commands::set_default_model,
+            ai_commands::open_ai_config,
+            ai_commands::ai_test_connection,
+            ai_commands::ai_chat_stream,
+            ai_commands::cancel_ai_stream,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -21,6 +21,7 @@ import {
   SettingsNumberInput,
   SettingsSegmentedControl,
 } from './SettingsControls';
+import { AiSettings } from './AiSettings';
 
 import '../../styles/settings.css';
 
@@ -124,6 +125,7 @@ const SECTIONS = [
   { id: 'appearance', label: '外观' },
   { id: 'editor', label: '编辑器' },
   { id: 'image', label: '图片' },
+  { id: 'ai', label: 'AI 助手' },
   { id: 'shortcuts', label: '快捷键' },
 ];
 
@@ -560,6 +562,8 @@ export function SettingsDialog() {
               </div>
             </div>
           )}
+
+          {settingsActiveSection === 'ai' && <AiSettings />}
 
           {settingsActiveSection === 'shortcuts' && (
             <div className="settings-section settings-shortcuts">

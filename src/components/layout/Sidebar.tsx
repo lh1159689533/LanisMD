@@ -193,8 +193,12 @@ export function Sidebar() {
       let el: HTMLElement | null = view.dom.parentElement;
       while (el) {
         const { overflow, overflowY } = getComputedStyle(el);
-        if (overflow === 'auto' || overflow === 'scroll' ||
-            overflowY === 'auto' || overflowY === 'scroll') {
+        if (
+          overflow === 'auto' ||
+          overflow === 'scroll' ||
+          overflowY === 'auto' ||
+          overflowY === 'scroll'
+        ) {
           scrollContainer = el;
           break;
         }
@@ -322,10 +326,10 @@ export function Sidebar() {
             setSidebarWidth(clampedWidth);
           }
           if (contentPanelRef.current) {
-            contentPanelRef.current.style.width = '';
+            contentPanelRef.current.style.width = `${clampedWidth}px`;
           }
           if (innerPanelRef.current) {
-            innerPanelRef.current.style.width = '';
+            innerPanelRef.current.style.width = `${clampedWidth}px`;
           }
           setIsDragging(false);
         }

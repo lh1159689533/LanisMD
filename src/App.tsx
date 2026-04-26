@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
@@ -9,6 +9,7 @@ import { ToastContainer } from './components/common/ToastContainer';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
+import { useAiStore } from './stores/ai-store';
 import { useTheme } from './hooks/useTheme';
 import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -60,6 +61,12 @@ function TauriApp() {
     onToggleFocusMode: toggleFocusMode,
     onToggleTypewriterMode: toggleTypewriterMode,
   });
+
+  // 启动时读取一次 AI 配置文件（同步默认服务商/模型到 settings）
+  const refreshConfig = useAiStore((s) => s.refreshConfig);
+  useEffect(() => {
+    void refreshConfig();
+  }, [refreshConfig]);
 
   return (
     <>

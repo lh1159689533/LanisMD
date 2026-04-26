@@ -12,6 +12,10 @@ interface UIState {
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
   settingsActiveSection: string;
+  /** AI 历史面板是否打开 */
+  aiHistoryOpen: boolean;
+  /** AI 历史面板宽度 */
+  aiHistoryWidth: number;
   toasts: Toast[];
 
   toggleSidebar: () => void;
@@ -25,6 +29,9 @@ interface UIState {
   closeCommandPalette: () => void;
   openSettings: (section?: string) => void;
   closeSettings: () => void;
+  toggleAiHistory: () => void;
+  closeAiHistory: () => void;
+  setAiHistoryWidth: (width: number) => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
 }
@@ -36,6 +43,8 @@ export const useUIStore = create<UIState>()((set) => ({
   commandPaletteOpen: false,
   settingsOpen: false,
   settingsActiveSection: 'general',
+  aiHistoryOpen: false,
+  aiHistoryWidth: 320,
   toasts: [],
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -51,6 +60,9 @@ export const useUIStore = create<UIState>()((set) => ({
       settingsActiveSection: section ?? 'general',
     }),
   closeSettings: () => set({ settingsOpen: false }),
+  toggleAiHistory: () => set((s) => ({ aiHistoryOpen: !s.aiHistoryOpen })),
+  closeAiHistory: () => set({ aiHistoryOpen: false }),
+  setAiHistoryWidth: (width) => set({ aiHistoryWidth: width }),
   addToast: (toast) =>
     set((s) => ({
       toasts: [...s.toasts, { ...toast, id: generateToastId() }],

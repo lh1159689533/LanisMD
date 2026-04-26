@@ -37,8 +37,12 @@ function getMilkdownView(
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
   while (el) {
     const { overflow, overflowY } = getComputedStyle(el);
-    if (overflow === 'auto' || overflow === 'scroll' ||
-        overflowY === 'auto' || overflowY === 'scroll') {
+    if (
+      overflow === 'auto' ||
+      overflow === 'scroll' ||
+      overflowY === 'auto' ||
+      overflowY === 'scroll'
+    ) {
       return el;
     }
     el = el.parentElement;
@@ -143,9 +147,7 @@ export function EditorCore() {
 
       try {
         // 设置选区到匹配位置
-        const tr = view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, from, to),
-        );
+        const tr = view.state.tr.setSelection(TextSelection.create(view.state.doc, from, to));
         view.dispatch(tr);
 
         // 手动滚动外层 .editor-content 容器到匹配位置
@@ -280,7 +282,7 @@ export function EditorCore() {
         <div
           ref={containerRef}
           className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
-          style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
+          style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)', minHeight: '100%' }}
         >
           <SourceEditor />
         </div>
@@ -295,7 +297,7 @@ export function EditorCore() {
       <div
         ref={containerRef}
         className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
-        style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
+        style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)', minHeight: '100%' }}
       >
         <div
           ref={rootRef}

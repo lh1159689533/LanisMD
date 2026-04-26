@@ -1,0 +1,217 @@
+/**
+ * AI 历史面板样式
+ *
+ * 覆盖在编辑区右侧的面板，展示 AI 生成历史记录。
+ * 类名前缀：`.lanismd-ai-history-`
+ *
+ * 所有颜色均引用主题变量（--lanismd-ai-*），不再硬编码。
+ * 暗色主题通过 light.css / dark.css 中覆盖变量值自动适配。
+ */
+
+/* 面板容器 - 覆盖式布局 */
+.lanismd-ai-history-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
+  background-color: var(--lanismd-sidebar-bg);
+  border-left: 1px solid var(--lanismd-editor-border);
+  box-shadow: -2px 0 8px var(--lanismd-ai-overlay-bg);
+  overflow: hidden;
+  transition: width var(--lanismd-transition-medium);
+}
+
+.lanismd-ai-history-panel.no-transition {
+  transition: none;
+}
+
+/* 拖拽手柄 - 与 Sidebar resizer 风格统一 */
+.lanismd-ai-history-resize-handle {
+  position: relative;
+  width: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  z-index: 1;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-ai-history-resize-handle:hover {
+  background-color: var(--lanismd-accent-light);
+}
+
+.lanismd-ai-history-resize-handle.dragging {
+  background-color: var(--lanismd-accent-light);
+}
+
+/* 内部小竖线手柄 */
+.lanismd-ai-history-resize-handle-bar {
+  width: 2px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: var(--lanismd-sidebar-text);
+  opacity: 0;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.lanismd-ai-history-resize-handle:hover .lanismd-ai-history-resize-handle-bar {
+  height: 40px;
+  opacity: 0.25;
+}
+
+.lanismd-ai-history-resize-handle.dragging .lanismd-ai-history-resize-handle-bar {
+  height: 48px;
+  background-color: var(--lanismd-accent);
+  opacity: 0.6;
+}
+
+/* 内容区（拖拽手柄右侧） */
+.lanismd-ai-history-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* 头部 */
+.lanismd-ai-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+}
+
+.lanismd-ai-history-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-ai-history-title svg {
+  color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lanismd-ai-history-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  color: var(--lanismd-sidebar-text);
+  transition: all var(--lanismd-transition-normal);
+}
+
+.lanismd-ai-history-action-btn:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+/* 内容滚动区 */
+.lanismd-ai-history-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 历史列表 */
+.lanismd-ai-history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 单条记录 */
+.lanismd-ai-history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  transition: background-color var(--lanismd-transition-normal);
+}
+
+.lanismd-ai-history-item:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.lanismd-ai-history-item:last-child {
+  border-bottom: none;
+}
+
+.lanismd-ai-history-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lanismd-ai-history-item-command {
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-ai-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lanismd-ai-history-item-time {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 原文区域 */
+.lanismd-ai-history-item-original {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background-color: var(--lanismd-hover-bg);
+}
+
+/* 结果区域 */
+.lanismd-ai-history-item-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 区域标签（原文/解释/润色后/译文） */
+.lanismd-ai-history-item-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--lanismd-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 文本内容（原文/结果） */
+.lanismd-ai-history-item-text {
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+  color: var(--lanismd-sidebar-text);
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

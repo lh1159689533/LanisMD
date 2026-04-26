@@ -113,7 +113,32 @@
   /* Selection */
   --lanismd-selection-bg: rgba(37, 99, 235, 0.2);
   --lanismd-selection-text: inherit;
-  
+
+  /* ===== AI 模块 ===== */
+  --lanismd-ai-accent: #6366f1;
+  --lanismd-ai-accent-hover: #4f46e5;
+  --lanismd-ai-accent-light: #818cf8;
+  --lanismd-ai-accent-bg: rgba(99, 102, 241, 0.08);
+  --lanismd-ai-accent-bg-hover: rgba(99, 102, 241, 0.12);
+  --lanismd-ai-inline-bg: rgba(99, 102, 241, 0.08);
+  --lanismd-ai-inline-color: #4f46e5;
+  --lanismd-ai-diff-deleted-color: #ef4444;
+  --lanismd-ai-diff-deleted-bg: rgba(239, 68, 68, 0.1);
+  --lanismd-ai-diff-inserted-color: #22c55e;
+  --lanismd-ai-diff-inserted-bg: rgba(34, 197, 94, 0.1);
+  --lanismd-ai-diff-inserted-focus-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);
+  --lanismd-ai-popup-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --lanismd-ai-dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --lanismd-ai-context-menu-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --lanismd-ai-overlay-bg: rgba(0, 0, 0, 0.05);
+  --lanismd-ai-guide-overlay-bg: rgba(0, 0, 0, 0.35);
+  --lanismd-ai-success-color: #22c55e;
+  --lanismd-ai-error-color: #ef4444;
+  --lanismd-ai-guide-icon-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12));
+  --lanismd-ai-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+  --lanismd-ai-input-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  --lanismd-ai-hover-bg: rgba(0, 0, 0, 0.04);
+
   /* ===== 3. 代码块 ===== */
   
   /* Code Block Container */
