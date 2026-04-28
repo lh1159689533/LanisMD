@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
-use tauri_plugin_shell::ShellExt;
+use tauri_plugin_opener::OpenerExt;
 
 use crate::models::ai::{ChatMessage, ChatRequest, ProviderId};
 use crate::services::ai::{config_file, openai_compatible, stream_manager};
@@ -64,8 +64,8 @@ pub async fn open_ai_config(app: AppHandle) -> Result<(), String> {
     let dir = config_file::get_config_dir().map_err(|e| e.to_string())?;
     let dir_str = dir.to_string_lossy().to_string();
 
-    // 使用 tauri-plugin-shell 的 open 方法打开目录
-    app.shell().open(&dir_str, None)
+    // 使用 tauri-plugin-opener 打开目录（系统文件管理器）
+    app.opener().open_path(dir_str, None::<&str>)
         .map_err(|e| format!("打开配置目录失败：{}", e))?;
 
     Ok(())

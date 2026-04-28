@@ -75,6 +75,7 @@
     "store:default",
     "notification:default",
     "os:default",
-    "shell:allow-open"
+    "opener:default",
+    "opener:allow-open-path"
   ]
 }
