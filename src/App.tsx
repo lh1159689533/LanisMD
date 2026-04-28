@@ -68,6 +68,19 @@ function TauriApp() {
     void refreshConfig();
   }, [refreshConfig]);
 
+  useEffect(() => {
+    // 全局禁用 WebView 默认右键菜单（Reload / Inspect Element 等）
+    // 应用内自定义右键菜单通过 React 事件处理器独立注册，不受影响
+    const callback = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('contextmenu', callback);
+
+    return () => {
+      window.removeEventListener('contextmenu', callback);
+    };
+  }, []);
+
   return (
     <>
       <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />

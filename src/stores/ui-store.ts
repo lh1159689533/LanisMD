@@ -16,6 +16,10 @@ interface UIState {
   aiHistoryOpen: boolean;
   /** AI 历史面板宽度 */
   aiHistoryWidth: number;
+  /** 「最近打开文件夹」浮层是否展开（由 Sidebar 入口触发，浮层在 FileTree 内渲染） */
+  recentFoldersOpen: boolean;
+  /** 触发「最近打开」浮层的所有按钮 DOM 元素，供浮层 outside-click 排除使用 */
+  recentFoldersTriggerEls: Set<HTMLElement>;
   toasts: Toast[];
 
   toggleSidebar: () => void;
@@ -32,6 +36,10 @@ interface UIState {
   toggleAiHistory: () => void;
   closeAiHistory: () => void;
   setAiHistoryWidth: (width: number) => void;
+  toggleRecentFolders: () => void;
+  setRecentFoldersOpen: (open: boolean) => void;
+  registerRecentFoldersTriggerEl: (el: HTMLElement) => void;
+  unregisterRecentFoldersTriggerEl: (el: HTMLElement) => void;
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
 }
@@ -45,6 +53,8 @@ export const useUIStore = create<UIState>()((set) => ({
   settingsActiveSection: 'general',
   aiHistoryOpen: false,
   aiHistoryWidth: 320,
+  recentFoldersOpen: false,
+  recentFoldersTriggerEls: new Set<HTMLElement>(),
   toasts: [],
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -63,6 +73,22 @@ export const useUIStore = create<UIState>()((set) => ({
   toggleAiHistory: () => set((s) => ({ aiHistoryOpen: !s.aiHistoryOpen })),
   closeAiHistory: () => set({ aiHistoryOpen: false }),
   setAiHistoryWidth: (width) => set({ aiHistoryWidth: width }),
+  toggleRecentFolders: () => set((s) => ({ recentFoldersOpen: !s.recentFoldersOpen })),
+  setRecentFoldersOpen: (open) => set({ recentFoldersOpen: open }),
+  registerRecentFoldersTriggerEl: (el) =>
+    set((s) => {
+      if (s.recentFoldersTriggerEls.has(el)) return s;
+      const next = new Set(s.recentFoldersTriggerEls);
+      next.add(el);
+      return { recentFoldersTriggerEls: next };
+    }),
+  unregisterRecentFoldersTriggerEl: (el) =>
+    set((s) => {
+      if (!s.recentFoldersTriggerEls.has(el)) return s;
+      const next = new Set(s.recentFoldersTriggerEls);
+      next.delete(el);
+      return { recentFoldersTriggerEls: next };
+    }),
   addToast: (toast) =>
     set((s) => ({
       toasts: [...s.toasts, { ...toast, id: generateToastId() }],

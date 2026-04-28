@@ -43,6 +43,7 @@
 @import './tooltip.css';
 @import './dialog.css';
 @import './link-tooltip.css';
+@import './context-menu.css';
 
 /* Special */
 @import './front-matter.css';

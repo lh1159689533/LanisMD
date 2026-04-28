@@ -241,6 +241,8 @@ export function StatusBar() {
   const customItemRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const aiOn = config.ai?.enabled !== false;
+
   // 加载用户自定义主题列表
   useEffect(() => {
     themeLoader.listUserThemes().then(setUserThemes);
@@ -384,21 +386,21 @@ export function StatusBar() {
             </span>
           </>
         )}
-        <div className="relative">
-          <button
-            onClick={toggleAiHistory}
-            className={cn(
-              'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
-              aiHistoryOpen && 'text-[var(--lanismd-accent)]',
-            )}
-            title="AI 历史记录"
-          >
-            <RiSparklingLine size={13} />
-            {historyCount > 0 && (
-              <span className="text-[10px] opacity-70">{historyCount}</span>
-            )}
-          </button>
-        </div>
+        {aiOn && (
+          <div className="relative">
+            <button
+              onClick={toggleAiHistory}
+              className={cn(
+                'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+                aiHistoryOpen && 'text-[var(--lanismd-accent)]',
+              )}
+              title="AI 历史记录"
+            >
+              <RiSparklingLine size={13} />
+              {historyCount > 0 && <span className="text-[10px] opacity-70">{historyCount}</span>}
+            </button>
+          </div>
+        )}
         <div className="relative">
           <button
             ref={themeButtonRef}
@@ -416,7 +418,7 @@ export function StatusBar() {
               className={cn(
                 'absolute bottom-full right-0 mb-1 min-w-[140px]',
                 'rounded-md border border-[var(--lanismd-editor-border)]',
-                'bg-[var(--lanismd-editor-bg)] py-1 shadow-lg',
+                'z-10 bg-[var(--lanismd-editor-bg)] py-1 shadow-lg',
               )}
             >
               {/* 基础主题 */}

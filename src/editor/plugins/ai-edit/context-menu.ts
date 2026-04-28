@@ -38,8 +38,6 @@ interface MenuItem {
   disabled?: boolean;
   /** 点击回调 */
   action?: () => void;
-  /** 附加的 CSS 类 */
-  extraClass?: string;
 }
 
 /**
@@ -57,28 +55,27 @@ export function registerContextMenu(view: EditorView): () => void {
 
     // 创建菜单 DOM
     const menu = document.createElement('div');
-    menu.className = 'lanismd-ai-context-menu';
+    menu.className = 'lanismd-context-menu';
 
     for (const item of items) {
       if (item.separator) {
         const sep = document.createElement('div');
-        sep.className = 'lanismd-ai-context-menu-separator';
+        sep.className = 'lanismd-context-menu-separator';
         menu.appendChild(sep);
         continue;
       }
 
       const btn = document.createElement('button');
-      btn.className = 'lanismd-ai-context-menu-item';
-      if (item.extraClass) btn.classList.add(item.extraClass);
+      btn.className = 'lanismd-context-menu-item';
       if (item.disabled) {
-        btn.classList.add('lanismd-ai-context-menu-item-disabled');
+        btn.classList.add('lanismd-context-menu-item-disabled');
         btn.disabled = true;
       }
       btn.type = 'button';
 
       if (item.icon) {
         const iconSpan = document.createElement('span');
-        iconSpan.className = 'lanismd-ai-context-menu-icon';
+        iconSpan.className = 'lanismd-context-menu-icon';
         iconSpan.innerHTML = item.icon;
         btn.appendChild(iconSpan);
       }
@@ -99,11 +96,9 @@ export function registerContextMenu(view: EditorView): () => void {
       menu.appendChild(btn);
     }
 
-    // 定位菜单
-    menu.style.position = 'fixed';
+    // 定位菜单（position: fixed 已在 CSS 中设置）
     menu.style.left = `${e.clientX}px`;
     menu.style.top = `${e.clientY}px`;
-    menu.style.zIndex = '9998';
 
     document.body.appendChild(menu);
     activeMenu = menu;
@@ -124,11 +119,23 @@ export function registerContextMenu(view: EditorView): () => void {
       if (!menu.contains(ev.target as Node)) {
         closeActiveMenu();
         document.removeEventListener('mousedown', handleOutsideClick, true);
+        document.removeEventListener('keydown', handleEscape);
       }
     }
+
+    // Escape 键关闭
+    function handleEscape(ev: KeyboardEvent) {
+      if (ev.key === 'Escape') {
+        closeActiveMenu();
+        document.removeEventListener('mousedown', handleOutsideClick, true);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    }
+
     // 延迟绑定，避免当前事件立刻触发
     requestAnimationFrame(() => {
       document.addEventListener('mousedown', handleOutsideClick, true);
+      document.addEventListener('keydown', handleEscape);
     });
 
     // 滚动时关闭
@@ -204,18 +211,21 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     icon: ICON_PASTE,
     action: () => {
       // 使用 Clipboard API 粘贴
-      void navigator.clipboard.readText().then((text) => {
-        if (text) {
-          const { state: s, dispatch } = view;
-          const tr = s.tr.insertText(text, s.selection.from, s.selection.to);
-          dispatch(tr);
-        }
-        view.focus();
-      }).catch(() => {
-        // 回退到 execCommand
-        document.execCommand('paste');
-        view.focus();
-      });
+      void navigator.clipboard
+        .readText()
+        .then((text) => {
+          if (text) {
+            const { state: s, dispatch } = view;
+            const tr = s.tr.insertText(text, s.selection.from, s.selection.to);
+            dispatch(tr);
+          }
+          view.focus();
+        })
+        .catch(() => {
+          // 回退到 execCommand
+          document.execCommand('paste');
+          view.focus();
+        });
     },
   });
 
@@ -224,9 +234,7 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     icon: ICON_SELECT_ALL,
     action: () => {
       const { state: s, dispatch } = view;
-      const tr = s.tr.setSelection(
-        TextSelection.create(s.doc, 0, s.doc.content.size),
-      );
+      const tr = s.tr.setSelection(TextSelection.create(s.doc, 0, s.doc.content.size));
       dispatch(tr);
       view.focus();
     },
@@ -243,7 +251,6 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     items.push({
       label: 'AI 润色（仅选中）',
       icon: ICON_AI,
-      extraClass: 'lanismd-ai-context-menu-item-ai',
       action: () => {
         void runAiCommand(view, AI_COMMANDS.polish);
       },
@@ -252,7 +259,6 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     items.push({
       label: 'AI 润色（完整上下文）',
       icon: ICON_AI,
-      extraClass: 'lanismd-ai-context-menu-item-ai',
       action: () => {
         void runAiCommand(view, AI_COMMANDS.polish, {
           selection: selectedText,
@@ -264,7 +270,6 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     items.push({
       label: 'AI 翻译',
       icon: ICON_AI,
-      extraClass: 'lanismd-ai-context-menu-item-ai',
       action: () => {
         void runAiCommand(view, AI_COMMANDS.translate, {
           options: { targetLang: '英语' },
@@ -275,7 +280,6 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     items.push({
       label: 'AI 解释',
       icon: ICON_AI,
-      extraClass: 'lanismd-ai-context-menu-item-ai',
       action: () => {
         void runAiCommand(view, AI_COMMANDS.explain);
       },
