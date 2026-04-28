@@ -1,5 +1,4 @@
 pub mod ai;
-pub mod app_config;
 pub mod file_metadata;
 pub mod recent_file;
 

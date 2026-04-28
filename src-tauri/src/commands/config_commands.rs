@@ -1,6 +1,5 @@
 use serde_json::Value;
 use tauri::{AppHandle, Manager};
-use tauri::path::PathResolver;
 
 use crate::error::AppResult;
 use crate::models::RecentFile;

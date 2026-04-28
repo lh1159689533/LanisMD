@@ -21,9 +21,6 @@ pub enum AiError {
     #[error("请求已取消")]
     Canceled,
 
-    #[error("Keychain 访问失败：{0}")]
-    Keychain(String),
-
     #[error("解析 SSE 数据失败：{0}")]
     Parse(String),
 
@@ -40,7 +37,6 @@ impl AiError {
             AiError::RateLimit => "rate_limit",
             AiError::Network(_) => "network",
             AiError::Canceled => "canceled",
-            AiError::Keychain(_) => "unknown",
             AiError::Parse(_) => "unknown",
             AiError::Unknown(_) => "unknown",
         }
@@ -70,16 +66,12 @@ pub struct OpenAiStreamChunk {
 pub struct OpenAiChoice {
     #[serde(default)]
     pub delta: OpenAiDelta,
-    #[serde(default)]
-    pub finish_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default)]
 pub struct OpenAiDelta {
     #[serde(default)]
     pub content: Option<String>,
-    #[serde(default)]
-    pub role: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
