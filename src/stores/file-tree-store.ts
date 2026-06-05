@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { FileTreeNode } from '@/types';
 import { fileService } from '@/services/tauri';
+import { useSessionStore } from './session-store';
 
 interface FileTreeState {
   /** 根文件夹路径 */
@@ -58,6 +59,8 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
         selectedDir: null,
         isLoading: false,
       });
+      // 同步会话快照：记录上次打开的根文件夹
+      useSessionStore.getState().setLastFolder(path);
     } catch (err) {
       console.error('Failed to open folder:', err);
       set({ isLoading: false });
@@ -86,6 +89,8 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
       selectedFile: null,
       selectedDir: null,
     });
+    // 用户主动关闭文件夹 → 清空会话快照中的文件夹
+    useSessionStore.getState().setLastFolder(null);
   },
 
   toggleDir: (path: string) => {

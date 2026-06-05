@@ -129,6 +129,11 @@ export interface AppConfig {
     insertAction: 'copy-to-assets' | 'relative-path' | 'absolute-path';
     assetsFolderName: string;
   };
+  /** 欢迎页配置 */
+  welcome: {
+    /** 空状态是否显示仪表板视图；false 则显示极简视图 */
+    showOnStartup: boolean;
+  };
   /** AI 助手配置 */
   ai: {
     enabled: boolean;

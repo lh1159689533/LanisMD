@@ -1,0 +1,311 @@
+/* ===== 欢迎页样式 (Dashboard + Minimal) ===== */
+
+/* 容器：填满空状态区，支持深浅色主题 */
+.lanismd-welcome-dashboard,
+.lanismd-welcome-minimal {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  color: var(--lanismd-text-color);
+  background: var(--lanismd-editor-bg);
+}
+
+/* ===== Dashboard (方案 C) ===== */
+
+.lanismd-welcome-dashboard-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 80px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.lanismd-welcome-header {
+  margin: 0;
+}
+
+.lanismd-welcome-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--lanismd-text-color);
+}
+
+.lanismd-welcome-slogan {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--lanismd-text-color);
+  opacity: 0.65;
+}
+
+.lanismd-welcome-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--lanismd-text-color);
+  opacity: 0.85;
+}
+
+/* 开始 + 最近 双栏 */
+.lanismd-welcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .lanismd-welcome-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 开始区按钮 */
+.lanismd-welcome-start-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lanismd-welcome-start-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.lanismd-welcome-start-item:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.lanismd-welcome-start-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.lanismd-welcome-start-label {
+  flex: 1;
+}
+
+.lanismd-welcome-start-shortcut {
+  font-size: 11px;
+  opacity: 0.55;
+  font-family: var(--lanismd-font-mono, ui-monospace, SFMono-Regular, monospace);
+  background: transparent;
+}
+
+/* 最近文件 */
+.lanismd-welcome-recent {
+  min-width: 0;
+}
+
+.lanismd-welcome-recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lanismd-welcome-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  min-width: 0;
+  transition: background-color 0.15s ease;
+}
+
+.lanismd-welcome-recent-item:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.lanismd-welcome-recent-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.lanismd-welcome-recent-name {
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.lanismd-welcome-recent-path {
+  font-size: 11px;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.lanismd-welcome-recent-empty {
+  font-size: 12px;
+  opacity: 0.5;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+/* 核心功能徽章 */
+.lanismd-welcome-features-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lanismd-welcome-feature {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.1);
+  font-size: 12px;
+  cursor: default;
+  user-select: none;
+}
+
+/* 快捷键速查 */
+.lanismd-welcome-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.lanismd-welcome-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lanismd-welcome-shortcut kbd {
+  font-family: var(--lanismd-font-mono, ui-monospace, SFMono-Regular, monospace);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(127, 127, 127, 0.15);
+  font-size: 11px;
+  border: none;
+}
+
+.lanismd-welcome-shortcut-label {
+  opacity: 0.85;
+}
+
+/* 底部 */
+.lanismd-welcome-footer {
+  border-top: 1px solid var(--lanismd-border-color, rgba(127, 127, 127, 0.2));
+  padding-top: 16px;
+}
+
+.lanismd-welcome-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lanismd-welcome-toggle:hover {
+  opacity: 0.95;
+}
+
+.lanismd-welcome-toggle input {
+  cursor: pointer;
+  margin: 0;
+}
+
+/* ===== Minimal (方案 A) ===== */
+
+.lanismd-welcome-minimal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  opacity: 0.55;
+  user-select: none;
+  padding: 24px;
+}
+
+.lanismd-welcome-minimal-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lanismd-welcome-minimal-title {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  margin: 0;
+  color: var(--lanismd-text-color);
+}
+
+.lanismd-welcome-minimal-slogan {
+  margin: 0;
+  color: var(--lanismd-text-color);
+}
+
+/* 小提示轮播 */
+.lanismd-welcome-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--lanismd-text-color);
+}
+
+.lanismd-welcome-tip-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.lanismd-welcome-tip-text {
+  animation: lanismd-welcome-tip-fade 0.4s ease;
+}
+
+@keyframes lanismd-welcome-tip-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

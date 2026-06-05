@@ -17,3 +17,4 @@ src-tauri/Cargo.lock
 *.swp
 *.swo
 typora-themes/
+docs/

@@ -232,6 +232,25 @@ export function SettingsDialog() {
                 </button>
               </div>
 
+              {/* G2 - 启动时显示欢迎页 */}
+              <div className="settings-item">
+                <label className="settings-item-label">启动时显示欢迎页</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'welcome.showOnStartup',
+                      !config.welcome?.showOnStartup,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.welcome?.showOnStartup && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+
               {/* G5 - 最近文件数量上限 */}
               <div className="settings-item">
                 <label className="settings-item-label">最近文件数量上限</label>

@@ -30,6 +30,9 @@ const DEFAULT_CONFIG: AppConfig = {
     insertAction: 'copy-to-assets',
     assetsFolderName: 'assets',
   },
+  welcome: {
+    showOnStartup: true,
+  },
   ai: {
     enabled: true,
     currentProvider: 'zhipu',

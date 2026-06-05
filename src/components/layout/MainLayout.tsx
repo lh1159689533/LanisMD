@@ -2,6 +2,7 @@ import { cn } from '@/utils/cn';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 import { AiHistoryPanel } from './AiHistoryPanel';
+import { WelcomeScreen } from './WelcomeScreen';
 import { EditorCore } from '@/editor/components/EditorCore';
 import { useFileStore } from '@/stores/file-store';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -23,18 +24,7 @@ export function MainLayout() {
             'editor-content min-h-0 flex-1 overflow-auto bg-[var(--lanismd-editor-bg)]',
             typewriterMode && 'lanismd-typewriter-active',
           )}>
-            {currentFile ? (
-              <EditorCore />
-            ) : (
-              <div
-                className={cn(
-                  'flex h-full select-none items-center justify-center',
-                  'text-sm text-[var(--lanismd-sidebar-text)] opacity-40',
-                )}
-              >
-                没有打开的文件
-              </div>
-            )}
+            {currentFile ? <EditorCore /> : <WelcomeScreen />}
           </div>
           {aiHistoryOpen && <AiHistoryPanel />}
         </div>
