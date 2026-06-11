@@ -13,6 +13,7 @@ import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
 import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 
 import { basicSlashCommands } from './commands-basic';
 import { createAiSlashCommand } from './commands-ai';
@@ -464,6 +465,9 @@ export function configureSlash(ctx: Ctx) {
         content: menuView.element,
         debounce: 50,
         shouldShow(view: EditorView) {
+          // 沉浸式阅读：完全禁用 slash menu
+          if (useUIStore.getState().immersiveReading) return false;
+
           const { state } = view;
           const { $from } = state.selection;
           if (state.selection.from !== state.selection.to) return false;

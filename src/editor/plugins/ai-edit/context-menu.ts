@@ -15,6 +15,8 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 
 import { AI_COMMANDS } from '@/services/ai/commands';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
+import { toggleImmersiveReading } from '@/utils/immersive-reading';
 import { runAiCommand } from './generator';
 
 /** 当前显示的右键菜单（全局唯一） */
@@ -178,14 +180,56 @@ const ICON_SELECT_ALL =
 const ICON_AI =
   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.9 8.1 19 10 13.9 11.9 12 17 10.1 11.9 5 10 10.1 8.1 12 3z"/><path d="M18 16l.75 2L21 19l-2.25 1L18 22l-.75-2L15 19l2.25-1L18 16z"/></svg>';
 
+/** 沉浸式阅读图标（书本） */
+const ICON_BOOK =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+
 function buildMenuItems(view: EditorView): MenuItem[] {
   const { state } = view;
   const { from, to } = state.selection;
   const hasSelection = from !== to;
+  const immersive = useUIStore.getState().immersiveReading;
 
   const items: MenuItem[] = [];
 
-  // -- 常规编辑操作 --
+  // -- 沉浸式阅读切换项（始终位于菜单顶部） --
+  // 开启时显示「关闭沉浸式阅读」，关闭时显示「开启沉浸式阅读」
+  items.push({
+    label: immersive ? '关闭沉浸式阅读' : '开启沉浸式阅读',
+    icon: ICON_BOOK,
+    action: () => {
+      toggleImmersiveReading();
+    },
+  });
+
+  // 沉浸式阅读开启时：仅保留只读类操作（复制 / 全选），其余编辑类与 AI 操作全部隐藏
+  if (immersive) {
+    items.push({ label: '', separator: true });
+    items.push({
+      label: '复制',
+      icon: ICON_COPY,
+      disabled: !hasSelection,
+      action: () => {
+        document.execCommand('copy');
+        view.focus();
+      },
+    });
+    items.push({
+      label: '全选',
+      icon: ICON_SELECT_ALL,
+      action: () => {
+        const { state: s, dispatch } = view;
+        const tr = s.tr.setSelection(TextSelection.create(s.doc, 0, s.doc.content.size));
+        dispatch(tr);
+        view.focus();
+      },
+    });
+    return items;
+  }
+
+  // -- 常规编辑操作（非沉浸式） --
+  items.push({ label: '', separator: true });
+
   items.push({
     label: '剪切',
     icon: ICON_CUT,

@@ -1,0 +1,83 @@
+/**
+ * LanisMD Editor - Immersive Reading
+ * 沉浸式阅读模式：开启后隐藏所有可能干扰阅读的浮层、工具栏、操作按钮。
+ *
+ * 触发方式：document.body[data-immersive="true"]
+ * 由 EditorCore 在 immersiveReading 状态变化时设置/清除该属性。
+ */
+
+/* ===== 块拖拽手柄 ===== */
+body[data-immersive='true'] .milkdown-block-handle {
+  display: none !important;
+}
+
+/* ===== 浮动格式化工具栏（tooltip-toolbar） ===== */
+/* 已在 shouldShow 内短路；此处再做兜底，防止旧 DOM 节点遗留可见 */
+body[data-immersive='true'] .milkdown-tooltip {
+  display: none !important;
+}
+
+/* ===== Slash 命令菜单 ===== */
+/* 同样在 shouldShow 内短路；CSS 兜底 */
+body[data-immersive='true'] .milkdown-slash {
+  display: none !important;
+}
+
+/* ===== 链接悬浮提示 ===== */
+body[data-immersive='true'] .milkdown-link-tooltip {
+  display: none !important;
+}
+
+/* ===== 图片块（image-block）操作工具栏 ===== */
+body[data-immersive='true'] .image-block-toolbar,
+body[data-immersive='true'] .image-inline-toolbar {
+  display: none !important;
+}
+
+/* ===== Mermaid 块工具栏 ===== */
+body[data-immersive='true'] .lanismd-mermaid-toolbar {
+  display: none !important;
+}
+
+/* ===== 数学块工具栏 ===== */
+body[data-immersive='true'] .lanismd-math-block-toolbar {
+  display: none !important;
+}
+
+/* ===== TOC 块的删除/操作按钮 ===== */
+body[data-immersive='true'] .lanismd-toc-action-delete,
+body[data-immersive='true'] .lanismd-toc-actions {
+  display: none !important;
+}
+
+/* ===== 表格行/列操作手柄 ===== */
+body[data-immersive='true'] .milkdown-table-row-handle,
+body[data-immersive='true'] .milkdown-table-col-handle,
+body[data-immersive='true'] .milkdown-cell-handle,
+body[data-immersive='true'] .milkdown-table-row-add,
+body[data-immersive='true'] .milkdown-table-col-add,
+body[data-immersive='true'] .milkdown-table-handle-menu {
+  display: none !important;
+}
+
+/* ===== 代码块复制/语言选择器（hover 才显示，沉浸式下也禁用） ===== */
+body[data-immersive='true'] .milkdown-code-block .copy-button,
+body[data-immersive='true'] .milkdown-code-block .language-picker {
+  display: none !important;
+}
+
+/* ===== Front Matter 操作按钮 ===== */
+body[data-immersive='true'] .lanismd-front-matter-actions {
+  display: none !important;
+}
+
+/* ===== 编辑器内可视提示：光标隐藏（只读时浏览器自然不显示，但保险起见） ===== */
+body[data-immersive='true'] .ProseMirror {
+  caret-color: transparent;
+}
+
+/* ===== 占位符隐藏：只读时空段落上的 “按 / 输入命令…” 提示无意义 ===== */
+body[data-immersive='true'] .milkdown-placeholder,
+body[data-immersive='true'] .ProseMirror p[data-placeholder]::before {
+  display: none !important;
+}

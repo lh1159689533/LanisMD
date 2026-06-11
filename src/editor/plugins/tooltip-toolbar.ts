@@ -20,6 +20,7 @@ import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 import { AI_COMMANDS } from '@/services/ai/commands';
 import type { AiCommand } from '@/types/ai';
 import { withShortcut } from '@/utils/shortcut';
@@ -946,6 +947,9 @@ export function configureTooltip(ctx: Ctx) {
         content: toolbarView.element,
         debounce: 50,
         shouldShow(view: EditorView, _prevState?: EditorState) {
+          // 沉浸式阅读：完全禁用 tooltip 工具栏
+          if (useUIStore.getState().immersiveReading) return false;
+
           // 鼠标按钮仍按下时不显示（仍在选择）
           if (isMouseDown) return false;
 

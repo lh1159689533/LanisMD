@@ -4,6 +4,7 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 import { useEditor } from '../hooks/use-editor';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { useUIStore } from '@/stores/ui-store';
 import { useSearchStore } from '@/stores/search-store';
 import { SearchReplace } from '@/components/editor/SearchReplace';
 import { SourceEditor } from './SourceEditor';
@@ -58,6 +59,20 @@ export function EditorCore() {
   const mode = useEditorStore((s) => s.mode);
   const searchIsOpen = useSearchStore((s) => s.isOpen);
   const highlightOnly = useSearchStore((s) => s.highlightOnly);
+  // 沉浸式阅读状态：用于在 DOM 上添加 data-immersive 属性，CSS 据此隐藏块级工具栏
+  const immersiveReading = useUIStore((s) => s.immersiveReading);
+
+  // 在 body 上同步沉浸式阅读标记，使 floating-ui 等飘出编辑器树的浮层也能被 CSS 命中
+  useEffect(() => {
+    if (immersiveReading) {
+      document.body.setAttribute('data-immersive', 'true');
+    } else {
+      document.body.removeAttribute('data-immersive');
+    }
+    return () => {
+      document.body.removeAttribute('data-immersive');
+    };
+  }, [immersiveReading]);
 
   // 监听代码块设置变化
   const showLineNumbers = useSettingsStore(

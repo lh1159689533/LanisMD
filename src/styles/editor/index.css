@@ -57,6 +57,7 @@
 
 /* Modes */
 @import './focus-typewriter.css';
+@import './immersive-reading.css';
 
 /* AI 助手 */
 @import './ai-edit.css';
