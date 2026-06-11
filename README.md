@@ -5,6 +5,7 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-orange)
 ![React](https://img.shields.io/badge/React-18-61dafb)
+![图标库](https://react-icons.github.io/react-icons/)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ 功能特性

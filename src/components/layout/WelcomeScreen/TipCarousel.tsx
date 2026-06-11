@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Lightbulb } from 'lucide-react';
+import { RiLightbulbLine } from 'react-icons/ri';
 import { WELCOME_TIPS } from './tips';
 
 /** 每条提示展示时长（毫秒） */
@@ -21,7 +21,7 @@ export function TipCarousel() {
 
   return (
     <div className="lanismd-welcome-tip">
-      <Lightbulb size={14} className="lanismd-welcome-tip-icon" />
+      <RiLightbulbLine size={14} className="lanismd-welcome-tip-icon" />
       <span key={index} className="lanismd-welcome-tip-text">
         {WELCOME_TIPS[index]}
       </span>

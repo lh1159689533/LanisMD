@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { RiCloseLine, RiDeleteBinLine, RiSparklingLine } from 'react-icons/ri';
+import { RiCloseLine, RiDeleteBinLine } from 'react-icons/ri';
+import { AiGradientIcon } from '@/components/common/AiGradientIcon';
 import { useAiStore } from '@/stores/ai-store';
 import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/utils/cn';
@@ -207,7 +208,7 @@ export function AiHistoryPanel() {
         {/* 面板头部 */}
         <div className="lanismd-ai-history-header">
           <div className="lanismd-ai-history-title">
-            <RiSparklingLine size={14} />
+            <AiGradientIcon size={14} />
             <span>AI 历史</span>
           </div>
           <div className="lanismd-ai-history-actions">
@@ -239,7 +240,7 @@ export function AiHistoryPanel() {
                 'text-xs text-[var(--lanismd-text-muted)]',
               )}
             >
-              <RiSparklingLine size={24} className="opacity-30" />
+              <AiGradientIcon size={24} className="opacity-30" />
               <span>暂无 AI 生成记录</span>
               <span className="opacity-60">使用 AI 指令后，结果将显示在这里</span>
             </div>

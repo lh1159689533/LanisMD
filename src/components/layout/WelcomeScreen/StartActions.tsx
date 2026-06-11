@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { FolderOpen, FilePlus, Command, Settings } from 'lucide-react';
+import { RiFolderOpenLine, RiSettings3Line, RiCommandLine, RiHistoryLine } from 'react-icons/ri';
 import { useFile } from '@/hooks/useFile';
 import { useUIStore } from '@/stores/ui-store';
 
@@ -28,7 +28,7 @@ export function StartActions() {
 
   const actions: ActionItem[] = [
     {
-      icon: <FolderOpen size={16} />,
+      icon: <RiFolderOpenLine size={16} />,
       label: '打开文件',
       shortcut: `${modKey}O`,
       onClick: () => {
@@ -36,19 +36,19 @@ export function StartActions() {
       },
     },
     {
-      icon: <Command size={16} />,
+      icon: <RiCommandLine size={16} />,
       label: '命令面板',
       shortcut: `${modKey}K`,
       onClick: () => openCommandPalette(),
     },
     {
-      icon: <Settings size={16} />,
+      icon: <RiSettings3Line size={16} />,
       label: '偏好设置',
       shortcut: `${modKey},`,
       onClick: () => openSettings(),
     },
     {
-      icon: <Command size={16} />,
+      icon: <RiHistoryLine size={16} />,
       label: '最近打开',
       shortcut: '',
       onClick: () => openRecentFolders(),

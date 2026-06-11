@@ -8,8 +8,8 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
-  RiSparklingLine,
 } from 'react-icons/ri';
+import { AiGradientIcon } from '@/components/common/AiGradientIcon';
 import { TbLeaf, TbSnowflake, TbFlower, TbBookOff, TbBook } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -418,7 +418,7 @@ export function StatusBar() {
               )}
               title="AI 历史记录"
             >
-              <RiSparklingLine size={13} />
+              <AiGradientIcon size={13} />
               {historyCount > 0 && <span className="text-[10px] opacity-70">{historyCount}</span>}
             </button>
           </div>

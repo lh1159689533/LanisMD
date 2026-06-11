@@ -39,7 +39,6 @@
     "codemirror": "^6.0.2",
     "dompurify": "^3.3.3",
     "katex": "^0.16.44",
-    "lucide-react": "^0.468.0",
     "mdast-util-frontmatter": "^2.0.1",
     "mermaid": "^11.13.0",
     "micromark-extension-frontmatter": "^2.0.0",

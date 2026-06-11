@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText } from 'lucide-react';
+import { RiFileTextLine } from 'react-icons/ri';
 import { configService, fileService } from '@/services/tauri';
 import { useFileStore } from '@/stores/file-store';
 import type { RecentFile } from '@/types';
@@ -55,7 +55,7 @@ export function RecentFilesList() {
                 onClick={() => void openRecentFile(file.path)}
                 title={file.path}
               >
-                <FileText size={14} className="lanismd-welcome-recent-icon" />
+                <RiFileTextLine size={14} className="lanismd-welcome-recent-icon" />
                 <span className="lanismd-welcome-recent-name">{file.fileName}</span>
                 <span className="lanismd-welcome-recent-path">{file.path}</span>
               </button>
