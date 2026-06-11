@@ -488,6 +488,21 @@
   --lanismd-context-menu-item-hover-bg: var(--lanismd-hover-bg);
   --lanismd-context-menu-separator: var(--lanismd-border-color);
 
+  /* 外部链接确认弹窗 */
+  --lanismd-link-confirm-overlay-bg: rgba(0, 0, 0, 0.35);
+  --lanismd-link-confirm-bg: var(--lanismd-editor-bg, #ffffff);
+  --lanismd-link-confirm-border: 1px solid var(--lanismd-border-color);
+  --lanismd-link-confirm-text: var(--lanismd-text-color);
+  --lanismd-link-confirm-shadow: var(--lanismd-shadow-lg, 0 8px 32px rgba(0, 0, 0, 0.15));
+  /* 警示横条（橙色系，复用 alert-warning 色调） */
+  --lanismd-link-confirm-warning-bg: rgba(245, 158, 11, 0.12);
+  --lanismd-link-confirm-warning-fg: #d97706;
+  /* URL 警示色 */
+  --lanismd-link-confirm-url-color: #ea580c;
+  /* 「继续」按钮（描边风格） */
+  --lanismd-link-confirm-btn-color: #ea580c;
+  --lanismd-link-confirm-btn-border: 1px solid #ea580c;
+
   /* ===============================================
    * AI 模块
    * =============================================== */

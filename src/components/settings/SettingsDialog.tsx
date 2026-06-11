@@ -281,6 +281,25 @@ export function SettingsDialog() {
                   <span className="settings-toggle-thumb" />
                 </button>
               </div>
+
+              {/* G9 - 访问外部链接前提示 */}
+              <div className="settings-item">
+                <label className="settings-item-label">访问外部链接前提示</label>
+                <button
+                  onClick={() =>
+                    setConfig('confirmExternalLinkOpen', !config.confirmExternalLinkOpen)
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.confirmExternalLinkOpen !== false && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+              <div className="settings-item-hint">
+                <p>开启后，点击文档中的 http/https 链接会先弹出确认框，避免意外跳转。</p>
+              </div>
             </div>
           )}
 

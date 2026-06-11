@@ -6,6 +6,7 @@ import { BrowserLayout } from './components/layout/BrowserLayout';
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
+import { LinkConfirmDialog } from './components/common/LinkConfirmDialog';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
@@ -145,6 +146,7 @@ function TauriApp() {
       {settingsOpen && <SettingsDialog />}
       <QuickOpen />
       <ToastContainer />
+      <LinkConfirmDialog />
     </>
   );
 }
@@ -155,7 +157,12 @@ function TauriApp() {
 function BrowserApp() {
   useBrowserFile();
 
-  return <BrowserLayout />;
+  return (
+    <>
+      <BrowserLayout />
+      <LinkConfirmDialog />
+    </>
+  );
 }
 
 export default function App() {

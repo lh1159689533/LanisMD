@@ -33,6 +33,7 @@ const DEFAULT_CONFIG: AppConfig = {
   welcome: {
     showOnStartup: true,
   },
+  confirmExternalLinkOpen: true,
   ai: {
     enabled: true,
     currentProvider: 'zhipu',

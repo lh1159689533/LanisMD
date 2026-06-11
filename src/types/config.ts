@@ -134,6 +134,8 @@ export interface AppConfig {
     /** 空状态是否显示仪表板视图；false 则显示极简视图 */
     showOnStartup: boolean;
   };
+  /** 访问外部链接（http/https）前是否弹出确认提示。默认 true */
+  confirmExternalLinkOpen: boolean;
   /** AI 助手配置 */
   ai: {
     enabled: boolean;
