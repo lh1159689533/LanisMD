@@ -27,8 +27,9 @@ const ICON_EXPLAIN =
 const ICON_MERMAID =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="5" rx="1"/><rect x="15" y="2" width="7" height="5" rx="1"/><rect x="8.5" y="17" width="7" height="5" rx="1"/><line x1="5.5" y1="7" x2="5.5" y2="11"/><line x1="18.5" y1="7" x2="18.5" y2="11"/><line x1="5.5" y1="11" x2="18.5" y2="11"/><line x1="12" y1="11" x2="12" y2="17"/></svg>';
 
+// 转公式图标：使用 Σ（Sigma）字符，跟随主题色
 const ICON_LATEX =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L20 4"/><path d="M4 4l4 16"/><path d="M16 4l4 16"/><path d="M2 12h6"/><path d="M16 12h6"/></svg>';
+  '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="400" fill="currentColor">Σ</text></svg>';
 
 // ---------------------------------------------------------------------------
 // 指令定义

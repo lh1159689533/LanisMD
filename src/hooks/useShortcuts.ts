@@ -11,8 +11,8 @@ export function useShortcuts(handlers?: {
   onToggleOutline?: () => void;
   onOpenSettings?: () => void;
   onToggleSearch?: () => void;
+  onToggleGlobalSearch?: () => void;
   onQuickOpen?: () => void;
-  onToggleFocusMode?: () => void;
   onToggleTypewriterMode?: () => void;
 }) {
   const handlersRef = useRef(handlers);
@@ -43,10 +43,10 @@ export function useShortcuts(handlers?: {
     if (isInputField) return;
 
     // Cmd+N: New file
-    if (e[modKey] && e.key === 'n' && !e.shiftKey) {
-      e.preventDefault();
-      h.onNewFile?.();
-    }
+    // if (e[modKey] && e.key === 'n' && !e.shiftKey) {
+    //   e.preventDefault();
+    //   h.onNewFile?.();
+    // }
 
     // Cmd+O: Open file
     if (e[modKey] && e.key === 'o' && !e.shiftKey) {
@@ -61,13 +61,13 @@ export function useShortcuts(handlers?: {
     }
 
     // Cmd+Shift+B: Toggle sidebar
-    if (e[modKey] && e.shiftKey && e.key === 'b') {
+    if ((e[modKey] && e.shiftKey && e.key === 'b') || e.key === 'B') {
       e.preventDefault();
       h.onToggleSidebar?.();
     }
 
     // Cmd+Shift+L: Toggle outline panel
-    if (e[modKey] && e.shiftKey && e.key === 'l') {
+    if ((e[modKey] && e.shiftKey && e.key === 'l') || e.key === 'L') {
       e.preventDefault();
       h.onToggleOutline?.();
     }
@@ -78,10 +78,10 @@ export function useShortcuts(handlers?: {
       h.onOpenSettings?.();
     }
 
-    // Cmd+Shift+F: 专注模式
-    if (e[modKey] && e.shiftKey && e.key === 'f') {
+    // Cmd+Shift+F: 全局搜索（侧边栏 search 面板）
+    if (e[modKey] && e.shiftKey && (e.key === 'f' || e.key === 'F')) {
       e.preventDefault();
-      h.onToggleFocusMode?.();
+      h.onToggleGlobalSearch?.();
     }
 
     // Cmd+Shift+9: 打字机模式

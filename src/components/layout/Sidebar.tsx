@@ -13,6 +13,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { parseOutline } from '@/utils/toc';
 import { scrollToHeadingByIndex, scrollToHeadingInSource } from '@/editor/plugins/outline-sync';
 import { cn } from '@/utils/cn';
+import { withShortcut } from '@/utils/shortcut';
 import { FileTree } from './FileTree';
 import { SearchPanel } from './SearchPanel';
 import type { OutlineItem } from '@/types';
@@ -377,14 +378,14 @@ export function Sidebar() {
         <button
           onClick={() => setSidebarPanel('outline')}
           className={cn('sidebar-icon-btn', sidebarPanel === 'outline' && 'active')}
-          title="大纲"
+          title={withShortcut('大纲', 'toggleOutline')}
         >
           <RiListOrdered size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('search')}
           className={cn('sidebar-icon-btn', sidebarPanel === 'search' && 'active')}
-          title="搜索"
+          title={withShortcut('搜索', 'toggleGlobalSearch')}
         >
           <RiSearchLine size={16} />
         </button>
@@ -393,7 +394,7 @@ export function Sidebar() {
         <button
           onClick={toggleSidebar}
           className={cn('sidebar-icon-btn toggle-btn', !sidebarOpen && 'collapsed')}
-          title="切换侧边栏"
+          title={withShortcut('切换侧边栏', 'toggleSidebar')}
         >
           <RiSideBarLine size={16} />
         </button>
@@ -407,7 +408,11 @@ export function Sidebar() {
           <RiHistoryLine size={16} />
         </button>
         {/* 设置 */}
-        <button onClick={() => openSettings('general')} className="sidebar-icon-btn" title="设置">
+        <button
+          onClick={() => openSettings('general')}
+          className="sidebar-icon-btn"
+          title={withShortcut('设置', 'openSettings')}
+        >
           <RiSettings3Line size={16} />
         </button>
       </div>

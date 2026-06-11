@@ -22,6 +22,7 @@ import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores/settings-store';
 import { AI_COMMANDS } from '@/services/ai/commands';
 import type { AiCommand } from '@/types/ai';
+import { withShortcut } from '@/utils/shortcut';
 
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-block';
 import { runAiCommand } from './ai-edit';
@@ -62,8 +63,9 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   clearFormat:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-3.2-3.2a2 2 0 0 1 0-2.83L14.17 5.1a2 2 0 0 1 2.83 0l4.89 4.89a2 2 0 0 1 0 2.83L15.12 19.6"/><path d="m9.69 12.31 4.24 4.24"/></svg>',
+  // AI 入口图标：渐变文字 "AI"，与 slash-menu 中的 ai 图标保持一致
   aiPolish:
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.9 8.1 19 10 13.9 11.9 12 17 10.1 11.9 5 10 10.1 8.1 12 3z"/><path d="M18 16l.75 2L21 19l-2.25 1L18 22l-.75-2L15 19l2.25-1L18 16z"/></svg>',
+    '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lanismd-ai-grad-tooltip" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="url(#lanismd-ai-grad-tooltip)" letter-spacing="-0.5">AI</text></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -446,31 +448,66 @@ class TooltipToolbarView {
   private provider: TooltipProvider | null = null;
 
   private buttonDefs: ToolbarButton[] = [
-    { id: 'bold', icon: icons.bold, title: '加粗', markName: 'strong' },
-    { id: 'italic', icon: icons.italic, title: '斜体', markName: 'emphasis' },
-    { id: 'underline', icon: icons.underline, title: '下划线', markName: 'underline' },
-    { id: 'strikethrough', icon: icons.strikethrough, title: '删除线', markName: 'strike_through' },
-    { id: 'highlight', icon: icons.highlight, title: '高亮', markName: 'highlight' },
-    { id: 'superscript', icon: icons.superscript, title: '上标', markName: 'superscript' },
-    { id: 'subscript', icon: icons.subscript, title: '下标', markName: 'subscript' },
+    { id: 'bold', icon: icons.bold, title: withShortcut('加粗', 'bold'), markName: 'strong' },
+    {
+      id: 'italic',
+      icon: icons.italic,
+      title: withShortcut('斜体', 'italic'),
+      markName: 'emphasis',
+    },
+    {
+      id: 'underline',
+      icon: icons.underline,
+      title: withShortcut('下划线', 'underline'),
+      markName: 'underline',
+    },
+    {
+      id: 'strikethrough',
+      icon: icons.strikethrough,
+      title: withShortcut('删除线', 'strikethrough'),
+      markName: 'strike_through',
+    },
+    {
+      id: 'highlight',
+      icon: icons.highlight,
+      title: withShortcut('高亮', 'highlight'),
+      markName: 'highlight',
+    },
+    {
+      id: 'superscript',
+      icon: icons.superscript,
+      title: withShortcut('上标', 'superscript'),
+      markName: 'superscript',
+    },
+    {
+      id: 'subscript',
+      icon: icons.subscript,
+      title: withShortcut('下标', 'subscript'),
+      markName: 'subscript',
+    },
     {
       id: 'separator-1',
       icon: '',
       title: '',
       markName: null,
     },
-    { id: 'code', icon: icons.code, title: '行内代码', markName: 'inlineCode' },
+    {
+      id: 'code',
+      icon: icons.code,
+      title: withShortcut('行内代码', 'inlineCode'),
+      markName: 'inlineCode',
+    },
     {
       id: 'link',
       icon: icons.link,
-      title: '链接',
+      title: withShortcut('链接', 'link'),
       markName: 'link',
       action: (view) => this.handleLinkAction(view),
     },
     {
       id: 'image',
       icon: icons.image,
-      title: '图片',
+      title: withShortcut('图片', 'image'),
       markName: null,
       action: (view) => this.handleImageAction(view),
     },
@@ -483,7 +520,7 @@ class TooltipToolbarView {
     {
       id: 'clearFormat',
       icon: icons.clearFormat,
-      title: '清除格式',
+      title: withShortcut('清除格式', 'clearFormat'),
       markName: null,
       action: (view) => clearAllMarks(view),
     },
@@ -568,7 +605,8 @@ class TooltipToolbarView {
         // 添加小三角指示有子菜单
         const arrow = document.createElement('span');
         arrow.className = 'milkdown-tooltip-btn-arrow';
-        arrow.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>';
+        arrow.innerHTML =
+          '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>';
         btn.appendChild(arrow);
 
         btn.addEventListener('mouseenter', () => {

@@ -51,8 +51,17 @@ function TauriApp() {
   }, [setSidebarPanel]);
 
   const toggleSearch = useSearchStore((s) => s.toggleSearch);
-  const toggleFocusMode = useEditorStore((s) => s.toggleFocusMode);
   const toggleTypewriterMode = useEditorStore((s) => s.toggleTypewriterMode);
+
+  // 切换全局搜索：与大纲面板一致——已在搜索面板则关闭侧边栏，否则切到搜索面板
+  const toggleGlobalSearch = useCallback(() => {
+    const state = useUIStore.getState();
+    if (state.sidebarOpen && state.sidebarPanel === 'search') {
+      state.toggleSidebar();
+    } else {
+      setSidebarPanel('search');
+    }
+  }, [setSidebarPanel]);
 
   useShortcuts({
     onNewFile: newFile,
@@ -62,8 +71,8 @@ function TauriApp() {
     onToggleOutline: toggleOutline,
     onOpenSettings: () => openSettings('general'),
     onToggleSearch: toggleSearch,
+    onToggleGlobalSearch: toggleGlobalSearch,
     onQuickOpen: openCommandPalette,
-    onToggleFocusMode: toggleFocusMode,
     onToggleTypewriterMode: toggleTypewriterMode,
   });
 

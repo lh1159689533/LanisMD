@@ -32,7 +32,7 @@ function getCurrentCommands(): SlashCommand[] {
   const aiOn = config.ai?.enabled !== false && config.ai?.showInSlash !== false;
 
   if (aiOn) {
-    return [createAiSlashCommand(), ...basicSlashCommands];
+    return [...basicSlashCommands, createAiSlashCommand()];
   }
   return [...basicSlashCommands];
 }
