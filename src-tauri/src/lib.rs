@@ -6,6 +6,7 @@ mod services;
 use commands::file_commands;
 use commands::config_commands;
 use commands::search_commands;
+use commands::ai_commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,51 +15,57 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .setup(|app| {
             // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式
             #[cfg(target_os = "macos")]
             {
                 use tauri::Manager;
-                use cocoa::appkit::{NSApp, NSApplication, NSImage, NSWindow, NSWindowTitleVisibility};
-                use cocoa::base::{nil, YES};
-                use cocoa::foundation::NSData;
-                use objc::runtime::Object;
+                use objc2::{AnyThread, MainThreadMarker};
+                use objc2_app_kit::{
+                    NSApplication, NSImage, NSWindow, NSWindowStyleMask,
+                    NSWindowTitleVisibility,
+                };
+                use objc2_foundation::NSData;
 
                 // 恢复窗口装饰和 Overlay 标题栏
                 if let Some(window) = app.get_webview_window("main") {
-                    let ns_window = window.ns_window().unwrap() as cocoa::base::id;
-                    unsafe {
-                        // 显示窗口装饰（红绿灯按钮）
-                        ns_window.setHasShadow_(YES);
-                        // 设置标题栏透明 + 全尺寸内容视图（Overlay 效果）
-                        let masks = ns_window.styleMask()
-                            | cocoa::appkit::NSWindowStyleMask::NSFullSizeContentViewWindowMask
-                            | cocoa::appkit::NSWindowStyleMask::NSTitledWindowMask
-                            | cocoa::appkit::NSWindowStyleMask::NSClosableWindowMask
-                            | cocoa::appkit::NSWindowStyleMask::NSMiniaturizableWindowMask
-                            | cocoa::appkit::NSWindowStyleMask::NSResizableWindowMask;
-                        ns_window.setStyleMask_(masks);
-                        ns_window.setTitlebarAppearsTransparent_(YES);
-                        ns_window.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
-                    }
+                    let ns_window_ptr = window.ns_window().unwrap() as *const NSWindow;
+                    // 安全性：Tauri 保证 ns_window() 在 macOS 上返回有效的 NSWindow 指针
+                    let ns_window: &NSWindow = unsafe { &*ns_window_ptr };
+
+                    // 显示窗口阴影
+                    ns_window.setHasShadow(true);
+                    // 设置标题栏透明 + 全尺寸内容视图（Overlay 效果）
+                    let masks = ns_window.styleMask()
+                        | NSWindowStyleMask::FullSizeContentView
+                        | NSWindowStyleMask::Titled
+                        | NSWindowStyleMask::Closable
+                        | NSWindowStyleMask::Miniaturizable
+                        | NSWindowStyleMask::Resizable;
+                    ns_window.setStyleMask(masks);
+                    ns_window.setTitlebarAppearsTransparent(true);
+                    ns_window.setTitleVisibility(NSWindowTitleVisibility::Hidden);
                 }
 
-                // 设置 Dock 图标
+                // 设置 Dock 图标（仅开发期：路径为 build 时的绝对路径，
+                // 打包后该路径不存在会静默 fallback 到 bundle 默认图标）
                 let icon_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                     .join("icons/128x128@2x.png");
-                
+
                 if let Ok(icon_data) = std::fs::read(&icon_path) {
-                    unsafe {
-                        let data = NSData::dataWithBytes_length_(
-                            nil,
-                            icon_data.as_ptr() as *const std::os::raw::c_void,
-                            icon_data.len() as u64,
-                        );
-                        let nsimage: *mut Object = NSImage::initWithData_(NSImage::alloc(nil), data);
-                        let app_instance = NSApp();
-                        app_instance.setApplicationIconImage_(nsimage);
+                    // setup 闭包默认在主线程执行，此处必然成立
+                    let mtm = MainThreadMarker::new()
+                        .expect("setup must run on main thread");
+                    // 用 NSData 包装 PNG 字节并构造 NSImage
+                    let data = NSData::with_bytes(&icon_data);
+                    if let Some(nsimage) = NSImage::initWithData(NSImage::alloc(), &data) {
+                        let app_instance = NSApplication::sharedApplication(mtm);
+                        // 安全性：nsimage 为有效的非空 Retained<NSImage>
+                        unsafe {
+                            app_instance.setApplicationIconImage(Some(&nsimage));
+                        }
                     }
                 }
             }
@@ -84,6 +91,15 @@ pub fn run() {
             config_commands::get_recent_files,
             config_commands::add_recent_file,
             search_commands::global_search,
+            ai_commands::set_ai_api_key,
+            ai_commands::get_ai_key_status,
+            ai_commands::read_ai_config,
+            ai_commands::set_default_provider,
+            ai_commands::set_default_model,
+            ai_commands::open_ai_config,
+            ai_commands::ai_test_connection,
+            ai_commands::ai_chat_stream,
+            ai_commands::cancel_ai_stream,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

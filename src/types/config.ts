@@ -129,6 +129,41 @@ export interface AppConfig {
     insertAction: 'copy-to-assets' | 'relative-path' | 'absolute-path';
     assetsFolderName: string;
   };
+  /** 欢迎页配置 */
+  welcome: {
+    /** 空状态是否显示仪表板视图；false 则显示极简视图 */
+    showOnStartup: boolean;
+  };
+  /** 访问外部链接（http/https）前是否弹出确认提示。默认 true */
+  confirmExternalLinkOpen: boolean;
+  /** AI 助手配置 */
+  ai: {
+    enabled: boolean;
+    currentProvider: 'zhipu' | 'deepseek' | 'siliconflow' | 'custom';
+    /** 各 Provider 选中的模型 */
+    selectedModels: {
+      zhipu: string;
+      deepseek: string;
+      siliconflow: string;
+      custom: string;
+    };
+    temperature: number;
+    maxTokens: number;
+    /** 划词浮层是否显示 AI 按钮 */
+    showInTooltip: boolean;
+    /** 斜杠菜单是否显示 AI 指令 */
+    showInSlash: boolean;
+    /** Custom Provider 的 base URL */
+    customBaseUrl: string;
+    /** 用户自定义 Prompt 模板 */
+    customPrompts?: Array<{
+      id: string;
+      label: string;
+      prompt: string;
+    }>;
+    /** AI 历史记录最大条数 */
+    maxHistoryCount: number;
+  };
 }
 
 export type ErrorCode =

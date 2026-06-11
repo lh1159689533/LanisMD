@@ -1,5 +1,4 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { cn } from '@/utils/cn';
 
 export interface ContextMenuItem {
   label: string;
@@ -22,7 +21,7 @@ interface ContextMenuProps {
 export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Adjust position so the menu stays within the viewport
+  // 调整位置确保菜单不超出视口
   useEffect(() => {
     const menu = menuRef.current;
     if (!menu) return;
@@ -34,20 +33,20 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
     let adjustedX = x;
     let adjustedY = y;
 
-    if (x + rect.width > vw) {
-      adjustedX = vw - rect.width - 4;
+    if (x + rect.width > vw - 8) {
+      adjustedX = vw - rect.width - 8;
     }
-    if (y + rect.height > vh) {
-      adjustedY = vh - rect.height - 4;
+    if (y + rect.height > vh - 8) {
+      adjustedY = vh - rect.height - 8;
     }
-    if (adjustedX < 0) adjustedX = 4;
-    if (adjustedY < 0) adjustedY = 4;
+    if (adjustedX < 4) adjustedX = 4;
+    if (adjustedY < 4) adjustedY = 4;
 
     menu.style.left = `${adjustedX}px`;
     menu.style.top = `${adjustedY}px`;
   }, [x, y]);
 
-  // Close on click outside or Escape
+  // 点击外部、Escape、滚动时关闭
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -57,16 +56,20 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    // Use capture to ensure we catch the event before anything else
+    const handleScroll = () => onClose();
+
+    // 使用捕获阶段确保优先处理
     document.addEventListener('mousedown', handleClick, true);
     document.addEventListener('keydown', handleKey);
+    document.addEventListener('scroll', handleScroll, true);
     return () => {
       document.removeEventListener('mousedown', handleClick, true);
       document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('scroll', handleScroll, true);
     };
   }, [onClose]);
 
-  // Prevent browser's default context menu on the component itself
+  // 阻止菜单自身的浏览器右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -76,15 +79,12 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
     <div
       ref={menuRef}
       onContextMenu={handleContextMenu}
-      className={cn(
-        'fixed z-[9999] min-w-[180px] py-1 shadow-xl backdrop-blur-sm',
-        'rounded-lg border border-[var(--lanismd-sidebar-border)] bg-[var(--lanismd-sidebar-bg)]',
-      )}
+      className="lanismd-context-menu"
       style={{ left: x, top: y }}
     >
       {groups.map((group, gi) => (
         <div key={gi}>
-          {gi > 0 && <div className="mx-2 my-1 h-px bg-[var(--lanismd-sidebar-border)]" />}
+          {gi > 0 && <div className="lanismd-context-menu-separator" />}
           {group.items.map((item, ii) => (
             <button
               key={ii}
@@ -95,16 +95,13 @@ export function ContextMenu({ x, y, groups, onClose }: ContextMenuProps) {
                 }
               }}
               disabled={item.disabled}
-              className={cn(
-                'flex w-full items-center gap-2.5 px-3 py-1.5',
-                'text-left text-xs transition-colors',
-                item.disabled
-                  ? 'cursor-not-allowed opacity-40'
-                  : 'hover:bg-[var(--lanismd-accent)]/10 text-[var(--lanismd-sidebar-text)] hover:text-[var(--lanismd-accent)]',
-              )}
+              className={
+                'lanismd-context-menu-item' +
+                (item.disabled ? ' lanismd-context-menu-item-disabled' : '')
+              }
             >
               {item.icon && (
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center opacity-70">
+                <span className="lanismd-context-menu-icon">
                   {item.icon}
                 </span>
               )}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { EditorTab, SaveStatus } from '@/types';
+import { useSessionStore } from './session-store';
 
 function generateId(): string {
   return `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -64,6 +65,9 @@ export const useFileStore = create<FileState>()((set, get) => ({
       currentFile: newFile,
       saveStatus: 'idle',
     });
+
+    // 同步会话快照：记录上次打开的文件路径
+    useSessionStore.getState().setLastFile(path);
   },
 
   createUntitledFile: () => {
@@ -121,16 +125,23 @@ export const useFileStore = create<FileState>()((set, get) => ({
     const current = get().currentFile;
     if (!current) return;
 
+    const nextPath = filePath ?? current.filePath;
+
     set({
       currentFile: {
         ...current,
-        filePath: filePath ?? current.filePath,
+        filePath: nextPath,
         fileName: fileName ?? current.fileName,
         lastSavedContent: current.content,
         isDirty: false,
       },
       saveStatus: 'saved',
     });
+
+    // 另存为场景：filePath 变化时同步会话快照
+    if (filePath && filePath !== current.filePath) {
+      useSessionStore.getState().setLastFile(filePath);
+    }
 
     // Reset save status to idle after 2 seconds
     setTimeout(() => {
@@ -146,6 +157,8 @@ export const useFileStore = create<FileState>()((set, get) => ({
 
   closeFile: () => {
     set({ currentFile: null, saveStatus: 'idle' });
+    // 用户主动关闭文件 → 清空会话快照中的文件
+    useSessionStore.getState().setLastFile(null);
   },
 
   updateFilePath: (newPath: string, newName: string) => {
@@ -158,6 +171,8 @@ export const useFileStore = create<FileState>()((set, get) => ({
         fileName: newName,
       },
     });
+    // 重命名后同步会话快照
+    useSessionStore.getState().setLastFile(newPath);
   },
 
   getCurrentFile: () => get().currentFile,

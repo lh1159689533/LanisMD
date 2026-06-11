@@ -19,8 +19,14 @@ import type { MarkType } from '@milkdown/kit/prose/model';
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
+import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
+import { AI_COMMANDS } from '@/services/ai/commands';
+import type { AiCommand } from '@/types/ai';
+import { withShortcut } from '@/utils/shortcut';
 
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-block';
+import { runAiCommand } from './ai-edit';
 
 // ---------------------------------------------------------------------------
 // 辅助函数
@@ -58,6 +64,9 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   clearFormat:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-3.2-3.2a2 2 0 0 1 0-2.83L14.17 5.1a2 2 0 0 1 2.83 0l4.89 4.89a2 2 0 0 1 0 2.83L15.12 19.6"/><path d="m9.69 12.31 4.24 4.24"/></svg>',
+  // AI 入口图标：渐变文字 "AI"，与 slash-menu 中的 ai 图标保持一致
+  aiPolish:
+    '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lanismd-ai-grad-tooltip" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="url(#lanismd-ai-grad-tooltip)" letter-spacing="-0.5">AI</text></svg>',
 };
 
 // ---------------------------------------------------------------------------
@@ -104,6 +113,16 @@ function clearAllMarks(view: EditorView) {
 
   dispatch(tr);
   view.focus();
+}
+
+/**
+ * 是否在 tooltip 中显示 AI 按钮
+ * - 设置里 ai.enabled 为 true
+ * - 设置里 ai.showInTooltip 为 true
+ */
+function isAiToolbarEnabled(): boolean {
+  const { config } = useSettingsStore.getState();
+  return Boolean(config.ai?.enabled) && Boolean(config.ai?.showInTooltip);
 }
 
 // ---------------------------------------------------------------------------
@@ -404,6 +423,17 @@ interface ToolbarButton {
   markName: string | null;
   /** 自定义操作处理器（覆盖默认的 toggleMark） */
   action?: (view: EditorView) => void;
+  /** 追加到按钮上的额外 class（用于 AI 等特殊样式） */
+  extraClass?: string;
+  /** 动态显隐：返回 false 时按钮会被隐藏 */
+  isVisible?: () => boolean;
+  /** 子菜单项（AI 按钮使用） */
+  submenuItems?: Array<{
+    id: string;
+    icon: string;
+    label: string;
+    action: (view: EditorView) => void;
+  }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -413,35 +443,72 @@ interface ToolbarButton {
 class TooltipToolbarView {
   private container: HTMLElement;
   private buttons: Map<string, HTMLButtonElement> = new Map();
+  /** 保存各 id 对应的 DOM 元素（按钮或分隔符），用于动态显隐 */
+  private elements: Map<string, HTMLElement> = new Map();
   private view: EditorView | null = null;
   private provider: TooltipProvider | null = null;
 
   private buttonDefs: ToolbarButton[] = [
-    { id: 'bold', icon: icons.bold, title: '加粗', markName: 'strong' },
-    { id: 'italic', icon: icons.italic, title: '斜体', markName: 'emphasis' },
-    { id: 'underline', icon: icons.underline, title: '下划线', markName: 'underline' },
-    { id: 'strikethrough', icon: icons.strikethrough, title: '删除线', markName: 'strike_through' },
-    { id: 'highlight', icon: icons.highlight, title: '高亮', markName: 'highlight' },
-    { id: 'superscript', icon: icons.superscript, title: '上标', markName: 'superscript' },
-    { id: 'subscript', icon: icons.subscript, title: '下标', markName: 'subscript' },
+    { id: 'bold', icon: icons.bold, title: withShortcut('加粗', 'bold'), markName: 'strong' },
+    {
+      id: 'italic',
+      icon: icons.italic,
+      title: withShortcut('斜体', 'italic'),
+      markName: 'emphasis',
+    },
+    {
+      id: 'underline',
+      icon: icons.underline,
+      title: withShortcut('下划线', 'underline'),
+      markName: 'underline',
+    },
+    {
+      id: 'strikethrough',
+      icon: icons.strikethrough,
+      title: withShortcut('删除线', 'strikethrough'),
+      markName: 'strike_through',
+    },
+    {
+      id: 'highlight',
+      icon: icons.highlight,
+      title: withShortcut('高亮', 'highlight'),
+      markName: 'highlight',
+    },
+    {
+      id: 'superscript',
+      icon: icons.superscript,
+      title: withShortcut('上标', 'superscript'),
+      markName: 'superscript',
+    },
+    {
+      id: 'subscript',
+      icon: icons.subscript,
+      title: withShortcut('下标', 'subscript'),
+      markName: 'subscript',
+    },
     {
       id: 'separator-1',
       icon: '',
       title: '',
       markName: null,
     },
-    { id: 'code', icon: icons.code, title: '行内代码', markName: 'inlineCode' },
+    {
+      id: 'code',
+      icon: icons.code,
+      title: withShortcut('行内代码', 'inlineCode'),
+      markName: 'inlineCode',
+    },
     {
       id: 'link',
       icon: icons.link,
-      title: '链接',
+      title: withShortcut('链接', 'link'),
       markName: 'link',
       action: (view) => this.handleLinkAction(view),
     },
     {
       id: 'image',
       icon: icons.image,
-      title: '图片',
+      title: withShortcut('图片', 'image'),
       markName: null,
       action: (view) => this.handleImageAction(view),
     },
@@ -454,11 +521,50 @@ class TooltipToolbarView {
     {
       id: 'clearFormat',
       icon: icons.clearFormat,
-      title: '清除格式',
+      title: withShortcut('清除格式', 'clearFormat'),
       markName: null,
       action: (view) => clearAllMarks(view),
     },
+    {
+      id: 'separator-ai',
+      icon: '',
+      title: '',
+      markName: null,
+      isVisible: () => isAiToolbarEnabled(),
+    },
+    {
+      id: 'ai-menu',
+      icon: icons.aiPolish,
+      title: 'AI 助手',
+      markName: null,
+      extraClass: 'milkdown-tooltip-btn-ai',
+      isVisible: () => isAiToolbarEnabled(),
+      action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
+      submenuItems: [
+        {
+          id: 'ai-polish',
+          icon: AI_COMMANDS.polish.icon,
+          label: '润色',
+          action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
+        },
+        {
+          id: 'ai-translate',
+          icon: AI_COMMANDS.translate.icon,
+          label: '翻译',
+          action: (view) => this.handleAiCommand(view, AI_COMMANDS.translate),
+        },
+        {
+          id: 'ai-explain',
+          icon: AI_COMMANDS.explain.icon,
+          label: '解释',
+          action: (view) => this.handleAiCommand(view, AI_COMMANDS.explain),
+        },
+      ],
+    },
   ];
+
+  /** 当前显示的 AI 子菜单元素 */
+  private aiSubmenu: HTMLElement | null = null;
 
   constructor() {
     this.container = document.createElement('div');
@@ -481,38 +587,149 @@ class TooltipToolbarView {
         const sep = document.createElement('div');
         sep.className = 'milkdown-tooltip-separator';
         this.container.appendChild(sep);
+        this.elements.set(def.id, sep);
         return;
       }
 
       const btn = document.createElement('button');
       btn.className = 'milkdown-tooltip-btn';
+      if (def.extraClass) {
+        btn.classList.add(def.extraClass);
+      }
       btn.innerHTML = def.icon;
       btn.setAttribute('aria-label', def.title);
       btn.setAttribute('title', def.title);
       btn.type = 'button';
 
-      btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!this.view) return;
+      // 有子菜单的按钮：添加下拉箭头，hover 展开
+      if (def.submenuItems && def.submenuItems.length > 0) {
+        // 添加小三角指示有子菜单
+        const arrow = document.createElement('span');
+        arrow.className = 'milkdown-tooltip-btn-arrow';
+        arrow.innerHTML =
+          '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>';
+        btn.appendChild(arrow);
 
-        if (def.action) {
-          def.action(this.view);
-        } else if (def.markName) {
-          const markType = this.view.state.schema.marks[def.markName];
-          if (markType) {
-            toggleMarkCommand(this.view, markType);
+        btn.addEventListener('mouseenter', () => {
+          this.showAiSubmenu(btn, def);
+        });
+
+        btn.addEventListener('mouseleave', (e) => {
+          // 如果鼠标移向子菜单，不隐藏
+          const relatedTarget = e.relatedTarget as HTMLElement | null;
+          if (relatedTarget && this.aiSubmenu?.contains(relatedTarget)) return;
+          // 延迟隐藏，给用户时间移到子菜单上
+          setTimeout(() => {
+            if (!this.aiSubmenu?.matches(':hover') && !btn.matches(':hover')) {
+              this.hideAiSubmenu();
+            }
+          }, 100);
+        });
+
+        // 默认点击执行第一个子菜单项（润色）
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!this.view) return;
+          if (def.action) {
+            def.action(this.view);
           }
-        }
+        });
+      } else {
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!this.view) return;
 
-        // 操作后更新激活状态
-        this.updateActiveStates();
-        // this.provider?.hide();
-      });
+          if (def.action) {
+            def.action(this.view);
+          } else if (def.markName) {
+            const markType = this.view.state.schema.marks[def.markName];
+            if (markType) {
+              toggleMarkCommand(this.view, markType);
+            }
+          }
+
+          // 操作后更新激活状态
+          this.updateActiveStates();
+        });
+      }
 
       this.container.appendChild(btn);
       this.buttons.set(def.id, btn);
+      this.elements.set(def.id, btn);
     });
+  }
+
+  /** 显示 AI 子菜单 */
+  private showAiSubmenu(anchorBtn: HTMLElement, def: ToolbarButton) {
+    if (this.aiSubmenu) {
+      this.hideAiSubmenu();
+    }
+    if (!def.submenuItems || !this.view) return;
+
+    const submenu = document.createElement('div');
+    submenu.className = 'milkdown-tooltip-ai-submenu';
+
+    def.submenuItems.forEach((item) => {
+      const menuItem = document.createElement('button');
+      menuItem.className = 'milkdown-tooltip-ai-submenu-item';
+      menuItem.type = 'button';
+      menuItem.innerHTML = `<span class="milkdown-tooltip-ai-submenu-icon">${item.icon}</span><span>${item.label}</span>`;
+
+      menuItem.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!this.view) return;
+        item.action(this.view);
+        this.hideAiSubmenu();
+      });
+
+      submenu.appendChild(menuItem);
+    });
+
+    submenu.addEventListener('mouseleave', () => {
+      setTimeout(() => {
+        if (!submenu.matches(':hover') && !anchorBtn.matches(':hover')) {
+          this.hideAiSubmenu();
+        }
+      }, 100);
+    });
+
+    // 将子菜单挂载到 body，避免溢出 tooltip 容器导致编辑器出现滚动条
+    document.body.appendChild(submenu);
+
+    requestAnimationFrame(() => {
+      const btnRect = anchorBtn.getBoundingClientRect();
+      const submenuRect = submenu.getBoundingClientRect();
+
+      // 默认在按钮下方，使用视口坐标（fixed 定位）
+      let top = btnRect.bottom + 4;
+      let left = btnRect.left;
+
+      // 如果超出视口底部，改为在上方显示
+      if (btnRect.bottom + submenuRect.height + 8 > window.innerHeight) {
+        top = btnRect.top - submenuRect.height - 4;
+      }
+
+      // 如果超出视口右边，向左偏移
+      if (left + submenuRect.width > window.innerWidth) {
+        left = window.innerWidth - submenuRect.width - 8;
+      }
+
+      submenu.style.top = `${top}px`;
+      submenu.style.left = `${left}px`;
+    });
+
+    this.aiSubmenu = submenu;
+  }
+
+  /** 隐藏 AI 子菜单 */
+  hideAiSubmenu() {
+    if (this.aiSubmenu) {
+      this.aiSubmenu.remove();
+      this.aiSubmenu = null;
+    }
   }
 
   /**
@@ -523,6 +740,14 @@ class TooltipToolbarView {
     const { state } = this.view;
 
     this.buttonDefs.forEach((def) => {
+      // 先处理动态显隐（AI 等按钮受设置开关控制）
+      if (def.isVisible) {
+        const el = this.elements.get(def.id);
+        if (el) {
+          el.style.display = def.isVisible() ? '' : 'none';
+        }
+      }
+
       if (def.id.startsWith('separator') || !def.markName) return;
 
       const btn = this.buttons.get(def.id);
@@ -538,6 +763,20 @@ class TooltipToolbarView {
         btn.style.opacity = '0.3';
         btn.style.cursor = 'not-allowed';
       }
+    });
+  }
+
+  /**
+   * 处理 AI 指令按钮
+   *
+   * 先隐藏 tooltip，让 AI 交互组件在原选区处显示；
+   * 然后把当前选区交给 ai-edit 插件处理。
+   */
+  private handleAiCommand(view: EditorView, command: AiCommand) {
+    this.provider?.hide();
+    // 让 tooltip 隐藏后再异步启动，避免 DOM 遮挡
+    requestAnimationFrame(() => {
+      void runAiCommand(view, command);
     });
   }
 
@@ -708,6 +947,9 @@ export function configureTooltip(ctx: Ctx) {
         content: toolbarView.element,
         debounce: 50,
         shouldShow(view: EditorView, _prevState?: EditorState) {
+          // 沉浸式阅读：完全禁用 tooltip 工具栏
+          if (useUIStore.getState().immersiveReading) return false;
+
           // 鼠标按钮仍按下时不显示（仍在选择）
           if (isMouseDown) return false;
 
@@ -754,6 +996,7 @@ export function configureTooltip(ctx: Ctx) {
         destroy: () => {
           view.dom.removeEventListener('mousedown', handleMouseDown);
           document.removeEventListener('mouseup', handleMouseUp);
+          toolbarView.hideAiSubmenu();
           provider.destroy();
           toolbarView.element.remove();
         },

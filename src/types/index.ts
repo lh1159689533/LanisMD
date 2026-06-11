@@ -22,3 +22,19 @@ export {
   isCustomTheme,
   getCustomThemeId,
 } from './config';
+export {
+  type AiProviderId,
+  type AiModel,
+  type AiProviderMeta,
+  type AiProviderConfig,
+  type AiChatMessage,
+  type AiChatParams,
+  type AiCommandId,
+  type AiInsertMode,
+  type AiPromptInput,
+  type AiCommand,
+  type AiStreamChunk,
+  type AiStreamDone,
+  type AiStreamError,
+  type AiConfig,
+} from './ai';

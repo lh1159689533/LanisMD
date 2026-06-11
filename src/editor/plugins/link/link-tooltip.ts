@@ -143,9 +143,15 @@ class LinkTooltipView {
   // ---- Actions ----
 
   private handleOpen() {
-    if (this.linkHref) {
-      navigateLink(this.linkHref, this.view ?? undefined);
-    }
+    if (!this.linkHref) return;
+    // 立即收起 tooltip，避免遮挡后续可能弹出的链接确认框
+    const href = this.linkHref;
+    const view = this.view ?? undefined;
+    this.hide();
+    // navigateLink 是 async（外部 URL 可能要弹确认框），需要捕获异常避免静默失败
+    Promise.resolve(navigateLink(href, view)).catch((err) => {
+      console.error('Failed to open link from tooltip:', err);
+    });
   }
 
   private handleEdit() {

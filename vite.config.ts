@@ -62,7 +62,7 @@ export default defineConfig({
             '@tauri-apps/plugin-fs',
             '@tauri-apps/plugin-notification',
             '@tauri-apps/plugin-os',
-            '@tauri-apps/plugin-shell',
+            '@tauri-apps/plugin-opener',
             '@tauri-apps/plugin-store',
           ],
           // 工具库

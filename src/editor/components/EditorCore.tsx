@@ -4,6 +4,7 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 import { useEditor } from '../hooks/use-editor';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { useUIStore } from '@/stores/ui-store';
 import { useSearchStore } from '@/stores/search-store';
 import { SearchReplace } from '@/components/editor/SearchReplace';
 import { SourceEditor } from './SourceEditor';
@@ -37,8 +38,12 @@ function getMilkdownView(
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
   while (el) {
     const { overflow, overflowY } = getComputedStyle(el);
-    if (overflow === 'auto' || overflow === 'scroll' ||
-        overflowY === 'auto' || overflowY === 'scroll') {
+    if (
+      overflow === 'auto' ||
+      overflow === 'scroll' ||
+      overflowY === 'auto' ||
+      overflowY === 'scroll'
+    ) {
       return el;
     }
     el = el.parentElement;
@@ -54,6 +59,20 @@ export function EditorCore() {
   const mode = useEditorStore((s) => s.mode);
   const searchIsOpen = useSearchStore((s) => s.isOpen);
   const highlightOnly = useSearchStore((s) => s.highlightOnly);
+  // 沉浸式阅读状态：用于在 DOM 上添加 data-immersive 属性，CSS 据此隐藏块级工具栏
+  const immersiveReading = useUIStore((s) => s.immersiveReading);
+
+  // 在 body 上同步沉浸式阅读标记，使 floating-ui 等飘出编辑器树的浮层也能被 CSS 命中
+  useEffect(() => {
+    if (immersiveReading) {
+      document.body.setAttribute('data-immersive', 'true');
+    } else {
+      document.body.removeAttribute('data-immersive');
+    }
+    return () => {
+      document.body.removeAttribute('data-immersive');
+    };
+  }, [immersiveReading]);
 
   // 监听代码块设置变化
   const showLineNumbers = useSettingsStore(
@@ -143,9 +162,7 @@ export function EditorCore() {
 
       try {
         // 设置选区到匹配位置
-        const tr = view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, from, to),
-        );
+        const tr = view.state.tr.setSelection(TextSelection.create(view.state.doc, from, to));
         view.dispatch(tr);
 
         // 手动滚动外层 .editor-content 容器到匹配位置
@@ -280,7 +297,7 @@ export function EditorCore() {
         <div
           ref={containerRef}
           className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
-          style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
+          style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)', minHeight: '100%' }}
         >
           <SourceEditor />
         </div>
@@ -295,7 +312,7 @@ export function EditorCore() {
       <div
         ref={containerRef}
         className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
-        style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
+        style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)', minHeight: '100%' }}
       >
         <div
           ref={rootRef}

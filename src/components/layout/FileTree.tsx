@@ -719,9 +719,16 @@ export function FileTree() {
   const btnRef = useRef<HTMLButtonElement>(null);
   const fileTreeRootRef = useRef<HTMLDivElement>(null);
 
-  // Recent folders panel state
-  const [showRecentFolders, setShowRecentFolders] = useState(false);
-  const recentFoldersBtnRef = useRef<HTMLButtonElement>(null);
+  // Recent folders panel state（提升至 ui-store，由 Sidebar 触发）
+  const showRecentFolders = useUIStore((s) => s.recentFoldersOpen);
+  const setShowRecentFolders = useUIStore((s) => s.setRecentFoldersOpen);
+  const toggleRecentFolders = useUIStore((s) => s.toggleRecentFolders);
+  const registerRecentFoldersTriggerEl = useUIStore((s) => s.registerRecentFoldersTriggerEl);
+  const unregisterRecentFoldersTriggerEl = useUIStore(
+    (s) => s.unregisterRecentFoldersTriggerEl,
+  );
+  // empty state 中的「最近打开」按钮 ref，仅在该状态下挂载，需注册到 store 以排除 outside-click
+  const emptyRecentBtnRef = useRef<HTMLButtonElement>(null);
   const addRecentFolder = useRecentFoldersStore((s) => s.addRecentFolder);
 
   // Context menu state
@@ -751,6 +758,15 @@ export function FileTree() {
       }
     });
   }, [selectedFile]);
+
+  // empty state 下的「最近打开」按钮注册到全局触发集合（用于浮层 outside-click 排除）
+  useEffect(() => {
+    if (rootPath) return;
+    const el = emptyRecentBtnRef.current;
+    if (!el) return;
+    registerRecentFoldersTriggerEl(el);
+    return () => unregisterRecentFoldersTriggerEl(el);
+  }, [rootPath, registerRecentFoldersTriggerEl, unregisterRecentFoldersTriggerEl]);
 
   /** Flat file list sorted by modified time (newest first) for list view */
   const flatFiles = useMemo(() => {
@@ -1410,8 +1426,8 @@ export function FileTree() {
             打开文件夹
           </button>
           <button
-            ref={recentFoldersBtnRef}
-            onClick={() => setShowRecentFolders((v) => !v)}
+            ref={emptyRecentBtnRef}
+            onClick={toggleRecentFolders}
             className="file-tree-empty-btn"
           >
             <RiHistoryLine size={14} />
@@ -1423,7 +1439,6 @@ export function FileTree() {
         {showRecentFolders && (
           <RecentFoldersPanel
             containerRef={fileTreeRootRef}
-            toggleBtnRef={recentFoldersBtnRef}
             onClose={() => setShowRecentFolders(false)}
             onSwitchFolder={handleSwitchToFolder}
           />
@@ -1448,17 +1463,6 @@ export function FileTree() {
           {folderName}
         </span>
         <div className="file-tree-header-actions">
-          <button
-            ref={recentFoldersBtnRef}
-            onClick={() => setShowRecentFolders((v) => !v)}
-            className={cn('file-tree-header-btn', showRecentFolders && 'active')}
-            title="最近打开的文件夹"
-          >
-            <RiHistoryLine size={13} />
-          </button>
-
-          <span className="file-tree-header-separator" />
-
           {/* View mode toggle */}
           <button
             onClick={() => setViewMode('tree')}
@@ -1568,7 +1572,6 @@ export function FileTree() {
       {showRecentFolders && (
         <RecentFoldersPanel
           containerRef={fileTreeRootRef}
-          toggleBtnRef={recentFoldersBtnRef}
           onClose={() => setShowRecentFolders(false)}
           onSwitchFolder={handleSwitchToFolder}
         />

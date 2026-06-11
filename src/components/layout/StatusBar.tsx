@@ -8,11 +8,14 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
+  RiSparklingLine,
 } from 'react-icons/ri';
-import { TbLeaf, TbSnowflake, TbFlower } from 'react-icons/tb';
+import { TbLeaf, TbSnowflake, TbFlower, TbBookOff, TbBook } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
+import { useUIStore } from '@/stores/ui-store';
+import { useAiStore } from '@/stores/ai-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
 import {
   BUILTIN_THEME_LIST,
@@ -22,6 +25,7 @@ import {
 } from '@/types/config';
 import type { ThemeMode, ThemeInfo } from '@/types';
 import { cn } from '@/utils/cn';
+import { toggleImmersiveReading } from '@/utils/immersive-reading';
 
 // 内置主题图标映射
 const BUILTIN_THEME_ICONS: Record<BuiltinTheme | 'system', React.ReactNode> = {
@@ -225,6 +229,10 @@ export function StatusBar() {
     useEditorStore();
   const { config, setConfig } = useSettingsStore();
   const currentFile = useFileStore((s) => s.currentFile);
+  const toggleAiHistory = useUIStore((s) => s.toggleAiHistory);
+  const aiHistoryOpen = useUIStore((s) => s.aiHistoryOpen);
+  const immersiveReading = useUIStore((s) => s.immersiveReading);
+  const historyCount = useAiStore((s) => s.history.length);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showBloomSubmenu, setShowBloomSubmenu] = useState(false);
   const [showCustomSubmenu, setShowCustomSubmenu] = useState(false);
@@ -234,6 +242,8 @@ export function StatusBar() {
   const bloomItemRef = useRef<HTMLDivElement>(null);
   const customItemRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const aiOn = config.ai?.enabled !== false;
 
   // 加载用户自定义主题列表
   useEffect(() => {
@@ -353,12 +363,32 @@ export function StatusBar() {
       <div className="flex items-center gap-3">
         {currentFile && (
           <>
+            {/* 沉浸式阅读切换按钮 */}
             <button
-              onClick={toggleMode}
+              onClick={toggleImmersiveReading}
               className={cn(
                 'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+                immersiveReading && 'text-[var(--lanismd-accent)]',
               )}
-              title={mode === 'wysiwyg' ? '切换到源码模式' : '切换到预览模式'}
+              title={immersiveReading ? '关闭沉浸式阅读' : '开启沉浸式阅读'}
+            >
+              {immersiveReading ? <TbBook size={15} /> : <TbBookOff size={15} />}
+            </button>
+            {/* 模式切换：沉浸式阅读开启时锁定不可切换 */}
+            <button
+              onClick={toggleMode}
+              disabled={immersiveReading}
+              className={cn(
+                'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+                immersiveReading && 'cursor-not-allowed opacity-40 hover:text-inherit',
+              )}
+              title={
+                immersiveReading
+                  ? '沉浸式阅读模式下不可切换'
+                  : mode === 'wysiwyg'
+                    ? '切换到源码模式'
+                    : '切换到预览模式'
+              }
             >
               {mode === 'wysiwyg' ? (
                 <>
@@ -378,6 +408,21 @@ export function StatusBar() {
             </span>
           </>
         )}
+        {aiOn && (
+          <div className="relative">
+            <button
+              onClick={toggleAiHistory}
+              className={cn(
+                'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
+                aiHistoryOpen && 'text-[var(--lanismd-accent)]',
+              )}
+              title="AI 历史记录"
+            >
+              <RiSparklingLine size={13} />
+              {historyCount > 0 && <span className="text-[10px] opacity-70">{historyCount}</span>}
+            </button>
+          </div>
+        )}
         <div className="relative">
           <button
             ref={themeButtonRef}
@@ -395,7 +440,7 @@ export function StatusBar() {
               className={cn(
                 'absolute bottom-full right-0 mb-1 min-w-[140px]',
                 'rounded-md border border-[var(--lanismd-editor-border)]',
-                'bg-[var(--lanismd-editor-bg)] py-1 shadow-lg',
+                'z-10 bg-[var(--lanismd-editor-bg)] py-1 shadow-lg',
               )}
             >
               {/* 基础主题 */}

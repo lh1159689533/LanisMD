@@ -43,6 +43,7 @@
 @import './tooltip.css';
 @import './dialog.css';
 @import './link-tooltip.css';
+@import './context-menu.css';
 
 /* Special */
 @import './front-matter.css';
@@ -56,3 +57,7 @@
 
 /* Modes */
 @import './focus-typewriter.css';
+@import './immersive-reading.css';
+
+/* AI 助手 */
+@import './ai-edit.css';

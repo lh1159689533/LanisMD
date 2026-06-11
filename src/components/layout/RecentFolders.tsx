@@ -3,21 +3,19 @@ import { RiFolderLine, RiCloseLine } from 'react-icons/ri';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/utils/cn';
 import { ResizablePanel } from '@/components/common/ResizablePanel';
 
 interface RecentFoldersPanelProps {
   /** Ref to the container (the file-tree root div) whose height is used for ratio calc */
   containerRef: React.RefObject<HTMLElement | null>;
-  /** Ref to the toggle button so outside-click ignores it */
-  toggleBtnRef: React.RefObject<HTMLElement | null>;
   onClose: () => void;
   onSwitchFolder: (folderPath: string) => void;
 }
 
 export function RecentFoldersPanel({
   containerRef,
-  toggleBtnRef,
   onClose,
   onSwitchFolder,
 }: RecentFoldersPanelProps) {
@@ -41,18 +39,17 @@ export function RecentFoldersPanel({
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(target) &&
-        toggleBtnRef.current &&
-        !toggleBtnRef.current.contains(target)
-      ) {
-        onClose();
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      // 排除所有已注册的触发按钮，避免触发关闭后再次 toggle 打开导致的闪烁
+      const triggerEls = useUIStore.getState().recentFoldersTriggerEls;
+      for (const el of triggerEls) {
+        if (el.contains(target)) return;
       }
+      onClose();
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [closeOnClickOutside, onClose, toggleBtnRef]);
+  }, [closeOnClickOutside, onClose]);
 
   // Close on Escape
   useEffect(() => {

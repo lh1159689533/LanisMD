@@ -15,13 +15,14 @@ import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { invoke } from '@tauri-apps/api/core';
-import { open as shellOpen } from '@tauri-apps/plugin-shell';
+import { openUrl, openPath } from '@tauri-apps/plugin-opener';
 import { parseLink } from './utils';
 import type { ParsedLink } from './utils';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useUIStore } from '@/stores/ui-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { fileService } from '@/services/tauri';
 import { scrollToHeadingByIndex } from '../outline-sync';
 
@@ -58,9 +59,17 @@ export async function navigateLink(href: string, view?: EditorView): Promise<voi
       await handleLocalFile(parsed, view);
       break;
     case 'external-url':
-      handleExternalUrl(parsed);
+      await handleExternalUrl(parsed);
       break;
   }
+}
+
+/**
+ * 判断是否为 http/https 协议的链接（需要确认弹窗的目标）
+ */
+function isHttpUrl(href: string): boolean {
+  const lower = href.trim().toLowerCase();
+  return lower.startsWith('http://') || lower.startsWith('https://');
 }
 
 // ---------------------------------------------------------------------------
@@ -139,7 +148,7 @@ async function handleLocalFile(parsed: ParsedLink, view?: EditorView): Promise<v
       await openMarkdownFile(result.resolvedPath, parsed.anchor, view);
     } else {
       // 非 Markdown 文件：用系统默认应用打开
-      await shellOpen(result.resolvedPath);
+      await openPath(result.resolvedPath);
     }
   } catch (err) {
     console.error('Failed to resolve link path:', err);
@@ -228,13 +237,37 @@ async function openMarkdownFile(
 // ---------------------------------------------------------------------------
 
 /**
- * 处理外部 URL：用系统默认浏览器打开
+ * 处理外部 URL：根据设置决定是否弹窗确认，再用系统默认浏览器打开。
+ *
+ * - 仅对 http/https 链接进行确认拦截（与用户期望的"访问外部网页"语义一致）
+ * - 其他协议（mailto / tel / ftp 等）保持原直接打开行为
+ * - 用户在弹窗勾选「不再提示」后，会把设置项 `confirmExternalLinkOpen` 置为 false
  */
-function handleExternalUrl(parsed: ParsedLink): void {
+async function handleExternalUrl(parsed: ParsedLink): Promise<void> {
   if (!parsed.href) return;
-  shellOpen(parsed.href).catch((err) => {
+
+  // 仅 http/https 走确认流程
+  if (isHttpUrl(parsed.href)) {
+    const { config, setConfig } = useSettingsStore.getState();
+
+    if (config.confirmExternalLinkOpen) {
+      const { requestLinkConfirm } = useUIStore.getState();
+      const { confirmed, dontAskAgain } = await requestLinkConfirm(parsed.href);
+
+      if (!confirmed) return;
+
+      // 用户勾选「不再提示」：关闭设置开关
+      if (dontAskAgain) {
+        setConfig('confirmExternalLinkOpen', false);
+      }
+    }
+  }
+
+  try {
+    await openUrl(parsed.href);
+  } catch (err) {
     console.error('Failed to open external link:', err);
-  });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -345,29 +378,46 @@ export const linkClickPlugin = $prose(() => {
   return new Plugin({
     key: LINK_CLICK_KEY,
     props: {
-      handleClick(view, pos, event) {
-        // 检查是否按住了 Cmd (macOS) 或 Ctrl (Windows/Linux)
-        const isMod = event.metaKey || event.ctrlKey;
-        if (!isMod) return false;
+      // 使用 handleDOMEvents.click 而非 handleClick：
+      // - handleClick 接收的是 mouseup 合成事件，preventDefault 无法阻止 <a href> 的浏览器默认导航
+      // - handleDOMEvents.click 接收原生 click 事件，preventDefault 才能真正取消默认跳转
+      handleDOMEvents: {
+        click(view, event) {
+          // 沿 DOM 树向上找最近的 <a> 元素（点击点可能落在 <a> 内的 <strong>、<em> 等子节点上）
+          const target = event.target as HTMLElement | null;
+          const anchor = target?.closest?.('a') as HTMLAnchorElement | null;
+          if (!anchor) return false;
 
-        // 查找点击位置的 link mark
-        const { state } = view;
-        const linkType = state.schema.marks.link;
-        if (!linkType) return false;
+          // 用 getAttribute 而不是 .href，避免浏览器把相对路径解析成绝对 URL（影响本地文件判断）
+          const href = anchor.getAttribute('href');
+          if (!href) return false;
 
-        const $pos = state.doc.resolve(pos);
-        const marks = $pos.marks();
-        const linkMark = marks.find((m) => m.type === linkType);
-        if (!linkMark) return false;
+          // 校验该 <a> 确实在 ProseMirror 文档树内（排除 tooltip / 其它 UI 层的 <a>）。
+          // 注意：不再使用 $pos.marks() 反查 link mark —— 因为 posAtDOM 返回的位置常落在
+          // link 文本起点的边界，$pos.marks() 在边界会返回空数组（边界既不归属于前节点也不归属于后节点），
+          // 导致校验失败 → return false → webview 执行默认跳转。
+          // 只要 posAtDOM 返回 >= 0，就说明该 <a> 是文档内容渲染出来的，足够安全。
+          const pos = view.posAtDOM(anchor, 0);
+          if (pos < 0) return false;
 
-        const href = linkMark.attrs.href;
-        if (!href) return false;
+          const isMod = event.metaKey || event.ctrlKey;
+          const isExternalHttp = isHttpUrl(href);
 
-        // 阻止默认行为，执行跳转
-        event.preventDefault();
-        navigateLink(href, view);
+          // 拦截策略：
+          // - 外部 http/https 链接：任何点击都拦截（覆盖 webview 默认 <a> 跳转），
+          //   走 navigateLink → handleExternalUrl → 弹确认框 → 浏览器打开
+          // - 本地文件 / 锚点链接：仅 Cmd/Ctrl+点击 时拦截（保留编辑时光标定位的默认行为）
+          if (!isExternalHttp && !isMod) {
+            return false;
+          }
 
-        return true;
+          // 关键：阻止原生 click 事件的默认行为，避免 webview 自动跳转浏览器
+          event.preventDefault();
+          event.stopPropagation();
+          navigateLink(href, view);
+
+          return true;
+        },
       },
     },
   });

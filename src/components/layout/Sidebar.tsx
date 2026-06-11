@@ -5,6 +5,7 @@ import {
   RiSideBarLine,
   RiFolderLine,
   RiSettings3Line,
+  RiHistoryLine,
 } from 'react-icons/ri';
 import { useUIStore } from '@/stores/ui-store';
 import { useFileStore } from '@/stores/file-store';
@@ -12,6 +13,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { parseOutline } from '@/utils/toc';
 import { scrollToHeadingByIndex, scrollToHeadingInSource } from '@/editor/plugins/outline-sync';
 import { cn } from '@/utils/cn';
+import { withShortcut } from '@/utils/shortcut';
 import { FileTree } from './FileTree';
 import { SearchPanel } from './SearchPanel';
 import type { OutlineItem } from '@/types';
@@ -104,6 +106,12 @@ export function Sidebar() {
     setSidebarWidth,
   } = useUIStore();
   const openSettings = useUIStore((s) => s.openSettings);
+  const recentFoldersOpen = useUIStore((s) => s.recentFoldersOpen);
+  const toggleRecentFolders = useUIStore((s) => s.toggleRecentFolders);
+  const registerRecentFoldersTriggerEl = useUIStore((s) => s.registerRecentFoldersTriggerEl);
+  const unregisterRecentFoldersTriggerEl = useUIStore(
+    (s) => s.unregisterRecentFoldersTriggerEl,
+  );
   const currentFile = useFileStore((s) => s.currentFile);
 
   // 编辑器模式和大纲数据
@@ -193,8 +201,12 @@ export function Sidebar() {
       let el: HTMLElement | null = view.dom.parentElement;
       while (el) {
         const { overflow, overflowY } = getComputedStyle(el);
-        if (overflow === 'auto' || overflow === 'scroll' ||
-            overflowY === 'auto' || overflowY === 'scroll') {
+        if (
+          overflow === 'auto' ||
+          overflow === 'scroll' ||
+          overflowY === 'auto' ||
+          overflowY === 'scroll'
+        ) {
           scrollContainer = el;
           break;
         }
@@ -239,6 +251,7 @@ export function Sidebar() {
   const widthRef = useRef(sidebarWidth);
   const contentPanelRef = useRef<HTMLDivElement>(null);
   const innerPanelRef = useRef<HTMLDivElement>(null);
+  const recentFoldersBtnRef = useRef<HTMLButtonElement>(null);
   const rafRef = useRef<number>(0);
   /** 拖拽过程中内容面板是否折叠（吸附行为） */
   const snapCollapsedRef = useRef(false);
@@ -248,6 +261,14 @@ export function Sidebar() {
   useEffect(() => {
     widthRef.current = sidebarWidth;
   }, [sidebarWidth]);
+
+  // 注册「最近打开」按钮 DOM 到全局，供浮层 outside-click 排除使用
+  useEffect(() => {
+    const el = recentFoldersBtnRef.current;
+    if (!el) return;
+    registerRecentFoldersTriggerEl(el);
+    return () => unregisterRecentFoldersTriggerEl(el);
+  }, [registerRecentFoldersTriggerEl, unregisterRecentFoldersTriggerEl]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -322,10 +343,10 @@ export function Sidebar() {
             setSidebarWidth(clampedWidth);
           }
           if (contentPanelRef.current) {
-            contentPanelRef.current.style.width = '';
+            contentPanelRef.current.style.width = `${clampedWidth}px`;
           }
           if (innerPanelRef.current) {
-            innerPanelRef.current.style.width = '';
+            innerPanelRef.current.style.width = `${clampedWidth}px`;
           }
           setIsDragging(false);
         }
@@ -357,14 +378,14 @@ export function Sidebar() {
         <button
           onClick={() => setSidebarPanel('outline')}
           className={cn('sidebar-icon-btn', sidebarPanel === 'outline' && 'active')}
-          title="大纲"
+          title={withShortcut('大纲', 'toggleOutline')}
         >
           <RiListOrdered size={16} />
         </button>
         <button
           onClick={() => setSidebarPanel('search')}
           className={cn('sidebar-icon-btn', sidebarPanel === 'search' && 'active')}
-          title="搜索"
+          title={withShortcut('搜索', 'toggleGlobalSearch')}
         >
           <RiSearchLine size={16} />
         </button>
@@ -373,12 +394,25 @@ export function Sidebar() {
         <button
           onClick={toggleSidebar}
           className={cn('sidebar-icon-btn toggle-btn', !sidebarOpen && 'collapsed')}
-          title="切换侧边栏"
+          title={withShortcut('切换侧边栏', 'toggleSidebar')}
         >
           <RiSideBarLine size={16} />
         </button>
+        {/* 最近打开的文件夹 - 紧贴设置按钮上方 */}
+        <button
+          ref={recentFoldersBtnRef}
+          onClick={toggleRecentFolders}
+          className={cn('sidebar-icon-btn', recentFoldersOpen && 'active')}
+          title="最近打开的文件夹"
+        >
+          <RiHistoryLine size={16} />
+        </button>
         {/* 设置 */}
-        <button onClick={() => openSettings('general')} className="sidebar-icon-btn" title="设置">
+        <button
+          onClick={() => openSettings('general')}
+          className="sidebar-icon-btn"
+          title={withShortcut('设置', 'openSettings')}
+        >
           <RiSettings3Line size={16} />
         </button>
       </div>

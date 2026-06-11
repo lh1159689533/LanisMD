@@ -21,6 +21,7 @@ import {
   SettingsNumberInput,
   SettingsSegmentedControl,
 } from './SettingsControls';
+import { AiSettings } from './AiSettings';
 
 import '../../styles/settings.css';
 
@@ -124,6 +125,7 @@ const SECTIONS = [
   { id: 'appearance', label: '外观' },
   { id: 'editor', label: '编辑器' },
   { id: 'image', label: '图片' },
+  { id: 'ai', label: 'AI 助手' },
   { id: 'shortcuts', label: '快捷键' },
 ];
 
@@ -230,6 +232,25 @@ export function SettingsDialog() {
                 </button>
               </div>
 
+              {/* G2 - 启动时显示欢迎页 */}
+              <div className="settings-item">
+                <label className="settings-item-label">启动时显示欢迎页</label>
+                <button
+                  onClick={() =>
+                    setNestedConfig(
+                      'welcome.showOnStartup',
+                      !config.welcome?.showOnStartup,
+                    )
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.welcome?.showOnStartup && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+
               {/* G5 - 最近文件数量上限 */}
               <div className="settings-item">
                 <label className="settings-item-label">最近文件数量上限</label>
@@ -259,6 +280,25 @@ export function SettingsDialog() {
                 >
                   <span className="settings-toggle-thumb" />
                 </button>
+              </div>
+
+              {/* G9 - 访问外部链接前提示 */}
+              <div className="settings-item">
+                <label className="settings-item-label">访问外部链接前提示</label>
+                <button
+                  onClick={() =>
+                    setConfig('confirmExternalLinkOpen', !config.confirmExternalLinkOpen)
+                  }
+                  className={cn(
+                    'settings-toggle',
+                    config.confirmExternalLinkOpen !== false && 'checked',
+                  )}
+                >
+                  <span className="settings-toggle-thumb" />
+                </button>
+              </div>
+              <div className="settings-item-hint">
+                <p>开启后，点击文档中的 http/https 链接会先弹出确认框，避免意外跳转。</p>
               </div>
             </div>
           )}
@@ -560,6 +600,8 @@ export function SettingsDialog() {
               </div>
             </div>
           )}
+
+          {settingsActiveSection === 'ai' && <AiSettings />}
 
           {settingsActiveSection === 'shortcuts' && (
             <div className="settings-section settings-shortcuts">

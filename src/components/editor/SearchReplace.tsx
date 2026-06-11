@@ -20,6 +20,7 @@ import {
   RiArrowRightSLine,
 } from 'react-icons/ri';
 import { cn } from '@/utils/cn';
+import { withShortcut } from '@/utils/shortcut';
 import { useSearchStore } from '@/stores/search-store';
 
 interface SearchReplaceProps {
@@ -200,7 +201,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
               type="button"
               onClick={handleNavigatePrev}
               disabled={matches.length === 0}
-              title="上一个 (Shift+Enter)"
+              title={withShortcut('上一个', { shift: true, key: 'Enter' })}
               className="lanismd-editor-search-btn"
             >
               <RiArrowUpLine size={14} />
@@ -209,7 +210,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
               type="button"
               onClick={handleNavigateNext}
               disabled={matches.length === 0}
-              title="下一个 (Enter)"
+              title={withShortcut('下一个', { key: 'Enter' })}
               className="lanismd-editor-search-btn"
             >
               <RiArrowDownLine size={14} />
@@ -219,7 +220,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
             <button
               type="button"
               onClick={closeSearch}
-              title="关闭 (Escape)"
+              title={withShortcut('关闭', { key: 'Esc' })}
               className="lanismd-editor-search-btn"
             >
               <RiCloseLine size={14} />
@@ -245,7 +246,7 @@ export function SearchReplace({ onScrollToMatch, onReplace, onReplaceAll }: Sear
                 type="button"
                 onClick={handleReplace}
                 disabled={matches.length === 0}
-                title="替换当前匹配 (Enter)"
+                title={withShortcut('替换当前匹配', { key: 'Enter' })}
                 className="lanismd-editor-search-replace-btn"
               >
                 替换

@@ -130,3 +130,10 @@
     transform: translateX(0);
   }
 }
+
+/* 子菜单中的分隔线 */
+.milkdown-slash-submenu-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background-color: var(--lanismd-editor-border);
+}

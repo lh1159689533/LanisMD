@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
@@ -6,9 +6,16 @@ import { BrowserLayout } from './components/layout/BrowserLayout';
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
+import { LinkConfirmDialog } from './components/common/LinkConfirmDialog';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
+import { useAiStore } from './stores/ai-store';
+import { useSettingsStore } from './stores/settings-store';
+import { useSessionStore } from './stores/session-store';
+import { useFileStore } from './stores/file-store';
+import { useFileTreeStore } from './stores/file-tree-store';
+import { fileService } from './services/tauri';
 import { useTheme } from './hooks/useTheme';
 import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -45,8 +52,17 @@ function TauriApp() {
   }, [setSidebarPanel]);
 
   const toggleSearch = useSearchStore((s) => s.toggleSearch);
-  const toggleFocusMode = useEditorStore((s) => s.toggleFocusMode);
   const toggleTypewriterMode = useEditorStore((s) => s.toggleTypewriterMode);
+
+  // 切换全局搜索：与大纲面板一致——已在搜索面板则关闭侧边栏，否则切到搜索面板
+  const toggleGlobalSearch = useCallback(() => {
+    const state = useUIStore.getState();
+    if (state.sidebarOpen && state.sidebarPanel === 'search') {
+      state.toggleSidebar();
+    } else {
+      setSidebarPanel('search');
+    }
+  }, [setSidebarPanel]);
 
   useShortcuts({
     onNewFile: newFile,
@@ -56,10 +72,72 @@ function TauriApp() {
     onToggleOutline: toggleOutline,
     onOpenSettings: () => openSettings('general'),
     onToggleSearch: toggleSearch,
+    onToggleGlobalSearch: toggleGlobalSearch,
     onQuickOpen: openCommandPalette,
-    onToggleFocusMode: toggleFocusMode,
     onToggleTypewriterMode: toggleTypewriterMode,
   });
+
+  // 启动时读取一次 AI 配置文件（同步默认服务商/模型到 settings）
+  const refreshConfig = useAiStore((s) => s.refreshConfig);
+  useEffect(() => {
+    void refreshConfig();
+  }, [refreshConfig]);
+
+  // 启动时恢复上次会话（仅当 settings.restoreSession 为 true）
+  // 使用 ref 守卫，确保 StrictMode/HMR 下也只执行一次
+  const sessionRestoredRef = useRef(false);
+  useEffect(() => {
+    if (sessionRestoredRef.current) return;
+    sessionRestoredRef.current = true;
+
+    const { restoreSession } = useSettingsStore.getState().config;
+    if (!restoreSession) return;
+
+    const { lastFolderPath, lastFilePath } = useSessionStore.getState();
+
+    void (async () => {
+      // 恢复文件夹（失败则清空对应快照，避免下次启动继续报错）
+      if (lastFolderPath) {
+        try {
+          await useFileTreeStore.getState().openFolder(lastFolderPath);
+        } catch (err) {
+          console.error('[restoreSession] failed to restore folder:', err);
+          useSessionStore.getState().setLastFolder(null);
+        }
+      }
+
+      // 恢复文件
+      if (lastFilePath) {
+        try {
+          const result = await fileService.readFile({
+            path: lastFilePath,
+            encoding: 'utf-8',
+          });
+          const fileName =
+            lastFilePath.split('/').pop() ?? lastFilePath.split('\\').pop() ?? 'Unknown';
+          useFileStore
+            .getState()
+            .openFile(lastFilePath, result.content, result.encoding ?? 'utf-8', fileName);
+        } catch (err) {
+          console.error('[restoreSession] failed to restore file:', err);
+          useSessionStore.getState().setLastFile(null);
+        }
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    // 全局禁用 WebView 默认右键菜单（Reload / Inspect Element 等）
+    // 应用内自定义右键菜单通过 React 事件处理器独立注册，不受影响
+    const callback = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('contextmenu', callback);
+
+    return () => {
+      window.removeEventListener('contextmenu', callback);
+    };
+  }, []);
 
   return (
     <>
@@ -68,6 +146,7 @@ function TauriApp() {
       {settingsOpen && <SettingsDialog />}
       <QuickOpen />
       <ToastContainer />
+      <LinkConfirmDialog />
     </>
   );
 }
@@ -78,7 +157,12 @@ function TauriApp() {
 function BrowserApp() {
   useBrowserFile();
 
-  return <BrowserLayout />;
+  return (
+    <>
+      <BrowserLayout />
+      <LinkConfirmDialog />
+    </>
+  );
 }
 
 export default function App() {
