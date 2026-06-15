@@ -40,6 +40,10 @@ export function toggleImmersiveReading(): void {
       // 收起侧边栏，但保留宽度，方便用户手动展开
       ui.collapseSidebar(ui.sidebarWidth);
     }
+    if (ui.aiHistoryOpen) {
+      // 关闭 AI 历史面板
+      ui.closeAiHistory();
+    }
   } else {
     // 退出沉浸式阅读：恢复之前的模式
     if (previousEditorMode && previousEditorMode !== editor.mode) {
