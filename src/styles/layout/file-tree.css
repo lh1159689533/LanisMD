@@ -129,11 +129,11 @@
 }
 
 .file-tree-node-icon.folder {
-  color: #f59e0b; /* amber-500 */
+  color: var(--lanismd-file-tree-folder-icon-color);
 }
 
 .file-tree-node-icon.file {
-  color: #3b82f6; /* blue-500 */
+  color: var(--lanismd-file-tree-file-icon-color);
 }
 
 .file-tree-node-expand {

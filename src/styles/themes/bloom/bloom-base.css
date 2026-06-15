@@ -35,4 +35,14 @@
 /* ===== Bloom 主题通用字体设置 ===== */
 [class*="theme-bloom"] {
   --lanismd-font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  /* 文件树图标 - 莫兰迪风格默认色（浅色） */
+  --lanismd-file-tree-folder-icon-color: oklch(68% 0.1 75);
+  --lanismd-file-tree-file-icon-color: oklch(60% 0.1 250);
+}
+
+/* 文件树图标 - 深色模式提亮 */
+[class*="theme-bloom"][class*="-dark"] {
+  --lanismd-file-tree-folder-icon-color: oklch(78% 0.1 75);
+  --lanismd-file-tree-file-icon-color: oklch(72% 0.1 250);
 }

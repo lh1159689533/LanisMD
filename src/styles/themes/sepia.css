@@ -154,4 +154,8 @@
   --lanismd-syntax-attr-value: #6b8e23;
   --lanismd-syntax-meta: #a89878;
   --lanismd-syntax-definition: #b8860b;
+
+  /* === 文件树图标 === */
+  --lanismd-file-tree-folder-icon-color: #b8860b;
+  --lanismd-file-tree-file-icon-color: #6b8e23;
 }
