@@ -1,0 +1,50 @@
+/**
+ * 通用水平 resize 手柄样式
+ *
+ * 适用于 Sidebar、AiHistoryPanel 等需要拖拽调整宽度的面板。
+ * 类名前缀: `.lanismd-resize-handle`
+ */
+
+/* 手柄容器 */
+.lanismd-resize-handle {
+  position: relative;
+  width: 6px;
+  flex-shrink: 0;
+  display: flex;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-resize-handle:hover {
+  background-color: var(--lanismd-accent-light);
+}
+
+.lanismd-resize-handle.dragging {
+  background-color: var(--lanismd-accent-light);
+}
+
+/* 竖线指示器 - 绝对定位跟随鼠标 Y */
+.lanismd-resize-handle-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(50% - 20px);
+  width: 3px;
+  height: 40px;
+  border-radius: 9999px;
+  background-color: var(--lanismd-accent, #4f9cf8);
+  opacity: 0;
+  transition: opacity var(--lanismd-transition-fast);
+  pointer-events: none;
+}
+
+.lanismd-resize-handle:hover .lanismd-resize-handle-bar {
+  opacity: 0.5;
+}
+
+.lanismd-resize-handle.dragging .lanismd-resize-handle-bar {
+  height: 48px;
+  background-color: var(--lanismd-accent, #4f9cf8);
+  opacity: 0.8;
+}

@@ -84,45 +84,11 @@
   overflow: hidden;
 }
 
-/* ===== 调整器 ===== */
-.sidebar-resizer {
-  position: absolute;
+/* ===== 调整器（仅定位，样式来自 resize-handle.css） ===== */
+.sidebar-resizer-position {
+  position: absolute !important;
   right: -1px;
-  width: 6px;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: col-resize;
-  transition: background-color var(--lanismd-transition-fast);
-}
-
-.sidebar-resizer:hover {
-  background-color: var(--lanismd-accent-light);
-}
-
-.sidebar-resizer.dragging {
-  background-color: var(--lanismd-accent-light);
-}
-
-.sidebar-resizer-handle {
-  width: 2px;
-  height: 32px;
-  border-radius: 9999px;
-  background-color: var(--lanismd-sidebar-text);
-  opacity: 0;
-  transition: all var(--lanismd-transition-fast);
-}
-
-.sidebar-resizer:hover .sidebar-resizer-handle {
-  height: 40px;
-  opacity: 0.25;
-}
-
-.sidebar-resizer.dragging .sidebar-resizer-handle {
-  height: 48px;
-  background-color: var(--lanismd-accent);
-  opacity: 0.6;
 }
 
 /* ===== 大纲面板 ===== */
