@@ -86,9 +86,6 @@ dependencies:
   katex:
     specifier: ^0.16.44
     version: 0.16.44
-  lucide-react:
-    specifier: ^0.468.0
-    version: 0.468.0(react@18.3.1)
   mdast-util-frontmatter:
     specifier: ^2.0.1
     version: 2.0.1
@@ -3042,14 +3039,6 @@ packages:
     dependencies:
       yallist: 3.1.1
     dev: true
-
-  /lucide-react@0.468.0(react@18.3.1):
-    resolution: {integrity: sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
-    dependencies:
-      react: 18.3.1
-    dev: false
 
   /magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
