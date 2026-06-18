@@ -1,0 +1,295 @@
+/**
+ * 同步设置面板样式
+ * 用于 SettingsDialog 中的远程仓库配置
+ */
+
+/* ===== 设置区域头部 ===== */
+.sync-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.sync-settings-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-accent);
+  background-color: transparent;
+  border: 1px solid var(--lanismd-accent);
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.sync-settings-add-btn:hover {
+  background-color: var(--lanismd-accent);
+  color: #fff;
+}
+
+/* ===== 仓库列表 ===== */
+.sync-repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sync-repo-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.sync-repo-empty-hint {
+  margin-top: 4px;
+  font-size: var(--lanismd-font-size-xs);
+  opacity: 0.7;
+}
+
+/* ===== 仓库列表项 ===== */
+.sync-repo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.sync-repo-item:hover {
+  border-color: var(--lanismd-accent);
+}
+
+.sync-repo-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+  flex-shrink: 0;
+}
+
+.sync-repo-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sync-repo-item-name {
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-editor-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-repo-item-detail {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-repo-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sync-repo-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-secondary);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.sync-repo-item-btn:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.sync-repo-item-btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+/* ===== 仓库编辑表单 ===== */
+.sync-repo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 12px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+}
+
+.sync-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-form-row-double {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.sync-form-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-form-separator {
+  padding: 0 8px;
+  padding-bottom: 7px;
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-md);
+}
+
+.sync-form-label {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  font-weight: 500;
+}
+
+.sync-form-input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  transition: border-color var(--lanismd-transition-fast);
+  outline: none;
+}
+
+.sync-form-input:focus {
+  border-color: var(--lanismd-accent);
+}
+
+/* 分段控件 */
+.sync-form-segmented {
+  display: flex;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  overflow: hidden;
+}
+
+.sync-form-seg-item {
+  flex: 1;
+  padding: 5px 12px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-secondary);
+  background-color: transparent;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.sync-form-seg-item:not(:last-child) {
+  border-right: 1px solid var(--lanismd-border-color);
+}
+
+.sync-form-seg-item.active {
+  background-color: var(--lanismd-accent);
+  color: #fff;
+}
+
+.sync-form-seg-item:hover:not(.active) {
+  background-color: var(--lanismd-hover-bg);
+}
+
+/* 操作按钮 */
+.sync-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--lanismd-border-color);
+}
+
+.sync-form-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sync-form-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.sync-form-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-form-btn-test {
+  color: var(--lanismd-text-secondary);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: transparent;
+}
+
+.sync-form-btn-test:hover:not(:disabled) {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+.sync-form-btn-cancel {
+  color: var(--lanismd-text-secondary);
+  background-color: transparent;
+}
+
+.sync-form-btn-cancel:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.sync-form-btn-save {
+  color: #fff;
+  background-color: var(--lanismd-accent);
+}
+
+.sync-form-btn-save:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* 旋转动画（同步复用） */
+.sync-spin {
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

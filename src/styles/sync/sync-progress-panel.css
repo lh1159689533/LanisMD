@@ -1,0 +1,268 @@
+/**
+ * 同步进度浮动面板样式
+ * 右下角悬浮，跟随主题，显示文件级同步进度
+ */
+
+/* ===== 面板容器 ===== */
+.lanismd-sync-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 32px;
+  z-index: 100;
+  width: 340px;
+  border-radius: var(--lanismd-radius-lg);
+  border: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-editor-bg);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: lanismd-sync-panel-slide-in 0.2s ease-out;
+}
+
+@keyframes lanismd-sync-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 面板头部 ===== */
+.lanismd-sync-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-titlebar-bg);
+}
+
+.lanismd-sync-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-sync-panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-muted);
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.lanismd-sync-panel-close:hover {
+  background-color: var(--lanismd-sidebar-hover);
+  color: var(--lanismd-editor-text);
+}
+
+/* ===== 文件列表 ===== */
+.lanismd-sync-panel-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* 自定义滚动条 */
+.lanismd-sync-panel-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lanismd-sync-panel-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lanismd-sync-panel-list::-webkit-scrollbar-thumb {
+  background-color: var(--lanismd-border-color);
+  border-radius: 2px;
+}
+
+/* ===== 文件条目 ===== */
+.lanismd-sync-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-sync-file-item:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+/* 方向图标 */
+.lanismd-sync-file-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-sync-file-icon.upload {
+  color: var(--lanismd-accent);
+}
+
+.lanismd-sync-file-icon.download {
+  color: #60a5fa;
+}
+
+/* 文件信息区域 */
+.lanismd-sync-file-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lanismd-sync-file-name {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-editor-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 文件进度条 */
+.lanismd-sync-file-progress {
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--lanismd-border-color);
+  overflow: hidden;
+}
+
+.lanismd-sync-file-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.lanismd-sync-file-progress-bar.upload {
+  background-color: var(--lanismd-accent);
+}
+
+.lanismd-sync-file-progress-bar.download {
+  background-color: #60a5fa;
+}
+
+.lanismd-sync-file-progress-bar.done {
+  background-color: #34d399;
+}
+
+.lanismd-sync-file-progress-bar.failed {
+  background-color: #f87171;
+}
+
+/* 状态标签 */
+.lanismd-sync-file-status {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.lanismd-sync-file-status.waiting {
+  color: var(--lanismd-text-muted);
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-sync-file-status.syncing {
+  color: var(--lanismd-accent);
+  background-color: color-mix(in srgb, var(--lanismd-accent) 15%, transparent);
+}
+
+.lanismd-sync-file-status.done {
+  color: #34d399;
+  background-color: rgba(52, 211, 153, 0.12);
+}
+
+.lanismd-sync-file-status.failed {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+}
+
+/* ===== 失败重试按钮 ===== */
+.lanismd-sync-file-retry {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.12);
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.lanismd-sync-file-retry:hover {
+  background-color: rgba(248, 113, 113, 0.25);
+  color: #fca5a5;
+}
+
+.lanismd-sync-file-retry:active {
+  transform: scale(0.95);
+}
+
+/* ===== 失败提示 ===== */
+.lanismd-sync-panel-fail-hint {
+  font-size: 10px;
+  font-weight: 400;
+  color: #f87171;
+  margin-left: 6px;
+}
+
+/* ===== 空状态 ===== */
+.lanismd-sync-panel-empty {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+/* ===== 面板底部总进度 ===== */
+.lanismd-sync-panel-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-titlebar-bg);
+}
+
+.lanismd-sync-panel-footer-progress {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--lanismd-border-color);
+  overflow: hidden;
+}
+
+.lanismd-sync-panel-footer-bar {
+  height: 100%;
+  border-radius: 2px;
+  background-color: var(--lanismd-accent);
+  transition: width 0.3s ease;
+}
+
+.lanismd-sync-panel-footer-text {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--lanismd-text-muted);
+}
