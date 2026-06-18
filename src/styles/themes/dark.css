@@ -233,4 +233,8 @@
   --lanismd-search-badge-text: #7aa2f7;
   --lanismd-search-highlight-bg: rgba(224, 175, 104, 0.3);
   --lanismd-search-highlight-text: #e0af68;
+
+  /* === 文件树图标 === */
+  --lanismd-file-tree-folder-icon-color: #e0af68;
+  --lanismd-file-tree-file-icon-color: #7aa2f7;
 }

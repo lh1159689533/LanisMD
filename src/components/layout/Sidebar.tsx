@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   RiListOrdered,
   RiSearchLine,
@@ -10,6 +10,8 @@ import {
 import { useUIStore } from '@/stores/ui-store';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { useResizable } from '@/hooks/useResizable';
+import { ResizeHandle } from '@/components/common/ResizeHandle';
 import { parseOutline } from '@/utils/toc';
 import { scrollToHeadingByIndex, scrollToHeadingInSource } from '@/editor/plugins/outline-sync';
 import { cn } from '@/utils/cn';
@@ -247,20 +249,9 @@ export function Sidebar() {
     }
   }, [activeHeadingId, sidebarPanel]);
 
-  const isResizing = useRef(false);
-  const widthRef = useRef(sidebarWidth);
   const contentPanelRef = useRef<HTMLDivElement>(null);
   const innerPanelRef = useRef<HTMLDivElement>(null);
   const recentFoldersBtnRef = useRef<HTMLButtonElement>(null);
-  const rafRef = useRef<number>(0);
-  /** 拖拽过程中内容面板是否折叠（吸附行为） */
-  const snapCollapsedRef = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Sync width ref when store changes (e.g. sidebar toggled back open)
-  useEffect(() => {
-    widthRef.current = sidebarWidth;
-  }, [sidebarWidth]);
 
   // 注册「最近打开」按钮 DOM 到全局，供浮层 outside-click 排除使用
   useEffect(() => {
@@ -270,97 +261,66 @@ export function Sidebar() {
     return () => unregisterRecentFoldersTriggerEl(el);
   }, [registerRecentFoldersTriggerEl, unregisterRecentFoldersTriggerEl]);
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      isResizing.current = true;
-      snapCollapsedRef.current = !sidebarOpen; // start collapsed if sidebar was already closed
-      setIsDragging(true);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+  // 计算 iconBar 宽度的辅助函数（用于 calcWidth）
+  const getIconBarWidth = useCallback(() => {
+    return (
+      contentPanelRef.current?.parentElement
+        ?.querySelector('.sidebar-icon-bar')
+        ?.getBoundingClientRect().width ?? 36
+    );
+  }, []);
 
-      // Get the icon bar width to use as offset
-      const iconBarWidth =
-        contentPanelRef.current?.parentElement
-          ?.querySelector('.sidebar-icon-bar')
-          ?.getBoundingClientRect().width ?? 36;
-
-      const onMouseMove = (ev: MouseEvent) => {
-        if (!isResizing.current) return;
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(() => {
-          const rawWidth = ev.clientX - iconBarWidth;
-          const clampedRaw = Math.max(0, Math.min(MAX_SIDEBAR_WIDTH, rawWidth));
-          widthRef.current = clampedRaw;
-
-          if (clampedRaw < MIN_SIDEBAR_WIDTH) {
-            // --- snap collapse: instantly hide content panel ---
-            if (!snapCollapsedRef.current) {
-              snapCollapsedRef.current = true;
-            }
-            if (contentPanelRef.current) {
-              contentPanelRef.current.style.width = '0px';
-            }
-          } else {
-            // --- above threshold: show content panel at current width ---
-            if (snapCollapsedRef.current) {
-              snapCollapsedRef.current = false;
-            }
-            const displayWidth = Math.max(MIN_SIDEBAR_WIDTH, clampedRaw);
-            if (contentPanelRef.current) {
-              contentPanelRef.current.style.width = `${clampedRaw}px`;
-            }
-            if (innerPanelRef.current) {
-              innerPanelRef.current.style.width = `${displayWidth}px`;
-            }
-          }
-        });
-      };
-
-      const onMouseUp = () => {
-        isResizing.current = false;
-        cancelAnimationFrame(rafRef.current);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-
-        const finalWidth = widthRef.current;
-
-        if (finalWidth < MIN_SIDEBAR_WIDTH) {
-          // Collapse: keep inline width at 0 and keep transition disabled (isDragging stays true)
+  // 使用通用的 resize Hook
+  const { isDragging, resizerRef, handleMouseDown, handleResizerMouseMove } = useResizable({
+    width: sidebarWidth,
+    minWidth: MIN_SIDEBAR_WIDTH,
+    maxWidth: MAX_SIDEBAR_WIDTH,
+    calcWidth: useCallback(
+      (clientX: number) => clientX - getIconBarWidth(),
+      [getIconBarWidth],
+    ),
+    onWidthChange: useCallback(
+      (w: number) => {
+        if (w === 0) {
+          // 折叠态
           if (contentPanelRef.current) {
             contentPanelRef.current.style.width = '0px';
           }
-          if (sidebarOpen) {
-            collapseSidebar(MIN_SIDEBAR_WIDTH);
-          }
-          setIsDragging(false);
         } else {
-          const clampedWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, finalWidth));
-          widthRef.current = clampedWidth;
-          if (!sidebarOpen) {
-            expandSidebar(clampedWidth);
-          } else {
-            setSidebarWidth(clampedWidth);
-          }
+          // 正常拖拽
+          const displayWidth = Math.max(MIN_SIDEBAR_WIDTH, w);
           if (contentPanelRef.current) {
-            contentPanelRef.current.style.width = `${clampedWidth}px`;
+            contentPanelRef.current.style.width = `${w}px`;
           }
           if (innerPanelRef.current) {
-            innerPanelRef.current.style.width = `${clampedWidth}px`;
+            innerPanelRef.current.style.width = `${displayWidth}px`;
           }
-          setIsDragging(false);
         }
-
-        snapCollapsedRef.current = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    },
-    [setSidebarWidth, sidebarOpen, collapseSidebar, expandSidebar],
-  );
+      },
+      [],
+    ),
+    onCollapse: useCallback(() => {
+      if (sidebarOpen) {
+        collapseSidebar(MIN_SIDEBAR_WIDTH);
+      }
+    }, [sidebarOpen, collapseSidebar]),
+    onCommit: useCallback(
+      (w: number) => {
+        if (!sidebarOpen) {
+          expandSidebar(w);
+        } else {
+          setSidebarWidth(w);
+        }
+        if (contentPanelRef.current) {
+          contentPanelRef.current.style.width = `${w}px`;
+        }
+        if (innerPanelRef.current) {
+          innerPanelRef.current.style.width = `${w}px`;
+        }
+      },
+      [sidebarOpen, expandSidebar, setSidebarWidth],
+    ),
+  });
 
   const contentWidth = sidebarOpen ? sidebarWidth : 0;
 
@@ -446,12 +406,13 @@ export function Sidebar() {
       </div>
 
       {/* 拖拽调整宽度 */}
-      <div
-        className={cn('sidebar-resizer', isDragging && 'dragging')}
+      <ResizeHandle
+        elRef={resizerRef}
+        isDragging={isDragging}
         onMouseDown={handleMouseDown}
-      >
-        <div className="sidebar-resizer-handle" />
-      </div>
+        onMouseMove={handleResizerMouseMove}
+        className="sidebar-resizer-position"
+      />
     </div>
   );
 }

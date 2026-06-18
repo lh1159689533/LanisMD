@@ -104,8 +104,14 @@ function findScrollContainerOf(view: EditorView): HTMLElement | null {
   let el: HTMLElement | null = view.dom.parentElement;
   while (el) {
     const { overflow, overflowY } = getComputedStyle(el);
-    if (overflow === 'auto' || overflow === 'scroll' ||
-        overflowY === 'auto' || overflowY === 'scroll') {
+    const hasOverflowStyle =
+      overflow === 'auto' ||
+      overflow === 'scroll' ||
+      overflowY === 'auto' ||
+      overflowY === 'scroll';
+
+    // 除了 overflow 属性匹配外，还要确认元素确实有可滚动区域
+    if (hasOverflowStyle && el.scrollHeight > el.clientHeight) {
       return el;
     }
     el = el.parentElement;
@@ -141,9 +147,8 @@ function findActiveHeadingByScroll(view: EditorView, flatHeadings: FlatHeading[]
   for (const heading of flatHeadings) {
     try {
       const domPos = view.domAtPos(heading.pos + 1);
-      const headingEl = domPos.node instanceof HTMLElement
-        ? domPos.node
-        : domPos.node.parentElement;
+      const headingEl =
+        domPos.node instanceof HTMLElement ? domPos.node : domPos.node.parentElement;
 
       if (!headingEl) continue;
 
@@ -356,8 +361,12 @@ export function scrollToHeadingInSource(targetIndex: number): void {
             let scrollContainer: HTMLElement | null = view.dom.parentElement;
             while (scrollContainer) {
               const { overflow, overflowY } = getComputedStyle(scrollContainer);
-              if (overflow === 'auto' || overflow === 'scroll' ||
-                  overflowY === 'auto' || overflowY === 'scroll') {
+              if (
+                overflow === 'auto' ||
+                overflow === 'scroll' ||
+                overflowY === 'auto' ||
+                overflowY === 'scroll'
+              ) {
                 break;
               }
               scrollContainer = scrollContainer.parentElement;

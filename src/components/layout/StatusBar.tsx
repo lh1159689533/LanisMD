@@ -8,14 +8,16 @@ import {
   RiEyeLine,
   RiPaletteLine,
   RiArrowRightSLine,
-  RiSparklingLine,
 } from 'react-icons/ri';
+import { AiGradientIcon } from '@/components/common/AiGradientIcon';
+import { SyncProgressPanel } from '@/components/sync/SyncProgressPanel';
 import { TbLeaf, TbSnowflake, TbFlower, TbBookOff, TbBook } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useAiStore } from '@/stores/ai-store';
+import { useSyncStore } from '@/stores/sync-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
 import {
   BUILTIN_THEME_LIST,
@@ -224,6 +226,61 @@ function CustomThemeSubmenu({
   );
 }
 
+/** 同步进度指示器 — 同步中/完成/出错时持续显示，点击可切换进度面板 */
+function SyncProgressIndicator() {
+  const activeSync = useSyncStore((s) => s.activeSync);
+  const fileProgressList = useSyncStore((s) => s.fileProgressList);
+  const toggleSyncPanel = useSyncStore((s) => s.toggleSyncPanel);
+  const syncPanelVisible = useSyncStore((s) => s.syncPanelVisible);
+
+  // 无同步任务且无残留文件进度时不显示
+  if (!activeSync && fileProgressList.length === 0) return null;
+
+  // 如果 activeSync 已清除但还有文件进度列表（极端情况），仍显示
+  const phase = activeSync?.phase;
+  const current = activeSync?.current ?? 0;
+  const total = activeSync?.total ?? 0;
+  const file = activeSync?.currentFile;
+
+  // 阶段中文映射
+  const phaseLabel: Record<string, string> = {
+    scanning: '扫描中',
+    downloading: '拉取中',
+    uploading: '推送中',
+    completed: '同步完成',
+    error: '同步出错',
+  };
+
+  const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+  const label = phase ? (phaseLabel[phase] || phase) : '同步';
+  const isActive = phase === 'scanning' || phase === 'downloading' || phase === 'uploading';
+  const hasFailedFiles = fileProgressList.some((f) => f.status === 'failed');
+
+  return (
+    <button
+      onClick={toggleSyncPanel}
+      className={cn(
+        'flex items-center gap-1.5 transition-colors hover:text-[var(--lanismd-accent)]',
+        phase === 'error' && 'text-red-400',
+        hasFailedFiles && 'text-red-400',
+        phase === 'completed' && !hasFailedFiles && 'text-green-400',
+        syncPanelVisible && isActive && 'text-[var(--lanismd-accent)]',
+      )}
+      title={file ? `${file} - 点击${syncPanelVisible ? '关闭' : '打开'}进度面板` : `点击${syncPanelVisible ? '关闭' : '打开'}进度面板`}
+    >
+      {isActive && (
+        <span className="inline-block h-2 w-16 overflow-hidden rounded-full bg-[var(--lanismd-border-color)]">
+          <span
+            className="block h-full rounded-full bg-[var(--lanismd-accent)] transition-[width] duration-300"
+            style={{ width: `${percent}%` }}
+          />
+        </span>
+      )}
+      <span>{label}{total > 0 ? ` ${current}/${total}` : ''}</span>
+    </button>
+  );
+}
+
 export function StatusBar() {
   const { wordCount, charCount, lineCount, cursorLine, cursorColumn, mode, setMode } =
     useEditorStore();
@@ -361,6 +418,8 @@ export function StatusBar() {
         )}
       </div>
       <div className="flex items-center gap-3">
+        {/* 同步进度指示器 — 右侧第一个 */}
+        <SyncProgressIndicator />
         {currentFile && (
           <>
             {/* 沉浸式阅读切换按钮 */}
@@ -418,7 +477,7 @@ export function StatusBar() {
               )}
               title="AI 历史记录"
             >
-              <RiSparklingLine size={13} />
+              <AiGradientIcon size={13} />
               {historyCount > 0 && <span className="text-[10px] opacity-70">{historyCount}</span>}
             </button>
           </div>
@@ -534,6 +593,9 @@ export function StatusBar() {
           )}
         </div>
       </div>
+
+      {/* 同步进度浮动面板 */}
+      <SyncProgressPanel />
     </div>
   );
 }

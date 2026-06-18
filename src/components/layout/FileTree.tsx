@@ -3,7 +3,6 @@ import {
   RiFolderOpenLine,
   RiFolderLine,
   RiFileTextLine,
-  RiRefreshLine,
   RiArrowRightSLine,
   RiArrowDownSLine,
   RiFolderAddLine,
@@ -16,6 +15,8 @@ import {
   RiClipboardLine,
   RiFolderOpenFill,
   RiHistoryLine,
+  RiDownloadCloud2Line,
+  RiUploadCloud2Line,
 } from 'react-icons/ri';
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { save as tauriSave } from '@tauri-apps/plugin-dialog';
@@ -23,6 +24,7 @@ import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useFileStore } from '@/stores/file-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
+import { useSyncStore } from '@/stores/sync-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
 import { timeAgo } from '@/utils/time';
@@ -30,6 +32,8 @@ import { cn } from '@/utils/cn';
 import { ContextMenu } from '@/components/common/ContextMenu';
 import type { ContextMenuGroup } from '@/components/common/ContextMenu';
 import { RecentFoldersPanel } from './RecentFolders';
+import { SyncPullDialog } from '@/components/sync/SyncPullDialog';
+import { SyncPushDialog } from '@/components/sync/SyncPushDialog';
 import type { FileTreeNode } from '@/types';
 
 import '../../styles/layout/file-tree.css';
@@ -336,11 +340,14 @@ function FileTreeItem({
   // ─── 拖拽事件处理 ───
 
   /** 文件节点：开始拖拽 */
-  const handleDragStart = useCallback((e: React.DragEvent) => {
-    e.dataTransfer.setData('text/plain', node.path);
-    e.dataTransfer.effectAllowed = 'move';
-    onDragStateChange(true, node.path);
-  }, [node.path, onDragStateChange]);
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      e.dataTransfer.setData('text/plain', node.path);
+      e.dataTransfer.effectAllowed = 'move';
+      onDragStateChange(true, node.path);
+    },
+    [node.path, onDragStateChange],
+  );
 
   /** 文件节点：拖拽结束 */
   const handleDragEnd = useCallback(() => {
@@ -360,46 +367,55 @@ function FileTreeItem({
   const dragEnterCountRef = useRef(0);
 
   /** 文件夹节点：dragEnter（高亮 + 启动自动展开计时器） */
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragEnterCountRef.current++;
-    onDragOverChange(node.path);
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragEnterCountRef.current++;
+      onDragOverChange(node.path);
 
-    // 如果文件夹未展开，启动 500ms 自动展开计时器
-    if (!expandedDirs.has(node.path)) {
-      onStartDragExpandTimer(node.path);
-    }
-  }, [node.path, expandedDirs, onDragOverChange, onStartDragExpandTimer]);
+      // 如果文件夹未展开，启动 500ms 自动展开计时器
+      if (!expandedDirs.has(node.path)) {
+        onStartDragExpandTimer(node.path);
+      }
+    },
+    [node.path, expandedDirs, onDragOverChange, onStartDragExpandTimer],
+  );
 
   /** 文件夹节点：dragLeave（取消高亮 + 清除计时器） */
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragEnterCountRef.current--;
-    if (dragEnterCountRef.current <= 0) {
-      dragEnterCountRef.current = 0;
-      // 仅当 dragOverPath 仍指向当前文件夹时才清除，避免覆盖其他文件夹的高亮
-      if (dragOverPath === node.path) {
-        onDragOverChange(null);
+  const handleDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragEnterCountRef.current--;
+      if (dragEnterCountRef.current <= 0) {
+        dragEnterCountRef.current = 0;
+        // 仅当 dragOverPath 仍指向当前文件夹时才清除，避免覆盖其他文件夹的高亮
+        if (dragOverPath === node.path) {
+          onDragOverChange(null);
+        }
+        onClearDragExpandTimer();
       }
-      onClearDragExpandTimer();
-    }
-  }, [node.path, dragOverPath, onDragOverChange, onClearDragExpandTimer]);
+    },
+    [node.path, dragOverPath, onDragOverChange, onClearDragExpandTimer],
+  );
 
   /** 文件夹节点：drop（执行移动） */
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragEnterCountRef.current = 0;
-    onDragOverChange(null);
-    onClearDragExpandTimer();
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragEnterCountRef.current = 0;
+      onDragOverChange(null);
+      onClearDragExpandTimer();
 
-    const sourcePath = e.dataTransfer.getData('text/plain');
-    if (!sourcePath || sourcePath === node.path) return;
+      const sourcePath = e.dataTransfer.getData('text/plain');
+      if (!sourcePath || sourcePath === node.path) return;
 
-    await onMoveFile(sourcePath, node.path);
-  }, [node.path, onDragOverChange, onClearDragExpandTimer, onMoveFile]);
+      await onMoveFile(sourcePath, node.path);
+    },
+    [node.path, onDragOverChange, onClearDragExpandTimer, onMoveFile],
+  );
 
   if (isBeingRenamed) {
     return (
@@ -708,25 +724,40 @@ function FileListItem({
 export function FileTree() {
   const rootPath = useFileTreeStore((s) => s.rootPath);
   const tree = useFileTreeStore((s) => s.tree);
-  const isLoading = useFileTreeStore((s) => s.isLoading);
   const openFolder = useFileTreeStore((s) => s.openFolder);
   const refreshTree = useFileTreeStore((s) => s.refreshTree);
   const { openFile } = useFileStore();
+  const activeSync = useSyncStore((s) => s.activeSync);
+  // 仅在同步真正进行中时禁用按钮（completed/error 状态不算进行中）
+  const isSyncing = Boolean(
+    activeSync && activeSync.phase !== 'completed' && activeSync.phase !== 'error',
+  );
 
   const [showMenu, setShowMenu] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('tree');
+  const [showPullDialog, setShowPullDialog] = useState(false);
+  const [showPushDialog, setShowPushDialog] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const fileTreeRootRef = useRef<HTMLDivElement>(null);
+
+  // 文件夹变化时加载同步清单
+  const loadManifest = useSyncStore((s) => s.loadManifest);
+  const clearManifest = useSyncStore((s) => s.clearManifest);
+  useEffect(() => {
+    if (rootPath) {
+      loadManifest(rootPath);
+    } else {
+      clearManifest();
+    }
+  }, [rootPath, loadManifest, clearManifest]);
 
   // Recent folders panel state（提升至 ui-store，由 Sidebar 触发）
   const showRecentFolders = useUIStore((s) => s.recentFoldersOpen);
   const setShowRecentFolders = useUIStore((s) => s.setRecentFoldersOpen);
   const toggleRecentFolders = useUIStore((s) => s.toggleRecentFolders);
   const registerRecentFoldersTriggerEl = useUIStore((s) => s.registerRecentFoldersTriggerEl);
-  const unregisterRecentFoldersTriggerEl = useUIStore(
-    (s) => s.unregisterRecentFoldersTriggerEl,
-  );
+  const unregisterRecentFoldersTriggerEl = useUIStore((s) => s.unregisterRecentFoldersTriggerEl);
   // empty state 中的「最近打开」按钮 ref，仅在该状态下挂载，需注册到 store 以排除 outside-click
   const emptyRecentBtnRef = useRef<HTMLButtonElement>(null);
   const addRecentFolder = useRecentFoldersStore((s) => s.addRecentFolder);
@@ -752,7 +783,9 @@ export function FileTree() {
       const contentEl = fileTreeRootRef.current?.querySelector('.file-tree-content');
       if (!contentEl) return;
       // 查找 selected 状态的按钮节点
-      const selectedEl = contentEl.querySelector('.file-tree-node-item.selected, .file-list-item.selected');
+      const selectedEl = contentEl.querySelector(
+        '.file-tree-node-item.selected, .file-list-item.selected',
+      );
       if (selectedEl) {
         selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
@@ -1337,34 +1370,34 @@ export function FileTree() {
   }, []);
 
   /** 执行文件移动 */
-  const handleMoveFile = useCallback(async (sourcePath: string, targetDir: string) => {
-    try {
-      useFileTreeStore.getState().notifyUserOp();
-      const newPath = await fileService.moveFile(sourcePath, targetDir);
-      await refreshTree();
+  const handleMoveFile = useCallback(
+    async (sourcePath: string, targetDir: string) => {
+      try {
+        useFileTreeStore.getState().notifyUserOp();
+        const newPath = await fileService.moveFile(sourcePath, targetDir);
+        await refreshTree();
 
-      // 如果移动的是当前打开的文件，更新编辑器路径
-      const currentFile = useFileStore.getState().currentFile;
-      if (currentFile?.filePath === sourcePath) {
-        const newName = newPath.split('/').pop() ?? newPath.split('\\').pop() ?? '';
-        useFileStore.getState().updateFilePath(newPath, newName);
+        // 如果移动的是当前打开的文件，更新编辑器路径
+        const currentFile = useFileStore.getState().currentFile;
+        if (currentFile?.filePath === sourcePath) {
+          const newName = newPath.split('/').pop() ?? newPath.split('\\').pop() ?? '';
+          useFileStore.getState().updateFilePath(newPath, newName);
+        }
+
+        // 更新文件树选中状态
+        useFileTreeStore.getState().selectFile(newPath);
+      } catch (err) {
+        // 同名冲突等错误 -> toast 提示
+        const message =
+          err instanceof Error ? err.message : typeof err === 'string' ? err : '移动文件失败';
+        useUIStore.getState().addToast({
+          type: 'error',
+          message,
+        });
       }
-
-      // 更新文件树选中状态
-      useFileTreeStore.getState().selectFile(newPath);
-    } catch (err) {
-      // 同名冲突等错误 -> toast 提示
-      const message = err instanceof Error
-        ? err.message
-        : typeof err === 'string'
-          ? err
-          : '移动文件失败';
-      useUIStore.getState().addToast({
-        type: 'error',
-        message,
-      });
-    }
-  }, [refreshTree]);
+    },
+    [refreshTree],
+  );
 
   /** 空白区域：允许放置 */
   const handleBlankDragOver = useCallback((e: React.DragEvent) => {
@@ -1374,18 +1407,21 @@ export function FileTree() {
   }, []);
 
   /** 空白区域：放置到根目录 */
-  const handleBlankDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOverPath(null);
-    setIsDragging(false);
-    setDragSourcePath(null);
+  const handleBlankDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOverPath(null);
+      setIsDragging(false);
+      setDragSourcePath(null);
 
-    if (!rootPath) return;
-    const sourcePath = e.dataTransfer.getData('text/plain');
-    if (!sourcePath) return;
+      if (!rootPath) return;
+      const sourcePath = e.dataTransfer.getData('text/plain');
+      if (!sourcePath) return;
 
-    await handleMoveFile(sourcePath, rootPath);
-  }, [rootPath, handleMoveFile]);
+      await handleMoveFile(sourcePath, rootPath);
+    },
+    [rootPath, handleMoveFile],
+  );
 
   // ─── New entry inline edit from root (for blank-area new file/folder) ──
 
@@ -1488,18 +1524,31 @@ export function FileTree() {
           >
             <RiFolderOpenLine size={13} />
           </button>
-          <button onClick={refreshTree} className="file-tree-header-btn" title="刷新">
-            <RiRefreshLine size={13} />
+
+          {/* 同步按钮：拉取 */}
+          <button
+            onClick={() => setShowPullDialog(true)}
+            className="file-tree-header-btn"
+            title="拉取远程文档"
+            disabled={isSyncing}
+          >
+            <RiDownloadCloud2Line size={13} />
+          </button>
+          {/* 同步按钮：推送 */}
+          <button
+            onClick={() => setShowPushDialog(true)}
+            className="file-tree-header-btn"
+            title="推送到远程仓库"
+            disabled={isSyncing}
+          >
+            <RiUploadCloud2Line size={13} />
           </button>
         </div>
       </div>
 
       {/* Content area */}
       <div
-        className={cn(
-          'file-tree-content',
-          dragOverPath === '__root__' && 'drag-over-root',
-        )}
+        className={cn('file-tree-content', dragOverPath === '__root__' && 'drag-over-root')}
         onContextMenu={handleBlankContextMenu}
         onDragOver={handleBlankDragOver}
         onDrop={handleBlankDrop}
@@ -1590,6 +1639,10 @@ export function FileTree() {
           onClose={closeCtxMenu}
         />
       )}
+
+      {/* 同步弹窗 */}
+      {showPullDialog && <SyncPullDialog onClose={() => setShowPullDialog(false)} />}
+      {showPushDialog && <SyncPushDialog onClose={() => setShowPushDialog(false)} />}
     </div>
   );
 }

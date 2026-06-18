@@ -28,49 +28,7 @@
   transition: none;
 }
 
-/* 拖拽手柄 - 与 Sidebar resizer 风格统一 */
-.lanismd-ai-history-resize-handle {
-  position: relative;
-  width: 4px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: col-resize;
-  z-index: 1;
-  transition: background-color var(--lanismd-transition-fast);
-}
-
-.lanismd-ai-history-resize-handle:hover {
-  background-color: var(--lanismd-accent-light);
-}
-
-.lanismd-ai-history-resize-handle.dragging {
-  background-color: var(--lanismd-accent-light);
-}
-
-/* 内部小竖线手柄 */
-.lanismd-ai-history-resize-handle-bar {
-  width: 2px;
-  height: 32px;
-  border-radius: 9999px;
-  background-color: var(--lanismd-sidebar-text);
-  opacity: 0;
-  transition: all var(--lanismd-transition-fast);
-}
-
-.lanismd-ai-history-resize-handle:hover .lanismd-ai-history-resize-handle-bar {
-  height: 40px;
-  opacity: 0.25;
-}
-
-.lanismd-ai-history-resize-handle.dragging .lanismd-ai-history-resize-handle-bar {
-  height: 48px;
-  background-color: var(--lanismd-accent);
-  opacity: 0.6;
-}
-
-/* 内容区（拖拽手柄右侧） */
+/* 内容区（拖拽手柄右侧，手柄样式来自 resize-handle.css） */
 .lanismd-ai-history-inner {
   display: flex;
   flex-direction: column;

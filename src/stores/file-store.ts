@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { EditorTab, SaveStatus } from '@/types';
 import { useSessionStore } from './session-store';
+import { saveViewState } from './scroll-position-cache';
+import { useEditorStore } from './editor-store';
 
 function generateId(): string {
   return `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -45,6 +47,36 @@ export const useFileStore = create<FileState>()((set, get) => ({
     // If the same file is already open, do nothing
     const current = get().currentFile;
     if (current?.filePath === path) return;
+
+    // 切换前保存当前文件的滚动位置和光标位置（仅 WYSIWYG 模式）
+    if (current?.filePath) {
+      const pmView = useEditorStore.getState().wysiwygView;
+      if (pmView) {
+        // 查找真正的滚动容器（需要同时满足 overflow 样式和实际可滚动）
+        let scrollContainer: HTMLElement | null = pmView.dom.parentElement;
+        while (scrollContainer) {
+          const { overflow, overflowY } = getComputedStyle(scrollContainer);
+          const hasOverflowStyle =
+            overflow === 'auto' || overflow === 'scroll' ||
+            overflowY === 'auto' || overflowY === 'scroll';
+          // 除了 overflow 属性匹配外，还要确认元素确实有可滚动区域
+          if (hasOverflowStyle && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+            break;
+          }
+          scrollContainer = scrollContainer.parentElement;
+        }
+
+        const scrollTop = scrollContainer?.scrollTop ?? 0;
+        const { anchor, head } = pmView.state.selection;
+
+        saveViewState(current.filePath, {
+          scrollTop,
+          cursorAnchor: anchor,
+          cursorHead: head,
+          timestamp: Date.now(),
+        });
+      }
+    }
 
     const newFile: EditorTab = {
       id: generateId(),

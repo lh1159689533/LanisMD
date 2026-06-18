@@ -1,0 +1,444 @@
+/**
+ * 同步弹窗组件样式
+ * 用于 SyncPullDialog 和 SyncPushDialog
+ */
+
+/* ===== 遮罩层 ===== */
+.sync-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+/* ===== 弹窗容器 ===== */
+.sync-dialog {
+  width: 480px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--lanismd-radius-lg, 12px);
+  background-color: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
+  border: 1px solid var(--lanismd-border-color);
+  box-shadow: var(--lanismd-shadow-lg);
+}
+
+/* ===== 头部 ===== */
+.sync-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--lanismd-border-color);
+}
+
+.sync-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-md);
+  color: #fff;
+}
+
+.sync-dialog-header-icon.pull {
+  background-color: var(--lanismd-accent, #4f8ef7);
+}
+
+.sync-dialog-header-icon.push {
+  background-color: #10b981;
+}
+
+.sync-dialog-title {
+  flex: 1;
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.sync-dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-secondary);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.sync-dialog-close:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+/* ===== 内容区 ===== */
+.sync-dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ===== 表单字段 ===== */
+.sync-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sync-dialog-label {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  font-weight: 500;
+}
+
+.sync-dialog-select,
+.sync-dialog-input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  transition: border-color var(--lanismd-transition-fast);
+  outline: none;
+}
+
+.sync-dialog-select:focus,
+.sync-dialog-input:focus {
+  border-color: var(--lanismd-accent);
+}
+
+.sync-dialog-select:disabled,
+.sync-dialog-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-dialog-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-secondary);
+}
+
+/* ===== 锁定状态 ===== */
+.sync-dialog-locked-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-hover-bg, rgba(127, 127, 127, 0.06));
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+}
+
+.sync-dialog-locked-icon {
+  color: var(--lanismd-text-secondary);
+  flex-shrink: 0;
+}
+
+.sync-dialog-locked-hint {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: rgba(79, 142, 247, 0.08);
+  border: 1px solid rgba(79, 142, 247, 0.2);
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+}
+
+/* ===== 警告 ===== */
+.sync-dialog-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #d97706;
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+}
+
+.sync-dialog-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ===== 错误 ===== */
+.sync-dialog-error {
+  padding: 10px 12px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+}
+
+/* ===== 底部按钮区 ===== */
+.sync-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--lanismd-border-color);
+}
+
+.sync-dialog-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.sync-dialog-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-dialog-btn-cancel {
+  color: var(--lanismd-text-secondary);
+  background-color: transparent;
+}
+
+.sync-dialog-btn-cancel:hover:not(:disabled) {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.sync-dialog-btn-primary {
+  color: #fff;
+  background-color: var(--lanismd-accent, #4f8ef7);
+}
+
+.sync-dialog-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* ===== 推送弹窗加宽 ===== */
+.sync-dialog--push {
+  width: 520px;
+}
+
+/* ===== 过滤条件变更提示条 ===== */
+/* 变更文件 label 行：固定高度的工具栏，确保提示出现/消失不引起弹窗高度抖动 */
+.sync-dialog-change-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+/* label 在工具栏中靠左，不抢占剩余空间 */
+.sync-dialog-change-toolbar-label {
+  flex-shrink: 0;
+}
+
+/* 过滤变更提示：内联轻量样式，仅前景色，无背景框，紧贴 label 右侧 */
+.sync-dialog-filter-changed-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: #d97706;
+}
+
+.sync-dialog-filter-changed-icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.sync-dialog-filter-changed-text {
+  color: #d97706;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sync-dialog-filter-changed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--lanismd-radius-sm);
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+  white-space: nowrap;
+}
+
+.sync-dialog-filter-changed-btn:hover:not(:disabled) {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.sync-dialog-filter-changed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 变更文件列表 ===== */
+.sync-dialog-change-count {
+  color: var(--lanismd-accent);
+  font-weight: 600;
+}
+
+/* 变更内容包裹层：为 loading 浮层提供定位上下文，并保证最小高度防止弹窗抖动 */
+.sync-dialog-change-wrap {
+  position: relative;
+  min-height: 80px;
+}
+
+/* 首次扫描尚无内容时的占位块，仅用于撑开高度 */
+.sync-dialog-change-placeholder {
+  min-height: 80px;
+}
+
+/* 扫描中浮层：覆盖在变更列表上方，半透明遮罩 + 居中的胶囊状提示 */
+.sync-dialog-scanning-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--lanismd-radius-md);
+  background-color: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
+  /* 半透明遮罩，让用户感知"内容仍在但正在刷新" */
+  opacity: 0.92;
+  z-index: 1;
+}
+
+.sync-dialog-scanning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background-color: var(--lanismd-hover-bg, rgba(127, 127, 127, 0.08));
+  border: 1px solid var(--lanismd-border-color);
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+}
+
+.sync-dialog-change-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: rgba(79, 142, 247, 0.06);
+  border: 1px solid rgba(79, 142, 247, 0.15);
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-xs);
+}
+
+.sync-dialog-change-empty {
+  padding: 20px 10px;
+  text-align: center;
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-xs);
+  border-radius: var(--lanismd-radius-md);
+  border: 1px dashed var(--lanismd-border-color);
+}
+
+.sync-dialog-change-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+}
+
+.sync-dialog-change-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: var(--lanismd-font-size-xs);
+  border-bottom: 1px solid var(--lanismd-border-color);
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.sync-dialog-change-item:last-child {
+  border-bottom: none;
+}
+
+.sync-dialog-change-item:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.sync-dialog-change-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lanismd-editor-text);
+}
+
+.sync-dialog-change-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.sync-dialog-change-item--added .sync-dialog-change-badge {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.sync-dialog-change-item--modified .sync-dialog-change-badge {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.sync-dialog-change-item--deleted .sync-dialog-change-badge {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* ===== 旋转动画 ===== */
+.sync-spin {
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

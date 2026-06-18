@@ -7,6 +7,7 @@ use commands::file_commands;
 use commands::config_commands;
 use commands::search_commands;
 use commands::ai_commands;
+use commands::sync_commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -100,6 +101,16 @@ pub fn run() {
             ai_commands::ai_test_connection,
             ai_commands::ai_chat_stream,
             ai_commands::cancel_ai_stream,
+            sync_commands::sync_get_repos,
+            sync_commands::sync_save_repo,
+            sync_commands::sync_delete_repo,
+            sync_commands::sync_test_connection,
+            sync_commands::sync_list_branches,
+            sync_commands::sync_browse_remote,
+            sync_commands::sync_pull,
+            sync_commands::sync_push,
+            sync_commands::sync_diff,
+            sync_commands::sync_read_manifest,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

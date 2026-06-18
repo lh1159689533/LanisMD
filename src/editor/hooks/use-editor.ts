@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { Editor } from '@milkdown/kit/core';
 import { editorViewCtx } from '@milkdown/kit/core';
+import { TextSelection } from '@milkdown/kit/prose/state';
 import { createEditor, setupEditorListeners, type EditorListener } from '../editor-setup';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
+import { getViewState } from '@/stores/scroll-position-cache';
 import { registerContextMenu } from '../plugins/ai-edit';
 
 export function useEditor() {
@@ -79,6 +81,54 @@ export function useEditor() {
             view.setProps({ editable: () => !immersive });
             // 注册自定义右键菜单
             destroyContextMenu = registerContextMenu(view);
+
+            // 恢复缓存的滚动位置和光标位置（或重置为顶部）
+            if (file.filePath) {
+              const cached = getViewState(file.filePath);
+              // 延迟一帧等待 DOM 渲染完成后再恢复/重置
+              requestAnimationFrame(() => {
+                if (cancelled) return;
+
+                // 查找真正的滚动容器（需要同时满足 overflow 样式和实际可滚动）
+                let scrollContainer: HTMLElement | null = view.dom.parentElement;
+                while (scrollContainer) {
+                  const { overflow, overflowY } = getComputedStyle(scrollContainer);
+                  const hasOverflowStyle =
+                    overflow === 'auto' || overflow === 'scroll' ||
+                    overflowY === 'auto' || overflowY === 'scroll';
+                  // 除了 overflow 属性匹配外，还要确认元素确实有可滚动区域
+                  if (hasOverflowStyle && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+                    break;
+                  }
+                  scrollContainer = scrollContainer.parentElement;
+                }
+
+                if (cached) {
+                  // 恢复光标位置（需要确保位置不超出文档范围）
+                  try {
+                    const docSize = view.state.doc.content.size;
+                    const anchor = Math.min(cached.cursorAnchor, docSize);
+                    const head = Math.min(cached.cursorHead, docSize);
+                    const selection = TextSelection.create(view.state.doc, anchor, head);
+                    const tr = view.state.tr.setSelection(selection);
+                    view.dispatch(tr);
+                  } catch {
+                    // 位置无效时忽略（文件内容可能已变化）
+                  }
+
+                  // 恢复滚动位置
+                  if (scrollContainer) {
+                    scrollContainer.scrollTop = cached.scrollTop;
+                  }
+                } else {
+                  // 没有缓存记录时，重置滚动容器到顶部
+                  // （防止继承上一个文件的滚动位置）
+                  if (scrollContainer) {
+                    scrollContainer.scrollTop = 0;
+                  }
+                }
+              });
+            }
           });
         } catch {
           // 编辑器可能还没完全初始化

@@ -1,7 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { RiCloseLine, RiDeleteBinLine, RiSparklingLine } from 'react-icons/ri';
+import { useCallback, useRef } from 'react';
+import { RiCloseLine, RiDeleteBinLine } from 'react-icons/ri';
+import { AiGradientIcon } from '@/components/common/AiGradientIcon';
+import { ResizeHandle } from '@/components/common/ResizeHandle';
 import { useAiStore } from '@/stores/ai-store';
 import { useUIStore } from '@/stores/ui-store';
+import { useResizable } from '@/hooks/useResizable';
 import { cn } from '@/utils/cn';
 import type { AiHistoryEntry } from '@/stores/ai-store';
 
@@ -94,99 +97,38 @@ export function AiHistoryPanel() {
   const aiHistoryWidth = useUIStore((s) => s.aiHistoryWidth);
   const setAiHistoryWidth = useUIStore((s) => s.setAiHistoryWidth);
 
-  const [isDragging, setIsDragging] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const widthRef = useRef(aiHistoryWidth);
-  const rafRef = useRef<number>(0);
-  /** 拖拽过程中面板是否折叠（吸附行为） */
-  const snapCollapsedRef = useRef(false);
 
-  // 同步 width ref
-  useEffect(() => {
-    widthRef.current = aiHistoryWidth;
-  }, [aiHistoryWidth]);
+  // 使用通用的 resize Hook
+  const { isDragging, resizerRef, handleMouseDown, handleResizerMouseMove } = useResizable({
+    width: aiHistoryWidth,
+    minWidth: MIN_WIDTH,
+    maxWidth: useCallback(() => document.body.clientWidth * MAX_WIDTH_RATIO, []),
+    calcWidth: useCallback((clientX: number) => {
+      const editorContainer = panelRef.current?.closest('.editor-container');
+      const containerRect = editorContainer?.getBoundingClientRect();
+      if (!containerRect) return 0;
+      return containerRect.right - clientX;
+    }, []),
+    onWidthChange: useCallback((w: number) => {
+      if (panelRef.current) {
+        panelRef.current.style.width = w === 0 ? '0px' : `${w}px`;
+      }
+    }, []),
+    onCollapse: useCallback(() => {
+      closeAiHistory();
+    }, [closeAiHistory]),
+    onCommit: useCallback((w: number) => {
+      if (panelRef.current) {
+        panelRef.current.style.width = `${w}px`;
+      }
+      setAiHistoryWidth(w);
+    }, [setAiHistoryWidth]),
+  });
 
   const handleClear = useCallback(() => {
     clearHistory();
   }, [clearHistory]);
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      snapCollapsedRef.current = false;
-      setIsDragging(true);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-
-      // 获取编辑区容器宽度作为最大限制
-      const editorContainer = panelRef.current?.closest('.editor-container');
-      const maxWidth = document.body.clientWidth * MAX_WIDTH_RATIO;
-
-      const onMouseMove = (ev: MouseEvent) => {
-        cancelAnimationFrame(rafRef.current);
-        // 面板在右侧，宽度 = 容器右边界 - 鼠标位置
-        const containerRect = editorContainer?.getBoundingClientRect();
-        if (!containerRect) return;
-
-        const rawWidth = containerRect.right - ev.clientX;
-        const clampedRaw = Math.max(0, Math.min(maxWidth, rawWidth));
-        widthRef.current = clampedRaw;
-        rafRef.current = requestAnimationFrame(() => {
-          if (clampedRaw < MIN_WIDTH) {
-            // 吸附折叠：瞬间隐藏面板
-            if (!snapCollapsedRef.current) {
-              snapCollapsedRef.current = true;
-            }
-            if (panelRef.current) {
-              panelRef.current.style.width = '0px';
-            }
-          } else {
-            // 超过阈值：恢复面板显示
-            if (snapCollapsedRef.current) {
-              snapCollapsedRef.current = false;
-            }
-            if (panelRef.current) {
-              panelRef.current.style.width = `${clampedRaw}px`;
-            }
-          }
-        });
-      };
-
-      const onMouseUp = () => {
-        cancelAnimationFrame(rafRef.current);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-
-        const finalWidth = widthRef.current;
-
-        if (finalWidth < MIN_WIDTH) {
-          // 宽度小于最小值：关闭面板
-          if (panelRef.current) {
-            panelRef.current.style.width = '0px';
-          }
-          closeAiHistory();
-        } else {
-          // 正常结束：保存最终宽度
-          const clampedWidth = Math.max(MIN_WIDTH, Math.min(maxWidth, finalWidth));
-          widthRef.current = clampedWidth;
-          if (panelRef.current) {
-            // 直接设置最终宽度
-            panelRef.current.style.width = `${clampedWidth}px`;
-          }
-          setAiHistoryWidth(clampedWidth);
-        }
-
-        snapCollapsedRef.current = false;
-        setIsDragging(false);
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    },
-    [closeAiHistory, setAiHistoryWidth],
-  );
 
   return (
     <div
@@ -195,19 +137,19 @@ export function AiHistoryPanel() {
       style={{ width: `${aiHistoryWidth}px` }}
     >
       {/* 左侧拖拽手柄 */}
-      <div
-        className={cn('lanismd-ai-history-resize-handle', isDragging && 'dragging')}
+      <ResizeHandle
+        elRef={resizerRef}
+        isDragging={isDragging}
         onMouseDown={handleMouseDown}
-      >
-        <div className="lanismd-ai-history-resize-handle-bar" />
-      </div>
+        onMouseMove={handleResizerMouseMove}
+      />
 
       {/* 面板内容区 */}
       <div className="lanismd-ai-history-inner">
         {/* 面板头部 */}
         <div className="lanismd-ai-history-header">
           <div className="lanismd-ai-history-title">
-            <RiSparklingLine size={14} />
+            <AiGradientIcon size={14} />
             <span>AI 历史</span>
           </div>
           <div className="lanismd-ai-history-actions">
@@ -239,7 +181,7 @@ export function AiHistoryPanel() {
                 'text-xs text-[var(--lanismd-text-muted)]',
               )}
             >
-              <RiSparklingLine size={24} className="opacity-30" />
+              <AiGradientIcon size={24} className="opacity-30" />
               <span>暂无 AI 生成记录</span>
               <span className="opacity-60">使用 AI 指令后，结果将显示在这里</span>
             </div>

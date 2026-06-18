@@ -124,10 +124,12 @@ export function RecentFoldersPanel({
                 >
                   <RiFolderLine
                     size={14}
-                    className={cn(
-                      'shrink-0',
-                      isCurrent ? 'text-[var(--lanismd-accent)]' : 'text-amber-500',
-                    )}
+                    className="shrink-0"
+                    style={{
+                      color: isCurrent
+                        ? 'var(--lanismd-accent)'
+                        : 'var(--lanismd-file-tree-folder-icon-color)',
+                    }}
                   />
                   <span className="truncate">{folder.name}</span>
                   {isCurrent && (

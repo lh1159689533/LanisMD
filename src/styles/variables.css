@@ -562,6 +562,8 @@
   --lanismd-file-tree-item-height: 28px;
   --lanismd-file-tree-indent: 20px;
   --lanismd-file-tree-icon-color: #64748b;
+  --lanismd-file-tree-folder-icon-color: #f59e0b;
+  --lanismd-file-tree-file-icon-color: #3b82f6;
 
   /* 连线样式 */
   --lanismd-file-tree-line-display: none;
