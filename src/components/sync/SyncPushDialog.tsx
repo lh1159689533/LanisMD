@@ -241,8 +241,8 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   /** 确认推送 */
   const handlePush = useCallback(async () => {
     const effectiveRepoId = manifestLocked ? lockedConfigId : selectedRepoId;
-    const effectiveBranch = manifestLocked ? lockedBranch || 'main' : branch;
-    if (!effectiveRepoId || !rootPath) return;
+    const effectiveBranch = manifestLocked ? lockedBranch : branch;
+    if (!effectiveRepoId || !rootPath || !effectiveBranch) return;
     setPushing(true);
     setError(null);
     try {
@@ -498,7 +498,7 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
             onClick={onClose}
             disabled={pushing}
           >
-            取消
+            关闭
           </button>
           <button
             className="sync-dialog-btn sync-dialog-btn-primary"

@@ -290,7 +290,7 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
             onClick={onClose}
             disabled={pulling}
           >
-            取消
+            关闭
           </button>
           <button
             className="sync-dialog-btn sync-dialog-btn-primary"

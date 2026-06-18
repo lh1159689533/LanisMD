@@ -28,7 +28,8 @@ function getFileName(path: string): string {
 
 /** 单个文件进度条目 */
 function SyncFileItem({ file }: { file: SyncFileProgress }) {
-  const DirectionIcon = file.direction === 'upload' ? RiUploadCloud2Line : RiDownloadCloud2Line;
+  const DirectionIcon =
+    file.direction === 'upload' ? RiUploadCloud2Line : RiDownloadCloud2Line;
   const retryFailedFile = useSyncStore((s) => s.retryFailedFile);
 
   // 进度条样式类名

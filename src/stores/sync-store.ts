@@ -272,8 +272,9 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
           list[idx] = { ...list[idx], status: 'failed', percent: 0 };
         } else {
           // 文件读取就失败，可能还没 upsert 到列表中
+          const currentPhase = get().activeSync?.phase;
           const direction: 'upload' | 'download' =
-            get().activeSync?.phase === 'uploading' ? 'upload' : 'download';
+            currentPhase === 'uploading' ? 'upload' : 'download';
           list.push({
             path: progress.currentFile,
             direction,

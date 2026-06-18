@@ -516,19 +516,160 @@ impl SyncEngine {
             let _ = ManifestService::write_manifest(&request.local_path, &manifest);
         }
 
-        // 7. 发送完成进度
+        // 7. 删除远程上已在本地删除的文件
+        // 找出清单中有但本地已不存在的文件（仅在已有清单时才执行）
+        let local_paths: std::collections::HashSet<&String> =
+            local_files.iter().map(|(rel, _)| rel).collect();
+        let files_to_delete: Vec<String> = new_entries
+            .keys()
+            .filter(|k| !local_paths.contains(k))
+            .filter(|k| Self::should_include_file(k, &include_patterns, &exclude_patterns))
+            .cloned()
+            .collect();
+
+        let delete_total = files_to_delete.len();
+        let mut files_deleted = 0;
+
+        if !files_to_delete.is_empty() {
+            Self::emit_progress(
+                &app,
+                &SyncProgress {
+                    repo_id: config.id.clone(),
+                    phase: "uploading".to_string(),
+                    current: 0,
+                    total: delete_total,
+                    current_file: String::new(),
+                    message: Some(format!("正在删除远程文件 (共 {} 个)...", delete_total)),
+                },
+            );
+
+            for (idx, rel_path) in files_to_delete.iter().enumerate() {
+                Self::emit_progress(
+                    &app,
+                    &SyncProgress {
+                        repo_id: config.id.clone(),
+                        phase: "uploading".to_string(),
+                        current: idx + 1,
+                        total: delete_total,
+                        current_file: rel_path.clone(),
+                        message: None,
+                    },
+                );
+
+                // 获取远程文件 SHA（删除时需要）
+                let sha = match provider.get_file_sha(rel_path).await {
+                    Ok(Some(sha)) => sha,
+                    Ok(None) => {
+                        // 远程文件已不存在，直接从清单中移除即可
+                        new_entries.remove(rel_path);
+                        files_deleted += 1;
+                        Self::emit_progress(
+                            &app,
+                            &SyncProgress {
+                                repo_id: config.id.clone(),
+                                phase: "file_done".to_string(),
+                                current: files_deleted,
+                                total: delete_total,
+                                current_file: rel_path.clone(),
+                                message: None,
+                            },
+                        );
+                        continue;
+                    }
+                    Err(_e) => {
+                        files_failed += 1;
+                        Self::emit_progress(
+                            &app,
+                            &SyncProgress {
+                                repo_id: config.id.clone(),
+                                phase: "file_failed".to_string(),
+                                current: files_deleted,
+                                total: delete_total,
+                                current_file: rel_path.clone(),
+                                message: Some(format!("获取文件SHA失败: {}", _e)),
+                            },
+                        );
+                        continue;
+                    }
+                };
+
+                let message = format!(
+                    "sync: {} - delete {}",
+                    chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+                    rel_path
+                );
+
+                match provider.delete_file(rel_path, &sha, &message).await {
+                    Ok(()) => {
+                        // 从清单中移除已删除文件的条目
+                        new_entries.remove(rel_path);
+                        files_deleted += 1;
+                        files_processed += 1;
+
+                        Self::emit_progress(
+                            &app,
+                            &SyncProgress {
+                                repo_id: config.id.clone(),
+                                phase: "file_done".to_string(),
+                                current: files_deleted,
+                                total: delete_total,
+                                current_file: rel_path.clone(),
+                                message: None,
+                            },
+                        );
+                    }
+                    Err(_e) => {
+                        files_failed += 1;
+
+                        Self::emit_progress(
+                            &app,
+                            &SyncProgress {
+                                repo_id: config.id.clone(),
+                                phase: "file_failed".to_string(),
+                                current: files_deleted,
+                                total: delete_total,
+                                current_file: rel_path.clone(),
+                                message: Some(format!("删除远程文件失败: {}", _e)),
+                            },
+                        );
+                    }
+                }
+
+                // 每次删除后实时更新清单
+                let manifest = SyncManifest {
+                    repo_config: SyncManifestRepoConfig {
+                        platform: config.platform.clone(),
+                        owner: config.owner.clone(),
+                        repo: config.repo.clone(),
+                        config_id: config.id.clone(),
+                    },
+                    branch: branch.clone(),
+                    include_patterns: include_patterns.clone(),
+                    exclude_patterns: exclude_patterns.clone(),
+                    last_sync_at: Some(chrono::Utc::now().to_rfc3339()),
+                    sync_direction: "push".to_string(),
+                    file_entries: new_entries.clone(),
+                };
+                let _ = ManifestService::write_manifest(&request.local_path, &manifest);
+            }
+        }
+
+        // 8. 发送完成进度
         let files_skipped = local_files.len() - total;
         Self::emit_progress(
             &app,
             &SyncProgress {
                 repo_id: config.id.clone(),
                 phase: "completed".to_string(),
-                current: total,
-                total,
+                current: total + delete_total,
+                total: total + delete_total,
                 current_file: String::new(),
                 message: Some(format!(
-                    "推送完成: {} 文件已上传, {} 跳过, {} 失败",
-                    files_processed, files_skipped, files_failed
+                    "推送完成: {} 文件已上传, {} 文件已删除, {} 跳过, {} 失败",
+                    files_processed - files_deleted,
+                    files_deleted,
+                    files_skipped,
+                    files_failed
                 )),
             },
         );
