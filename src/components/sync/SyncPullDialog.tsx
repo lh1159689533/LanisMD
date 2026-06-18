@@ -57,8 +57,7 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [includePatterns, setIncludePatterns] = useState(DEFAULT_INCLUDE_PATTERNS_STR);
   const [excludePatterns, setExcludePatterns] = useState(DEFAULT_EXCLUDE_PATTERNS_STR);
-  const [pulling, setPulling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
 
   // 加载仓库列表
   useEffect(() => {
@@ -108,7 +107,6 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
   const handleRepoChange = useCallback(
     (repoId: string) => {
       setSelectedRepoId(repoId);
-      setError(null);
       const repo = repos.find((r) => r.id === repoId);
       if (repo) {
         setBranch(repo.branch);
@@ -120,34 +118,27 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
   );
 
   /** 确认拉取 */
-  const handlePull = useCallback(async () => {
+  const handlePull = useCallback(() => {
     const effectiveRepoId = manifestLocked ? lockedConfigId : selectedRepoId;
     const effectiveBranch = manifestLocked ? lockedBranch : branch;
     if (!effectiveRepoId || !rootPath || !effectiveBranch) return;
-    setPulling(true);
-    setError(null);
-    try {
-      await startPull({
-        configId: effectiveRepoId,
-        branch: effectiveBranch,
-        localPath: rootPath,
-        includePatterns: includePatterns
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        excludePatterns: excludePatterns
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-      });
-      // 拉取成功，刷新文件树并关闭弹窗
-      useFileTreeStore.getState().refreshTree();
-      onClose();
-    } catch (err) {
-      setError(typeof err === 'string' ? err : (err as Error).message || '拉取失败');
-    } finally {
-      setPulling(false);
-    }
+
+    // 前端参数预校验通过，发起拉取并立即关闭弹窗
+    // 后续的拉取进度/错误全部由 SyncProgressPanel 接管展示
+    startPull({
+      configId: effectiveRepoId,
+      branch: effectiveBranch,
+      localPath: rootPath,
+      includePatterns: includePatterns
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      excludePatterns: excludePatterns
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    });
+    onClose();
   }, [
     manifestLocked,
     lockedConfigId,
@@ -190,7 +181,6 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
                 className="sync-dialog-select"
                 value={selectedRepoId}
                 onChange={(e) => handleRepoChange(e.target.value)}
-                disabled={pulling}
               >
                 <option value="" disabled>
                   请选择仓库配置
@@ -222,7 +212,6 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
                 className="sync-dialog-select"
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                disabled={pulling}
               >
                 {branches.map((b) => (
                   <option key={b} value={b}>
@@ -237,7 +226,6 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
                 placeholder="main"
-                disabled={pulling}
               />
             )}
           </div>
@@ -258,7 +246,6 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
               value={includePatterns}
               onChange={(e) => setIncludePatterns(e.target.value)}
               placeholder="**/*.md"
-              disabled={pulling}
             />
           </div>
 
@@ -271,16 +258,8 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
               value={excludePatterns}
               onChange={(e) => setExcludePatterns(e.target.value)}
               placeholder="**/node_modules/**"
-              disabled={pulling}
             />
           </div>
-
-          {/* 错误信息 */}
-          {error && (
-            <div className="sync-dialog-error">
-              <span>{error}</span>
-            </div>
-          )}
         </div>
 
         {/* 底部操作 */}
@@ -288,26 +267,16 @@ export function SyncPullDialog({ onClose }: SyncPullDialogProps) {
           <button
             className="sync-dialog-btn sync-dialog-btn-cancel"
             onClick={onClose}
-            disabled={pulling}
           >
             关闭
           </button>
           <button
             className="sync-dialog-btn sync-dialog-btn-primary"
             onClick={handlePull}
-            disabled={pulling || (manifestLocked ? !lockedConfigId : !selectedRepoId || !branch)}
+            disabled={manifestLocked ? !lockedConfigId : !selectedRepoId || !branch}
           >
-            {pulling ? (
-              <>
-                <RiLoader4Line size={14} className="sync-spin" />
-                <span>拉取中...</span>
-              </>
-            ) : (
-              <>
-                <RiDownloadCloud2Line size={14} />
-                <span>开始拉取</span>
-              </>
-            )}
+            <RiDownloadCloud2Line size={14} />
+            <span>开始拉取</span>
           </button>
         </div>
       </div>

@@ -43,7 +43,7 @@ export interface SyncManifestRepoConfig {
 
 /** 单个文件的同步记录 */
 export interface SyncFileEntry {
-  /** 文件 MD5 */
+  /** 文件 MD5（始终与远端文件内容一致） */
   md5: string;
   /** 远程文件 SHA */
   remoteSha: string | null;
@@ -51,8 +51,6 @@ export interface SyncFileEntry {
   size: number;
   /** 该文件的同步时间 */
   syncedAt: string;
-  /** 同步状态 */
-  status: 'synced' | 'pending' | 'error';
 }
 
 /** 本地同步清单（lanismd-sync.json） */
@@ -156,6 +154,8 @@ export interface SyncFileProgress {
   status: SyncFileStatus;
   /** 进度百分比 0-100 */
   percent: number;
+  /** 失败原因（仅 status 为 failed 时有值） */
+  errorMessage?: string;
 }
 
 /** 同步进度事件 */

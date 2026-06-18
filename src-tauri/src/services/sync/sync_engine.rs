@@ -119,12 +119,12 @@ impl SyncEngine {
             // 同步固定使用仓库根目录，远程路径即为相对路径
             let rel_path = entry.path.clone();
 
-            // 增量检测：如果清单中已有该文件且 SHA 未变，跳过
+            // 增量检测：如果清单中已有该文件且 remote_sha 未变，跳过
+            // 拉取失败的文件 md5 为空字符串，remote_sha 可能存在但 md5 不匹配本地，
+            // 因此仅 remote_sha 相同即可判断无需重复拉取（失败的文件不会写入清单）
             if !should_full_sync {
                 if let Some(existing_entry) = existing_entries.get(&rel_path) {
-                    if existing_entry.remote_sha.as_deref() == entry.sha.as_deref()
-                        && existing_entry.status == "synced"
-                    {
+                    if existing_entry.remote_sha.as_deref() == entry.sha.as_deref() {
                         files_skipped += 1;
                         continue;
                     }
@@ -155,16 +155,7 @@ impl SyncEngine {
 
                     if let Err(e) = fs::write(&local_file_path, &content) {
                         files_failed += 1;
-                        new_entries.insert(
-                            rel_path.clone(),
-                            SyncFileEntry {
-                                md5: String::new(),
-                                remote_sha: entry.sha.clone(),
-                                size: entry.size,
-                                synced_at: chrono::Utc::now().to_rfc3339(),
-                                status: "error".to_string(),
-                            },
-                        );
+                        // 拉取失败不写入清单，保留原有条目（如有）
                         // 本地写入失败事件
                         Self::emit_progress(
                             &app,
@@ -192,7 +183,6 @@ impl SyncEngine {
                             remote_sha: entry.sha.clone(),
                             size: entry.size,
                             synced_at: chrono::Utc::now().to_rfc3339(),
-                            status: "synced".to_string(),
                         },
                     );
 
@@ -213,16 +203,7 @@ impl SyncEngine {
                 }
                 Err(_e) => {
                     files_failed += 1;
-                    new_entries.insert(
-                        rel_path.clone(),
-                        SyncFileEntry {
-                            md5: String::new(),
-                            remote_sha: entry.sha.clone(),
-                            size: entry.size,
-                            synced_at: chrono::Utc::now().to_rfc3339(),
-                            status: "error".to_string(),
-                        },
-                    );
+                    // 拉取失败不写入清单，保留原有条目（如有）
 
                     // 单文件下载失败事件
                     Self::emit_progress(
@@ -417,8 +398,10 @@ impl SyncEngine {
             // 同步固定使用仓库根目录，远程路径即为相对路径
             let remote_file_path = rel_path.clone();
 
-            // 获取远程文件 SHA（更新时需要）
-            let existing_sha = provider.get_file_sha(&remote_file_path).await?;
+            // 使用清单中已有的 remote_sha（更新时需要），新增文件则为 None
+            let existing_sha = new_entries
+                .get(rel_path)
+                .and_then(|e| e.remote_sha.clone());
 
             // 上传文件
             let message = format!(
@@ -436,14 +419,8 @@ impl SyncEngine {
                 )
                 .await
             {
-                Ok(()) => {
+                Ok(new_sha) => {
                     let file_size = content.len() as u64;
-                    // 获取上传后的新 SHA
-                    let new_sha = provider
-                        .get_file_sha(&remote_file_path)
-                        .await
-                        .ok()
-                        .flatten();
 
                     new_entries.insert(
                         rel_path.clone(),
@@ -452,7 +429,6 @@ impl SyncEngine {
                             remote_sha: new_sha,
                             size: file_size,
                             synced_at: chrono::Utc::now().to_rfc3339(),
-                            status: "synced".to_string(),
                         },
                     );
                     files_processed += 1;
@@ -472,16 +448,7 @@ impl SyncEngine {
                 }
                 Err(_e) => {
                     files_failed += 1;
-                    new_entries.insert(
-                        rel_path.clone(),
-                        SyncFileEntry {
-                            md5: md5.clone(),
-                            remote_sha: None,
-                            size: 0,
-                            synced_at: chrono::Utc::now().to_rfc3339(),
-                            status: "error".to_string(),
-                        },
-                    );
+                    // 推送失败不修改清单：新增文件不写入，更新文件保留原有条目
 
                     // 单文件上传失败事件
                     Self::emit_progress(

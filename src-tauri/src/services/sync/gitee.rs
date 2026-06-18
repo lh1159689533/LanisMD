@@ -205,7 +205,7 @@ impl RemoteProvider for GiteeProvider {
         content: &[u8],
         sha: Option<&str>,
         message: &str,
-    ) -> AppResult<()> {
+    ) -> AppResult<Option<String>> {
         let url = self.api_url(&format!("contents/{}", path));
 
         use base64::Engine;
@@ -240,7 +240,13 @@ impl RemoteProvider for GiteeProvider {
             )));
         }
 
-        Ok(())
+        // 从响应中提取新文件的 SHA
+        let resp_text = response.text().await.unwrap_or_default();
+        let new_sha = serde_json::from_str::<serde_json::Value>(&resp_text)
+            .ok()
+            .and_then(|v| v["content"]["sha"].as_str().map(|s| s.to_string()));
+
+        Ok(new_sha)
     }
 
     async fn delete_file(&self, path: &str, sha: &str, message: &str) -> AppResult<()> {

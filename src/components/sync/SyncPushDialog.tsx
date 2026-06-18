@@ -75,8 +75,7 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [includePatterns, setIncludePatterns] = useState(DEFAULT_INCLUDE_PATTERNS_STR);
   const [excludePatterns, setExcludePatterns] = useState(DEFAULT_EXCLUDE_PATTERNS_STR);
-  const [pushing, setPushing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
 
   // 变更扫描状态
   const [scanning, setScanning] = useState(false);
@@ -202,7 +201,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   const handleRepoChange = useCallback(
     (repoId: string) => {
       setSelectedRepoId(repoId);
-      setError(null);
       const repo = repos.find((r) => r.id === repoId);
       if (repo) {
         setBranch(repo.branch);
@@ -215,8 +213,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
 
   /** 推送按钮是否禁用 */
   const pushDisabled = useMemo(() => {
-    // 推送中
-    if (pushing) return true;
     // 扫描中（无论是手动重新扫描还是初始扫描）
     if (scanning) return true;
     // 有 manifest 时：如果扫描完毕且变更为空且过滤条件未变更，禁用
@@ -227,7 +223,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
     if (manifestLocked && !lockedConfigId) return true;
     return false;
   }, [
-    pushing,
     scanning,
     scanned,
     changeList.length,
@@ -239,32 +234,27 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   ]);
 
   /** 确认推送 */
-  const handlePush = useCallback(async () => {
+  const handlePush = useCallback(() => {
     const effectiveRepoId = manifestLocked ? lockedConfigId : selectedRepoId;
     const effectiveBranch = manifestLocked ? lockedBranch : branch;
     if (!effectiveRepoId || !rootPath || !effectiveBranch) return;
-    setPushing(true);
-    setError(null);
-    try {
-      await startPush({
-        localPath: rootPath,
-        configId: effectiveRepoId,
-        branch: effectiveBranch,
-        includePatterns: includePatterns
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        excludePatterns: excludePatterns
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-      });
-      onClose();
-    } catch (err) {
-      setError(typeof err === 'string' ? err : (err as Error).message || '推送失败');
-    } finally {
-      setPushing(false);
-    }
+
+    // 前端参数预校验通过，发起推送并立即关闭弹窗
+    // 后续的推送进度/错误全部由 SyncProgressPanel 接管展示
+    startPush({
+      localPath: rootPath,
+      configId: effectiveRepoId,
+      branch: effectiveBranch,
+      includePatterns: includePatterns
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      excludePatterns: excludePatterns
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    });
+    onClose();
   }, [
     manifestLocked,
     lockedConfigId,
@@ -319,7 +309,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                 className="sync-dialog-select"
                 value={selectedRepoId}
                 onChange={(e) => handleRepoChange(e.target.value)}
-                disabled={pushing}
               >
                 <option value="" disabled>
                   请选择仓库配置
@@ -351,7 +340,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                 className="sync-dialog-select"
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                disabled={pushing}
               >
                 {branches.map((b) => (
                   <option key={b} value={b}>
@@ -366,7 +354,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
                 placeholder="main"
-                disabled={pushing}
               />
             )}
           </div>
@@ -387,7 +374,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
               value={includePatterns}
               onChange={(e) => setIncludePatterns(e.target.value)}
               placeholder="**/*.md"
-              disabled={pushing}
             />
           </div>
 
@@ -400,7 +386,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
               value={excludePatterns}
               onChange={(e) => setExcludePatterns(e.target.value)}
               placeholder="**/node_modules/**"
-              disabled={pushing}
             />
           </div>
 
@@ -429,7 +414,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                   <button
                     className="sync-dialog-filter-changed-btn"
                     onClick={() => scanChanges(includePatterns, excludePatterns)}
-                    disabled={pushing}
                   >
                     <RiRefreshLine size={12} />
                     <span>重新扫描</span>
@@ -483,12 +467,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
             </div>
           </div>
 
-          {/* 错误信息 */}
-          {error && (
-            <div className="sync-dialog-error">
-              <span>{error}</span>
-            </div>
-          )}
         </div>
 
         {/* 底部操作 */}
@@ -496,7 +474,6 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
           <button
             className="sync-dialog-btn sync-dialog-btn-cancel"
             onClick={onClose}
-            disabled={pushing}
           >
             关闭
           </button>
@@ -505,17 +482,8 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
             onClick={handlePush}
             disabled={pushDisabled}
           >
-            {pushing ? (
-              <>
-                <RiLoader4Line size={14} className="sync-spin" />
-                <span>推送中...</span>
-              </>
-            ) : (
-              <>
-                <RiUploadCloud2Line size={14} />
-                <span>开始推送</span>
-              </>
-            )}
+            <RiUploadCloud2Line size={14} />
+            <span>开始推送</span>
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { syncService } from '@/services/tauri/sync-service';
+import { useFileTreeStore } from '@/stores/file-tree-store';
 import type {
   SyncRepoConfig,
   SyncManifest,
@@ -45,10 +46,10 @@ interface SyncState {
   saveRepo: (config: SyncRepoConfig) => Promise<void>;
   /** 删除仓库配置 */
   deleteRepo: (id: string) => Promise<void>;
-  /** 拉取：弹窗确认后调用 */
-  startPull: (request: PullRequest) => Promise<void>;
-  /** 推送：有清单时直接推送，无清单时需传入仓库/分支配置 */
-  startPush: (request: PushRequest) => Promise<void>;
+  /** 拉取：弹窗确认后调用（fire-and-forget，设置状态后立即返回） */
+  startPull: (request: PullRequest) => void;
+  /** 推送：弹窗确认后调用（fire-and-forget，设置状态后立即返回） */
+  startPush: (request: PushRequest) => void;
   /** 加载当前文件夹的同步清单 */
   loadManifest: (localPath: string) => Promise<void>;
   /** 清除当前清单状态 */
@@ -117,113 +118,121 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
     }
   },
 
-  startPull: async (request: PullRequest) => {
-    try {
-      // 清除上次超时定时器
-      if (dismissTimer) {
-        clearTimeout(dismissTimer);
-        dismissTimer = null;
-      }
-      // 重置面板状态，记录请求参数
-      set({
-        activeSync: {
-          repoId: request.configId,
-          phase: 'scanning',
-          current: 0,
-          total: 0,
-          currentFile: '',
-          message: '正在准备拉取...',
-        },
-        fileProgressList: [],
-        syncPanelVisible: true,
-        userClosedPanel: false,
-        lastSyncRequest: { type: 'pull', request },
-      });
-
-      await syncService.pull(request);
-
-      // 拉取完成后重新加载清单
-      await get().loadManifest(request.localPath);
-    } catch (error) {
-      console.error('拉取失败:', error);
-      // 如果还没有开始处理任何文件（配置阶段就失败了），
-      // 清除进度状态而不是显示错误面板
-      if (get().fileProgressList.length === 0) {
-        set({
-          activeSync: null,
-          syncPanelVisible: false,
-          userClosedPanel: false,
-          lastSyncRequest: null,
-        });
-      } else {
-        set({
-          activeSync: {
-            repoId: request.configId,
-            phase: 'error',
-            current: 0,
-            total: 0,
-            currentFile: '',
-            message: String(error),
-          },
-        });
-      }
-      throw error;
+  startPull: (request: PullRequest) => {
+    // 清除上次超时定时器
+    if (dismissTimer) {
+      clearTimeout(dismissTimer);
+      dismissTimer = null;
     }
+    // 重置面板状态，记录请求参数
+    set({
+      activeSync: {
+        repoId: request.configId,
+        phase: 'scanning',
+        current: 0,
+        total: 0,
+        currentFile: '',
+        message: '正在准备拉取...',
+      },
+      fileProgressList: [],
+      syncPanelVisible: true,
+      userClosedPanel: false,
+      lastSyncRequest: { type: 'pull', request },
+    });
+
+    // fire-and-forget：后台执行拉取，错误由进度面板展示
+    syncService
+      .pull(request)
+      .then(() => {
+        // 拉取完成后重新加载清单并刷新文件树
+        get().loadManifest(request.localPath);
+        useFileTreeStore.getState().refreshTree();
+      })
+      .catch((error) => {
+        console.error('拉取失败:', error);
+        // 如果还没有开始处理任何文件（配置阶段就失败了），
+        // 通过进度面板显示错误
+        if (get().fileProgressList.length === 0) {
+          set({
+            activeSync: {
+              repoId: request.configId,
+              phase: 'error',
+              current: 0,
+              total: 0,
+              currentFile: '',
+              message: String(error),
+            },
+          });
+        } else {
+          set({
+            activeSync: {
+              repoId: request.configId,
+              phase: 'error',
+              current: 0,
+              total: 0,
+              currentFile: '',
+              message: String(error),
+            },
+          });
+        }
+      });
   },
 
-  startPush: async (request: PushRequest) => {
-    try {
-      // 清除上次超时定时器
-      if (dismissTimer) {
-        clearTimeout(dismissTimer);
-        dismissTimer = null;
-      }
-      const repoId = request.configId || get().manifest?.repoConfig.configId || '';
-      // 重置面板状态，记录请求参数
-      set({
-        activeSync: {
-          repoId,
-          phase: 'scanning',
-          current: 0,
-          total: 0,
-          currentFile: '',
-          message: '正在准备推送...',
-        },
-        fileProgressList: [],
-        syncPanelVisible: true,
-        userClosedPanel: false,
-        lastSyncRequest: { type: 'push', request },
-      });
-
-      await syncService.push(request);
-
-      // 推送完成后重新加载清单
-      await get().loadManifest(request.localPath);
-    } catch (error) {
-      console.error('推送失败:', error);
-      // 如果还没有开始处理任何文件（配置阶段就失败了），
-      // 清除进度状态而不是显示错误面板，避免右下角闪现失败进度
-      if (get().fileProgressList.length === 0) {
-        set({
-          activeSync: null,
-          syncPanelVisible: false,
-          userClosedPanel: false,
-          lastSyncRequest: null,
-        });
-      } else {
-        set({
-          activeSync: {
-            repoId: request.configId || '',
-            phase: 'error',
-            current: 0,
-            total: 0,
-            currentFile: '',
-            message: String(error),
-          },
-        });
-      }
-      throw error;
+  startPush: (request: PushRequest) => {
+    // 清除上次超时定时器
+    if (dismissTimer) {
+      clearTimeout(dismissTimer);
+      dismissTimer = null;
     }
+    const repoId = request.configId || get().manifest?.repoConfig.configId || '';
+    // 重置面板状态，记录请求参数
+    set({
+      activeSync: {
+        repoId,
+        phase: 'scanning',
+        current: 0,
+        total: 0,
+        currentFile: '',
+        message: '正在准备推送...',
+      },
+      fileProgressList: [],
+      syncPanelVisible: true,
+      userClosedPanel: false,
+      lastSyncRequest: { type: 'push', request },
+    });
+
+    // fire-and-forget：后台执行推送，错误由进度面板展示
+    syncService
+      .push(request)
+      .then(() => get().loadManifest(request.localPath))
+      .catch((error) => {
+        console.error('推送失败:', error);
+        // 如果还没有开始处理任何文件（配置阶段就失败了），
+        // 通过进度面板显示错误
+        if (get().fileProgressList.length === 0) {
+          set({
+            activeSync: {
+              repoId: request.configId || '',
+              phase: 'error',
+              current: 0,
+              total: 0,
+              currentFile: '',
+              message: String(error),
+            },
+          });
+        } else {
+          set({
+            activeSync: {
+              repoId: request.configId || '',
+              phase: 'error',
+              current: 0,
+              total: 0,
+              currentFile: '',
+              message: String(error),
+            },
+          });
+        }
+      });
   },
 
   loadManifest: async (localPath: string) => {
@@ -264,12 +273,17 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
         return;
       }
 
-      // 单文件失败事件：实时标记对应文件为 failed
+      // 单文件失败事件：实时标记对应文件为 failed，并记录失败原因
       if (progress.phase === 'file_failed' && progress.currentFile) {
         const list = [...get().fileProgressList];
         const idx = list.findIndex((f) => f.path === progress.currentFile);
         if (idx >= 0) {
-          list[idx] = { ...list[idx], status: 'failed', percent: 0 };
+          list[idx] = {
+            ...list[idx],
+            status: 'failed',
+            percent: 0,
+            errorMessage: progress.message || undefined,
+          };
         } else {
           // 文件读取就失败，可能还没 upsert 到列表中
           const currentPhase = get().activeSync?.phase;
@@ -280,6 +294,7 @@ export const useSyncStore = create<SyncState>()((set, get) => ({
             direction,
             status: 'failed',
             percent: 0,
+            errorMessage: progress.message || undefined,
           });
         }
         set({ fileProgressList: list });

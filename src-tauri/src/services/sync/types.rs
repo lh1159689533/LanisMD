@@ -83,7 +83,7 @@ pub struct SyncManifest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncFileEntry {
-    /// 文件 MD5
+    /// 文件 MD5（始终与远端文件内容一致）
     pub md5: String,
     /// 远程文件 SHA（GitHub/Gitee API 需要）
     pub remote_sha: Option<String>,
@@ -91,8 +91,6 @@ pub struct SyncFileEntry {
     pub size: u64,
     /// 该文件的同步时间
     pub synced_at: String,
-    /// 同步状态 "synced" | "pending" | "error"
-    pub status: String,
 }
 
 /// 远程目录浏览条目

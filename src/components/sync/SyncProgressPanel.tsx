@@ -2,6 +2,8 @@
  * 同步进度浮动面板（文件列表）
  */
 
+import { useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   RiCloseLine,
   RiUploadCloud2Line,
@@ -26,18 +28,63 @@ function getFileName(path: string): string {
   return parts[parts.length - 1] || path;
 }
 
+/**
+ * 从嵌套错误信息中提取核心原因
+ * 例: "上传失败: Config error: Gitee 上传文件失败 (400 Bad Request): {"messages":["content is empty"]}"
+ * 提取为: "content is empty"
+ */
+function extractErrorCause(message: string): string {
+  // 尝试从 JSON 响应体中提取 messages 字段
+  const jsonMatch = message.match(/\{"messages":\["(.+?)"\]/);
+  if (jsonMatch) return jsonMatch[1];
+
+  // 尝试从 JSON 响应体中提取 message 字段
+  const msgMatch = message.match(/"message"\s*:\s*"(.+?)"/);
+  if (msgMatch) return msgMatch[1];
+
+  // 取最后一个冒号后的内容作为核心错误
+  const lastColon = message.lastIndexOf(': ');
+  if (lastColon > 0) {
+    const tail = message.slice(lastColon + 2).trim();
+    if (tail.length > 0) return tail;
+  }
+
+  return message;
+}
+
 /** 单个文件进度条目 */
 function SyncFileItem({ file }: { file: SyncFileProgress }) {
   const DirectionIcon =
     file.direction === 'upload' ? RiUploadCloud2Line : RiDownloadCloud2Line;
   const retryFailedFile = useSyncStore((s) => s.retryFailedFile);
+  const itemRef = useRef<HTMLDivElement>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   // 进度条样式类名
   const barClass =
     file.status === 'done' ? 'done' : file.status === 'failed' ? 'failed' : file.direction;
 
+  // 是否有失败信息需要展示 tooltip
+  const hasError = file.status === 'failed' && file.errorMessage;
+
+  // hover 时计算位置，在条目上方显示 tooltip
+  const handleMouseEnter = useCallback(() => {
+    if (!hasError || !itemRef.current) return;
+    const rect = itemRef.current.getBoundingClientRect();
+    setTooltipPos({ x: rect.left + 12, y: rect.top - 4 });
+  }, [hasError]);
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltipPos(null);
+  }, []);
+
   return (
-    <div className="lanismd-sync-file-item" title={file.path}>
+    <div
+      ref={itemRef}
+      className="lanismd-sync-file-item"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* 方向图标 */}
       <div className={`lanismd-sync-file-icon ${file.direction}`}>
         <DirectionIcon size={14} />
@@ -69,6 +116,23 @@ function SyncFileItem({ file }: { file: SyncFileProgress }) {
           {STATUS_LABEL[file.status]}
         </span>
       )}
+
+      {/* fixed 定位的错误 tooltip，通过 portal 渲染到 body，不受 overflow 裁切 */}
+      {hasError &&
+        tooltipPos &&
+        createPortal(
+          <div
+            className="lanismd-sync-error-tooltip"
+            style={{
+              left: tooltipPos.x,
+              top: tooltipPos.y,
+              transform: 'translateY(-100%)',
+            }}
+          >
+            {extractErrorCause(file.errorMessage!)}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
