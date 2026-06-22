@@ -69,7 +69,6 @@ export default defineConfig({
           utils: [
             'dompurify',
             'katex',
-            'lucide-react',
             'react-icons',
             '@floating-ui/dom',
             'zustand',
