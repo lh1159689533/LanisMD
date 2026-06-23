@@ -17,7 +17,7 @@ import { useSyncStore } from '@/stores/sync-store';
 import { syncService } from '@/services/tauri/sync-service';
 import { cn } from '@/utils/cn';
 import type { SyncRepoConfig, Platform } from '@/types/sync';
-import { DEFAULT_INCLUDE_PATTERNS, DEFAULT_EXCLUDE_PATTERNS } from '@/types/sync';
+import { WhitelistInput } from '@/components/sync/WhitelistInput';
 
 // ---------------------------------------------------------------------------
 // 空配置模板
@@ -32,8 +32,7 @@ function createEmptyConfig(): Omit<SyncRepoConfig, 'id' | 'createdAt' | 'updated
     repo: '',
     branch: 'main',
     localPath: null,
-    includePatterns: [...DEFAULT_INCLUDE_PATTERNS],
-    excludePatterns: [...DEFAULT_EXCLUDE_PATTERNS],
+    includePatterns: [],
   };
 }
 
@@ -54,16 +53,15 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
     ...initialData,
   }));
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<boolean | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; error?: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 白名单/黑名单使用独立的字符串 state，避免 onChange 中 split/join 导致逗号无法输入
-  const [includeText, setIncludeText] = useState(() => form.includePatterns.join(', '));
-  const [excludeText, setExcludeText] = useState(() => form.excludePatterns.join(', '));
+  // 用户额外追加的白名单（不含硬编码默认值）
+  const [extraIncludeText, setExtraIncludeText] = useState(() => form.includePatterns.join(', '));
 
   // 当字符串变化时，同步解析到 form 的数组字段
   useEffect(() => {
-    const parsed = includeText
+    const parsed = extraIncludeText
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
@@ -71,18 +69,7 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
       if (JSON.stringify(prev.includePatterns) === JSON.stringify(parsed)) return prev;
       return { ...prev, includePatterns: parsed };
     });
-  }, [includeText]);
-
-  useEffect(() => {
-    const parsed = excludeText
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    setForm((prev) => {
-      if (JSON.stringify(prev.excludePatterns) === JSON.stringify(parsed)) return prev;
-      return { ...prev, excludePatterns: parsed };
-    });
-  }, [excludeText]);
+  }, [extraIncludeText]);
 
   const updateField = useCallback(
     <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
@@ -104,10 +91,11 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
         updatedAt: new Date().toISOString(),
         ...form,
       } as SyncRepoConfig;
-      const ok = await syncService.testConnection(config);
-      setTestResult(ok);
-    } catch {
-      setTestResult(false);
+      const result = await syncService.testConnection(config);
+      setTestResult({ success: result.success, error: result.error ?? undefined });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTestResult({ success: false, error: msg });
     } finally {
       setTesting(false);
     }
@@ -165,7 +153,7 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
 
       {/* Token */}
       <div className="sync-form-row">
-        <label className="sync-form-label">Token</label>
+        <label className="sync-form-label">用户授权码</label>
         <input
           type="password"
           className="sync-form-input"
@@ -213,45 +201,39 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
       </div>
 
       {/* 白名单 */}
-      <div className="sync-form-row">
-        <label className="sync-form-label">白名单</label>
-        <input
-          type="text"
-          className="sync-form-input"
-          placeholder="**/*.md (逗号分隔)"
-          value={includeText}
-          onChange={(e) => setIncludeText(e.target.value)}
-        />
-      </div>
-
-      {/* 黑名单 */}
-      <div className="sync-form-row">
-        <label className="sync-form-label">黑名单</label>
-        <input
-          type="text"
-          className="sync-form-input"
-          placeholder="**/node_modules/** (逗号分隔)"
-          value={excludeText}
-          onChange={(e) => setExcludeText(e.target.value)}
-        />
-      </div>
+      <WhitelistInput
+        className="sync-form-row"
+        value={extraIncludeText}
+        onChange={setExtraIncludeText}
+      />
 
       {/* 操作按钮 */}
       <div className="sync-form-actions">
-        <button
-          className="sync-form-btn sync-form-btn-test"
-          onClick={handleTestConnection}
-          disabled={testing || !form.token || !form.owner || !form.repo}
-        >
-          {testing ? (
-            <RiLoader4Line size={14} className="sync-spin" />
-          ) : testResult === true ? (
-            <RiCheckLine size={14} />
-          ) : testResult === false ? (
-            <RiCloseLine size={14} />
-          ) : null}
-          <span>{testing ? '测试中...' : '测试连接'}</span>
-        </button>
+        <div className="sync-form-test-wrap">
+          <button
+            className={cn(
+              'sync-form-btn sync-form-btn-test',
+              testResult?.success === true && 'sync-form-btn-test--success',
+              testResult?.success === false && 'sync-form-btn-test--fail',
+            )}
+            onClick={handleTestConnection}
+            disabled={testing || !form.token || !form.owner || !form.repo}
+          >
+            {testing ? (
+              <RiLoader4Line size={14} className="sync-spin" />
+            ) : testResult?.success === true ? (
+              <RiCheckLine size={14} />
+            ) : testResult?.success === false ? (
+              <RiCloseLine size={14} />
+            ) : null}
+            <span>
+              {testing ? '测试中...' : testResult?.success === true ? '连接成功' : '测试连接'}
+            </span>
+          </button>
+          {testResult?.success === false && testResult.error && (
+            <span className="sync-form-test-error">{testResult.error}</span>
+          )}
+        </div>
         <div className="sync-form-actions-right">
           <button className="sync-form-btn sync-form-btn-cancel" onClick={onCancel}>
             取消
@@ -261,7 +243,7 @@ function RepoForm({ initialData, onSave, onCancel }: RepoFormProps) {
             onClick={handleSave}
             disabled={saving || !form.name || !form.token || !form.owner || !form.repo}
           >
-            {saving ? <RiLoader4Line size={14} className="sync-spin" /> : <RiCheckLine size={14} />}
+            {saving && <RiLoader4Line size={14} className="sync-spin" />}
             <span>保存</span>
           </button>
         </div>

@@ -23,10 +23,8 @@ export interface SyncRepoConfig {
   branch: string;
   /** 绑定的本地文件夹路径 */
   localPath: string | null;
-  /** 白名单 glob 模式 */
+  /** 用户额外追加的白名单 glob 模式（不含硬编码默认值） */
   includePatterns: string[];
-  /** 黑名单 glob 模式 */
-  excludePatterns: string[];
   /** 创建时间 ISO 8601 */
   createdAt: string;
   /** 更新时间 ISO 8601 */
@@ -59,10 +57,10 @@ export interface SyncManifest {
   repoConfig: SyncManifestRepoConfig;
   /** 同步分支 */
   branch: string;
-  /** 白名单 glob */
+  /** 远程目录（为空或 "/" 表示仓库根目录） */
+  remoteDir?: string | null;
+  /** 白名单 glob（硬编码默认值 + 用户追加） */
   includePatterns: string[];
-  /** 黑名单 glob */
-  excludePatterns: string[];
   /** 上次同步时间 ISO 8601 */
   lastSyncAt: string | null;
   /** 上次操作方向 */
@@ -93,10 +91,10 @@ export interface PullRequest {
   branch: string;
   /** 本地目标文件夹路径 */
   localPath: string;
-  /** 白名单 glob */
+  /** 远程目录（为空或 "/" 表示仓库根目录） */
+  remoteDir?: string;
+  /** 白名单 glob（硬编码默认值 + 用户追加） */
   includePatterns: string[];
-  /** 黑名单 glob */
-  excludePatterns: string[];
 }
 
 /** 推送请求参数 */
@@ -107,10 +105,12 @@ export interface PushRequest {
   configId?: string;
   /** 目标分支（无清单时必填） */
   branch?: string;
-  /** 白名单 glob */
+  /** 远程目录（为空或 "/" 表示仓库根目录） */
+  remoteDir?: string;
+  /** 是否保持本地目录结构（推送专用，默认 true） */
+  keepDirStructure?: boolean;
+  /** 白名单 glob（硬编码默认值 + 用户追加） */
   includePatterns?: string[];
-  /** 黑名单 glob */
-  excludePatterns?: string[];
 }
 
 /** 同步操作结果 */
@@ -129,6 +129,14 @@ export interface SyncResult {
   errorMessage: string | null;
 }
 
+/** 测试连接结果 */
+export interface TestConnectionResult {
+  /** 是否成功 */
+  success: boolean;
+  /** 失败时的错误原因 */
+  error: string | null;
+}
+
 /** 差异对比结果 */
 export interface DiffResult {
   /** 新增的文件 */
@@ -139,6 +147,24 @@ export interface DiffResult {
   deleted: string[];
   /** 未变更的文件 */
   unchanged: string[];
+}
+
+/** 拉取预览中的单个文件条目 */
+export interface PullPreviewEntry {
+  /** 文件相对路径 */
+  path: string;
+  /** 文件大小（字节） */
+  size: number;
+  /** 变更类型 */
+  changeType: 'added' | 'modified';
+}
+
+/** 拉取预览结果 */
+export interface PullPreviewResult {
+  /** 将要下载的文件列表（新增+更新） */
+  files: PullPreviewEntry[];
+  /** 是否为全量同步（首次拉取或切换分支/平台） */
+  isFullSync: boolean;
 }
 
 /** 单个文件的同步进度状态 */
@@ -182,25 +208,29 @@ export interface SyncProgress {
 }
 
 // ---------------------------------------------------------------------------
-// 同步白名单/黑名单默认值
+// 同步白名单默认值（硬编码，用户不可修改）
 // ---------------------------------------------------------------------------
 
-/** 默认白名单 glob 模式（数组形式，用于配置存储） */
-export const DEFAULT_INCLUDE_PATTERNS: string[] = [
+/** 硬编码的内置白名单 glob 模式，用户不可删除或修改 */
+export const BUILTIN_INCLUDE_PATTERNS: readonly string[] = [
   '**/*.md',
-  '**/*.png',
-  '**/*.jpg',
-  '**/*.jpeg',
-  '**/*.gif',
-  '**/*.svg',
-  '**/*.webp',
 ];
 
-/** 默认黑名单 glob 模式（数组形式，用于配置存储） */
-export const DEFAULT_EXCLUDE_PATTERNS: string[] = ['**/node_modules/**', '**/.git/**'];
+/** 硬编码白名单的展示字符串（逗号分隔，仅用于 UI 展示） */
+export const BUILTIN_INCLUDE_PATTERNS_STR = BUILTIN_INCLUDE_PATTERNS.join(', ');
 
-/** 默认白名单（逗号分隔字符串形式，用于表单输入） */
-export const DEFAULT_INCLUDE_PATTERNS_STR = DEFAULT_INCLUDE_PATTERNS.join(', ');
-
-/** 默认黑名单（逗号分隔字符串形式，用于表单输入） */
-export const DEFAULT_EXCLUDE_PATTERNS_STR = DEFAULT_EXCLUDE_PATTERNS.join(', ');
+/**
+ * 合并硬编码白名单和用户额外追加的白名单
+ * 实际传给后端的 includePatterns = 内置默认值 + 用户追加
+ */
+export function mergeIncludePatterns(userExtra: string[]): string[] {
+  // 去重：用户追加的模式若与内置重复则不重复添加
+  const builtinSet = new Set(BUILTIN_INCLUDE_PATTERNS);
+  const merged = [...BUILTIN_INCLUDE_PATTERNS];
+  for (const p of userExtra) {
+    if (p && !builtinSet.has(p)) {
+      merged.push(p);
+    }
+  }
+  return merged;
+}

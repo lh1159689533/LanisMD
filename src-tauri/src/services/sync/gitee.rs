@@ -66,7 +66,7 @@ impl GiteeProvider {
 
 #[async_trait]
 impl RemoteProvider for GiteeProvider {
-    async fn test_connection(&self) -> AppResult<bool> {
+    async fn test_connection(&self) -> AppResult<()> {
         let url = format!(
             "{}/repos/{}/{}?access_token={}",
             GITEE_API_BASE, self.owner, self.repo, self.token
@@ -77,9 +77,20 @@ impl RemoteProvider for GiteeProvider {
             .get(&url)
             .send()
             .await
-            .map_err(|e| AppError::Config(format!("Gitee 连接测试失败: {}", e)))?;
+            .map_err(|e| AppError::Config(format!("网络请求失败: {}", e)))?;
 
-        Ok(response.status().is_success())
+        let status = response.status();
+        if status.is_success() {
+            Ok(())
+        } else {
+            let reason = match status.as_u16() {
+                401 => "Token 无效或已过期".to_string(),
+                403 => "权限不足，请检查 Token 权限".to_string(),
+                404 => "仓库不存在，请检查拥有者和仓库名".to_string(),
+                _ => format!("请求失败 (HTTP {})", status.as_u16()),
+            };
+            Err(AppError::Config(reason))
+        }
     }
 
     async fn get_tree(&self, path: Option<&str>) -> AppResult<Vec<RemoteEntry>> {

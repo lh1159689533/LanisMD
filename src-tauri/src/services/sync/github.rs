@@ -13,8 +13,8 @@ const GITHUB_API_BASE: &str = "https://api.github.com";
 /// RemoteProvider Trait: 远程仓库操作抽象
 #[async_trait]
 pub trait RemoteProvider: Send + Sync {
-    /// 测试连接
-    async fn test_connection(&self) -> AppResult<bool>;
+    /// 测试连接（成功返回 Ok，失败返回错误原因）
+    async fn test_connection(&self) -> AppResult<()>;
 
     /// 获取远程目录树
     async fn get_tree(&self, path: Option<&str>) -> AppResult<Vec<RemoteEntry>>;
@@ -105,7 +105,7 @@ impl GitHubProvider {
 
 #[async_trait]
 impl RemoteProvider for GitHubProvider {
-    async fn test_connection(&self) -> AppResult<bool> {
+    async fn test_connection(&self) -> AppResult<()> {
         let url = format!("{}/repos/{}/{}", GITHUB_API_BASE, self.owner, self.repo);
         let mut request = self.client.get(&url);
         for (key, value) in self.auth_headers() {
@@ -115,9 +115,20 @@ impl RemoteProvider for GitHubProvider {
         let response = request
             .send()
             .await
-            .map_err(|e| AppError::Config(format!("GitHub 连接测试失败: {}", e)))?;
+            .map_err(|e| AppError::Config(format!("网络请求失败: {}", e)))?;
 
-        Ok(response.status().is_success())
+        let status = response.status();
+        if status.is_success() {
+            Ok(())
+        } else {
+            let reason = match status.as_u16() {
+                401 => "Token 无效或已过期".to_string(),
+                403 => "权限不足，请检查 Token 权限".to_string(),
+                404 => "仓库不存在，请检查拥有者和仓库名".to_string(),
+                _ => format!("请求失败 (HTTP {})", status.as_u16()),
+            };
+            Err(AppError::Config(reason))
+        }
     }
 
     async fn get_tree(&self, path: Option<&str>) -> AppResult<Vec<RemoteEntry>> {

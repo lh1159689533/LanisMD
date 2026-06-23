@@ -8,16 +8,17 @@ import {
   RiUploadCloud2Line,
   RiLoader4Line,
   RiLockLine,
-  RiFileTextLine,
   RiRefreshLine,
   RiAlertLine,
+  RiEyeLine,
 } from 'react-icons/ri';
 import { useSyncStore } from '@/stores/sync-store';
 import { syncService } from '@/services/tauri/sync-service';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { cn } from '@/utils/cn';
-import type { DiffResult } from '@/types/sync';
-import { DEFAULT_INCLUDE_PATTERNS_STR, DEFAULT_EXCLUDE_PATTERNS_STR } from '@/types/sync';
+import type { DiffResult, RemoteEntry } from '@/types/sync';
+import { mergeIncludePatterns } from '@/types/sync';
+import { WhitelistInput } from './WhitelistInput';
 
 import '../../styles/sync/sync-dialog.css';
 
@@ -73,9 +74,15 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   const [branch, setBranch] = useState('main');
   const [branches, setBranches] = useState<string[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
-  const [includePatterns, setIncludePatterns] = useState(DEFAULT_INCLUDE_PATTERNS_STR);
-  const [excludePatterns, setExcludePatterns] = useState(DEFAULT_EXCLUDE_PATTERNS_STR);
+  // 用户额外追加的白名单（不含硬编码默认值）
+  const [extraInclude, setExtraInclude] = useState('');
 
+  // 远程目录相关状态（优先从 manifest 中读取上次使用的远程目录）
+  const [remoteDir, setRemoteDir] = useState<string>(manifest?.remoteDir || '/');
+  const [remoteDirs, setRemoteDirs] = useState<RemoteEntry[]>([]);
+  const [loadingRemoteDirs, setLoadingRemoteDirs] = useState(false);
+  const [remoteDirError, setRemoteDirError] = useState<string | null>(null);
+  const [keepDirStructure, setKeepDirStructure] = useState(true);
 
   // 变更扫描状态
   const [scanning, setScanning] = useState(false);
@@ -83,15 +90,29 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   const [changeList, setChangeList] = useState<ChangeEntry[]>([]);
   const [scanned, setScanned] = useState(false);
 
-  // 上次扫描时使用的白/黑名单（用于检测是否变更）
-  const [lastScanInclude, setLastScanInclude] = useState<string>('');
-  const [lastScanExclude, setLastScanExclude] = useState<string>('');
+  // 上次扫描时使用的额外白名单（用于检测是否变更）
+  const [lastScanExtraInclude, setLastScanExtraInclude] = useState<string>('');
+  // 上次扫描时使用的远程目录和保持结构选项（用于检测是否变更）
+  const [lastScanRemoteDir, setLastScanRemoteDir] = useState<string>('/');
+  const [lastScanKeepDirStructure, setLastScanKeepDirStructure] = useState<boolean>(true);
   // 过滤条件是否已变更（需要重新扫描）
   const filtersChanged = useMemo(() => {
     // 尚未扫描过，不显示提示
     if (!scanned) return false;
-    return includePatterns !== lastScanInclude || excludePatterns !== lastScanExclude;
-  }, [scanned, includePatterns, excludePatterns, lastScanInclude, lastScanExclude]);
+    return (
+      extraInclude !== lastScanExtraInclude ||
+      remoteDir !== lastScanRemoteDir ||
+      keepDirStructure !== lastScanKeepDirStructure
+    );
+  }, [
+    scanned,
+    extraInclude,
+    lastScanExtraInclude,
+    remoteDir,
+    lastScanRemoteDir,
+    keepDirStructure,
+    lastScanKeepDirStructure,
+  ]);
 
   // 加载仓库列表
   useEffect(() => {
@@ -106,8 +127,7 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
       const first = repos[0];
       setSelectedRepoId(first.id);
       setBranch(first.branch);
-      setIncludePatterns(first.includePatterns.join(', '));
-      setExcludePatterns(first.excludePatterns.join(', '));
+      setExtraInclude(first.includePatterns.join(', '));
     }
   }, [repos, selectedRepoId]);
 
@@ -132,11 +152,42 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
     };
   }, [selectedRepoId]);
 
+  // 仓库和分支确定后加载远程第一层目录
+  useEffect(() => {
+    const effectiveRepoId = manifestLocked ? lockedConfigId : selectedRepoId;
+    const effectiveBranch = manifestLocked ? lockedBranch : branch;
+    if (!effectiveRepoId || !effectiveBranch) return;
+    let cancelled = false;
+    setLoadingRemoteDirs(true);
+    setRemoteDirError(null);
+    syncService
+      .browseRemote(effectiveRepoId, effectiveBranch)
+      .then((entries) => {
+        if (!cancelled) {
+          // 只保留第一层目录
+          setRemoteDirs(entries.filter((e) => e.entryType === 'dir'));
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRemoteDirs([]);
+          setRemoteDirError(typeof err === 'string' ? err : '加载远程目录失败');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRemoteDirs(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [manifestLocked, lockedConfigId, lockedBranch, selectedRepoId, branch]);
+
   /**
    * 扫描变更文件
+   * 当选择了非根远程目录且勾选保持本地目录结构时，通过后端 sub_dir 参数只扫描子目录
    */
   const scanChanges = useCallback(
-    async (includeStr: string = includePatterns, excludeStr: string = excludePatterns) => {
+    async (extraIncludeStr: string = extraInclude) => {
       if (!rootPath) return;
 
       setScanning(true);
@@ -145,20 +196,24 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
       // loading 状态以浮层形式叠加在列表上方（参见 JSX 渲染部分）
 
       try {
-        const parsedInclude = includeStr
+        const parsedExtra = extraIncludeStr
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean);
-        const parsedExclude = excludeStr
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const diff: DiffResult = await syncService.diff(rootPath, parsedInclude, parsedExclude);
+        // 合并硬编码默认值 + 用户额外追加的白名单
+        const mergedInclude = mergeIncludePatterns(parsedExtra);
+
+        // 当选择了非根远程目录且保持本地目录结构时，传入 subDir 让后端只扫描子目录
+        const subDir = remoteDir !== '/' && keepDirStructure ? remoteDir : undefined;
+
+        const diff: DiffResult = await syncService.diff(rootPath, subDir, mergedInclude);
+
         const entries: ChangeEntry[] = [
           ...diff.added.map((path) => ({ path, type: 'added' as ChangeType })),
           ...diff.modified.map((path) => ({ path, type: 'modified' as ChangeType })),
           ...diff.deleted.map((path) => ({ path, type: 'deleted' as ChangeType })),
         ];
+
         // 按类型排序：新增 > 更新 > 删除
         entries.sort((a, b) => {
           const order = { added: 0, modified: 1, deleted: 2 };
@@ -167,35 +222,27 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
         setChangeList(entries);
         setScanned(true);
         // 记录本次扫描时实际使用的过滤条件
-        setLastScanInclude(includeStr);
-        setLastScanExclude(excludeStr);
+        setLastScanExtraInclude(extraIncludeStr);
+        setLastScanRemoteDir(remoteDir);
+        setLastScanKeepDirStructure(keepDirStructure);
       } catch (err) {
         setScanError(typeof err === 'string' ? err : (err as Error).message || '扫描变更失败');
         setScanned(true);
         // 即使扫描失败也记录过滤条件，避免持续显示提示条
-        setLastScanInclude(includeStr);
-        setLastScanExclude(excludeStr);
+        setLastScanExtraInclude(extraIncludeStr);
+        setLastScanRemoteDir(remoteDir);
+        setLastScanKeepDirStructure(keepDirStructure);
       } finally {
         setScanning(false);
       }
     },
-    [rootPath, manifest, includePatterns, excludePatterns],
+    [rootPath, manifest, extraInclude, remoteDir, keepDirStructure],
   );
 
-  // 是否已触发过自动初始扫描（避免依赖 patterns 导致每次输入都重扫）
-  const [autoScanned, setAutoScanned] = useState(false);
-
-  // 有 manifest 时，弹窗打开自动扫描变更（仅一次）
-  useEffect(() => {
-    if (!rootPath || autoScanned) return;
-    // 等仓库配置完成初始化（或确实无可用仓库配置但 manifest 存在）
-    // 用 selectedRepoId 作为初始化完成的标志：repos 加载后会自动选中第一个并把 patterns 写入
-    const reposReadyOrUnavailable = reposLoaded && (repos.length === 0 || selectedRepoId !== '');
-    if (!reposReadyOrUnavailable) return;
-    setAutoScanned(true);
-    scanChanges(includePatterns, excludePatterns);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootPath, reposLoaded, repos.length, selectedRepoId, autoScanned]);
+  /** 手动触发预览（扫描变更） */
+  const handlePreview = useCallback(() => {
+    scanChanges(extraInclude);
+  }, [scanChanges, extraInclude]);
 
   /** 仓库选择变更 */
   const handleRepoChange = useCallback(
@@ -204,8 +251,7 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
       const repo = repos.find((r) => r.id === repoId);
       if (repo) {
         setBranch(repo.branch);
-        setIncludePatterns(repo.includePatterns.join(', '));
-        setExcludePatterns(repo.excludePatterns.join(', '));
+        setExtraInclude(repo.includePatterns.join(', '));
       }
     },
     [repos],
@@ -239,20 +285,22 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
     const effectiveBranch = manifestLocked ? lockedBranch : branch;
     if (!effectiveRepoId || !rootPath || !effectiveBranch) return;
 
+    // 合并硬编码默认值 + 用户额外追加的白名单
+    const parsedExtra = extraInclude
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const mergedInclude = mergeIncludePatterns(parsedExtra);
+
     // 前端参数预校验通过，发起推送并立即关闭弹窗
     // 后续的推送进度/错误全部由 SyncProgressPanel 接管展示
     startPush({
       localPath: rootPath,
       configId: effectiveRepoId,
       branch: effectiveBranch,
-      includePatterns: includePatterns
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      excludePatterns: excludePatterns
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
+      remoteDir: remoteDir === '/' ? undefined : remoteDir,
+      keepDirStructure,
+      includePatterns: mergedInclude,
     });
     onClose();
   }, [
@@ -262,8 +310,9 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
     selectedRepoId,
     branch,
     rootPath,
-    includePatterns,
-    excludePatterns,
+    remoteDir,
+    keepDirStructure,
+    extraInclude,
     startPush,
     onClose,
   ]);
@@ -341,6 +390,9 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
               >
+                <option value="" disabled>
+                  请选择分支
+                </option>
                 {branches.map((b) => (
                   <option key={b} value={b}>
                     {b}
@@ -365,37 +417,81 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
             </div>
           )}
 
+          {/* 远程目录选择 */}
+          <div className="sync-dialog-field">
+            <label className="sync-dialog-label">远程目录</label>
+            {loadingRemoteDirs ? (
+              <div className="sync-dialog-loading">
+                <RiLoader4Line size={14} className="sync-spin" />
+                <span>加载远程目录...</span>
+              </div>
+            ) : remoteDirError ? (
+              <div className="sync-dialog-select-wrap">
+                <select
+                  className="sync-dialog-select"
+                  value={remoteDir}
+                  onChange={(e) => setRemoteDir(e.target.value)}
+                >
+                  <option value="/">/</option>
+                </select>
+                <span className="sync-dialog-field-hint sync-dialog-field-hint--error">
+                  {remoteDirError}
+                </span>
+              </div>
+            ) : (
+              <div className="sync-dialog-select-wrap">
+                <select
+                  className="sync-dialog-select"
+                  value={remoteDir}
+                  onChange={(e) => setRemoteDir(e.target.value)}
+                >
+                  <option value="" disabled>
+                    请选择远程目录
+                  </option>
+                  <option value="/">/</option>
+                  {remoteDirs.map((dir) => (
+                    <option key={dir.path} value={dir.path}>
+                      /{dir.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* 保持目录结构复选框（仅选择非根目录时显示） */}
+          {remoteDir !== '/' && (
+            <div className="sync-dialog-field sync-dialog-field--checkbox">
+              <label className="sync-dialog-checkbox-label">
+                <input
+                  type="checkbox"
+                  className="sync-dialog-checkbox"
+                  checked={keepDirStructure}
+                  onChange={(e) => setKeepDirStructure(e.target.checked)}
+                />
+                <span>保持本地目录结构</span>
+              </label>
+              <span className="sync-dialog-field-hint">
+                {keepDirStructure
+                  ? `推送本地 /${remoteDir} 目录内容到远程 /${remoteDir}`
+                  : `推送本地工作区所有文件到远程 /${remoteDir}`}
+              </span>
+            </div>
+          )}
+
           {/* 白名单 */}
-          <div className="sync-dialog-field">
-            <label className="sync-dialog-label">白名单 (glob, 逗号分隔)</label>
-            <input
-              type="text"
-              className="sync-dialog-input"
-              value={includePatterns}
-              onChange={(e) => setIncludePatterns(e.target.value)}
-              placeholder="**/*.md"
-            />
-          </div>
+          <WhitelistInput
+            className="sync-dialog-field"
+            value={extraInclude}
+            onChange={setExtraInclude}
+          />
 
-          {/* 黑名单 */}
+          {/* 变更文件预览 */}
           <div className="sync-dialog-field">
-            <label className="sync-dialog-label">黑名单 (glob, 逗号分隔)</label>
-            <input
-              type="text"
-              className="sync-dialog-input"
-              value={excludePatterns}
-              onChange={(e) => setExcludePatterns(e.target.value)}
-              placeholder="**/node_modules/**"
-            />
-          </div>
-
-          {/* 变更文件列表 */}
-          <div className="sync-dialog-field">
-            {/* label 行：固定高度，过滤变更提示与“重新扫描”按钮内联在此行；
-                即使提示未显示，行高也保持一致，避免弹窗抖动 */}
+            {/* 工具栏：预览按钮 + 参数变更提示 */}
             <div className="sync-dialog-change-toolbar">
               <label className="sync-dialog-label sync-dialog-change-toolbar-label">
-                变更文件
+                文件预览
                 {scanned && !scanning && (
                   <span className="sync-dialog-change-count">
                     {changeList.length > 0 ? ` (${changeList.length})` : ''}
@@ -408,27 +504,38 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                   <span className="sync-dialog-filter-changed-inline">
                     <RiAlertLine size={13} className="sync-dialog-filter-changed-icon" />
                     <span className="sync-dialog-filter-changed-text">
-                      过滤条件已变更，文件列表可能不准确
+                      过滤条件已变更，请重新预览
                     </span>
                   </span>
                   <button
                     className="sync-dialog-filter-changed-btn"
-                    onClick={() => scanChanges(includePatterns, excludePatterns)}
+                    onClick={handlePreview}
                   >
                     <RiRefreshLine size={12} />
-                    <span>重新扫描</span>
+                    <span>重新预览</span>
                   </button>
                 </>
               )}
             </div>
 
-            {/* 内容容器：扫描时保留旧内容显示，loading 以浮层叠加在上方，
-                避免因高度突变导致弹窗在屏幕上抖动。设置最小高度保证首次扫描
-                （changeList 为空）时容器也有足够高度承载 loading 浮层。 */}
+            {/* 内容容器 */}
             <div className="sync-dialog-change-wrap">
-              {scanError && changeList.length === 0 && !scanning ? (
+              {!scanned && !scanning ? (
                 <div className="sync-dialog-change-hint">
-                  <RiFileTextLine size={14} />
+                  {!scanned && !scanning && !filtersChanged && (
+                    <button
+                      className="sync-dialog-preview-btn"
+                      onClick={handlePreview}
+                      disabled={manifestLocked ? !lockedConfigId : !selectedRepoId || !branch}
+                    >
+                      <RiEyeLine size={12} />
+                      <span>预览</span>
+                    </button>
+                  )}
+                  <span>点击"预览"查看将要推送的文件</span>
+                </div>
+              ) : scanError && changeList.length === 0 && !scanning ? (
+                <div className="sync-dialog-change-hint">
                   <span>{scanError}</span>
                 </div>
               ) : scanned && changeList.length === 0 && !scanning ? (
@@ -451,11 +558,10 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
                   ))}
                 </div>
               ) : (
-                // 首次扫描尚无任何内容时，用一个最小高度占位块支撑 loading 浮层
                 <div className="sync-dialog-change-placeholder" aria-hidden="true" />
               )}
 
-              {/* 扫描中浮层：绝对定位覆盖在内容之上，不影响容器高度 */}
+              {/* 扫描中浮层 */}
               {scanning && (
                 <div className="sync-dialog-scanning-overlay">
                   <div className="sync-dialog-scanning-badge">
@@ -466,15 +572,11 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
               )}
             </div>
           </div>
-
         </div>
 
         {/* 底部操作 */}
         <div className="sync-dialog-footer">
-          <button
-            className="sync-dialog-btn sync-dialog-btn-cancel"
-            onClick={onClose}
-          >
+          <button className="sync-dialog-btn sync-dialog-btn-cancel" onClick={onClose}>
             关闭
           </button>
           <button

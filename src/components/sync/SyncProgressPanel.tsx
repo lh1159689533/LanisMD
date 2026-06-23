@@ -2,7 +2,7 @@
  * 同步进度浮动面板（文件列表）
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   RiCloseLine,
@@ -145,6 +145,17 @@ export function SyncProgressPanel() {
   const dismissPanel = useSyncStore((s) => s.dismissPanel);
   const clearSyncState = useSyncStore((s) => s.clearSyncState);
 
+  // 按状态排序文件列表：正在同步 > 失败 > 成功/等待
+  const sortedFileList = useMemo(() => {
+    const statusOrder: Record<SyncFileProgress['status'], number> = {
+      syncing: 0,
+      failed: 1,
+      waiting: 2,
+      done: 3,
+    };
+    return [...fileList].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+  }, [fileList]);
+
   // 面板被关闭或没有同步数据时不渲染
   const hasData = activeSync || fileList.length > 0;
   if (!visible || !hasData) return null;
@@ -199,8 +210,8 @@ export function SyncProgressPanel() {
 
       {/* 文件列表 */}
       <div className="lanismd-sync-panel-list">
-        {fileList.length > 0 ? (
-          fileList.map((file) => <SyncFileItem key={file.path} file={file} />)
+        {sortedFileList.length > 0 ? (
+          sortedFileList.map((file) => <SyncFileItem key={file.path} file={file} />)
         ) : (
           <div className="lanismd-sync-panel-empty">
             {phase === 'scanning' ? '正在扫描变更文件...' : '暂无文件'}
@@ -215,7 +226,9 @@ export function SyncProgressPanel() {
             <div className="lanismd-sync-panel-footer-bar" style={{ width: `${percent}%` }} />
           </div>
           <span className="lanismd-sync-panel-footer-text">
-            {current}/{total}
+            {fileList.filter((f) => f.status === 'done').length}/
+            {fileList.filter((f) => f.status === 'failed').length}/
+            {total}
           </span>
         </div>
       )}

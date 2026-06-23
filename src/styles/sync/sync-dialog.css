@@ -111,8 +111,27 @@
   background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
   color: var(--lanismd-editor-text);
   font-size: var(--lanismd-font-size-sm);
-  transition: border-color var(--lanismd-transition-fast);
+  transition:
+    border-color var(--lanismd-transition-fast),
+    background-color var(--lanismd-transition-fast);
   outline: none;
+}
+
+/* select 专属：自定义下拉箭头 */
+.sync-dialog-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  cursor: pointer;
+}
+
+.sync-dialog-select:hover:not(:disabled),
+.sync-dialog-input:hover:not(:disabled) {
+  border-color: var(--lanismd-text-secondary);
 }
 
 .sync-dialog-select:focus,
@@ -124,6 +143,10 @@
 .sync-dialog-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.sync-dialog-input--readonly {
+  background-color: var(--lanismd-bg-secondary);
 }
 
 .sync-dialog-loading {
@@ -384,7 +407,6 @@
   gap: 8px;
   padding: 6px 10px;
   font-size: var(--lanismd-font-size-xs);
-  border-bottom: 1px solid var(--lanismd-border-color);
   transition: background-color var(--lanismd-transition-fast);
 }
 
@@ -427,6 +449,79 @@
 .sync-dialog-change-item--deleted .sync-dialog-change-badge {
   background-color: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+/* ===== 远程目录选择器 ===== */
+.sync-dialog-select-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===== 字段提示文字 ===== */
+.sync-dialog-field-hint {
+  font-size: 11px;
+  color: var(--lanismd-text-secondary);
+  line-height: 1.4;
+}
+
+.sync-dialog-field-hint--error {
+  color: #ef4444;
+}
+
+/* ===== 复选框字段 ===== */
+.sync-dialog-field--checkbox {
+  gap: 4px;
+}
+
+.sync-dialog-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sync-dialog-checkbox {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  accent-color: var(--lanismd-accent, #4f8ef7);
+  cursor: pointer;
+}
+
+/* ===== 暗色主题 select 箭头适配 ===== */
+.dark .sync-dialog-select,
+.theme-dark .sync-dialog-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* ===== 预览按钮（拉取弹窗专用） ===== */
+.sync-dialog-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: var(--lanismd-radius-sm);
+  background-color: rgba(79, 142, 247, 0.1);
+  color: var(--lanismd-accent, #4f8ef7);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+  white-space: nowrap;
+}
+
+.sync-dialog-preview-btn:hover:not(:disabled) {
+  background-color: rgba(79, 142, 247, 0.18);
+}
+
+.sync-dialog-preview-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ===== 旋转动画 ===== */

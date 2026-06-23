@@ -31,12 +31,9 @@ pub struct SyncRepoConfig {
     pub branch: String,
     /// 绑定的本地文件夹路径
     pub local_path: Option<String>,
-    /// 白名单 glob 模式（缺省为空，表示不过滤）
+    /// 用户额外追加的白名单 glob 模式（不含硬编码默认值）
     #[serde(default)]
     pub include_patterns: Vec<String>,
-    /// 黑名单 glob 模式（缺省为空，表示不排除）
-    #[serde(default)]
-    pub exclude_patterns: Vec<String>,
     /// 创建时间 ISO 8601
     pub created_at: String,
     /// 更新时间 ISO 8601
@@ -65,12 +62,12 @@ pub struct SyncManifest {
     pub repo_config: SyncManifestRepoConfig,
     /// 同步分支
     pub branch: String,
-    /// 白名单 glob（缺省为空，表示不过滤）
+    /// 远程目录（为空或 "/" 表示仓库根目录）
+    #[serde(default)]
+    pub remote_dir: Option<String>,
+    /// 白名单 glob（硬编码默认值 + 用户追加）
     #[serde(default)]
     pub include_patterns: Vec<String>,
-    /// 黑名单 glob（缺省为空，表示不排除）
-    #[serde(default)]
-    pub exclude_patterns: Vec<String>,
     /// 上次同步时间 ISO 8601
     pub last_sync_at: Option<String>,
     /// 上次操作方向 "pull" | "push"
@@ -119,12 +116,11 @@ pub struct PullRequest {
     pub branch: String,
     /// 本地目标文件夹路径
     pub local_path: String,
-    /// 白名单 glob（覆盖配置中的默认值，缺省为空）
+    /// 远程目录（为空或 "/" 表示仓库根目录）
+    pub remote_dir: Option<String>,
+    /// 白名单 glob（硬编码默认值 + 用户追加）
     #[serde(default)]
     pub include_patterns: Vec<String>,
-    /// 黑名单 glob（覆盖配置中的默认值，缺省为空）
-    #[serde(default)]
-    pub exclude_patterns: Vec<String>,
 }
 
 /// 推送请求参数
@@ -137,10 +133,12 @@ pub struct PushRequest {
     pub config_id: Option<String>,
     /// 目标分支（无清单时必填）
     pub branch: Option<String>,
-    /// 白名单 glob（无清单时可选）
+    /// 远程目录（为空或 "/" 表示仓库根目录）
+    pub remote_dir: Option<String>,
+    /// 是否保持本地目录结构（推送专用，默认 true）
+    pub keep_dir_structure: Option<bool>,
+    /// 白名单 glob（硬编码默认值 + 用户追加）
     pub include_patterns: Option<Vec<String>>,
-    /// 黑名单 glob（无清单时可选）
-    pub exclude_patterns: Option<Vec<String>>,
 }
 
 /// 同步操作结果
@@ -173,6 +171,28 @@ pub struct DiffResult {
     pub deleted: Vec<String>,
     /// 未变更的文件
     pub unchanged: Vec<String>,
+}
+
+/// 拉取预览结果
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PullPreviewResult {
+    /// 将要下载的文件列表（新增+更新）
+    pub files: Vec<PullPreviewEntry>,
+    /// 是否为全量同步（首次拉取或切换分支/平台）
+    pub is_full_sync: bool,
+}
+
+/// 拉取预览中的单个文件条目
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PullPreviewEntry {
+    /// 文件相对路径
+    pub path: String,
+    /// 文件大小（字节）
+    pub size: u64,
+    /// 变更类型: "added" | "modified"
+    pub change_type: String,
 }
 
 /// 同步进度事件（通过 Tauri Event 推送给前端）

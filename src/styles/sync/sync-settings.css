@@ -191,6 +191,12 @@
   border-color: var(--lanismd-accent);
 }
 
+.sync-form-input--readonly {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--lanismd-bg-secondary);
+}
+
 /* 分段控件 */
 .sync-form-segmented {
   display: flex;
@@ -255,15 +261,58 @@
   cursor: not-allowed;
 }
 
+/* 测试连接按钮包裹层 */
+.sync-form-test-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 测试连接失败错误信息 */
+.sync-form-test-error {
+  font-size: var(--lanismd-font-size-xs);
+  color: #dc2626;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sync-form-btn-test {
   color: var(--lanismd-text-secondary);
   border: 1px solid var(--lanismd-border-color);
   background-color: transparent;
+  flex-shrink: 0;
 }
 
 .sync-form-btn-test:hover:not(:disabled) {
   border-color: var(--lanismd-accent);
   color: var(--lanismd-accent);
+}
+
+/* 成功状态 */
+.sync-form-btn-test--success {
+  color: #16a34a;
+  border-color: #16a34a;
+  background-color: rgba(22, 163, 74, 0.06);
+}
+
+.sync-form-btn-test--success:hover:not(:disabled) {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+/* 失败状态 */
+.sync-form-btn-test--fail {
+  color: #dc2626;
+  border-color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.06);
+}
+
+.sync-form-btn-test--fail:hover:not(:disabled) {
+  color: #dc2626;
+  border-color: #dc2626;
 }
 
 .sync-form-btn-cancel {

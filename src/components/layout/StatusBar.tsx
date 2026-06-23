@@ -254,7 +254,6 @@ function SyncProgressIndicator() {
   const percent = total > 0 ? Math.round((current / total) * 100) : 0;
   const label = phase ? (phaseLabel[phase] || phase) : '同步';
   const isActive = phase === 'scanning' || phase === 'downloading' || phase === 'uploading';
-  const hasFailedFiles = fileProgressList.some((f) => f.status === 'failed');
 
   return (
     <button
@@ -262,8 +261,6 @@ function SyncProgressIndicator() {
       className={cn(
         'flex items-center gap-1.5 transition-colors hover:text-[var(--lanismd-accent)]',
         phase === 'error' && 'text-red-400',
-        hasFailedFiles && 'text-red-400',
-        phase === 'completed' && !hasFailedFiles && 'text-green-400',
         syncPanelVisible && isActive && 'text-[var(--lanismd-accent)]',
       )}
       title={file ? `${file} - 点击${syncPanelVisible ? '关闭' : '打开'}进度面板` : `点击${syncPanelVisible ? '关闭' : '打开'}进度面板`}
@@ -276,7 +273,19 @@ function SyncProgressIndicator() {
           />
         </span>
       )}
-      <span>{label}{total > 0 ? ` ${current}/${total}` : ''}</span>
+      <span>
+        {label}
+        {total > 0 && (
+          <>
+            {' '}
+            <span className="text-green-400">{fileProgressList.filter((f) => f.status === 'done').length}</span>
+            /
+            <span className="text-red-400">{fileProgressList.filter((f) => f.status === 'failed').length}</span>
+            /
+            {total}
+          </>
+        )}
+      </span>
     </button>
   );
 }

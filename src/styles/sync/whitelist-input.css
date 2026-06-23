@@ -1,0 +1,42 @@
+/* ===== WhitelistInput 白名单输入组件 ===== */
+
+/* 组件根容器 */
+.sync-whitelist-wrapper {
+  position: relative;
+}
+
+/* label 行 */
+.sync-whitelist-label {
+  display: inline-flex;
+  align-items: center;
+  /* gap: 4px; */
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  font-weight: 500;
+}
+
+.sync-whitelist-label-text {
+  line-height: 1;
+}
+
+/* 内联提示条：紧跟 label 下方，信息提示风格（蓝/灰色系） */
+.sync-whitelist-hint {
+  font-weight: 400;
+}
+
+/* 输入框：继承所在上下文的输入框样式，作为 fallback 提供基础样式 */
+.sync-whitelist-input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  transition: border-color var(--lanismd-transition-fast);
+  outline: none;
+}
+
+.sync-whitelist-input:focus {
+  border-color: var(--lanismd-accent);
+}

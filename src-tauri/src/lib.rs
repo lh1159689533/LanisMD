@@ -107,6 +107,7 @@ pub fn run() {
             sync_commands::sync_test_connection,
             sync_commands::sync_list_branches,
             sync_commands::sync_browse_remote,
+            sync_commands::sync_preview_pull,
             sync_commands::sync_pull,
             sync_commands::sync_push,
             sync_commands::sync_diff,
