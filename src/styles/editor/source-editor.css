@@ -120,3 +120,12 @@
 .source-editor-root .cm-scroller::-webkit-scrollbar-thumb:hover {
   background: var(--lanismd-scrollbar-thumb-hover);
 }
+
+/* ===== Selection layer z-index fix ===== */
+/* CodeMirror 的 drawSelection() 通过 inline style 给 cm-selectionLayer
+   设置 z-index: -2（above:false 时计算为 -1 - layerPos），
+   在某些 stacking context 下（如 contain 属性）会导致选区背景被遮挡。
+   将其重置为 0，使选区正常显示在文本下方（cm-content 的 z-index 更高） */
+.source-editor-root .cm-selectionLayer {
+  z-index: 0 !important;
+}
