@@ -431,7 +431,6 @@
   flex-shrink: 0;
   padding: 1px 6px;
   border-radius: var(--lanismd-radius-sm);
-  font-size: 10px;
   font-weight: 500;
   line-height: 1.6;
 }

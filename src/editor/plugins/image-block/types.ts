@@ -39,14 +39,18 @@ export function isRelativePath(src: string): boolean {
 /**
  * 将路径中的 `.` 和 `..` 段规范化为干净的绝对路径。
  * 纯字符串处理，不依赖 Node.js path 模块。
+ * 兼容 Windows 反斜杠路径：先统一转为正斜杠再处理。
  *
  * 示例：
- *   "/a/b/c/../d"   -> "/a/b/d"
- *   "/a/b/./c"      -> "/a/b/c"
- *   "/a/b/c/../../d" -> "/a/d"
+ *   "/a/b/c/../d"        -> "/a/b/d"
+ *   "/a/b/./c"           -> "/a/b/c"
+ *   "/a/b/c/../../d"     -> "/a/d"
+ *   "C:\\a\\b\\c\\..\\d" -> "C:/a/b/d"
  */
 function normalizePath(p: string): string {
-  const parts = p.split('/');
+  // Windows 兼容：统一将反斜杠转为正斜杠
+  const normalized = p.replace(/\\/g, '/');
+  const parts = normalized.split('/');
   const resolved: string[] = [];
   for (const seg of parts) {
     if (seg === '.' || seg === '') {
@@ -57,7 +61,7 @@ function normalizePath(p: string): string {
       continue;
     }
     if (seg === '..') {
-      // 向上跳一级，但不超过根目录
+      // 向上跳一级，但不超过根目录（保留盘符如 "C:" 或首个空段）
       if (resolved.length > 1) {
         resolved.pop();
       }
@@ -74,13 +78,16 @@ function normalizePath(p: string): string {
  *
  * 支持 `./`、`../`、多级 `../../` 等相对路径形式，
  * 最终返回规范化的绝对路径（不含 `.` / `..`）。
+ * 兼容 Windows 反斜杠路径格式。
  */
 export function buildAbsolutePath(src: string): string | null {
   const currentFile = useFileStore.getState().currentFile;
   if (!currentFile?.filePath) return null;
 
-  const lastSlash = currentFile.filePath.lastIndexOf('/');
-  const docDir = lastSlash >= 0 ? currentFile.filePath.substring(0, lastSlash) : '';
+  // Windows 兼容：统一转为正斜杠后再查找最后的分隔符
+  const filePath = currentFile.filePath.replace(/\\/g, '/');
+  const lastSlash = filePath.lastIndexOf('/');
+  const docDir = lastSlash >= 0 ? filePath.substring(0, lastSlash) : '';
   // 拼接后通过 normalizePath 解析 .. 和 . 段
   return normalizePath(`${docDir}/${src}`);
 }

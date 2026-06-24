@@ -57,10 +57,12 @@ impl FileHashService {
             }
 
             let abs_path = entry.path().to_string_lossy().to_string();
+            // Windows 兼容：将相对路径中的反斜杠统一为正斜杠，
+            // 确保与 manifest 中（来自远程 API）的路径 key 一致
             let rel_path = entry
                 .path()
                 .strip_prefix(base)
-                .map(|p| p.to_string_lossy().to_string())
+                .map(|p| p.to_string_lossy().to_string().replace('\\', "/"))
                 .unwrap_or_default();
 
             // 跳过 lanismd-sync.json 本身

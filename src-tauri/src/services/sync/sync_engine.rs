@@ -415,10 +415,12 @@ impl SyncEngine {
         let keep_dir_structure = request.keep_dir_structure.unwrap_or(true);
 
         // 保持目录结构时，扫描本地对应子目录；否则扫描整个本地工作区
+        // Windows 兼容：使用 Path::join 构造后统一转为正斜杠，
+        // 避免混合分隔符导致 strip_prefix 等操作失败
         let scan_path = if keep_dir_structure {
             if let Some(dir) = remote_dir {
                 let sub_path = Path::new(&request.local_path).join(dir);
-                sub_path.to_string_lossy().to_string()
+                sub_path.to_string_lossy().to_string().replace('\\', "/")
             } else {
                 request.local_path.clone()
             }
@@ -845,9 +847,11 @@ impl SyncEngine {
         let manifest_opt = ManifestService::read_manifest(local_path)?;
 
         // 确定实际扫描路径：有 sub_dir 时扫描子目录，否则扫描根目录
+        // Windows 兼容：使用 Path::join 确保路径正确拼接
         let scan_path = match sub_dir {
             Some(dir) if !dir.is_empty() && dir != "/" => {
-                format!("{}/{}", local_path, dir.trim_start_matches('/'))
+                let joined = Path::new(local_path).join(dir.trim_start_matches('/'));
+                joined.to_string_lossy().to_string().replace('\\', "/")
             }
             _ => local_path.to_string(),
         };

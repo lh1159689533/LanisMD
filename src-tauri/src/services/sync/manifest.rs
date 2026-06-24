@@ -29,8 +29,19 @@ impl ManifestService {
         let content = fs::read_to_string(&path)
             .map_err(|e| AppError::Config(format!("读取同步清单失败: {}", e)))?;
 
-        let manifest: SyncManifest = serde_json::from_str(&content)
+        let mut manifest: SyncManifest = serde_json::from_str(&content)
             .map_err(|e| AppError::Config(format!("解析同步清单失败: {}", e)))?;
+
+        // Windows 兼容：规范化 file_entries 中的路径 key，
+        // 防止历史遗留的反斜杠 key 导致路径比对失败
+        let needs_normalize = manifest.file_entries.keys().any(|k| k.contains('\\'));
+        if needs_normalize {
+            manifest.file_entries = manifest
+                .file_entries
+                .into_iter()
+                .map(|(k, v)| (k.replace('\\', "/"), v))
+                .collect();
+        }
 
         Ok(Some(manifest))
     }
