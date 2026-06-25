@@ -43,7 +43,7 @@ export default {
         },
       },
       maxWidth: {
-        editor: 'var(--lanismd-editor-max-width, 800px)',
+        editor: 'var(--lanismd-editor-max-width)',
       },
     },
   },

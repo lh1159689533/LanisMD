@@ -372,6 +372,17 @@
   color: var(--lanismd-editor-text);
 }
 
+/* ===== MaxWidth 宽度设置组合控件 ===== */
+.settings-max-width-control {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-md);
+}
+
+.settings-max-width-control .settings-segmented {
+  flex-shrink: 0;
+}
+
 /* ===== Select 下拉选择控件 ===== */
 .settings-select {
   padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);

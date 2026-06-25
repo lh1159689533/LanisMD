@@ -41,7 +41,7 @@
   --lanismd-font-ui: var(--lanismd-font-sans);
 
   /* ===== Layout ===== */
-  --lanismd-editor-max-width: 800px;
+  /* --lanismd-editor-max-width: 由 useTheme.ts 根据用户设置动态写入，勿在此处定义 */
 
   /* ===============================================
    * 主题变量默认值（可被各主题覆盖）
@@ -539,7 +539,11 @@
   --lanismd-ai-error-color: #ef4444;
 
   /* AI 引导图标渐变 */
-  --lanismd-ai-guide-icon-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12));
+  --lanismd-ai-guide-icon-bg: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.12),
+    rgba(168, 85, 247, 0.12)
+  );
 
   /* AI focus-visible 阴影 */
   --lanismd-ai-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);

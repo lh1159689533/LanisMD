@@ -3,7 +3,12 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, highlightActiveLine, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
-import { HighlightStyle, syntaxHighlighting, bracketMatching, indentUnit } from '@codemirror/language';
+import {
+  HighlightStyle,
+  syntaxHighlighting,
+  bracketMatching,
+  indentUnit,
+} from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
@@ -61,7 +66,11 @@ const markdownHighlightStyle = HighlightStyle.define([
   { tag: tags.quote, color: 'var(--lanismd-blockquote-text)', fontStyle: 'italic' },
   { tag: tags.list, color: 'var(--lanismd-accent)' },
   { tag: tags.contentSeparator, color: 'var(--lanismd-hr-color)' },
-  { tag: tags.monospace, color: 'var(--lanismd-inline-code-text)', fontFamily: 'var(--lanismd-font-mono)' },
+  {
+    tag: tags.monospace,
+    color: 'var(--lanismd-inline-code-text)',
+    fontFamily: 'var(--lanismd-font-mono)',
+  },
   { tag: tags.processingInstruction, color: 'var(--lanismd-text-muted)' },
 ]);
 
@@ -222,7 +231,15 @@ export function SourceEditor() {
     };
     // 主题/编辑器配置变化时重建编辑器以应用新的 CSS 变量
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFile?.id, theme, editorFontSize, editorLineHeight, editorWordWrap, editorTabSize, editorBracketMatching]);
+  }, [
+    currentFile?.id,
+    theme,
+    editorFontSize,
+    editorLineHeight,
+    editorWordWrap,
+    editorTabSize,
+    editorBracketMatching,
+  ]);
 
   // 同步外部内容变更到编辑器
   useEffect(() => {
@@ -247,7 +264,7 @@ export function SourceEditor() {
     <div
       ref={containerRef}
       className="source-editor-root"
-      style={{ maxWidth: 'var(--lanismd-editor-max-width, 800px)' }}
+      style={{ maxWidth: 'var(--lanismd-editor-max-width)' }}
       spellCheck={false}
       autoCorrect="off"
       autoCapitalize="off"

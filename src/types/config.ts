@@ -92,7 +92,8 @@ export interface AppConfig {
   editor: {
     fontSize: number;
     fontFamily: string;
-    maxWidth: number;
+    /** 编辑器最大宽度，支持 px 数值（如 800）或百分比字符串（如 '80%'） */
+    maxWidth: number | string;
     lineHeight: number;
     wordWrap: 'soft' | 'hard' | 'off';
     showLineNumbers: boolean;

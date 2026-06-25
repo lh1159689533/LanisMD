@@ -152,6 +152,69 @@ function ShortcutKeys({ shortcut }: { shortcut: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// MaxWidthControl - 最大宽度设置（支持 px 和 % 两种模式）
+// ---------------------------------------------------------------------------
+
+type MaxWidthMode = 'px' | '%';
+
+function parseMaxWidth(value: number | string): { mode: MaxWidthMode; numericValue: number } {
+  if (typeof value === 'string' && value.endsWith('%')) {
+    return { mode: '%', numericValue: parseInt(value, 10) || 80 };
+  }
+  return { mode: 'px', numericValue: typeof value === 'number' ? value : parseInt(value, 10) || 800 };
+}
+
+function MaxWidthControl({
+  value,
+  onChange,
+}: {
+  value: number | string;
+  onChange: (v: number | string) => void;
+}) {
+  const { mode, numericValue } = parseMaxWidth(value);
+
+  const handleModeChange = (newMode: MaxWidthMode) => {
+    if (newMode === mode) return;
+    if (newMode === '%') {
+      // 从 px 切换到百分比，默认 80%
+      onChange('80%');
+    } else {
+      // 从百分比切换到 px，默认 800px
+      onChange(800);
+    }
+  };
+
+  const handleValueChange = (v: number) => {
+    if (mode === '%') {
+      onChange(`${v}%`);
+    } else {
+      onChange(v);
+    }
+  };
+
+  return (
+    <div className="settings-max-width-control">
+      <SettingsSlider
+        value={numericValue}
+        min={mode === '%' ? 50 : 600}
+        max={mode === '%' ? 100 : 1600}
+        step={mode === '%' ? 5 : 50}
+        suffix={mode === '%' ? '%' : 'px'}
+        onChange={handleValueChange}
+      />
+      <SettingsSegmentedControl
+        value={mode}
+        options={[
+          { value: 'px', label: 'px' },
+          { value: '%', label: '%' },
+        ]}
+        onChange={(v) => handleModeChange(v as MaxWidthMode)}
+      />
+    </div>
+  );
+}
+
 export function SettingsDialog() {
   const { closeSettings, settingsActiveSection } = useUIStore();
   const { config, setConfig, setNestedConfig } = useSettingsStore();
@@ -418,15 +481,11 @@ export function SettingsDialog() {
                   />
                 </div>
 
-                {/* E3 - 编辑器最大宽度 */}
+                {/* E3 - 编辑器最大宽度（支持 px 数值和百分比） */}
                 <div className="settings-item">
                   <label className="settings-item-label">最大宽度</label>
-                  <SettingsSlider
+                  <MaxWidthControl
                     value={config.editor.maxWidth}
-                    min={600}
-                    max={1200}
-                    step={50}
-                    suffix="px"
                     onChange={(v) => setNestedConfig('editor.maxWidth', v)}
                   />
                 </div>

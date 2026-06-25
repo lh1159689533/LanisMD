@@ -149,8 +149,12 @@ export function useTheme() {
   useEffect(() => {
     const root = document.documentElement;
 
-    // 最大宽度（修正变量名为 --lanismd-editor-max-width）
-    root.style.setProperty('--lanismd-editor-max-width', `${config.editor.maxWidth}px`);
+    // 最大宽度：支持数值（px）和百分比字符串
+    const maxWidthValue =
+      typeof config.editor.maxWidth === 'string'
+        ? config.editor.maxWidth
+        : `${config.editor.maxWidth}px`;
+    root.style.setProperty('--lanismd-editor-max-width', maxWidthValue);
 
     // 字体大小
     root.style.setProperty('--lanismd-editor-font-size', `${config.editor.fontSize}px`);

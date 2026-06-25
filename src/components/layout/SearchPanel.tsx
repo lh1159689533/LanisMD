@@ -12,14 +12,20 @@ import '../../styles/layout/search-panel.css';
 
 /**
  * 向上查找真正的滚动容器（overflow: auto/scroll）
+ *
+ * 注意：CSS 规范中，当 overflow-x/overflow-y 其中一个设为非 visible 值时，
+ * 另一个会自动从 visible 变为 auto。因此仅检查 computed overflow 不够，
+ * 还需验证元素确实拥有可滚动的内容区域（scrollHeight > clientHeight）。
  */
 function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
   while (el) {
     const { overflow, overflowY } = getComputedStyle(el);
-    if (
+    const hasOverflowStyle =
       overflow === 'auto' || overflow === 'scroll' ||
-      overflowY === 'auto' || overflowY === 'scroll'
-    ) {
+      overflowY === 'auto' || overflowY === 'scroll';
+
+    // 除了 overflow 属性匹配外，还要确认元素确实有可滚动区域
+    if (hasOverflowStyle && el.scrollHeight > el.clientHeight) {
       return el;
     }
     el = el.parentElement;

@@ -141,7 +141,7 @@ impl ConfigService {
             "editor": {
                 "fontSize": 16,
                 "fontFamily": "system",
-                "maxWidth": 800,
+                "maxWidth": "80%",
                 "lineHeight": 1.75,
                 "wordWrap": "soft",
                 "showLineNumbers": true
