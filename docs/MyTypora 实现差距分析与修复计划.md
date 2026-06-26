@@ -1,4 +1,4 @@
-# LanisMD 实现差距分析与修复计划
+# MyTypora 实现差距分析与修复计划
 
 > **阶段**: Develop（开发执行）
 > **日期**: 2026-03-28
@@ -12,15 +12,16 @@
 
 以下问题已在 2026-03-28 修复，记录供追溯：
 
-| 编号                | 问题                                        | 修复内容                                                       |
-| ----------------- | ----------------------------------------- | ---------------------------------------------------------- |
-| ~~BUG-001~~       | 编辑器每次输入都会销毁重建                             | 移除 `useEffect` 中 `activeTab?.content` 依赖，仅依赖 `activeTabId` |
-| ~~BUG-002~~       | 保存按钮使用了错误的图标                              | `RiSettings3Line` → `RiSave3Line`                          |
-| ~~BUG-003~~       | 字数统计逻辑错误                                  | 实现中文按字 + 英文按词的正确计数                                         |
-| ~~ARCH-002~~      | Toast 通知系统无渲染                             | 新建 `ToastContainer.tsx` 并挂载到 `App.tsx`                     |
-| ~~MISS-004~~ (部分) | 标签页中键关闭/Cmd+W/Ctrl+Tab/关闭最后标签新建空白页        | `TabBar.tsx` 添加中键关闭 + `useShortcuts.ts` 绑定快捷键              |
-| ~~MISS-006~~      | 文件打开不支持多选                                 | `multiple: false` → `multiple: true`，循环打开多个文件              |
-| ~~MISS-007~~      | 另存为快捷键未绑定                                 | 绑定 `Cmd+Shift+S` 到 `saveFileAs`                            |
+| 编号                |                     问题                    | 修复内容                                                       |
+| ----------------- | :---------------------------------------: | ---------------------------------------------------------- |
+| ~~BUG-001~~       |               编辑器每次输入都会销毁重建               | 移除 `useEffect` 中 `activeTab?.content` 依赖，仅依赖 `activeTabId` |
+| <br />            |                   <br />                  | <br />                                                     |
+| ~~BUG-002~~       |                保存按钮使用了错误的图标               | `RiSettings3Line` → `RiSave3Line`                          |
+| ~~BUG-003~~       |                  字数统计逻辑错误                 | 实现中文按字 + 英文按词的正确计数                                         |
+| ~~ARCH-002~~      |               Toast 通知系统无渲染               | 新建 `ToastContainer.tsx` 并挂载到 `App.tsx`                     |
+| ~~MISS-004~~ (部分) |     标签页中键关闭/Cmd+W/Ctrl+Tab/关闭最后标签新建空白页    | `TabBar.tsx` 添加中键关闭 + `useShortcuts.ts` 绑定快捷键              |
+| ~~MISS-006~~      |                 文件打开不支持多选                 | `multiple: false` → `multiple: true`，循环打开多个文件              |
+| ~~MISS-007~~      |                 另存为快捷键未绑定                 | 绑定 `Cmd+Shift+S` 到 `saveFileAs`                            |
 | ~~快捷键~~           | Cmd+W / Ctrl+Tab / Ctrl+Shift+Tab / Cmd+, | 已绑定到对应 handler                                             |
 
 ***
@@ -53,7 +54,7 @@
 
 * [ ] 用户可在设置面板开关和调整间隔
 
-* [ ] 自动保存时更新状态栏显示（如短暂闪烁 "已保存" 提示）
+* [x] 自动保存时更新状态栏显示（如短暂闪烁 "已保存" 提示）
 
 **涉及文件**:
 
@@ -189,7 +190,7 @@
 
 * [ ] 安装 `@milkdown/plugin-diagram`（如未安装）
 
-* [ ] `editor-setup.ts` 中加载 diagram 插件
+* [x] `editor-setup.ts` 中加载 diagram 插件
 
 * [ ] 配置 mermaid 渲染函数
 
@@ -246,11 +247,13 @@
 
 **需要实现**:
 
-* [ ] 大纲点击时，通过 Milkdown/ProseMirror API 滚动到对应标题节点
+* [x] 大纲点击时，通过 Milkdown/ProseMirror API 滚动到对应标题节点
 
-* [ ] 高亮当前光标所在的标题（AC6）
+* [x] 高亮当前光标所在的标题（AC6）
 
-* [ ] 添加 `Cmd+Shift+L` 快捷键切换大纲（AC5）
+* [ ] 添加 `Cmd+Shift+L` 快捷键*切换*大**纲（AC5）**
+
+<br />
 
 ***
 
@@ -264,9 +267,9 @@
 
 * [ ] 实现源码模式（直接显示 Markdown 原文，使用 textarea 或 CodeMirror）
 
-* [ ] 添加 `Cmd+/` 快捷键切换 WYSIWYG / 源码模式
+* [x] 添加 `Cmd+/` 快捷键切换 WYSIWYG / 源码模式
 
-* [ ] 两种模式间同步内容
+* [x] 两种模式间同步内容
 
 ***
 
@@ -314,7 +317,7 @@
 
 **需要实现**:
 
-* [ ] 解析 `[toc]` 语法
+* [x] 解析 `[toc]` 语法
 
 * [ ] 在编辑器中渲染为可点击的目录列表
 

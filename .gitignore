@@ -16,5 +16,7 @@ src-tauri/Cargo.lock
 .idea/
 *.swp
 *.swo
-typora-themes/
-docs/
+
+# Self-improvement local logs (per-developer, not shared)
+.codebuddy/.learnings/
+.codebuddy/
