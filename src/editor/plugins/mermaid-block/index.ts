@@ -28,7 +28,7 @@ import { codeBlockSchema } from '@milkdown/kit/preset/commonmark';
 import { codeBlockView } from '@milkdown/kit/component/code-block';
 import { MermaidNodeView } from './node-view';
 import { startThemeObserver, stopThemeObserver } from './theme';
-import { wrapWithFold } from '../code-block-fold';
+import { createLazyCodeBlockNodeView } from '../code-block-lazy';
 
 // ---------------------------------------------------------------------------
 // 自动编辑标记：用于标记新创建的 Mermaid 块需要直接进入编辑模式
@@ -92,9 +92,15 @@ export const mermaidBlockPlugin = $view(codeBlockSchema.node, () => {
       return new MermaidNodeView(node, view, getPos, autoEdit);
     }
 
-    // 其他语言：委托给原始的 CodeMirror 代码块工厂，并包装折叠功能
-    const originalNodeView = originalFactory(node, view, getPos, decorations, innerDecorations);
-    return wrapWithFold(originalNodeView, node);
+    // 其他语言：使用懒加载 NodeView（进入视口时才创建 CodeMirror 实例）
+    return createLazyCodeBlockNodeView(
+      node,
+      view,
+      getPos,
+      decorations,
+      innerDecorations,
+      originalFactory,
+    );
   };
 });
 

@@ -318,12 +318,16 @@ export function EditorCore() {
       <div
         ref={containerRef}
         className="editor-wrapper relative mx-auto py-6 pl-8 pr-8 outline-none"
-        style={{ maxWidth: 'var(--lanismd-editor-max-width)', minHeight: '100%' }}
+        style={{
+          maxWidth: 'var(--lanismd-editor-max-width)',
+          minHeight: '100%',
+        }}
       >
         <div
           ref={rootRef}
           className="milkdown-editor-root"
           data-show-line-numbers={showLineNumbers}
+          data-immersive={immersiveReading || undefined}
           spellCheck={false}
           autoCorrect="off"
           autoCapitalize="off"

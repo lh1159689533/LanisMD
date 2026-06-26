@@ -1,0 +1,59 @@
+/**
+ * 代码块懒加载占位样式
+ *
+ * 让占位 DOM 尽可能接近真实 CodeMirror 代码块的外观，
+ * 避免升级时的视觉跳动。
+ */
+
+.code-block-lazy-placeholder {
+  position: relative;
+  margin: 0.75rem 0;
+  border-radius: var(--lanismd-cm-radius, 8px);
+  background-color: var(--lanismd-cm-bg, #1e1e2e);
+  border: 1px solid var(--lanismd-cm-border, rgba(255, 255, 255, 0.06));
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.code-block-lazy-placeholder:hover {
+  box-shadow: 0 0 0 2px var(--lanismd-accent, #7c3aed) inset;
+}
+
+.code-block-lazy-placeholder .tools {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.code-block-lazy-placeholder .language-label {
+  font-size: 12px;
+  color: var(--lanismd-cm-gutter-text, #6c7086);
+  font-family: var(--lanismd-font-mono, 'JetBrains Mono', monospace);
+  user-select: none;
+}
+
+.code-block-lazy-pre {
+  margin: 0;
+  padding: 8px 16px 16px;
+  overflow-x: auto;
+  font-family: var(--lanismd-font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--lanismd-cm-font-size, 13px);
+  line-height: var(--lanismd-cm-line-height, 1.6);
+  color: var(--lanismd-cm-text, #cdd6f4);
+  white-space: pre-wrap;
+  word-break: break-all;
+  /* 限制最大高度，避免过长的代码块占位过高 */
+  max-height: 400px;
+  overflow-y: hidden;
+  /* 底部渐隐效果 */
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+/* 升级后的透明容器：不参与布局，仅保持 ProseMirror dom 引用 */
+.code-block-lazy-upgraded {
+  display: contents;
+}

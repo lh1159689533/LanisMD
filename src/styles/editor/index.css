@@ -28,6 +28,7 @@
 
 /* Block Components */
 @import './code-block.css';
+@import './code-block-lazy.css';
 @import './image-block.css';
 @import './blockquote.css';
 @import './gfm-alert.css';

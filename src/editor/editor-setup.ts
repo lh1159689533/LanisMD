@@ -1,4 +1,5 @@
-import { Editor, rootCtx, defaultValueCtx } from '@milkdown/kit/core';
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx, parserCtx } from '@milkdown/kit/core';
+import { EditorState } from '@milkdown/kit/prose/state';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import {
   remarkGFMPlugin,
@@ -304,5 +305,37 @@ export function setupEditorListeners(
       .blur(() => {
         listeners?.onBlur?.();
       });
+  });
+}
+
+/**
+ * 切换文档内容（不销毁/重建编辑器实例）
+ *
+ * 原理：创建全新的 EditorState（含新文档 + 空 undo 历史），
+ * 通过 view.updateState() 替换，ProseMirror 会 diff 新旧 DOM 做最小更新。
+ *
+ * @param editor Milkdown Editor 实例
+ * @param newMarkdown 新文件的 markdown 内容
+ */
+export function switchDocument(editor: Editor, newMarkdown: string): void {
+  editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx);
+    const parser = ctx.get(parserCtx);
+
+    // 1. 将 markdown 解析为 ProseMirror doc
+    const doc = parser(newMarkdown);
+
+    // 2. 创建全新的 EditorState（复用当前插件集，重置 history）
+    const newState = EditorState.create({
+      doc,
+      plugins: view.state.plugins,
+    });
+
+    // 3. 替换 EditorView 的 State
+    view.updateState(newState);
+
+    // 4. 触发一次空事务，让 listener 插件感知新文档
+    //    （updateState 不走 dispatchTransaction，listener 不会自动回调）
+    view.dispatch(view.state.tr);
   });
 }
