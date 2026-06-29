@@ -36,11 +36,10 @@ export async function insertFileBlock(view: EditorView) {
   // 3. 根据配置决定存储策略
   const config = useSettingsStore.getState().config;
   let finalPath = selectedPath;
-  const storageDir = config.attachment?.storageDir;
 
-  if (storageDir) {
+  if (config.attachment?.insertAction === 'copy-to-assets') {
     try {
-      finalPath = await copyFileToAttachments(selectedPath, storageDir);
+      finalPath = await copyFileToAttachments(selectedPath, config.attachment.assetsFolderName);
     } catch (e) {
       console.error('复制文件到附件目录失败:', e);
       // 降级为使用原始路径
