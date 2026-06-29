@@ -6,6 +6,14 @@
 .dark,
 .theme-dark {
   /* ===== 1. 应用 UI ===== */
+
+  /* Global */
+  --lanismd-bg-color: #1a1b26;
+  --lanismd-text-color: #c0caf5;
+  --lanismd-border-color: #292e42;
+  --lanismd-text-secondary: #7982a9;
+  --lanismd-input-bg: #24283b;
+  --lanismd-bg-secondary: #1f2335;
   
   /* Editor Area */
   --lanismd-editor-bg: #1a1b26;

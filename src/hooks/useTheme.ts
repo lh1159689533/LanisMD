@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
+import { emit } from '@tauri-apps/api/event';
 import { useSettingsStore } from '@/stores/settings-store';
 import { themeLoader } from '@/services';
 import { isCustomTheme, getCustomThemeId, type BuiltinTheme } from '@/types/config';
 
-// 内置主题与 CSS class 的映射
-const BUILTIN_THEME_CLASS_MAP: Record<BuiltinTheme, string[]> = {
+// 内置主题与 CSS class 的映射（导出供预览窗口复用）
+export const BUILTIN_THEME_CLASS_MAP: Record<BuiltinTheme, string[]> = {
   light: ['theme-light'],
   dark: ['theme-dark', 'dark'], // 保留 dark class 兼容 Tailwind
   sepia: ['theme-sepia'],
@@ -29,8 +30,8 @@ const BUILTIN_THEME_CLASS_MAP: Record<BuiltinTheme, string[]> = {
   'bloom-verdant-dark': ['theme-bloom-verdant-dark', 'dark'],
 };
 
-// 所有可能的主题 class（用于清理）
-const ALL_THEME_CLASSES = [
+// 所有可能的主题 class（用于清理，导出供预览窗口复用）
+export const ALL_THEME_CLASSES = [
   'light',
   'dark',
   'theme-light',
@@ -62,6 +63,15 @@ export function useTheme() {
 
   useEffect(() => {
     /**
+     * 广播主题变更事件到其他窗口（如预览窗口）
+     */
+    const broadcastThemeChange = (theme: string) => {
+      emit('theme-changed', { theme }).catch((err) => {
+        console.error('[useTheme] Failed to broadcast theme change:', err);
+      });
+    };
+
+    /**
      * 应用内置主题
      */
     const applyBuiltinTheme = async (theme: BuiltinTheme) => {
@@ -83,6 +93,9 @@ export function useTheme() {
       } catch (err) {
         console.error('[useTheme] Failed to load user CSS:', err);
       }
+
+      // 广播主题变更事件到预览窗口
+      broadcastThemeChange(theme);
     };
 
     /**
@@ -107,6 +120,9 @@ export function useTheme() {
 
           // 加载用户自定义 CSS 覆盖
           await themeLoader.loadUserCSS(themeId);
+
+          // 广播自定义主题变更事件到预览窗口
+          broadcastThemeChange(`custom:${themeId}`);
         } else {
           console.error(
             `[useTheme] Failed to load custom theme: ${themeId}, falling back to light`,

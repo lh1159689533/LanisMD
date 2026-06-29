@@ -1,0 +1,66 @@
+/**
+ * 文件预览页面 — 自身 UI 样式
+ *
+ * 使用 CSS 变量替代硬编码颜色，确保预览窗口 UI
+ * 能完整跟随所有主题（Nord、Bloom 系列等）的色调。
+ */
+
+/* 页面背景 + 文字色 + 字体 */
+.lanismd-preview-page {
+  background: var(--lanismd-bg-color);
+  color: var(--lanismd-text-color);
+  font-family: var(--lanismd-font-sans);
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.5;
+}
+
+/* 顶部工具栏 */
+.lanismd-preview-toolbar {
+  border-bottom: 1px solid var(--lanismd-border-color);
+  background: var(--lanismd-dialog-nav-bg, var(--lanismd-sidebar-bg));
+}
+
+/* 文件名标题 */
+.lanismd-preview-title {
+  color: var(--lanismd-text-color);
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 500;
+}
+
+/* 次要文字（文件大小、路径提示等） */
+.lanismd-preview-muted {
+  color: var(--lanismd-text-muted);
+  font-size: var(--lanismd-font-size-xs);
+}
+
+/* "用系统软件打开"按钮 — 与主应用「+ 添加仓库」按钮风格完全一致 */
+.lanismd-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--lanismd-accent);
+  border: 1px solid var(--lanismd-accent);
+  border-radius: var(--lanismd-radius-md);
+  cursor: pointer;
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  font-family: inherit;
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+}
+
+.lanismd-preview-btn:hover {
+  background: var(--lanismd-accent);
+  color: #ffffff;
+}
+
+.lanismd-preview-btn:focus,
+.lanismd-preview-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring);
+}
+
+.lanismd-preview-btn:active {
+  opacity: 0.85;
+}

@@ -137,6 +137,15 @@ export interface AppConfig {
   };
   /** 访问外部链接（http/https）前是否弹出确认提示。默认 true */
   confirmExternalLinkOpen: boolean;
+  /** 附件配置 */
+  attachment: {
+    /** 插入附件时的行为 */
+    insertAction: 'copy-to-assets' | 'relative-path' | 'absolute-path';
+    /** 附件资源目录名称（选择"复制到资源目录"时生效） */
+    assetsFolderName: string;
+    /** 预览方式：system=系统默认软件打开，builtin=内置预览组件 */
+    previewMode: 'system' | 'builtin';
+  };
   /** AI 助手配置 */
   ai: {
     enabled: boolean;

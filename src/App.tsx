@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
+import { FilePreview } from './components/preview/FilePreview';
 
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LinkConfirmDialog } from './components/common/LinkConfirmDialog';
+import { DeleteConfirmDialog } from './components/common/DeleteConfirmDialog';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
@@ -28,6 +30,9 @@ import { isTauri } from './utils/platform';
 
 // Check platform once at module level
 const IS_TAURI = isTauri();
+
+// 检测当前是否为预览窗口（通过 URL 路径判断）
+const IS_PREVIEW_WINDOW = window.location.pathname === '/preview';
 
 /**
  * Tauri desktop app mode
@@ -156,6 +161,7 @@ function TauriApp() {
       <QuickOpen />
       <ToastContainer />
       <LinkConfirmDialog />
+      <DeleteConfirmDialog />
     </>
   );
 }
@@ -170,12 +176,18 @@ function BrowserApp() {
     <>
       <BrowserLayout />
       <LinkConfirmDialog />
+      <DeleteConfirmDialog />
     </>
   );
 }
 
 export default function App() {
   useTheme();
+
+  // 预览窗口：直接渲染 FilePreview 组件，不加载主应用
+  if (IS_PREVIEW_WINDOW) {
+    return <FilePreview />;
+  }
 
   return (
     <div

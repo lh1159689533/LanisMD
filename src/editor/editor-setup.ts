@@ -104,6 +104,11 @@ import {
   tocUpdatePlugin,
   tocInputRulePlugin,
 } from './plugins/toc-block';
+import {
+  fileBlockSchema,
+  fileBlockView,
+  fileBlockRemarkPlugin,
+} from './plugins/file-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
@@ -263,6 +268,9 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(remarkMathBlock)
     .use(mathBlockView)
     .use(mathBlockGuardPlugin)
+    .use(fileBlockSchema)
+    .use(fileBlockRemarkPlugin)
+    .use(fileBlockView)
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)

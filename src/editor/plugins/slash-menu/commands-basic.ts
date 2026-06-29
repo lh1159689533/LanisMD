@@ -11,6 +11,7 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 import { openImageDialog } from '../image-block';
 import { createLinkDialog } from '../tooltip-toolbar';
 import { setMermaidAutoEdit } from '../mermaid-block';
+import { insertFileBlock } from '../file-block';
 import type { GfmAlertType } from '../gfm-alert/types';
 
 import { icons } from './icons';
@@ -587,6 +588,12 @@ export const basicSlashCommands: SlashCommand[] = [
     icon: icons.toc,
     keywords: ['toc', 'table of contents', '目录', '导航', 'ml'],
     execute: (view) => insertTocBlock(view),
+  },
+  {
+    label: '附件',
+    icon: icons.file,
+    keywords: ['file', 'attachment', '附件', '文件', 'fj', 'wj'],
+    execute: (view) => insertFileBlock(view),
   },
   {
     label: '提示块',

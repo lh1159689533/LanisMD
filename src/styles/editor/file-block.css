@@ -1,0 +1,133 @@
+/**
+ * 附件卡片样式
+ * 使用统一主题变量，适配所有主题（浅色/深色/Bloom 系列等）
+ */
+
+.lanismd-file-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 8px;
+  background: var(--lanismd-hover-bg);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
+  cursor: default;
+  user-select: none;
+}
+
+.lanismd-file-block:hover {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--lanismd-accent) 12%, transparent);
+}
+
+/* 选中状态 */
+.ProseMirror-selectednode .lanismd-file-block,
+.lanismd-file-block.ProseMirror-selectednode {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lanismd-accent) 25%, transparent);
+}
+
+/* 文件缺失状态 */
+.lanismd-file-block--missing {
+  opacity: 0.7;
+  border-color: var(--lanismd-danger);
+  background: var(--lanismd-danger-bg, color-mix(in srgb, var(--lanismd-danger) 8%, transparent));
+}
+
+.lanismd-file-block--missing:hover {
+  border-color: var(--lanismd-danger);
+}
+
+/* 图标区域 */
+.lanismd-file-block__icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-file-block__icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* 信息区域 */
+.lanismd-file-block__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lanismd-file-block__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lanismd-editor-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lanismd-file-block__size {
+  font-size: 12px;
+  color: var(--lanismd-text-muted);
+}
+
+.lanismd-file-block__status {
+  font-size: 12px;
+  color: var(--lanismd-danger);
+  font-style: italic;
+}
+
+/* 操作按钮区域 */
+.lanismd-file-block__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.lanismd-file-block:hover .lanismd-file-block__actions {
+  opacity: 1;
+}
+
+.lanismd-file-block__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lanismd-text-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.lanismd-file-block__btn:hover {
+  background: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-file-block__btn[data-action='delete']:hover {
+  background: var(--lanismd-danger-bg, color-mix(in srgb, var(--lanismd-danger) 10%, transparent));
+  color: var(--lanismd-danger);
+}
+
+.lanismd-file-block__btn svg {
+  width: 14px;
+  height: 14px;
+}

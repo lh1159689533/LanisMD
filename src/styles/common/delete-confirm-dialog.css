@@ -1,13 +1,13 @@
 /**
- * 外部链接访问确认弹窗样式
+ * 附件删除确认弹窗样式
  *
  * 设计原则：
  * - 全部颜色使用 CSS 变量（var(--lanismd-*)），由主题系统驱动
- * - 不写死任何具体色值（除变量本身在 variables.css 中的默认值）
- * - 类名前缀：.link-confirm-*
+ * - 复用 link-confirm 的变量体系，保持视觉一致性
+ * - 类名前缀：.delete-confirm-*
  */
 
-.link-confirm-overlay {
+.delete-confirm-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -16,14 +16,13 @@
   justify-content: center;
   background: var(--lanismd-link-confirm-overlay-bg);
   padding: 24px;
-  /* 防止点击穿透到下层编辑器 */
   pointer-events: auto;
 }
 
-.link-confirm-dialog {
+.delete-confirm-dialog {
   position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: 460px;
   background: var(--lanismd-link-confirm-bg);
   color: var(--lanismd-link-confirm-text);
   border: var(--lanismd-link-confirm-border);
@@ -36,14 +35,13 @@
   font-family: var(--lanismd-font-ui);
 }
 
-/* 弹窗容器自身（tabIndex=-1）获得焦点时不显示 outline */
-.link-confirm-dialog:focus,
-.link-confirm-dialog:focus-visible {
+.delete-confirm-dialog:focus,
+.delete-confirm-dialog:focus-visible {
   outline: none;
 }
 
 /* 顶部警示栏 */
-.link-confirm-header {
+.delete-confirm-header {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -53,7 +51,7 @@
   padding: 10px 14px;
 }
 
-.link-confirm-icon {
+.delete-confirm-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -63,34 +61,21 @@
   color: var(--lanismd-link-confirm-warning-fg);
 }
 
-.link-confirm-title {
+.delete-confirm-title {
   font-size: var(--lanismd-font-size-md);
   font-weight: 600;
   color: var(--lanismd-link-confirm-warning-fg);
 }
 
 /* 正文 */
-.link-confirm-body {
+.delete-confirm-body {
   font-size: var(--lanismd-font-size-base);
   line-height: 1.6;
   color: var(--lanismd-link-confirm-text);
-  word-break: break-all;
-  white-space: normal;
-}
-
-.link-confirm-leading {
-  margin-right: 4px;
-}
-
-.link-confirm-url {
-  color: var(--lanismd-link-confirm-url-color);
-  font-family: var(--lanismd-font-mono);
-  font-size: var(--lanismd-font-size-sm);
-  word-break: break-all;
 }
 
 /* 底部行 */
-.link-confirm-footer {
+.delete-confirm-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -98,7 +83,7 @@
   margin-top: 4px;
 }
 
-.link-confirm-checkbox {
+.delete-confirm-checkbox {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -109,20 +94,20 @@
   opacity: 0.85;
 }
 
-.link-confirm-checkbox input[type='checkbox'] {
+.delete-confirm-checkbox input[type='checkbox'] {
   width: 14px;
   height: 14px;
   cursor: pointer;
   accent-color: var(--lanismd-link-confirm-btn-color);
 }
 
-.link-confirm-actions {
+.delete-confirm-actions {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.link-confirm-btn {
+.delete-confirm-btn {
   appearance: none;
   border-radius: 999px;
   padding: 6px 18px;
@@ -136,25 +121,25 @@
   background: transparent;
 }
 
-.link-confirm-btn-cancel {
-  border: 1px solid var(--lanismd-editor-border);
+.delete-confirm-btn-cancel {
+  border: 1px solid var(--lanismd-editor-border, #e5e7eb);
   color: var(--lanismd-link-confirm-text);
 }
 
-.link-confirm-btn-cancel:hover {
+.delete-confirm-btn-cancel:hover {
   background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.04));
 }
 
-.link-confirm-btn-confirm {
+.delete-confirm-btn-confirm {
   border: var(--lanismd-link-confirm-btn-border);
   color: var(--lanismd-link-confirm-btn-color);
 }
 
-.link-confirm-btn-confirm:hover {
+.delete-confirm-btn-confirm:hover {
   background: var(--lanismd-link-confirm-warning-bg);
 }
 
-.link-confirm-btn:focus-visible {
+.delete-confirm-btn:focus-visible {
   outline: 2px solid var(--lanismd-link-confirm-btn-color);
   outline-offset: 2px;
 }

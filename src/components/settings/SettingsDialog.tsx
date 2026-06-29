@@ -127,6 +127,7 @@ const SECTIONS = [
   { id: 'appearance', label: '外观' },
   { id: 'editor', label: '编辑器' },
   { id: 'image', label: '图片' },
+  { id: 'attachment', label: '附件' },
   { id: 'ai', label: 'AI 助手' },
   { id: 'sync', label: '远程同步' },
   { id: 'shortcuts', label: '快捷键' },
@@ -641,6 +642,59 @@ export function SettingsDialog() {
                 </div>
                 <div className="settings-item-hint">
                   <p>插入图片选择"复制到资源目录"时，图片将被复制到当前文件同级的此目录中。</p>
+                </div>
+              </div>
+            )}
+
+            {settingsActiveSection === 'attachment' && (
+              <div className="settings-section">
+                {/* AT1 - 插入附件时行为 */}
+                <div className="settings-item">
+                  <label className="settings-item-label">插入附件时</label>
+                  <SettingsSelect
+                    value={config.attachment.insertAction}
+                    options={[
+                      { value: 'copy-to-assets', label: '复制到资源目录' },
+                      { value: 'relative-path', label: '使用相对路径' },
+                      { value: 'absolute-path', label: '使用绝对路径' },
+                    ]}
+                    onChange={(v) => setNestedConfig('attachment.insertAction', v)}
+                  />
+                </div>
+
+                {/* AT2 - 附件资源目录名（仅"复制到资源目录"时显示） */}
+                {config.attachment.insertAction === 'copy-to-assets' && (
+                  <>
+                    <div className="settings-item">
+                      <label className="settings-item-label">资源目录名称</label>
+                      <SettingsTextInput
+                        value={config.attachment.assetsFolderName}
+                        placeholder="assets"
+                        onChange={(v) => setNestedConfig('attachment.assetsFolderName', v)}
+                      />
+                    </div>
+                    <div className="settings-item-hint">
+                      <p>
+                        插入附件选择"复制到资源目录"时，附件将被复制到当前文件同级的此目录中。
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {/* AT3 - 预览方式 */}
+                <div className="settings-item">
+                  <label className="settings-item-label">预览方式</label>
+                  <SettingsSegmentedControl
+                    value={config.attachment.previewMode}
+                    options={[
+                      { value: 'system', label: '系统' },
+                      { value: 'builtin', label: '内置' },
+                    ]}
+                    onChange={(v) => setNestedConfig('attachment.previewMode', v)}
+                  />
+                </div>
+                <div className="settings-item-hint">
+                  <p>选择"系统"将使用系统默认软件打开附件，选择"内置"将使用应用内预览。</p>
                 </div>
               </div>
             )}

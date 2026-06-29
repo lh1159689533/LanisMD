@@ -140,7 +140,6 @@
   margin-top: 12px;
   border-radius: var(--lanismd-radius-md);
   border: 1px solid var(--lanismd-border-color);
-  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
 }
 
 .sync-form-row {
@@ -180,7 +179,7 @@
   padding: 6px 10px;
   border-radius: var(--lanismd-radius-md);
   border: 1px solid var(--lanismd-border-color);
-  background-color: var(--lanismd-editor-bg);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
   color: var(--lanismd-editor-text);
   font-size: var(--lanismd-font-size-sm);
   transition: border-color var(--lanismd-transition-fast);
@@ -339,6 +338,10 @@
 }
 
 @keyframes sync-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

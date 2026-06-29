@@ -1,0 +1,201 @@
+/**
+ * 文件预览页面 — 第三方组件样式覆盖
+ *
+ * 覆盖 @open-file-viewer 的内置样式，使其与主应用主题保持一致。
+ * open-file-viewer 使用 --ofv-* CSS 变量体系，这里将其映射到 --lanismd-* 变量。
+ *
+ * 注意：选择器需要足够的优先级来覆盖组件内建样式。
+ */
+
+/* ===== 1. 核心变量覆盖：让 open-file-viewer 跟随主题 ===== */
+.ofv-root {
+  /* 文本色 */
+  --ofv-text: var(--lanismd-text-color);
+  --ofv-text-muted: var(--lanismd-text-muted);
+  /* 边框 */
+  --ofv-border: var(--lanismd-border-color);
+  /* 按钮 hover */
+  --ofv-button-hover: var(--lanismd-selected-bg);
+
+  --ofv-surface: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
+  --ofv-surface-muted: var(--ofv-surface);
+  --ofv-bg: var(--ofv-surface);
+  --ofv-toolbar-bg: var(--lanismd-dialog-nav-bg, var(--lanismd-sidebar-bg));
+
+  /* 移除 open-file-viewer 默认的外边框，预览页面自身已有结构 */
+  border: none !important;
+
+  /* 字体跟随主应用 */
+  font-family: var(--lanismd-font-sans) !important;
+  font-size: var(--lanismd-font-size-base) !important;
+}
+
+/* 深色主题变量覆盖（当 open-file-viewer 传入 theme="dark" 时） */
+.ofv-theme-dark {
+  --ofv-bg: var(--lanismd-bg-color);
+  --ofv-surface: var(--lanismd-bg-color);
+  --ofv-surface-muted: var(--lanismd-hover-bg);
+  --ofv-text: var(--lanismd-text-color);
+  --ofv-text-muted: var(--lanismd-text-muted);
+  --ofv-border: var(--lanismd-border-color);
+  --ofv-button-hover: var(--lanismd-selected-bg);
+}
+
+/* ===== 2. 通用按钮样式覆盖（覆盖所有工具栏按钮） ===== */
+
+/* 文本预览的工具栏 */
+.ofv-toolbar {
+  background: var(--ofv-toolbar-bg) !important;
+  border-bottom-color: var(--lanismd-border-color) !important;
+  font-size: var(--lanismd-font-size-sm) !important;
+}
+
+/* 图片预览的控制栏（缩小/放大/原始比例/旋转） */
+.ofv-image-controls {
+  background: var(--lanismd-bg-color) !important;
+  border-bottom-color: var(--lanismd-border-color) !important;
+}
+
+/* 统一所有工具栏按钮样式 — 和主应用的按钮风格保持一致 */
+.ofv-toolbar button,
+.ofv-image-controls button {
+  background: transparent !important;
+  color: var(--lanismd-text-color) !important;
+  border-radius: var(--lanismd-radius-md) !important;
+  font-size: var(--lanismd-font-size-sm) !important;
+  font-family: inherit !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid var(--lanismd-accent);
+}
+
+.ofv-toolbar button:not(:disabled):hover,
+.ofv-image-controls button:not(:disabled):hover {
+  background-color: var(--lanismd-accent) !important;
+  color: #fff !important;
+}
+
+/* 按钮 focus 状态 — 替代浏览器默认 outline，使用 accent 色 ring */
+.ofv-toolbar button:focus,
+.ofv-toolbar button:focus-visible,
+.ofv-image-controls button:focus,
+.ofv-image-controls button:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring) !important;
+  border-color: var(--lanismd-accent) !important;
+}
+
+/* ===== 3. 搜索输入框样式 ===== */
+.ofv-toolbar input,
+.ofv-toolbar-search input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--lanismd-radius-md) !important;
+  border: 1px solid var(--lanismd-border-color) !important;
+  background-color: var(--lanismd-editor-bg) !important;
+  color: var(--lanismd-editor-text) !important;
+  font-size: var(--lanismd-font-size-sm) !important;
+  transition: border-color var(--lanismd-transition-fast);
+  outline: none;
+}
+
+/* 搜索框 focus 状态 — accent 色边框 + ring */
+.ofv-toolbar input:focus,
+.ofv-toolbar input:focus-visible,
+.ofv-toolbar-search input:focus,
+.ofv-toolbar-search input:focus-visible {
+  border-color: var(--lanismd-accent) !important;
+}
+
+/* 搜索框 placeholder */
+.ofv-toolbar input::placeholder,
+.ofv-toolbar-search input::placeholder {
+  color: var(--lanismd-text-muted) !important;
+  opacity: 0.6 !important;
+}
+
+/* ===== 4. 视口区域 ===== */
+.ofv-viewport {
+  background: var(--ofv-surface) !important;
+  color: var(--lanismd-text-color) !important;
+}
+
+/* ===== 5. 文本预览特有覆盖 ===== */
+
+/* 隐藏文本预览的操作按钮区域（Wrap/Copy/Download 冗余） */
+.ofv-code-actions {
+  display: none !important;
+}
+
+/* 文本预览内容区域字体 */
+.ofv-code-pre,
+.ofv-text {
+  font-family: var(--lanismd-font-mono, 'JetBrains Mono', monospace) !important;
+  font-size: var(--lanismd-font-size-base, 13px) !important;
+  line-height: 1.6 !important;
+  background: var(--lanismd-bg-color) !important;
+  color: var(--lanismd-text-color) !important;
+}
+
+/* 行号样式 */
+.ofv-code-line-number {
+  color: var(--lanismd-text-muted) !important;
+  opacity: 0.6 !important;
+}
+
+/* ===== 6. 文件信息摘要区域 ===== */
+.ofv-details,
+.ofv-image-info {
+  background: var(--lanismd-bg-color) !important;
+  color: var(--lanismd-text-muted) !important;
+  border-top-color: var(--lanismd-border-color) !important;
+}
+
+.ofv-image-info-item strong {
+  color: var(--lanismd-text-color) !important;
+}
+
+/* ===== 7. 缩放比例文字 ===== */
+.ofv-image-zoom,
+.ofv-toolbar-queue {
+  color: var(--lanismd-text-muted) !important;
+  font-size: var(--lanismd-font-size-sm) !important;
+}
+
+/* ===== 8. Tab 标签页（存档/多Sheet等） ===== */
+.ofv-tabs {
+  background: var(--lanismd-bg-color) !important;
+  border-bottom-color: var(--lanismd-border-color) !important;
+}
+
+.ofv-tabs button {
+  color: var(--lanismd-text-muted) !important;
+  font-size: var(--lanismd-font-size-sm) !important;
+}
+
+.ofv-tabs button:hover {
+  color: var(--lanismd-text-color) !important;
+  background: var(--lanismd-selected-bg) !important;
+}
+
+.ofv-tabs button:focus,
+.ofv-tabs button:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--lanismd-focus-ring) !important;
+}
+
+.ofv-docx {
+  article {
+    span {
+      max-width: 100%;
+
+      div {
+        max-width: 100%;
+        height: auto !important;
+
+        img {
+          height: auto !important;
+        }
+      }
+    }
+  }
+}

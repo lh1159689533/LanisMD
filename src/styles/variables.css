@@ -51,6 +51,9 @@
   --lanismd-bg-color: #ffffff;
   --lanismd-text-color: #1e293b;
   --lanismd-border-color: #e2e8f0;
+  --lanismd-text-secondary: #64748b;
+  --lanismd-input-bg: #ffffff;
+  --lanismd-bg-secondary: #f8fafc;
 
   /* ===== 滚动条 ===== */
   --lanismd-scrollbar-width: 6px;
@@ -488,20 +491,24 @@
   --lanismd-context-menu-item-hover-bg: var(--lanismd-hover-bg);
   --lanismd-context-menu-separator: var(--lanismd-border-color);
 
-  /* 外部链接确认弹窗 */
-  --lanismd-link-confirm-overlay-bg: rgba(0, 0, 0, 0.35);
-  --lanismd-link-confirm-bg: var(--lanismd-editor-bg, #ffffff);
-  --lanismd-link-confirm-border: 1px solid var(--lanismd-border-color);
-  --lanismd-link-confirm-text: var(--lanismd-text-color);
-  --lanismd-link-confirm-shadow: var(--lanismd-shadow-lg, 0 8px 32px rgba(0, 0, 0, 0.15));
-  /* 警示横条（橙色系，复用 alert-warning 色调） */
-  --lanismd-link-confirm-warning-bg: rgba(245, 158, 11, 0.12);
-  --lanismd-link-confirm-warning-fg: #d97706;
+  /* 外部链接 / 删除确认弹窗 */
+  --lanismd-link-confirm-overlay-bg: rgba(0, 0, 0, 0.45);
+  --lanismd-link-confirm-bg: var(--lanismd-editor-bg);
+  --lanismd-link-confirm-border: 1px solid var(--lanismd-editor-border);
+  --lanismd-link-confirm-text: var(--lanismd-editor-text);
+  --lanismd-link-confirm-shadow: var(--lanismd-shadow-lg);
+  /* 警示横条（使用主题 warning 色） */
+  --lanismd-link-confirm-warning-bg: color-mix(
+    in srgb,
+    var(--lanismd-warning, #f59e0b) 15%,
+    transparent
+  );
+  --lanismd-link-confirm-warning-fg: var(--lanismd-warning);
   /* URL 警示色 */
-  --lanismd-link-confirm-url-color: #ea580c;
-  /* 「继续」按钮（描边风格） */
-  --lanismd-link-confirm-btn-color: #ea580c;
-  --lanismd-link-confirm-btn-border: 1px solid #ea580c;
+  --lanismd-link-confirm-url-color: var(--lanismd-danger);
+  /* 「继续/确认」按钮（描边风格，使用主题 warning 色） */
+  --lanismd-link-confirm-btn-color: var(--lanismd-warning);
+  --lanismd-link-confirm-btn-border: 1px solid var(--lanismd-warning);
 
   /* ===============================================
    * AI 模块
@@ -591,10 +598,10 @@
   --lanismd-search-filter-bg: transparent;
   --lanismd-search-filter-border: var(--lanismd-editor-border);
   --lanismd-search-error-bg: rgba(239, 68, 68, 0.1);
-  --lanismd-search-error-text: var(--lanismd-danger, #ef4444);
+  --lanismd-search-error-text: var(--lanismd-danger);
   --lanismd-search-separator: var(--lanismd-border-color);
   --lanismd-search-badge-bg: rgba(37, 99, 235, 0.12);
-  --lanismd-search-badge-text: var(--lanismd-accent, #2563eb);
+  --lanismd-search-badge-text: var(--lanismd-accent);
   --lanismd-search-highlight-bg: rgba(255, 235, 59, 0.35);
   --lanismd-search-highlight-text: inherit;
 

@@ -4,6 +4,7 @@ mod models;
 mod services;
 
 use commands::file_commands;
+use commands::file_block_commands;
 use commands::config_commands;
 use commands::search_commands;
 use commands::ai_commands;
@@ -112,6 +113,11 @@ pub fn run() {
             sync_commands::sync_push,
             sync_commands::sync_diff,
             sync_commands::sync_read_manifest,
+            file_block_commands::copy_file_to_attachments,
+            file_block_commands::get_file_size_formatted,
+            file_block_commands::delete_file_permanent,
+            file_block_commands::open_file_with_system,
+            file_block_commands::check_file_exists,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

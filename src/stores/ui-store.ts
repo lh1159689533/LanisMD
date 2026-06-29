@@ -62,6 +62,19 @@ interface UIState {
     resolve: (result: { confirmed: boolean; dontAskAgain: boolean }) => void;
   } | null;
 
+  /**
+   * 附件删除确认弹窗状态。
+   * - `null` 表示无弹窗
+   * - 非 null 时弹窗显示文件名，用户操作后调用 `resolve`：
+   *   - `confirmed=true, deleteFile=true`：删除节点 + 删除本地文件
+   *   - `confirmed=true, deleteFile=false`：仅移除节点
+   *   - `confirmed=false`：取消操作
+   */
+  deleteConfirm: {
+    fileName: string;
+    resolve: (result: { confirmed: boolean; deleteFile: boolean }) => void;
+  } | null;
+
   toggleSidebar: () => void;
   /** 原子地关闭侧边栏并设置下次打开的宽度 */
   collapseSidebar: (nextWidth: number) => void;
@@ -96,6 +109,14 @@ interface UIState {
   requestLinkConfirm: (url: string) => Promise<{ confirmed: boolean; dontAskAgain: boolean }>;
   /** 由弹窗组件调用：用户做出选择后回调 resolve */
   resolveLinkConfirm: (result: { confirmed: boolean; dontAskAgain: boolean }) => void;
+
+  /**
+   * 请求弹出附件删除确认框。
+   * 返回 Promise，resolve 为 `{ confirmed, deleteFile }`。
+   */
+  requestDeleteConfirm: (fileName: string) => Promise<{ confirmed: boolean; deleteFile: boolean }>;
+  /** 由弹窗组件调用：用户做出选择后回调 resolve */
+  resolveDeleteConfirm: (result: { confirmed: boolean; deleteFile: boolean }) => void;
 }
 
 export const useUIStore = create<UIState>()((set) => ({
@@ -112,6 +133,7 @@ export const useUIStore = create<UIState>()((set) => ({
   toasts: [],
   immersiveReading: readImmersivePersisted(),
   linkConfirm: null,
+  deleteConfirm: null,
 
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   collapseSidebar: (nextWidth) => set({ sidebarOpen: false, sidebarWidth: nextWidth }),
@@ -181,5 +203,23 @@ export const useUIStore = create<UIState>()((set) => ({
         s.linkConfirm.resolve(result);
       }
       return { linkConfirm: null };
+    }),
+
+  requestDeleteConfirm: (fileName) =>
+    new Promise((resolve) => {
+      set((s) => {
+        // 若已有未完成的确认，先按取消处理
+        if (s.deleteConfirm) {
+          s.deleteConfirm.resolve({ confirmed: false, deleteFile: false });
+        }
+        return { deleteConfirm: { fileName, resolve } };
+      });
+    }),
+  resolveDeleteConfirm: (result) =>
+    set((s) => {
+      if (s.deleteConfirm) {
+        s.deleteConfirm.resolve(result);
+      }
+      return { deleteConfirm: null };
     }),
 }));

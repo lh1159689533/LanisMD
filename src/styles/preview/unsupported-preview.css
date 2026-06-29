@@ -1,0 +1,125 @@
+/**
+ * 不支持预览文件的提示样式（卡片风格）
+ * 当文件格式不在内置预览支持列表中时展示
+ */
+
+/* 容器：垂直水平居中 */
+.lanismd-unsupported-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--lanismd-spacing-3xl);
+  font-family: var(--lanismd-font-ui);
+}
+
+/* 卡片主体 */
+.lanismd-unsupported-preview__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 28px 28px;
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: var(--lanismd-radius-xl);
+  background: var(--lanismd-selected-bg);
+  box-shadow: var(--lanismd-shadow-md);
+}
+
+/* 图标区域 */
+.lanismd-unsupported-preview__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: var(--lanismd-hover-bg);
+  color: var(--lanismd-text-muted);
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* 标题 */
+.lanismd-unsupported-preview__title {
+  margin: 0 0 6px;
+  font-size: var(--lanismd-font-size-lg);
+  font-weight: 600;
+  color: var(--lanismd-text-color);
+  text-align: center;
+}
+
+/* 副标题说明 */
+.lanismd-unsupported-preview__subtitle {
+  margin: 0 0 20px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-color);
+  opacity: 0.5;
+  text-align: center;
+}
+
+/* 文件信息列表 */
+.lanismd-unsupported-preview__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-md);
+  width: 100%;
+  margin: 0 0 24px;
+  padding: var(--lanismd-spacing-xl);
+  border-radius: var(--lanismd-radius-lg);
+  background: var(--lanismd-selected-bg);
+}
+
+/* 每一行：标签 + 值 */
+.lanismd-unsupported-preview__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--lanismd-spacing-lg);
+}
+
+.lanismd-unsupported-preview__row dt {
+  flex-shrink: 0;
+  width: 36px;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-text-color);
+  opacity: 0.5;
+}
+
+.lanismd-unsupported-preview__row dd {
+  margin: 0;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-color);
+  word-break: break-all;
+}
+
+/* "用系统软件打开"按钮 — 实心按钮风格 */
+.lanismd-unsupported-preview__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: 6px 10px;
+  justify-content: center;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-md);
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+  color: var(--lanismd-accent-contrast);
+  background-color: var(--lanismd-accent);
+  border-color: var(--lanismd-accent);
+  width: 100%;
+}
+
+.lanismd-unsupported-preview__btn:hover {
+  background: var(--lanismd-accent);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.lanismd-unsupported-preview__btn:active {
+  background: var(--lanismd-accent-hover);
+  box-shadow: none;
+}

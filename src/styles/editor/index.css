@@ -34,6 +34,8 @@
 @import './gfm-alert.css';
 @import './list.css';
 
+@import './file-block.css';
+
 /* Table */
 @import './table.css';
 @import './table-handle.css';

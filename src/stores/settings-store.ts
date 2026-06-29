@@ -34,6 +34,11 @@ const DEFAULT_CONFIG: AppConfig = {
     showOnStartup: true,
   },
   confirmExternalLinkOpen: true,
+  attachment: {
+    insertAction: 'copy-to-assets',
+    assetsFolderName: 'assets',
+    previewMode: 'system',
+  },
   ai: {
     enabled: true,
     currentProvider: 'zhipu',
