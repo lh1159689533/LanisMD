@@ -1,71 +1,21 @@
 /**
- * 外部链接访问确认弹窗样式
+ * 外部链接访问确认弹窗样式（业务个性化部分）
+ *
+ * 基础弹窗布局（overlay、容器、header、footer）由通用 Dialog 组件提供，
+ * 本文件仅保留 LinkConfirmDialog 特有的视觉定制。
  *
  * 设计原则：
  * - 全部颜色使用 CSS 变量（var(--lanismd-*)），由主题系统驱动
- * - 不写死任何具体色值（除变量本身在 variables.css 中的默认值）
  * - 类名前缀：.link-confirm-*
  */
 
-.link-confirm-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--lanismd-link-confirm-overlay-bg);
-  padding: 24px;
-  /* 防止点击穿透到下层编辑器 */
-  pointer-events: auto;
-}
-
-.link-confirm-dialog {
-  position: relative;
-  width: 100%;
-  max-width: 520px;
-  background: var(--lanismd-link-confirm-bg);
-  color: var(--lanismd-link-confirm-text);
-  border: var(--lanismd-link-confirm-border);
-  border-radius: var(--lanismd-radius-xl);
-  box-shadow: var(--lanismd-link-confirm-shadow);
-  padding: 20px 22px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-family: var(--lanismd-font-ui);
-}
-
-/* 弹窗容器自身（tabIndex=-1）获得焦点时不显示 outline */
-.link-confirm-dialog:focus,
-.link-confirm-dialog:focus-visible {
-  outline: none;
-}
-
-/* 顶部警示栏 */
-.link-confirm-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--lanismd-link-confirm-warning-bg);
-  color: var(--lanismd-link-confirm-warning-fg);
-  border-radius: var(--lanismd-radius-md);
-  padding: 10px 14px;
-}
-
-.link-confirm-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+/* 覆盖 Dialog header 的图标颜色 */
+.link-confirm-dialog .lanismd-dialog-header-icon {
   color: var(--lanismd-link-confirm-warning-fg);
 }
 
-.link-confirm-title {
-  font-size: var(--lanismd-font-size-md);
-  font-weight: 600;
+/* 覆盖 Dialog title 的颜色 */
+.link-confirm-dialog .lanismd-dialog-title {
   color: var(--lanismd-link-confirm-warning-fg);
 }
 

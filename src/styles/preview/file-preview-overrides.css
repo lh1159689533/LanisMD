@@ -184,6 +184,8 @@
 }
 
 .ofv-docx {
+  background: transparent !important;
+
   article {
     span {
       max-width: 100%;

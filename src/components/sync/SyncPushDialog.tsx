@@ -4,7 +4,6 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  RiCloseLine,
   RiUploadCloud2Line,
   RiLoader4Line,
   RiLockLine,
@@ -18,6 +17,7 @@ import { useFileTreeStore } from '@/stores/file-tree-store';
 import { cn } from '@/utils/cn';
 import type { DiffResult, RemoteEntry } from '@/types/sync';
 import { mergeIncludePatterns } from '@/types/sync';
+import { Dialog } from '@/components/common/Dialog';
 import { WhitelistInput } from './WhitelistInput';
 
 import '../../styles/sync/sync-dialog.css';
@@ -330,252 +330,19 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
   };
 
   return (
-    <div className="sync-dialog-overlay">
-      <div className="sync-dialog sync-dialog--push">
-        {/* 头部 */}
-        <div className="sync-dialog-header">
-          <div className="sync-dialog-header-icon push">
-            <RiUploadCloud2Line size={16} />
-          </div>
-          <h3 className="sync-dialog-title">推送到远程仓库</h3>
-          <button className="sync-dialog-close" onClick={onClose}>
-            <RiCloseLine size={16} />
-          </button>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      title="推送到远程仓库"
+      icon={
+        <div className="sync-dialog-header-icon push">
+          <RiUploadCloud2Line size={16} />
         </div>
-
-        {/* 内容 */}
-        <div className="sync-dialog-body">
-          {/* 仓库选择 */}
-          <div className="sync-dialog-field">
-            <label className="sync-dialog-label">选择仓库</label>
-            {manifestLocked ? (
-              <div className="sync-dialog-locked-value">
-                <RiLockLine size={13} className="sync-dialog-locked-icon" />
-                <span>{lockedRepoDisplay}</span>
-              </div>
-            ) : (
-              <select
-                className="sync-dialog-select"
-                value={selectedRepoId}
-                onChange={(e) => handleRepoChange(e.target.value)}
-              >
-                <option value="" disabled>
-                  请选择仓库配置
-                </option>
-                {repos.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({r.platform}: {r.owner}/{r.repo})
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* 分支选择 */}
-          <div className="sync-dialog-field">
-            <label className="sync-dialog-label">分支</label>
-            {manifestLocked ? (
-              <div className="sync-dialog-locked-value">
-                <RiLockLine size={13} className="sync-dialog-locked-icon" />
-                <span>{lockedBranch}</span>
-              </div>
-            ) : loadingBranches ? (
-              <div className="sync-dialog-loading">
-                <RiLoader4Line size={14} className="sync-spin" />
-                <span>加载分支列表...</span>
-              </div>
-            ) : branches.length > 0 ? (
-              <select
-                className="sync-dialog-select"
-                value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-              >
-                <option value="" disabled>
-                  请选择分支
-                </option>
-                {branches.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                className="sync-dialog-input"
-                value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-                placeholder="main"
-              />
-            )}
-          </div>
-
-          {/* 锁定提示 */}
-          {manifestLocked && (
-            <div className="sync-dialog-locked-hint">
-              仓库和分支由本地同步配置文件 (lanismd-sync.json) 锁定
-            </div>
-          )}
-
-          {/* 远程目录选择 */}
-          <div className="sync-dialog-field">
-            <label className="sync-dialog-label">远程目录</label>
-            {loadingRemoteDirs ? (
-              <div className="sync-dialog-loading">
-                <RiLoader4Line size={14} className="sync-spin" />
-                <span>加载远程目录...</span>
-              </div>
-            ) : remoteDirError ? (
-              <div className="sync-dialog-select-wrap">
-                <select
-                  className="sync-dialog-select"
-                  value={remoteDir}
-                  onChange={(e) => setRemoteDir(e.target.value)}
-                >
-                  <option value="/">/</option>
-                </select>
-                <span className="sync-dialog-field-hint sync-dialog-field-hint--error">
-                  {remoteDirError}
-                </span>
-              </div>
-            ) : (
-              <div className="sync-dialog-select-wrap">
-                <select
-                  className="sync-dialog-select"
-                  value={remoteDir}
-                  onChange={(e) => setRemoteDir(e.target.value)}
-                >
-                  <option value="" disabled>
-                    请选择远程目录
-                  </option>
-                  <option value="/">/</option>
-                  {remoteDirs.map((dir) => (
-                    <option key={dir.path} value={dir.path}>
-                      /{dir.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* 保持目录结构复选框（仅选择非根目录时显示） */}
-          {remoteDir !== '/' && (
-            <div className="sync-dialog-field sync-dialog-field--checkbox">
-              <label className="sync-dialog-checkbox-label">
-                <input
-                  type="checkbox"
-                  className="sync-dialog-checkbox"
-                  checked={keepDirStructure}
-                  onChange={(e) => setKeepDirStructure(e.target.checked)}
-                />
-                <span>保持本地目录结构</span>
-              </label>
-              <span className="sync-dialog-field-hint">
-                {keepDirStructure
-                  ? `推送本地 /${remoteDir} 目录内容到远程 /${remoteDir}`
-                  : `推送本地工作区所有文件到远程 /${remoteDir}`}
-              </span>
-            </div>
-          )}
-
-          {/* 白名单 */}
-          <WhitelistInput
-            className="sync-dialog-field"
-            value={extraInclude}
-            onChange={setExtraInclude}
-          />
-
-          {/* 变更文件预览 */}
-          <div className="sync-dialog-field">
-            {/* 工具栏：预览按钮 + 参数变更提示 */}
-            <div className="sync-dialog-change-toolbar">
-              <label className="sync-dialog-label sync-dialog-change-toolbar-label">
-                文件预览
-                {scanned && !scanning && (
-                  <span className="sync-dialog-change-count">
-                    {changeList.length > 0 ? ` (${changeList.length})` : ''}
-                  </span>
-                )}
-              </label>
-
-              {filtersChanged && !scanning && (
-                <>
-                  <span className="sync-dialog-filter-changed-inline">
-                    <RiAlertLine size={13} className="sync-dialog-filter-changed-icon" />
-                    <span className="sync-dialog-filter-changed-text">
-                      过滤条件已变更，请重新预览
-                    </span>
-                  </span>
-                  <button
-                    className="sync-dialog-filter-changed-btn"
-                    onClick={handlePreview}
-                  >
-                    <RiRefreshLine size={12} />
-                    <span>重新预览</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* 内容容器 */}
-            <div className="sync-dialog-change-wrap">
-              {!scanned && !scanning ? (
-                <div className="sync-dialog-change-hint">
-                  {!scanned && !scanning && !filtersChanged && (
-                    <button
-                      className="sync-dialog-preview-btn"
-                      onClick={handlePreview}
-                      disabled={manifestLocked ? !lockedConfigId : !selectedRepoId || !branch}
-                    >
-                      <RiEyeLine size={12} />
-                      <span>预览</span>
-                    </button>
-                  )}
-                  <span>点击"预览"查看将要推送的文件</span>
-                </div>
-              ) : scanError && changeList.length === 0 && !scanning ? (
-                <div className="sync-dialog-change-hint">
-                  <span>{scanError}</span>
-                </div>
-              ) : scanned && changeList.length === 0 && !scanning ? (
-                <div className="sync-dialog-change-empty">没有需要推送的文件变更</div>
-              ) : changeList.length > 0 ? (
-                <div className="sync-dialog-change-list">
-                  {changeList.map((entry) => (
-                    <div
-                      key={entry.path}
-                      className={cn(
-                        'sync-dialog-change-item',
-                        `sync-dialog-change-item--${entry.type}`,
-                      )}
-                    >
-                      <span className="sync-dialog-change-path" title={entry.path}>
-                        {entry.path}
-                      </span>
-                      <span className="sync-dialog-change-badge">{getChangeLabel(entry.type)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="sync-dialog-change-placeholder" aria-hidden="true" />
-              )}
-
-              {/* 扫描中浮层 */}
-              {scanning && (
-                <div className="sync-dialog-scanning-overlay">
-                  <div className="sync-dialog-scanning-badge">
-                    <RiLoader4Line size={14} className="sync-spin" />
-                    <span>正在扫描变更...</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 底部操作 */}
-        <div className="sync-dialog-footer">
+      }
+      size="md"
+      className="sync-dialog sync-dialog--push"
+      footer={
+        <>
           <button className="sync-dialog-btn sync-dialog-btn-cancel" onClick={onClose}>
             关闭
           </button>
@@ -587,8 +354,238 @@ export function SyncPushDialog({ onClose }: SyncPushDialogProps) {
             <RiUploadCloud2Line size={14} />
             <span>开始推送</span>
           </button>
+        </>
+      }
+    >
+      <div className="sync-dialog-body-inner">
+        {/* 仓库选择 */}
+        <div className="sync-dialog-field">
+          <label className="sync-dialog-label">选择仓库</label>
+          {manifestLocked ? (
+            <div className="sync-dialog-locked-value">
+              <RiLockLine size={13} className="sync-dialog-locked-icon" />
+              <span>{lockedRepoDisplay}</span>
+            </div>
+          ) : (
+            <select
+              className="sync-dialog-select"
+              value={selectedRepoId}
+              onChange={(e) => handleRepoChange(e.target.value)}
+            >
+              <option value="" disabled>
+                请选择仓库配置
+              </option>
+              {repos.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name} ({r.platform}: {r.owner}/{r.repo})
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* 分支选择 */}
+        <div className="sync-dialog-field">
+          <label className="sync-dialog-label">分支</label>
+          {manifestLocked ? (
+            <div className="sync-dialog-locked-value">
+              <RiLockLine size={13} className="sync-dialog-locked-icon" />
+              <span>{lockedBranch}</span>
+            </div>
+          ) : loadingBranches ? (
+            <div className="sync-dialog-loading">
+              <RiLoader4Line size={14} className="sync-spin" />
+              <span>加载分支列表...</span>
+            </div>
+          ) : branches.length > 0 ? (
+            <select
+              className="sync-dialog-select"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+            >
+              <option value="" disabled>
+                请选择分支
+              </option>
+              {branches.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              className="sync-dialog-input"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              placeholder="main"
+            />
+          )}
+        </div>
+
+        {/* 锁定提示 */}
+        {manifestLocked && (
+          <div className="sync-dialog-locked-hint">
+            仓库和分支由本地同步配置文件 (lanismd-sync.json) 锁定
+          </div>
+        )}
+
+        {/* 远程目录选择 */}
+        <div className="sync-dialog-field">
+          <label className="sync-dialog-label">远程目录</label>
+          {loadingRemoteDirs ? (
+            <div className="sync-dialog-loading">
+              <RiLoader4Line size={14} className="sync-spin" />
+              <span>加载远程目录...</span>
+            </div>
+          ) : remoteDirError ? (
+            <div className="sync-dialog-select-wrap">
+              <select
+                className="sync-dialog-select"
+                value={remoteDir}
+                onChange={(e) => setRemoteDir(e.target.value)}
+              >
+                <option value="/">/</option>
+              </select>
+              <span className="sync-dialog-field-hint sync-dialog-field-hint--error">
+                {remoteDirError}
+              </span>
+            </div>
+          ) : (
+            <div className="sync-dialog-select-wrap">
+              <select
+                className="sync-dialog-select"
+                value={remoteDir}
+                onChange={(e) => setRemoteDir(e.target.value)}
+              >
+                <option value="" disabled>
+                  请选择远程目录
+                </option>
+                <option value="/">/</option>
+                {remoteDirs.map((dir) => (
+                  <option key={dir.path} value={dir.path}>
+                    /{dir.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* 保持目录结构复选框（仅选择非根目录时显示） */}
+        {remoteDir !== '/' && (
+          <div className="sync-dialog-field sync-dialog-field--checkbox">
+            <label className="sync-dialog-checkbox-label">
+              <input
+                type="checkbox"
+                className="sync-dialog-checkbox"
+                checked={keepDirStructure}
+                onChange={(e) => setKeepDirStructure(e.target.checked)}
+              />
+              <span>保持本地目录结构</span>
+            </label>
+            <span className="sync-dialog-field-hint">
+              {keepDirStructure
+                ? `推送本地 /${remoteDir} 目录内容到远程 /${remoteDir}`
+                : `推送本地工作区所有文件到远程 /${remoteDir}`}
+            </span>
+          </div>
+        )}
+
+        {/* 白名单 */}
+        <WhitelistInput
+          className="sync-dialog-field"
+          value={extraInclude}
+          onChange={setExtraInclude}
+        />
+
+        {/* 变更文件预览 */}
+        <div className="sync-dialog-field">
+          {/* 工具栏：预览按钮 + 参数变更提示 */}
+          <div className="sync-dialog-change-toolbar">
+            <label className="sync-dialog-label sync-dialog-change-toolbar-label">
+              文件预览
+              {scanned && !scanning && (
+                <span className="sync-dialog-change-count">
+                  {changeList.length > 0 ? ` (${changeList.length})` : ''}
+                </span>
+              )}
+            </label>
+
+            {filtersChanged && !scanning && (
+              <>
+                <span className="sync-dialog-filter-changed-inline">
+                  <RiAlertLine size={13} className="sync-dialog-filter-changed-icon" />
+                  <span className="sync-dialog-filter-changed-text">
+                    过滤条件已变更，请重新预览
+                  </span>
+                </span>
+                <button
+                  className="sync-dialog-filter-changed-btn"
+                  onClick={handlePreview}
+                >
+                  <RiRefreshLine size={12} />
+                  <span>重新预览</span>
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* 内容容器 */}
+          <div className="sync-dialog-change-wrap">
+            {!scanned && !scanning ? (
+              <div className="sync-dialog-change-hint">
+                {!scanned && !scanning && !filtersChanged && (
+                  <button
+                    className="sync-dialog-preview-btn"
+                    onClick={handlePreview}
+                    disabled={manifestLocked ? !lockedConfigId : !selectedRepoId || !branch}
+                  >
+                    <RiEyeLine size={12} />
+                    <span>预览</span>
+                  </button>
+                )}
+                <span>点击"预览"查看将要推送的文件</span>
+              </div>
+            ) : scanError && changeList.length === 0 && !scanning ? (
+              <div className="sync-dialog-change-hint">
+                <span>{scanError}</span>
+              </div>
+            ) : scanned && changeList.length === 0 && !scanning ? (
+              <div className="sync-dialog-change-empty">没有需要推送的文件变更</div>
+            ) : changeList.length > 0 ? (
+              <div className="sync-dialog-change-list">
+                {changeList.map((entry) => (
+                  <div
+                    key={entry.path}
+                    className={cn(
+                      'sync-dialog-change-item',
+                      `sync-dialog-change-item--${entry.type}`,
+                    )}
+                  >
+                    <span className="sync-dialog-change-path" title={entry.path}>
+                      {entry.path}
+                    </span>
+                    <span className="sync-dialog-change-badge">{getChangeLabel(entry.type)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="sync-dialog-change-placeholder" aria-hidden="true" />
+            )}
+
+            {/* 扫描中浮层 */}
+            {scanning && (
+              <div className="sync-dialog-scanning-overlay">
+                <div className="sync-dialog-scanning-badge">
+                  <RiLoader4Line size={14} className="sync-spin" />
+                  <span>正在扫描变更...</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

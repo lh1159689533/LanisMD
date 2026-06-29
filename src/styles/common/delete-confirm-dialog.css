@@ -1,69 +1,21 @@
 /**
- * 附件删除确认弹窗样式
+ * 附件删除确认弹窗样式（业务个性化部分）
+ *
+ * 基础弹窗布局由通用 Dialog 组件提供，
+ * 本文件仅保留 DeleteConfirmDialog 特有的视觉定制。
  *
  * 设计原则：
  * - 全部颜色使用 CSS 变量（var(--lanismd-*)），由主题系统驱动
- * - 复用 link-confirm 的变量体系，保持视觉一致性
  * - 类名前缀：.delete-confirm-*
  */
 
-.delete-confirm-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--lanismd-link-confirm-overlay-bg);
-  padding: 24px;
-  pointer-events: auto;
-}
-
-.delete-confirm-dialog {
-  position: relative;
-  width: 100%;
-  max-width: 460px;
-  background: var(--lanismd-link-confirm-bg);
-  color: var(--lanismd-link-confirm-text);
-  border: var(--lanismd-link-confirm-border);
-  border-radius: var(--lanismd-radius-xl);
-  box-shadow: var(--lanismd-link-confirm-shadow);
-  padding: 20px 22px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-family: var(--lanismd-font-ui);
-}
-
-.delete-confirm-dialog:focus,
-.delete-confirm-dialog:focus-visible {
-  outline: none;
-}
-
-/* 顶部警示栏 */
-.delete-confirm-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--lanismd-link-confirm-warning-bg);
-  color: var(--lanismd-link-confirm-warning-fg);
-  border-radius: var(--lanismd-radius-md);
-  padding: 10px 14px;
-}
-
-.delete-confirm-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+/* 覆盖 Dialog header 的图标颜色 */
+.delete-confirm-dialog .lanismd-dialog-header-icon {
   color: var(--lanismd-link-confirm-warning-fg);
 }
 
-.delete-confirm-title {
-  font-size: var(--lanismd-font-size-md);
-  font-weight: 600;
+/* 覆盖 Dialog title 的颜色 */
+.delete-confirm-dialog .lanismd-dialog-title {
   color: var(--lanismd-link-confirm-warning-fg);
 }
 

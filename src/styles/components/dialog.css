@@ -1,0 +1,122 @@
+/**
+ * 通用 Dialog 组件样式
+ *
+ * 提供基础弹窗布局（overlay + header / body / footer 三段式），
+ * 内置 sm / md / lg / full 四种尺寸预设。
+ *
+ * 类名前缀：.lanismd-dialog-*
+ */
+
+/* ===== 遮罩层 ===== */
+.lanismd-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  padding: 24px;
+  pointer-events: auto;
+}
+
+/* ===== 弹窗容器 ===== */
+.lanismd-dialog {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--lanismd-radius-lg, 12px);
+  background-color: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
+  border: 1px solid var(--lanismd-border-color);
+  box-shadow: var(--lanismd-shadow-lg);
+  font-family: var(--lanismd-font-ui);
+}
+
+/* 弹窗获得焦点时不显示 outline（用于 tabIndex=-1 场景） */
+.lanismd-dialog:focus,
+.lanismd-dialog:focus-visible {
+  outline: none;
+}
+
+/* ===== 尺寸变体 ===== */
+.lanismd-dialog--sm {
+  max-width: 400px;
+}
+
+.lanismd-dialog--md {
+  max-width: 520px;
+}
+
+.lanismd-dialog--lg {
+  max-width: 640px;
+}
+
+.lanismd-dialog--full {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+/* ===== 头部 ===== */
+.lanismd-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--lanismd-border-color);
+  flex-shrink: 0;
+}
+
+.lanismd-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lanismd-dialog-title {
+  flex: 1;
+  font-size: var(--lanismd-font-size-md);
+  font-weight: 600;
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-secondary);
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.lanismd-dialog-close:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+/* ===== 内容区 ===== */
+.lanismd-dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+/* ===== 底部 ===== */
+.lanismd-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--lanismd-border-color);
+  flex-shrink: 0;
+}

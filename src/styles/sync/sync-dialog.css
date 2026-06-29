@@ -3,41 +3,14 @@
  * 用于 SyncPullDialog 和 SyncPushDialog
  */
 
-/* ===== 遮罩层 ===== */
-.sync-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
-}
+/**
+ * 同步弹窗组件样式（业务个性化部分）
+ *
+ * 基础弹窗布局（overlay、容器、header、footer）由通用 Dialog 组件提供，
+ * 本文件保留 SyncPullDialog 和 SyncPushDialog 特有的视觉定制和表单样式。
+ */
 
-/* ===== 弹窗容器 ===== */
-.sync-dialog {
-  width: 480px;
-  max-width: 90vw;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: var(--lanismd-radius-lg, 12px);
-  background-color: var(--lanismd-dialog-bg, var(--lanismd-editor-bg));
-  border: 1px solid var(--lanismd-border-color);
-  box-shadow: var(--lanismd-shadow-lg);
-}
-
-/* ===== 头部 ===== */
-.sync-dialog-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--lanismd-border-color);
-}
-
+/* ===== 头部图标（覆盖 Dialog 通用图标样式） ===== */
 .sync-dialog-header-icon {
   display: flex;
   align-items: center;
@@ -56,34 +29,8 @@
   background-color: #10b981;
 }
 
-.sync-dialog-title {
-  flex: 1;
-  font-size: var(--lanismd-font-size-md);
-  font-weight: 600;
-  color: var(--lanismd-editor-text);
-}
-
-.sync-dialog-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--lanismd-radius-sm);
-  color: var(--lanismd-text-secondary);
-  transition: all var(--lanismd-transition-fast);
-}
-
-.sync-dialog-close:hover {
-  background-color: var(--lanismd-hover-bg);
-  color: var(--lanismd-editor-text);
-}
-
-/* ===== 内容区 ===== */
-.sync-dialog-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px;
+/* ===== body 内部布局（原 sync-dialog-body 的 flex gap 布局） ===== */
+.sync-dialog-body-inner {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -219,15 +166,7 @@
   line-height: 1.5;
 }
 
-/* ===== 底部按钮区 ===== */
-.sync-dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 20px;
-  border-top: 1px solid var(--lanismd-border-color);
-}
+/* ===== 底部按钮（在 Dialog footer 内） ===== */
 
 .sync-dialog-btn {
   display: inline-flex;
@@ -264,9 +203,9 @@
   filter: brightness(1.1);
 }
 
-/* ===== 推送弹窗加宽 ===== */
-.sync-dialog--push {
-  width: 520px;
+/* ===== 推送弹窗加宽（覆盖 Dialog 的 max-width） ===== */
+.sync-dialog--push.lanismd-dialog {
+  max-width: 520px;
 }
 
 /* ===== 过滤条件变更提示条 ===== */
