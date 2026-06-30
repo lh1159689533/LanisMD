@@ -224,6 +224,8 @@ export function QuickOpen() {
       closeCommandPalette();
       try {
         await openFolder(folderPath);
+        // 切换文件夹后关闭当前已打开的文件（文件属于旧文件夹）
+        useFileStore.getState().closeFile();
       } catch (err) {
         console.error('Failed to open folder from quick open:', err);
       }
