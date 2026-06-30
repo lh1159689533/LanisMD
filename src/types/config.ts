@@ -146,6 +146,11 @@ export interface AppConfig {
     /** 预览方式：system=系统默认软件打开，builtin=内置预览组件 */
     previewMode: 'system' | 'builtin';
   };
+  /** 远程同步配置 */
+  sync: {
+    /** 是否启用远程同步功能 */
+    enabled: boolean;
+  };
   /** AI 助手配置 */
   ai: {
     enabled: boolean;

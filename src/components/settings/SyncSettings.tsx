@@ -14,6 +14,7 @@ import {
 } from 'react-icons/ri';
 import { SiGitee } from 'react-icons/si';
 import { useSyncStore } from '@/stores/sync-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { syncService } from '@/services/tauri/sync-service';
 import { cn } from '@/utils/cn';
 import type { SyncRepoConfig, Platform } from '@/types/sync';
@@ -299,6 +300,8 @@ function RepoListItem({
 
 export function SyncSettings() {
   const { repos, reposLoaded, loadRepos, saveRepo, deleteRepo } = useSyncStore();
+  const syncEnabled = useSettingsStore((s) => s.config.sync.enabled);
+  const setNestedConfig = useSettingsStore((s) => s.setNestedConfig);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -338,48 +341,65 @@ export function SyncSettings() {
 
   return (
     <div className="settings-section sync-settings">
-      {/* 标题区域 */}
-      <div className="sync-settings-header">
-        <div className="settings-section-title">远程仓库</div>
-        {!isAdding && !editingId && (
-          <button className="sync-settings-add-btn" onClick={() => setIsAdding(true)}>
-            <RiAddLine size={14} />
-            <span>添加仓库</span>
-          </button>
-        )}
+      {/* 启用远程同步开关 */}
+      <div className="settings-item">
+        <label className="settings-item-label">启用远程同步</label>
+        <button
+          onClick={() => setNestedConfig('sync.enabled', !syncEnabled)}
+          className={cn('settings-toggle', syncEnabled && 'checked')}
+        >
+          <span className="settings-toggle-thumb" />
+        </button>
       </div>
-
       <div className="settings-item-hint">
-        <p>配置 GitHub 或 Gitee 仓库，用于文档的远程同步。</p>
+        <p>
+          开启后，可通过左侧文件树操作栏的拉取和推送，实现本地和远程仓库的文档同步。目前支持 GitHub
+          和 Gitee 仓库。
+        </p>
       </div>
 
-      {/* 新建表单 */}
-      {isAdding && <RepoForm initialData={{}} onSave={handleSave} onCancel={handleCancel} />}
+      {/* 开关开启时才显示仓库配置区域 */}
+      {syncEnabled && (
+        <>
+          {/* 标题区域 */}
+          <div className="sync-settings-header">
+            <div className="settings-section-title">远程仓库</div>
+            {syncEnabled && !isAdding && !editingId && (
+              <button className="sync-settings-add-btn" onClick={() => setIsAdding(true)}>
+                <RiAddLine size={14} />
+                <span>添加仓库</span>
+              </button>
+            )}
+          </div>
+          {/* 新建表单 */}
+          {isAdding && <RepoForm initialData={{}} onSave={handleSave} onCancel={handleCancel} />}
 
-      {/* 编辑表单 */}
-      {editingRepo && (
-        <RepoForm initialData={editingRepo} onSave={handleSave} onCancel={handleCancel} />
-      )}
-
-      {/* 仓库列表 */}
-      {!isAdding && !editingId && (
-        <div className="sync-repo-list">
-          {repos.length === 0 ? (
-            <div className="sync-repo-empty">
-              <p>尚未配置远程仓库</p>
-              <p className="sync-repo-empty-hint">点击"添加仓库"配置 GitHub 或 Gitee 仓库</p>
-            </div>
-          ) : (
-            repos.map((repo) => (
-              <RepoListItem
-                key={repo.id}
-                repo={repo}
-                onEdit={() => setEditingId(repo.id)}
-                onDelete={() => handleDelete(repo.id)}
-              />
-            ))
+          {/* 编辑表单 */}
+          {editingRepo && (
+            <RepoForm initialData={editingRepo} onSave={handleSave} onCancel={handleCancel} />
           )}
-        </div>
+
+          {/* 仓库列表 */}
+          {!isAdding && !editingId && (
+            <div className="sync-repo-list">
+              {repos.length === 0 ? (
+                <div className="sync-repo-empty">
+                  <p>尚未配置远程仓库</p>
+                  <p className="sync-repo-empty-hint">点击"添加仓库"配置 GitHub 或 Gitee 仓库</p>
+                </div>
+              ) : (
+                repos.map((repo) => (
+                  <RepoListItem
+                    key={repo.id}
+                    repo={repo}
+                    onEdit={() => setEditingId(repo.id)}
+                    onDelete={() => handleDelete(repo.id)}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

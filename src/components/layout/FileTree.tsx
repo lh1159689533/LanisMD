@@ -25,6 +25,7 @@ import { useFileStore } from '@/stores/file-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { useSyncStore } from '@/stores/sync-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
 import { timeAgo } from '@/utils/time';
@@ -728,6 +729,7 @@ export function FileTree() {
   const refreshTree = useFileTreeStore((s) => s.refreshTree);
   const { openFile } = useFileStore();
   const activeSync = useSyncStore((s) => s.activeSync);
+  const syncEnabled = useSettingsStore((s) => s.config.sync.enabled);
   // 仅在同步真正进行中时禁用按钮（completed/error 状态不算进行中）
   const isSyncing = Boolean(
     activeSync && activeSync.phase !== 'completed' && activeSync.phase !== 'error',
@@ -1525,24 +1527,27 @@ export function FileTree() {
             <RiFolderOpenLine size={13} />
           </button>
 
-          {/* 同步按钮：拉取 */}
-          <button
-            onClick={() => setShowPullDialog(true)}
-            className="file-tree-header-btn"
-            title="拉取远程文档"
-            disabled={isSyncing}
-          >
-            <RiDownloadCloud2Line size={13} />
-          </button>
-          {/* 同步按钮：推送 */}
-          <button
-            onClick={() => setShowPushDialog(true)}
-            className="file-tree-header-btn"
-            title="推送到远程仓库"
-            disabled={isSyncing}
-          >
-            <RiUploadCloud2Line size={13} />
-          </button>
+          {/* 同步按钮：仅在远程同步启用时显示 */}
+          {syncEnabled && (
+            <>
+              <button
+                onClick={() => setShowPullDialog(true)}
+                className="file-tree-header-btn"
+                title="拉取远程文档"
+                disabled={isSyncing}
+              >
+                <RiDownloadCloud2Line size={13} />
+              </button>
+              <button
+                onClick={() => setShowPushDialog(true)}
+                className="file-tree-header-btn"
+                title="推送到远程仓库"
+                disabled={isSyncing}
+              >
+                <RiUploadCloud2Line size={13} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 

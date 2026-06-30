@@ -37,10 +37,13 @@ const DEFAULT_CONFIG: AppConfig = {
   attachment: {
     insertAction: 'copy-to-assets',
     assetsFolderName: 'assets',
-    previewMode: 'system',
+    previewMode: 'builtin',
+  },
+  sync: {
+    enabled: false,
   },
   ai: {
-    enabled: true,
+    enabled: false,
     currentProvider: 'zhipu',
     selectedModels: {
       zhipu: '',

@@ -72,14 +72,23 @@ export class FileBlockNodeView implements NodeView {
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'lanismd-file-block__actions';
 
-    const previewBtn = this.createButton('预览', 'preview',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`);
+    const previewBtn = this.createButton(
+      '预览',
+      'preview',
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    );
 
-    const revealBtn = this.createButton('在 Finder 中显示', 'reveal',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`);
+    const revealBtn = this.createButton(
+      '在 Finder 中显示',
+      'reveal',
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+    );
 
-    const deleteBtn = this.createButton('删除', 'delete',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`);
+    const deleteBtn = this.createButton(
+      '删除',
+      'delete',
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+    );
 
     actionsDiv.appendChild(previewBtn);
     actionsDiv.appendChild(revealBtn);
@@ -190,7 +199,7 @@ export class FileBlockNodeView implements NodeView {
    */
   private async handlePreview(src: string, name: string) {
     const config = useSettingsStore.getState().config;
-    const previewMode = config.attachment?.previewMode || 'system';
+    const previewMode = config.attachment?.previewMode || 'builtin';
 
     // 先检查文件是否存在
     try {
