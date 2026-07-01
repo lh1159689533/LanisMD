@@ -9,7 +9,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 
 import { removeSlashTrigger } from '../slash-menu/commands-basic';
 import { getFileSize, copyFileToAttachments } from '@/services/file-block-service';
-import { useSettingsStore } from '@/stores';
+import { useSettingsStore, useFileTreeStore } from '@/stores';
 
 /**
  * 插入文件附件节点
@@ -38,24 +38,36 @@ export async function insertFileBlock(view: EditorView) {
   let finalPath = selectedPath;
 
   if (config.attachment?.insertAction === 'copy-to-assets') {
-    try {
-      finalPath = await copyFileToAttachments(selectedPath, config.attachment.assetsFolderName);
-    } catch (e) {
-      console.error('复制文件到附件目录失败:', e);
-      // 降级为使用原始路径
-      finalPath = selectedPath;
+    const rootPath = useFileTreeStore.getState().rootPath;
+    if (rootPath) {
+      // 拼接为绝对路径：根文件夹 + 配置的资源目录名
+      const assetsFolderName = config.attachment.assetsFolderName || 'assets';
+      const separator = rootPath.includes('\\') ? '\\' : '/';
+      const storageDir = rootPath + separator + assetsFolderName;
+      try {
+        finalPath = await copyFileToAttachments(selectedPath, storageDir);
+      } catch (e) {
+        console.error('复制文件到附件目录失败:', e);
+        // 降级为使用原始路径
+        finalPath = selectedPath;
+      }
     }
+    // 未打开文件夹时保持原始路径
   }
 
-  // 4. 获取文件大小
+  // 4. 从最终路径重新提取文件名（复制到资源目录时可能因重名而改变）
+  const finalSeparator = finalPath.includes('\\') ? '\\' : '/';
+  const finalFileName = finalPath.split(finalSeparator).pop() || fileName;
+
+  // 5. 获取文件大小（使用最终路径）
   let size = '';
   try {
-    size = await getFileSize(selectedPath);
+    size = await getFileSize(finalPath);
   } catch {
     // 忽略，NodeView 会异步获取
   }
 
-  // 5. 插入 file_block 节点
+  // 6. 插入 file_block 节点
   const { state, dispatch } = view;
   const schema = state.schema;
   const fileBlockType = schema.nodes.file_block;
@@ -63,7 +75,7 @@ export async function insertFileBlock(view: EditorView) {
 
   const { $from } = state.selection;
   const parent = $from.parent;
-  const fileNode = fileBlockType.create({ src: finalPath, name: fileName, size });
+  const fileNode = fileBlockType.create({ src: finalPath, name: finalFileName, size });
 
   if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
     // 替换当前空段落
