@@ -17,6 +17,7 @@ export {
   type ErrorCode,
   type AppError,
   type Toast,
+  type ToastAction,
   BUILTIN_THEME_LIST,
   THEME_LIST,
   isCustomTheme,

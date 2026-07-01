@@ -23,12 +23,14 @@ import {
   model3dPlugin,
   gisPlugin,
   fallbackPlugin,
+  PreviewContext,
 } from '@open-file-viewer/core';
 import '@open-file-viewer/core/style.css';
 import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 import { openFileWithSystem, getFileSize, checkFileExists } from '@/services/file-block-service';
 import { usePreviewTheme } from '@/hooks/usePreviewTheme';
+import { useUIStore } from '@/stores/ui-store';
 import '@/styles/preview/file-preview.css';
 import '@/styles/preview/unsupported-preview.css';
 import '@/styles/preview/file-preview-overrides.css';
@@ -96,6 +98,59 @@ export function FilePreview() {
     await openFileWithSystem(filePath);
   };
 
+  const onRenderfallback = (ctx: PreviewContext) => {
+    const el = document.createElement('div');
+    el.className = 'lanismd-unsupported-preview';
+
+    // 文件信息行
+    const infoHtml = [
+      `<div class="lanismd-unsupported-preview__row"><dt>文件</dt><dd>${ctx.file.name}</dd></div>`,
+      `<div class="lanismd-unsupported-preview__row"><dt>格式</dt><dd>${ctx.file.extension ? `.${ctx.file.extension}` : '未知'}</dd></div>`,
+      fileSize
+        ? `<div class="lanismd-unsupported-preview__row"><dt>大小</dt><dd>${fileSize}</dd></div>`
+        : '',
+    ].join('');
+
+    // 卡片结构
+    const card = document.createElement('div');
+    card.className = 'lanismd-unsupported-preview__card';
+    card.innerHTML = `
+                  <div class="lanismd-unsupported-preview__icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="12" y1="18" x2="12" y2="12"/>
+                      <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                  </div>
+                  <h2 class="lanismd-unsupported-preview__title">暂不支持预览</h2>
+                  <p class="lanismd-unsupported-preview__subtitle">该文件格式无法在应用内预览</p>
+                  <dl class="lanismd-unsupported-preview__info">${infoHtml}</dl>
+                `;
+
+    // "用系统软件打开"按钮
+    const btn = document.createElement('button');
+    btn.className = 'lanismd-unsupported-preview__btn';
+    btn.textContent = '用系统软件打开';
+    btn.addEventListener('click', () => openFileWithSystem(filePath));
+    card.appendChild(btn);
+
+    el.appendChild(card);
+    ctx.viewport.appendChild(el);
+    return { destroy: () => el.remove() };
+  };
+
+  const onError = (errorMsg: string) => {
+    console.error('预览窗口创建失败:', errorMsg);
+    useUIStore.getState().addToast({
+      type: 'error',
+      message: `预览失败: ${errorMsg}`,
+      actions: [
+        { label: '用系统软件打开', onClick: () => openFileWithSystem(filePath), primary: true },
+      ],
+    });
+  };
+
   if (!filePath) {
     return (
       <div className="lanismd-preview-page flex h-screen items-center justify-center">
@@ -160,54 +215,14 @@ export function FilePreview() {
             fallback="custom"
             onError={(error, file) => {
               console.log('error:', error, file);
-              // 预览失败时降级为系统打开
-              openFileWithSystem(filePath);
+              const errorMsg = error instanceof Error ? error.message : String(error);
+              onError(errorMsg);
             }}
-            renderFallback={(ctx) => {
-              const el = document.createElement('div');
-              el.className = 'lanismd-unsupported-preview';
-
-              // 文件信息行
-              const infoHtml = [
-                `<div class="lanismd-unsupported-preview__row"><dt>文件</dt><dd>${ctx.file.name}</dd></div>`,
-                `<div class="lanismd-unsupported-preview__row"><dt>格式</dt><dd>${ctx.file.extension ? `.${ctx.file.extension}` : '未知'}</dd></div>`,
-                fileSize
-                  ? `<div class="lanismd-unsupported-preview__row"><dt>大小</dt><dd>${fileSize}</dd></div>`
-                  : '',
-              ].join('');
-
-              // 卡片结构
-              const card = document.createElement('div');
-              card.className = 'lanismd-unsupported-preview__card';
-              card.innerHTML = `
-                  <div class="lanismd-unsupported-preview__icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="12" y1="18" x2="12" y2="12"/>
-                      <line x1="9" y1="15" x2="15" y2="15"/>
-                    </svg>
-                  </div>
-                  <h2 class="lanismd-unsupported-preview__title">暂不支持预览</h2>
-                  <p class="lanismd-unsupported-preview__subtitle">该文件格式无法在应用内预览</p>
-                  <dl class="lanismd-unsupported-preview__info">${infoHtml}</dl>
-                `;
-
-              // "用系统软件打开"按钮
-              const btn = document.createElement('button');
-              btn.className = 'lanismd-unsupported-preview__btn';
-              btn.textContent = '用系统软件打开';
-              btn.addEventListener('click', () => openFileWithSystem(filePath));
-              card.appendChild(btn);
-
-              el.appendChild(card);
-              ctx.viewport.appendChild(el);
-              return { destroy: () => el.remove() };
-            }}
+            renderFallback={onRenderfallback}
             onUnsupported={(file) => {
               console.log('onUnsupported:', file);
-              // 预览失败时降级为系统打开
-              openFileWithSystem(filePath);
+              const ext = file?.extension || file?.name?.split('.').pop() || '未知';
+              onError(`不支持预览 .${ext} 格式的文件`);
             }}
             onLoad={(file) => {
               console.log('onLoad:', file);

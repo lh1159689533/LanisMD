@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "Default capabilities for LanisMD",
-  "windows": ["main", "file-preview"],
+  "windows": ["main", "file-preview-*"],
   "permissions": [
     "core:default",
     "core:webview:allow-create-webview-window",
@@ -70,6 +70,7 @@
     "core:window:allow-is-fullscreen",
     "core:window:allow-is-maximized",
     "core:window:allow-toggle-maximize",
+    "core:window:allow-set-focus",
     "core:window:allow-set-decorations",
     "core:window:allow-set-title-bar-style",
     "core:window:allow-start-dragging",

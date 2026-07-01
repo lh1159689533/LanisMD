@@ -196,9 +196,22 @@ export interface AppError {
   message: string;
 }
 
+/** Toast 操作按钮 */
+export interface ToastAction {
+  /** 按钮文字 */
+  label: string;
+  /** 点击回调 */
+  onClick: () => void;
+  /** 是否为主要按钮（蓝色高亮） */
+  primary?: boolean;
+}
+
 export interface Toast {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error';
   message: string;
+  /** 自动消失时间（毫秒），warning/error 强制为 0（不自动消失） */
   duration?: number;
+  /** 操作按钮列表，仅 warning/error 类型使用 */
+  actions?: ToastAction[];
 }

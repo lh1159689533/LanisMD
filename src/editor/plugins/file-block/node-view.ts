@@ -6,8 +6,6 @@
 
 import type { EditorView, NodeView } from '@milkdown/kit/prose/view';
 import type { Node } from '@milkdown/kit/prose/model';
-
-import { getFileIcon } from './file-icons';
 import {
   getFileSize,
   deleteFilePermanent,
@@ -17,6 +15,8 @@ import {
 import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores';
 import { useUIStore } from '@/stores/ui-store';
+import { getFileIcon } from './file-icons';
+import { Event as TauriEvent } from '@tauri-apps/api/event';
 
 export class FileBlockNodeView implements NodeView {
   dom: HTMLElement;
@@ -195,6 +195,21 @@ export class FileBlockNodeView implements NodeView {
   }
 
   /**
+   * 根据文件路径生成唯一的预览窗口 label
+   * 使用简单的字符串哈希，确保 label 符合 Tauri 的命名规范（字母数字和连字符）
+   */
+  private static generatePreviewLabel(src: string): string {
+    let hash = 0;
+    for (let i = 0; i < src.length; i++) {
+      const char = src.charCodeAt(i);
+      hash = ((hash << 5) - hash + char) | 0;
+    }
+    // 转为正整数的十六进制字符串
+    const hexHash = (hash >>> 0).toString(16);
+    return `file-preview-${hexHash}`;
+  }
+
+  /**
    * 预览文件
    */
   private async handlePreview(src: string, name: string) {
@@ -213,11 +228,31 @@ export class FileBlockNodeView implements NodeView {
     }
 
     if (previewMode === 'builtin') {
-      // 内置预览：创建新 Tauri 窗口，携带当前主题参数
+      const onError = (e: unknown) => {
+        console.error('预览窗口创建失败:', e);
+        const errorMsg = (e as TauriEvent<string>)?.payload ?? String(e);
+        useUIStore.getState().addToast({
+          type: 'error',
+          message: `预览失败: ${errorMsg}`,
+          actions: [
+            { label: '用系统软件打开', onClick: () => openFileWithSystem(src), primary: true },
+          ],
+        });
+      };
+      // 内置预览：创建新 Tauri 窗口，基于文件路径生成唯一 label
       try {
         const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+        const label = FileBlockNodeView.generatePreviewLabel(src);
+
+        // 尝试获取已有的同文件预览窗口，存在则聚焦
+        const existing = await WebviewWindow.getByLabel(label);
+        if (existing) {
+          await existing.setFocus();
+          return;
+        }
+
         const currentTheme = config.theme || 'system';
-        const previewWindow = new WebviewWindow('file-preview', {
+        const previewWindow = new WebviewWindow(label, {
           url: `/preview?file=${encodeURIComponent(src)}&theme=${encodeURIComponent(currentTheme)}`,
           title: name,
           width: 900,
@@ -226,14 +261,9 @@ export class FileBlockNodeView implements NodeView {
           resizable: true,
         });
         // 监听创建错误
-        previewWindow.once('tauri://error', (e) => {
-          console.error('预览窗口创建失败:', e);
-          // 降级为系统打开
-          openFileWithSystem(src);
-        });
-      } catch {
-        // 降级为系统打开
-        await openFileWithSystem(src);
+        previewWindow.once('tauri://error', onError);
+      } catch (err) {
+        onError(err);
       }
     } else {
       // 系统默认软件打开
