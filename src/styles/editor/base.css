@@ -14,7 +14,7 @@
   caret-color: var(--lanismd-accent);
   word-wrap: var(--lanismd-editor-word-wrap, normal);
   overflow-wrap: var(--lanismd-editor-word-wrap, normal);
-  overflow-x: var(--lanismd-editor-overflow-x, hidden);
+  overflow-x: var(--lanismd-editor-overflow-x, clip);
   /* 为 block-handle 预留左侧可见缓冲区（handle 定位在内容左外侧约 -62px 处，
      此处给 80px padding 让其落入 padding 区，再用等量负 margin 保持内容视觉位置不变；
      overflow-x 继续生效，长代码块等仍会被裁剪 */

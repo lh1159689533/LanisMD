@@ -8,6 +8,7 @@
  * 导出 `registerContextMenu` 供编辑器注册右键菜单。
  */
 
-export { runAiCommand } from './generator';
+export { runAiCommand, runUnifiedAiPopup } from './generator';
+export type { CommandResolver } from './generator';
 export { registerContextMenu } from './context-menu';
 export type { AiRunContext } from './types';

@@ -32,6 +32,12 @@ function createPlaceholderDecorations(state: import('@milkdown/kit/prose/state')
     return DecorationSet.empty;
   }
 
+  // 仅在顶层正文段落显示：$from.depth === 1 表示光标位于 doc 的直接子段落中。
+  // 表格单元格、引用块、列表项等嵌套容器内的空段落 depth 均 > 1，需排除。
+  if ($from.depth !== 1) {
+    return DecorationSet.empty;
+  }
+
   // 获取该段落在文档中的起始位置
   const pos = $from.before();
 

@@ -26,8 +26,8 @@ import { showInlineDiff } from './inline-diff';
 import { createPolishPopup } from './polish-popup';
 import { createAiPopup, TRANSLATE_LANGUAGES } from './ai-popup';
 import type { TranslateLanguageId } from './ai-popup';
-import { createGeneratorPopup } from './generator-popup';
-import type { GeneratorPopupType } from './generator-popup';
+import { createGeneratorPopup, createUnifiedGeneratorPopup } from './generator-popup';
+import type { GeneratorPopupType, GeneratorCommandOption } from './generator-popup';
 import { showFirstUseGuide } from './first-use-guide';
 import type { AiRunContext } from './types';
 
@@ -93,6 +93,175 @@ export async function runAiCommand(
   };
 
   await runStreaming(ctx, params, extra);
+}
+
+// ---------------------------------------------------------------------------
+// 统一 AI 助手弹窗入口
+// ---------------------------------------------------------------------------
+
+/**
+ * 用于构建 AiCommand 的回调类型（延迟构建，按需获取）
+ */
+export type CommandResolver = (commandId: string) => AiCommand | null;
+
+/**
+ * 打开统一 AI 助手弹窗。
+ *
+ * 与 runAiCommand 不同，此函数自己管理弹窗内的流式生成流程，
+ * 避免和 runAiCommand 内部的 generatorPopup 模式冲突（防止双重弹窗）。
+ *
+ * @param view - ProseMirror EditorView
+ * @param commandOptions - Tab 选项列表
+ * @param resolveCommand - 按 commandId 解析 AiCommand 的回调
+ * @param defaultCommandId - 默认选中的指令 id
+ */
+export async function runUnifiedAiPopup(
+  view: EditorView,
+  commandOptions: GeneratorCommandOption[],
+  resolveCommand: CommandResolver,
+  defaultCommandId?: string,
+): Promise<void> {
+  if (commandOptions.length === 0) return;
+
+  // Key 未配置时弹出引导对话框
+  await useAiStore.getState().refreshKeyStatus();
+  const { config } = useSettingsStore.getState();
+  const providerId = config.ai?.currentProvider ?? 'zhipu';
+  const hasKey = useAiStore.getState().keyStatus[providerId];
+  if (!hasKey) {
+    void showFirstUseGuide();
+    return;
+  }
+
+  const model =
+    config.ai?.selectedModels?.[providerId] ??
+    (providerId === 'zhipu' ? 'glm-4-flash' : '');
+  if (!model) {
+    void showFirstUseGuide();
+    return;
+  }
+
+  const { state } = view;
+  const { from, to } = state.selection;
+  let selection = '';
+  if (from !== to) {
+    selection = state.doc.textBetween(from, to, '\n', '\n');
+  }
+
+  let context = '';
+  try {
+    const $pos = state.doc.resolve(from);
+    const blockStart = $pos.start($pos.depth);
+    const startPos = Math.max(0, blockStart - 600);
+    context = state.doc.textBetween(startPos, from, '\n', '\n');
+  } catch {
+    // 定位失败则留空
+  }
+
+  let cancelFn: (() => Promise<void>) | null = null;
+  let currentRequestId: string | null = null;
+  let finished = false;
+  let lastUserArg = '';
+  let activeCommand: AiCommand | null = null;
+
+  /** 启动流式生成 */
+  async function startStream(commandId: string, arg: string) {
+    const command = resolveCommand(commandId);
+    if (!command) return;
+    activeCommand = command;
+    finished = false;
+    lastUserArg = arg;
+
+    const promptInput: AiPromptInput = { selection, context, arg };
+    const messages: AiChatMessage[] = command.buildPrompt(promptInput);
+
+    const params: AiChatParams = {
+      providerId,
+      model,
+      messages,
+      temperature: config.ai?.temperature,
+      maxTokens: config.ai?.maxTokens,
+      customBaseUrl:
+        providerId === 'custom' ? config.ai?.customBaseUrl : undefined,
+    };
+
+    try {
+      const handle = await aiService.startAiStream(params, {
+        onDelta: (delta) => {
+          popup.appendContent(delta);
+        },
+        onDone: () => {
+          if (finished) return;
+          finished = true;
+          popup.setDone();
+          if (currentRequestId) {
+            useAiStore.getState().untrackRequest(currentRequestId);
+            currentRequestId = null;
+          }
+        },
+        onError: (err) => {
+          if (finished) return;
+          finished = true;
+          if (currentRequestId) {
+            useAiStore.getState().untrackRequest(currentRequestId);
+            currentRequestId = null;
+          }
+          if (err.code === 'canceled') return;
+          popup.setError(getErrorMessage(err.code, err.message));
+        },
+      });
+
+      cancelFn = handle.cancel;
+      currentRequestId = handle.requestId;
+      useAiStore.getState().trackRequest({
+        requestId: handle.requestId,
+        cancel: handle.cancel,
+      });
+    } catch (e) {
+      finished = true;
+      const msg = e instanceof Error ? e.message : String(e);
+      popup.setError(getErrorMessage('unknown', msg));
+    }
+  }
+
+  /** 取消当前正在进行的请求 */
+  function cancelCurrent() {
+    if (cancelFn && !finished) void cancelFn();
+    if (currentRequestId) {
+      useAiStore.getState().untrackRequest(currentRequestId);
+      currentRequestId = null;
+    }
+    cancelFn = null;
+  }
+
+  const popup = createUnifiedGeneratorPopup({
+    view,
+    pos: from,
+    commands: commandOptions,
+    defaultCommandId,
+    onStart: (commandId, arg) => {
+      popup.switchToResult();
+      void startStream(commandId, arg);
+    },
+    onAccept: (_commandId, result) => {
+      cancelCurrent();
+      if (!activeCommand) return;
+      const cleanedText = cleanOutput(activeCommand.insertMode, result);
+      const ctx: AiRunContext = { view, command: activeCommand, from, to, selection, context };
+      commitResult(ctx, cleanedText);
+      recordAiHistory(activeCommand, result, lastUserArg || undefined);
+    },
+    onReject: () => {
+      cancelCurrent();
+    },
+    onRetry: (_commandId, _arg) => {
+      // 仅取消当前请求；UI 回到阶段 1 由弹窗内部完成
+      cancelCurrent();
+    },
+    onClose: () => {
+      cancelCurrent();
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -498,11 +667,9 @@ async function runWithGeneratorPopup(
     onReject: () => {
       cancelCurrent();
     },
-    onRetry: (arg) => {
-      lastUserArg = arg;
-      // 取消当前请求，用修改后的输入重新生成
+    onRetry: (_arg) => {
+      // 取消当前请求；UI 回到阶段 1 由弹窗内部完成，用户重新点击"开始生成"触发 onStart
       cancelCurrent();
-      void startStream(arg);
     },
     onClose: () => {
       cancelCurrent();

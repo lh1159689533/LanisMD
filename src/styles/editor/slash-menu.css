@@ -6,7 +6,7 @@
 .milkdown-slash {
   display: none;
   position: absolute;
-  min-width: 200px;
+  width: 280px;
   z-index: 50;
   /* 外层不裁剪，子菜单需要溢出显示 */
   overflow: visible;
@@ -19,7 +19,7 @@
   border-radius: var(--lanismd-radius-lg);
   box-shadow: var(--lanismd-shadow-md);
   padding: var(--lanismd-spacing-sm);
-  max-height: 280px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
@@ -42,14 +42,79 @@
   border-radius: 2px;
 }
 
+/* ---------------------------------------------------------------------------
+ * 最近使用区域
+ * ------------------------------------------------------------------------- */
+
+.milkdown-slash-section-header {
+  padding: 4px 8px 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--lanismd-text-muted);
+  user-select: none;
+}
+
+.milkdown-slash-recent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 8px 8px;
+}
+
+.milkdown-slash-recent-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--lanismd-radius-md);
+  background: var(--lanismd-selected-bg);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.milkdown-slash-recent-tag:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.milkdown-slash-recent-tag-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.milkdown-slash-recent-tag-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.milkdown-slash-recent-tag-label {
+  font-size: 12px;
+  color: var(--lanismd-editor-text);
+  white-space: nowrap;
+}
+
+/* 分隔线 */
+.milkdown-slash-separator {
+  height: 1px;
+  margin: 4px 8px;
+  background-color: var(--lanismd-editor-border);
+}
+
+/* ---------------------------------------------------------------------------
+ * 命令列表项
+ * ------------------------------------------------------------------------- */
+
 .milkdown-slash-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: var(--lanismd-spacing-md) var(--lanismd-spacing-lg);
+  padding: 6px 8px;
   border-radius: var(--lanismd-radius-md);
   cursor: pointer;
-  font-size: var(--lanismd-font-size-md);
   color: var(--lanismd-editor-text);
   transition: background-color var(--lanismd-transition-normal);
   user-select: none;
@@ -60,24 +125,60 @@
   background-color: var(--lanismd-hover-bg);
 }
 
+/* 图标容器 - 适配 36x36 彩色方块图标 */
 .milkdown-slash-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--lanismd-radius-md);
-  background: var(--lanismd-selected-bg);
-  color: var(--lanismd-accent);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.milkdown-slash-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* 中间信息区域：名称 + 描述 */
+.milkdown-slash-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .milkdown-slash-label {
-  flex: 1;
   font-size: var(--lanismd-font-size-base);
   font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+.milkdown-slash-desc {
+  font-size: 11px;
+  color: var(--lanismd-text-muted);
+  line-height: 1.3;
+}
+
+/* 右侧 markdown 语法标记 */
+.milkdown-slash-markdown {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  font-family: var(--lanismd-font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  background: var(--lanismd-selected-bg);
+  border-radius: var(--lanismd-radius-sm);
+}
+
+/* 兼容旧的 shortcut 类名 */
 .milkdown-slash-shortcut {
   font-size: var(--lanismd-font-size-xs);
   color: var(--lanismd-text-muted);
@@ -91,7 +192,10 @@
   text-align: center;
 }
 
-/* 展开箭头（有子菜单的项） */
+/* ---------------------------------------------------------------------------
+ * 展开箭头（有子菜单的项）
+ * ------------------------------------------------------------------------- */
+
 .milkdown-slash-arrow {
   display: flex;
   align-items: center;
@@ -107,7 +211,10 @@
   color: var(--lanismd-editor-text);
 }
 
-/* 右侧展开子菜单 */
+/* ---------------------------------------------------------------------------
+ * 右侧展开子菜单
+ * ------------------------------------------------------------------------- */
+
 .milkdown-slash-submenu {
   position: absolute;
   background: var(--lanismd-editor-bg);
@@ -136,4 +243,69 @@
   height: 1px;
   margin: 4px 8px;
   background-color: var(--lanismd-editor-border);
+}
+
+/* 子菜单图标（单色线性图标）：比主菜单 32px 彩色方块更小 */
+.milkdown-slash-submenu .milkdown-slash-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.milkdown-slash-submenu .milkdown-slash-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 表格网格选择器
+ * ------------------------------------------------------------------------- */
+
+.lanismd-table-grid {
+  /* 单个格子的边长，网格列宽引用此变量 */
+  --lanismd-table-grid-cell: 16px;
+  position: absolute;
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+  padding: 10px;
+  z-index: 51;
+  user-select: none;
+  animation: lanismd-submenu-in 0.12s ease-out;
+}
+
+.lanismd-table-grid-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--lanismd-text-muted);
+  margin-bottom: 8px;
+}
+
+.lanismd-table-grid-cells {
+  display: grid;
+  /* 相邻格子共享 1px 分隔线：容器背景透出作为线条，格子间距即为线宽 */
+  gap: 1px;
+  background: var(--lanismd-editor-border);
+  border: 1px solid var(--lanismd-editor-border);
+}
+
+.lanismd-table-grid-cell {
+  width: var(--lanismd-table-grid-cell);
+  height: var(--lanismd-table-grid-cell);
+  box-sizing: border-box;
+  /* 边框统一由容器背景透出，格子自身不再描边、不再圆角 */
+  background: var(--lanismd-editor-bg);
+  transition: background-color 0.08s ease;
+}
+
+.lanismd-table-grid-cell[data-active='true'] {
+  background: var(--lanismd-accent);
+}
+
+.lanismd-table-grid-count {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--lanismd-editor-text);
+  font-variant-numeric: tabular-nums;
 }

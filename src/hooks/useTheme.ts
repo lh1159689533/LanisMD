@@ -193,7 +193,7 @@ export function useTheme() {
     // hard: 插入实际换行符（编辑器层面处理，CSS 层面与 soft 相同）
     // off: 不换行，显示水平滚动条
     const wordWrapValue = config.editor.wordWrap === 'off' ? 'nowrap' : 'normal';
-    const overflowXValue = config.editor.wordWrap === 'off' ? 'auto' : 'hidden';
+    const overflowXValue = config.editor.wordWrap === 'off' ? 'auto' : 'clip';
     root.style.setProperty('--lanismd-editor-word-wrap', wordWrapValue);
     root.style.setProperty('--lanismd-editor-overflow-x', overflowXValue);
   }, [

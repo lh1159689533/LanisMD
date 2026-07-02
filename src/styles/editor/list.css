@@ -60,6 +60,15 @@
   gap: var(--lanismd-spacing-sm);
 }
 
+/* 内容包裹层填满剩余宽度：
+ * .children 默认是 shrink-to-fit 的 flex 子项，段落为空时宽度塌陷到 0，
+ * 导致浏览器无法在零宽度可编辑区绘制光标（表现为空列表项看不到光标，
+ * 输入一个字符后才出现）。让其撑满剩余空间即可正常显示光标。 */
+.milkdown-editor-root .ProseMirror .milkdown-list-item-block > .list-item > .children {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Label wrapper: contains the bullet/number/checkbox icon */
 .milkdown-editor-root .ProseMirror .milkdown-list-item-block .list-item > .label-wrapper {
   display: flex;

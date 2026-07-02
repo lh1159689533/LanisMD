@@ -14,7 +14,7 @@ import { setMermaidAutoEdit } from '../mermaid-block';
 import { insertFileBlock } from '../file-block';
 import type { GfmAlertType } from '../gfm-alert/types';
 
-import { icons } from './icons';
+import { icons, getIcon } from './icons';
 import type { SlashCommand } from './types';
 
 // ---------------------------------------------------------------------------
@@ -115,7 +115,15 @@ function insertHr(view: EditorView) {
   view.focus();
 }
 
-function insertTable(view: EditorView) {
+/**
+ * 按指定行列插入表格。
+ *
+ * @param rows 总行数（含表头行），例如 rows=4 表示 1 个表头行 + 3 个数据行
+ * @param cols 列数
+ *
+ * 遵循 GFM 规范：表格第一行必须是表头行，因此实际数据行数为 `rows - 1`。
+ */
+export function insertTableWithSize(view: EditorView, rows: number, cols: number) {
   removeSlashTrigger(view);
 
   const { state, dispatch } = view;
@@ -129,25 +137,27 @@ function insertTable(view: EditorView) {
 
   if (!tableType || !tableRowType || !tableCellType || !paragraphType) return;
 
+  // 至少 1 行（表头）1 列
+  const totalRows = Math.max(1, Math.floor(rows));
+  const totalCols = Math.max(1, Math.floor(cols));
+
   const { $from } = state.selection;
   const parent = $from.parent;
 
   const headerCellType = tableHeaderType || tableCellType;
-  const headerCells = [
-    headerCellType.create(null, paragraphType.create()),
-    headerCellType.create(null, paragraphType.create()),
-    headerCellType.create(null, paragraphType.create()),
-  ];
+  const headerCells = [];
+  for (let c = 0; c < totalCols; c++) {
+    headerCells.push(headerCellType.create(null, paragraphType.create()));
+  }
   const headerRowType = tableHeaderRowType || tableRowType;
   const headerRow = headerRowType.create(null, headerCells);
 
   const bodyRows = [];
-  for (let i = 0; i < 2; i++) {
-    const cells = [
-      tableCellType.create(null, paragraphType.create()),
-      tableCellType.create(null, paragraphType.create()),
-      tableCellType.create(null, paragraphType.create()),
-    ];
+  for (let r = 0; r < totalRows - 1; r++) {
+    const cells = [];
+    for (let c = 0; c < totalCols; c++) {
+      cells.push(tableCellType.create(null, paragraphType.create()));
+    }
     bodyRows.push(tableRowType.create(null, cells));
   }
 
@@ -169,6 +179,11 @@ function insertTable(view: EditorView) {
     dispatch(tr.scrollIntoView());
   }
   view.focus();
+}
+
+/** 默认表格：3 行（含表头）x 3 列 */
+function insertTable(view: EditorView) {
+  insertTableWithSize(view, 3, 3);
 }
 
 function wrapInList(view: EditorView, listType: string) {
@@ -457,118 +472,182 @@ function insertImage(view: EditorView) {
 // 基础指令清单（AI 指令见 commands-ai.ts）
 // ---------------------------------------------------------------------------
 
-export const basicSlashCommands: SlashCommand[] = [
+/**
+ * 获取基础指令清单（每次调用时重新获取当前主题对应的图标）
+ */
+export function getBasicSlashCommands(): SlashCommand[] {
+  return [
   {
-    label: '标题 1',
-    icon: icons.h1,
+    id: 'heading1',
+    label: '标题1',
+    description: '',
+    icon: getIcon('h1'),
     shortcut: '#',
+    markdown: '#',
     keywords: ['heading', 'h1', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 1 }),
   },
   {
-    label: '标题 2',
-    icon: icons.h2,
+    id: 'heading2',
+    label: '标题2',
+    description: '',
+    icon: getIcon('h2'),
     shortcut: '##',
+    markdown: '##',
     keywords: ['heading', 'h2', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 2 }),
   },
   {
-    label: '标题 3',
-    icon: icons.h3,
+    id: 'heading3',
+    label: '标题3',
+    description: '',
+    icon: getIcon('h3'),
     shortcut: '###',
+    markdown: '###',
     keywords: ['heading', 'h3', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 3 }),
   },
   {
-    label: '标题 4',
-    icon: icons.h4,
+    id: 'heading4',
+    label: '标题4',
+    description: '',
+    icon: getIcon('h4'),
     shortcut: '####',
+    markdown: '####',
     keywords: ['heading', 'h4', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 4 }),
   },
   {
-    label: '标题 5',
-    icon: icons.h5,
+    id: 'heading5',
+    label: '标题5',
+    description: '',
+    icon: getIcon('h5'),
     shortcut: '#####',
+    markdown: '#####',
     keywords: ['heading', 'h5', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 5 }),
   },
   {
-    label: '标题 6',
-    icon: icons.h6,
+    id: 'heading6',
+    label: '标题6',
+    description: '',
+    icon: getIcon('h6'),
     shortcut: '######',
+    markdown: '######',
     keywords: ['heading', 'h6', '标题', 'title', 'bt'],
+    isQuickAccess: true,
     execute: (view) => wrapBlock(view, 'heading', { level: 6 }),
   },
   {
+    id: 'bullet-list',
     label: '无序列表',
-    icon: icons.bulletList,
+    description: '',
+    icon: getIcon('bulletList'),
     shortcut: '-',
+    markdown: '-',
     keywords: ['bullet', 'list', 'unordered', '无序', '列表', 'lb'],
+    isQuickAccess: true,
     execute: (view) => wrapInList(view, 'bullet_list'),
   },
   {
+    id: 'ordered-list',
     label: '有序列表',
-    icon: icons.orderedList,
+    description: '',
+    icon: getIcon('orderedList'),
     shortcut: '1.',
+    markdown: '1.',
     keywords: ['ordered', 'list', 'number', '有序', '列表', 'lb'],
+    isQuickAccess: true,
     execute: (view) => wrapInList(view, 'ordered_list'),
   },
   {
+    id: 'task-list',
     label: '任务列表',
-    icon: icons.taskList,
+    description: '',
+    icon: getIcon('taskList'),
+    markdown: '- [ ]',
     keywords: ['task', 'todo', 'checkbox', '任务', '待办', 'rw'],
+    isQuickAccess: true,
     execute: (view) => insertTaskList(view),
   },
   {
+    id: 'link',
+    label: '链接',
+    description: '可自定义链接标题',
+    icon: getIcon('link'),
+    keywords: ['link', 'url', 'href', '链接', '超链接', 'lj'],
+    isQuickAccess: true,
+    execute: (view) => insertLink(view),
+  },
+  {
+    id: 'code-block',
     label: '代码块',
-    icon: icons.codeBlock,
+    description: '支持多种语言和主题切换',
+    icon: getIcon('codeBlock'),
     shortcut: '```',
-    keywords: ['code', 'block', '代码', 'dm'],
+    markdown: '```',
+    keywords: ['code', 'block', '代码', 'dm', 'dmk'],
+    isQuickAccess: true,
     execute: (view) => insertCodeBlock(view),
   },
   {
-    label: '引用',
-    icon: icons.blockquote,
-    shortcut: '>',
-    keywords: ['quote', 'blockquote', '引用', 'yy'],
-    execute: (view) => wrapBlock(view, 'blockquote'),
+    id: 'image',
+    label: '图片',
+    description: '',
+    icon: getIcon('image'),
+    keywords: ['image', 'img', 'picture', 'photo', '图片', '图像', 'tp'],
+    isQuickAccess: true,
+    execute: (view) => insertImage(view),
   },
   {
-    label: '分割线',
-    icon: icons.divider,
-    shortcut: '---',
-    keywords: ['divider', 'hr', 'horizontal', '分割', '分隔', 'fgx'],
-    execute: (view) => insertHr(view),
-  },
-  {
-    label: '数学公式',
-    icon: icons.math,
+    id: 'math',
+    label: '公式',
+    description: '支持 Latex 语法',
+    icon: getIcon('math'),
     shortcut: '$$',
+    markdown: '$$',
     keywords: ['math', 'formula', 'equation', 'latex', 'katex', '数学', '公式', '方程', 'sx', 'gs'],
     execute: (view) => insertMathBlock(view),
   },
   {
-    label: '链接',
-    icon: icons.link,
-    keywords: ['link', 'url', 'href', '链接', '超链接', 'lj'],
-    execute: (view) => insertLink(view),
+    id: 'blockquote',
+    label: '引用',
+    description: '插入引用格式',
+    icon: getIcon('blockquote'),
+    shortcut: '>',
+    markdown: '>',
+    keywords: ['quote', 'blockquote', '引用', 'yy'],
+    execute: (view) => wrapBlock(view, 'blockquote'),
   },
   {
-    label: '图片',
-    icon: icons.image,
-    keywords: ['image', 'img', 'picture', 'photo', '图片', '图像', 'tp'],
-    execute: (view) => insertImage(view),
+    id: 'divider',
+    label: '分割线',
+    description: '插入分割线',
+    icon: getIcon('divider'),
+    shortcut: '---',
+    markdown: '---',
+    keywords: ['divider', 'hr', 'horizontal', '分割', '分隔', 'fgx'],
+    execute: (view) => insertHr(view),
   },
   {
+    id: 'table',
     label: '表格',
-    icon: icons.table,
+    description: '',
+    icon: getIcon('table'),
     keywords: ['table', 'grid', '表格', 'bg'],
+    tableGrid: true,
     execute: (view) => insertTable(view),
   },
   {
-    label: '图表',
-    icon: icons.mermaid,
+    id: 'mermaid',
+    label: '文本绘图',
+    description: '支持Mermaid',
+    icon: getIcon('mermaid'),
     keywords: [
       'mermaid',
       'diagram',
@@ -579,25 +658,33 @@ export const basicSlashCommands: SlashCommand[] = [
       '流程图',
       '序列图',
       '甘特图',
+      '文本绘图',
       'tb',
+      'wbht',
     ],
     execute: (view) => insertMermaidBlock(view),
   },
   {
+    id: 'toc',
     label: '目录',
-    icon: icons.toc,
+    description: '',
+    icon: getIcon('toc'),
     keywords: ['toc', 'table of contents', '目录', '导航', 'ml'],
     execute: (view) => insertTocBlock(view),
   },
   {
+    id: 'file',
     label: '附件',
-    icon: icons.file,
+    description: '插入本地文件，支持pdf、ppt等多种格式内置预览',
+    icon: getIcon('file'),
     keywords: ['file', 'attachment', '附件', '文件', 'fj', 'wj'],
     execute: (view) => insertFileBlock(view),
   },
   {
+    id: 'alert',
     label: '提示块',
-    icon: icons.alert,
+    description: '',
+    icon: getIcon('alert'),
     keywords: ['alert', 'callout', 'admonition', '提示', '警告', '注意', 'tsk'],
     execute: () => {},
     children: [
@@ -633,4 +720,5 @@ export const basicSlashCommands: SlashCommand[] = [
       },
     ],
   },
-];
+  ];
+}
