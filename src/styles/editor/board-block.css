@@ -1,0 +1,426 @@
+/**
+ * Board Block - 样式
+ *
+ * 画板块（思维导图）的容器、工具栏、高度拖拽手柄样式，以及从 Plait 相关包
+ * 移植而来的基础/cosmetic 样式（纯 CSS）。
+ *
+ * 说明：
+ * - @plait-board/react-board、@plait-board/react-text 的 package.json 仅在
+ *   exports 暴露 "." 入口，未声明 "./index.css"，Vite 5 严格遵循 exports 无法
+ *   直接 import 其 CSS 子路径，故将其基础样式移植于此。
+ * - @plait/mind 官方样式为 SCSS 且依赖 mixins，本项目未安装 sass，故将思维导图
+ *   渲染必需的 cursor/animation/文本尺寸等样式移植为纯 CSS。
+ * - 上述移植样式统一作用域限定在 .lanismd-board-block 内，避免污染全局；其中
+ *   Plait 内部类名（.plait-board-container / .plait-text-container 等）必须保持
+ *   原样不可加前缀。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                     | 关联                                                 |
+ * | v1.0.0 | 初始实现：画板块样式 + Plait 基础/mind 样式移植 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/* --------------------------------------------------------------------------
+ * 容器
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block {
+  position: relative;
+  margin: 12px 0;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 8px;
+  background: var(--lanismd-bg-color, #fff);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lanismd-board-block.is-selected {
+  border-color: var(--lanismd-primary-color, #00b96b);
+  box-shadow: 0 0 0 2px rgba(0, 185, 107, 0.15);
+}
+
+.lanismd-board-block.is-editing {
+  border-color: var(--lanismd-primary-color, #00b96b);
+}
+
+.lanismd-board-block.is-resizing {
+  user-select: none;
+}
+
+/* React / Plait 挂载宿主 */
+.lanismd-board-block__host {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.lanismd-board-block__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.lanismd-board-block__canvas .plait-board-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 预览态下屏蔽画板内部交互（只读，避免误触发滚动/拖拽） */
+.lanismd-board-block.is-preview .lanismd-board-block__host {
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+ * 工具栏
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block__toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 6px;
+  background: var(--lanismd-bg-elevated, rgba(255, 255, 255, 0.92));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.lanismd-board-block__toolbar.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lanismd-board-block__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-text-color, #262626);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lanismd-board-block__toolbar-btn:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-block__toolbar-btn--delete:hover {
+  color: #e5484d;
+}
+
+.lanismd-board-block__toolbar-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.lanismd-board-block__toolbar-icon svg {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+ * 高度拖拽手柄
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block__resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+  background: transparent;
+}
+
+.lanismd-board-block__resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 36px;
+  height: 3px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: var(--lanismd-border-color, #d7dbd9);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.lanismd-board-block:hover .lanismd-board-block__resize-handle::after,
+.lanismd-board-block.is-resizing .lanismd-board-block__resize-handle::after {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+ * 移植自 @plait-board/react-board 的基础样式
+ *
+ * 说明：react-board 的 package.json 仅在 exports 暴露 "." 入口，未声明
+ * "./index.css"，Vite 5 严格遵循 exports 无法直接 import 其 CSS 子路径。
+ * 故将画板容器渲染必需的样式移植于此，并统一作用域到 .lanismd-board-block。
+ * 选择器保持 Plait 原始类名（.plait-board-container 等），不可加前缀。
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block .plait-board-container {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.lanismd-board-block .plait-board-container foreignObject {
+  outline: none;
+}
+
+.lanismd-board-block .plait-board-container.firefox {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lanismd-board-block .plait-board-container .viewport-container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.lanismd-board-block .plait-board-container.disabled-scroll .viewport-container {
+  overflow: hidden;
+}
+
+.lanismd-board-block .plait-board-container svg {
+  transform: scale(1);
+}
+
+.lanismd-board-block .plait-board-container .plait-text-container {
+  position: initial !important;
+}
+
+.lanismd-board-block .plait-board-container .text foreignObject {
+  outline: none;
+}
+
+.lanismd-board-block .plait-board-container .text .slate-editable-container {
+  outline: none;
+}
+
+.lanismd-board-block .plait-board-container .plait-toolbar {
+  position: absolute;
+  display: flex;
+  height: 30px;
+  z-index: 100;
+}
+
+.lanismd-board-block .plait-board-container.element-moving .element-active-host > g:not(.active-with-moving) {
+  display: none;
+}
+
+.lanismd-board-block .plait-board-container.element-rotating .element-active-host g.resize-handle,
+.lanismd-board-block .plait-board-container.element-rotating .element-active-host g[class^='line-auto-complete-'] {
+  display: none;
+}
+
+.lanismd-board-block .plait-board-container.pointer-selection {
+  cursor: default;
+}
+
+.lanismd-board-block .plait-board-container.ns-resize {
+  cursor: ns-resize;
+}
+
+.lanismd-board-block .plait-board-container.ew-resize {
+  cursor: ew-resize;
+}
+
+.lanismd-board-block .plait-board-container.nwse-resize {
+  cursor: nwse-resize;
+}
+
+.lanismd-board-block .plait-board-container.nesw-resize {
+  cursor: nesw-resize;
+}
+
+.lanismd-board-block .plait-board-container.crosshair {
+  cursor: crosshair;
+}
+
+.lanismd-board-block .plait-board-container foreignObject[class^='foreign-object-'] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lanismd-board-block .plait-board-container .board-active-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.lanismd-board-block .plait-board-container.theme-colorful .board-host-svg,
+.lanismd-board-block .plait-board-container.theme-default .board-host-svg {
+  background-color: #fff;
+}
+
+.lanismd-board-block .plait-board-container.theme-soft .board-host-svg {
+  background-color: #f5f5f5;
+}
+
+.lanismd-board-block .plait-board-container.theme-retro .board-host-svg {
+  background-color: #f9f8ed;
+}
+
+.lanismd-board-block .plait-board-container.theme-dark .board-host-svg {
+  background-color: #141414;
+}
+
+.lanismd-board-block .plait-board-container.theme-starry .board-host-svg {
+  background-color: #0d2537;
+}
+
+/* --------------------------------------------------------------------------
+ * 移植自 @plait-board/react-text 的文本层样式（同样受 exports 限制）
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block .plait-board-container .text foreignObject {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.lanismd-board-block .plait-board-container .text foreignObject::-webkit-scrollbar {
+  display: none;
+}
+
+.lanismd-board-block .plait-text-container {
+  font-size: 14px;
+  min-height: 20px;
+  line-height: 20px;
+  display: block;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Noto Sans',
+    'Noto Sans CJK SC', 'Microsoft Yahei', 'Hiragino Sans GB', Arial, sans-serif;
+}
+
+.lanismd-board-block .slate-editable-container {
+  outline: none;
+  padding: 0;
+  cursor: default;
+}
+
+.lanismd-board-block .slate-editable-container [data-slate-node='element'] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lanismd-board-block .slate-editable-container[contenteditable='true'] {
+  cursor: text;
+}
+
+.lanismd-board-block .slate-editable-container[contenteditable='true'] [data-slate-node='element'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* --------------------------------------------------------------------------
+ * 移植自 @plait/mind 的关键样式（作用域限定在画板块内）
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .slate-editable-container,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .slate-editable-container {
+  min-width: 5px;
+}
+
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .collapse-button,
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .add-button,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .collapse-button,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .add-button {
+  transform-origin: center center;
+  transform-box: fill-box;
+  cursor: pointer;
+}
+
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .collapse-button.animated,
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .add-button.animated,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .collapse-button.animated,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .add-button.animated {
+  animation: lanismd-board-scale-in 0.15s ease-out forwards;
+}
+
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .expanded-button,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .expanded-button {
+  cursor: pointer;
+}
+
+.lanismd-board-block .plait-board-container g[plait-mind='true'] .dragging-node,
+.lanismd-board-block .plait-board-container g[plait-mind-temporary='true'] .dragging-node {
+  opacity: 0.6;
+}
+
+@keyframes lanismd-board-scale-in {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.lanismd-board-block .plait-board-container.pointer-hand .board-host-svg {
+  cursor: grab;
+}
+
+.lanismd-board-block .plait-board-container.pointer-mind .board-host-svg {
+  cursor: default !important;
+}
+
+.lanismd-board-block .plait-board-container.readonly .mind-node-image {
+  cursor: zoom-in;
+}
+
+.lanismd-board-block .plait-board-container.viewport-moving svg {
+  cursor: grabbing;
+}
+
+.lanismd-board-block .plait-board-container.abstract-resizing-horizontal {
+  cursor: ns-resize;
+}
+
+.lanismd-board-block .plait-board-container.abstract-resizing-vertical {
+  cursor: ew-resize;
+}
+
+.lanismd-board-block .plait-board-container .node-emojis-container {
+  display: flex;
+  position: initial;
+  align-items: center;
+  height: 100%;
+}
+
+.lanismd-board-block .plait-board-container .fake-node.dragging {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.lanismd-board-block .plait-board-container .root .plait-text-container {
+  font-size: 18px;
+  min-height: 25px;
+  line-height: 25px;
+}
+
+.lanismd-board-block .plait-board-container .mind-node-image {
+  display: block;
+}
+
+/* 文本颜色（默认主题） */
+.lanismd-board-block .plait-board-container.theme-default .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-soft .plait-text-container {
+  color: #333333;
+}

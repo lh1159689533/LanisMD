@@ -109,6 +109,11 @@ import {
   fileBlockView,
   fileBlockRemarkPlugin,
 } from './plugins/file-block';
+import {
+  boardBlockSchema,
+  remarkBoardPlugin,
+  boardBlockView,
+} from './plugins/board-block';
 import { placeholderPlugin } from './plugins/placeholder';
 import { searchHighlightPlugin } from './plugins/search-highlight';
 import { outlineSyncPlugin } from './plugins/outline-sync';
@@ -271,6 +276,9 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(fileBlockSchema)
     .use(fileBlockRemarkPlugin)
     .use(fileBlockView)
+    .use(boardBlockSchema)
+    .use(remarkBoardPlugin)
+    .use(boardBlockView)
     .use(placeholderPlugin)
     .use(searchHighlightPlugin)
     .use(outlineSyncPlugin)

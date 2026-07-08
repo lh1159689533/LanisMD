@@ -12,6 +12,7 @@ import { openImageDialog } from '../image-block';
 import { createLinkDialog } from '../tooltip-toolbar';
 import { setMermaidAutoEdit } from '../mermaid-block';
 import { insertFileBlock } from '../file-block';
+import { createDefaultMindmap, encode, DEFAULT_HEIGHT, SCHEMA_VERSION } from '../board-block';
 import type { GfmAlertType } from '../gfm-alert/types';
 
 import { icons, getIcon } from './icons';
@@ -369,6 +370,43 @@ function insertTocBlock(view: EditorView) {
 }
 
 /**
+ * 插入一个思维导图画板并自动进入编辑态。
+ *
+ * 插入即预置一份含中心主题的默认思维导图（base64 编码写入 data），
+ * autoEdit 让 NodeView 挂载后立即进入可编辑状态。
+ */
+function insertBoardBlock(view: EditorView) {
+  removeSlashTrigger(view);
+
+  const { state, dispatch } = view;
+  const schema = state.schema;
+  const boardBlock = schema.nodes.board_block;
+  if (!boardBlock) return;
+
+  const { $from } = state.selection;
+  const parent = $from.parent;
+
+  const boardNode = boardBlock.create({
+    data: encode(createDefaultMindmap()),
+    version: SCHEMA_VERSION,
+    height: DEFAULT_HEIGHT,
+    autoEdit: true,
+  });
+
+  if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
+    const from = $from.before();
+    const to = $from.after();
+    const tr = state.tr.replaceWith(from, to, boardNode);
+    dispatch(tr.scrollIntoView());
+  } else {
+    const insertPos = $from.after();
+    const tr = state.tr.insert(insertPos, boardNode);
+    dispatch(tr.scrollIntoView());
+  }
+  view.focus();
+}
+
+/**
  * 插入带 alertType 的 blockquote（GFM Alert）
  */
 function insertGfmAlert(view: EditorView, alertType: GfmAlertType) {
@@ -671,6 +709,14 @@ export function getBasicSlashCommands(): SlashCommand[] {
     icon: getIcon('toc'),
     keywords: ['toc', 'table of contents', '目录', '导航', 'ml'],
     execute: (view) => insertTocBlock(view),
+  },
+  {
+    id: 'board',
+    label: '思维导图',
+    description: '插入可编辑的思维导图画板',
+    icon: getIcon('board'),
+    keywords: ['board', 'mindmap', 'mind', '思维导图', '导图', '脑图', '画板', 'swdt', 'hb'],
+    execute: (view) => insertBoardBlock(view),
   },
   {
     id: 'file',
