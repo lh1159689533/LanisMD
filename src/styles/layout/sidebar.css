@@ -64,6 +64,7 @@
 
 /* ===== 内容面板 ===== */
 .sidebar-content {
+  position: relative;
   overflow: hidden;
   border-right: 1px solid var(--lanismd-sidebar-border);
   transition: width var(--lanismd-transition-slow);

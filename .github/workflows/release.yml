@@ -16,10 +16,14 @@ jobs:
         include:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
+            rustTargets: 'aarch64-apple-darwin'
+          # x86_64 在 Intel runner (macos-13) 上原生构建，避免 arm64 交叉编译
+          - platform: 'macos-13'
             args: '--target x86_64-apple-darwin'
+            rustTargets: 'x86_64-apple-darwin'
           - platform: 'windows-latest'
             args: ''
+            rustTargets: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -28,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -38,7 +42,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rustTargets }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2

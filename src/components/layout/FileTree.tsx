@@ -32,7 +32,6 @@ import { timeAgo } from '@/utils/time';
 import { cn } from '@/utils/cn';
 import { ContextMenu } from '@/components/common/ContextMenu';
 import type { ContextMenuGroup } from '@/components/common/ContextMenu';
-import { RecentFoldersPanel } from './RecentFolders';
 import { SyncPullDialog } from '@/components/sync/SyncPullDialog';
 import { SyncPushDialog } from '@/components/sync/SyncPushDialog';
 import type { FileTreeNode } from '@/types';
@@ -754,9 +753,7 @@ export function FileTree() {
     }
   }, [rootPath, loadManifest, clearManifest]);
 
-  // Recent folders panel state（提升至 ui-store，由 Sidebar 触发）
-  const showRecentFolders = useUIStore((s) => s.recentFoldersOpen);
-  const setShowRecentFolders = useUIStore((s) => s.setRecentFoldersOpen);
+  // Recent folders panel state（浮层已提升至 Sidebar，此处仅保留 empty state 触发按钮所需绑定）
   const toggleRecentFolders = useUIStore((s) => s.toggleRecentFolders);
   const registerRecentFoldersTriggerEl = useUIStore((s) => s.registerRecentFoldersTriggerEl);
   const unregisterRecentFoldersTriggerEl = useUIStore((s) => s.unregisterRecentFoldersTriggerEl);
@@ -896,21 +893,6 @@ export function FileTree() {
       }
     }
   }, []);
-
-  /** Switch to a folder from the recent folders list */
-  const handleSwitchToFolder = useCallback(
-    async (folderPath: string) => {
-      // Skip if it's already the current folder
-      if (folderPath === rootPath) return;
-
-      await handleUnsavedBeforeSwitchFolder();
-      await openFolder(folderPath);
-      addRecentFolder(folderPath);
-      // 切换文件夹后关闭当前已打开的文件（文件属于旧文件夹）
-      useFileStore.getState().closeFile();
-    },
-    [rootPath, openFolder, addRecentFolder, handleUnsavedBeforeSwitchFolder],
-  );
 
   // ─── Context menu actions ─────────────────────────────
 
@@ -1475,14 +1457,6 @@ export function FileTree() {
           </button>
         </div>
 
-        {/* Recent Folders Panel — bottom overlay in empty state */}
-        {showRecentFolders && (
-          <RecentFoldersPanel
-            containerRef={fileTreeRootRef}
-            onClose={() => setShowRecentFolders(false)}
-            onSwitchFolder={handleSwitchToFolder}
-          />
-        )}
       </div>
     );
   }
@@ -1624,14 +1598,7 @@ export function FileTree() {
         )}
       </div>
 
-      {/* Recent Folders Panel — bottom overlay */}
-      {showRecentFolders && (
-        <RecentFoldersPanel
-          containerRef={fileTreeRootRef}
-          onClose={() => setShowRecentFolders(false)}
-          onSwitchFolder={handleSwitchToFolder}
-        />
-      )}
+      {/* Recent Folders Panel 已提升至 Sidebar 层级渲染 */}
 
       {/* Context Menu */}
       {ctxMenu && (

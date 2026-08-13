@@ -18,6 +18,10 @@ import { cn } from '@/utils/cn';
 import { withShortcut } from '@/utils/shortcut';
 import { FileTree } from './FileTree';
 import { SearchPanel } from './SearchPanel';
+import { RecentFoldersPanel } from './RecentFolders';
+import { useFileTreeStore } from '@/stores/file-tree-store';
+import { useRecentFoldersStore } from '@/stores/recent-folders-store';
+import { fileService } from '@/services/tauri';
 import type { OutlineItem } from '@/types';
 
 import '../../styles/layout/sidebar.css';
@@ -115,6 +119,9 @@ export function Sidebar() {
     (s) => s.unregisterRecentFoldersTriggerEl,
   );
   const currentFile = useFileStore((s) => s.currentFile);
+  const openFolder = useFileTreeStore((s) => s.openFolder);
+  const addRecentFolder = useRecentFoldersStore((s) => s.addRecentFolder);
+  const setRecentFoldersOpen = useUIStore((s) => s.setRecentFoldersOpen);
 
   // 编辑器模式和大纲数据
   const editorMode = useEditorStore((s) => s.mode);
@@ -324,6 +331,37 @@ export function Sidebar() {
 
   const contentWidth = sidebarOpen ? sidebarWidth : 0;
 
+  /** 从最近打开列表切换到某个文件夹（浮层提升到 Sidebar 后，此逻辑也从 FileTree 上移） */
+  const handleSwitchToFolder = useCallback(
+    async (folderPath: string) => {
+      const rootPath = useFileTreeStore.getState().rootPath;
+      if (folderPath === rootPath) return;
+
+      // 切换文件夹前处理未保存的更改
+      const current = useFileStore.getState().currentFile;
+      if (current?.isDirty) {
+        if (current.filePath) {
+          try {
+            await fileService.writeFile({
+              path: current.filePath,
+              content: current.content,
+              encoding: current.encoding,
+            });
+            useFileStore.getState().markSaved();
+          } catch (err) {
+            console.error('Failed to auto-save before switching folder:', err);
+          }
+        }
+      }
+
+      await openFolder(folderPath);
+      addRecentFolder(folderPath);
+      // 切换文件夹后关闭当前已打开的文件（文件属于旧文件夹）
+      useFileStore.getState().closeFile();
+    },
+    [openFolder, addRecentFolder],
+  );
+
   return (
     <div className={cn('sidebar', !sidebarOpen && 'collapsed')}>
       {/* 图标栏 */}
@@ -403,6 +441,15 @@ export function Sidebar() {
           {sidebarPanel === 'files' && <FileTree />}
           {sidebarPanel === 'search' && <SearchPanel />}
         </div>
+
+        {/* 最近打开的文件夹浮层 — 提升到 Sidebar 层级，不依赖当前面板 */}
+        {recentFoldersOpen && (
+          <RecentFoldersPanel
+            containerRef={contentPanelRef}
+            onClose={() => setRecentFoldersOpen(false)}
+            onSwitchFolder={handleSwitchToFolder}
+          />
+        )}
       </div>
 
       {/* 拖拽调整宽度 */}

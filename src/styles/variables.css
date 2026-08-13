@@ -433,8 +433,8 @@
   --lanismd-quick-open-border: 1px solid var(--lanismd-border-color);
   --lanismd-quick-open-border-radius: var(--lanismd-radius-lg);
   --lanismd-quick-open-shadow: 0 16px 70px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
-  --lanismd-quick-open-width: 520px;
-  --lanismd-quick-open-max-height: 420px;
+  --lanismd-quick-open-width: 80%;
+  --lanismd-quick-open-max-height: 80%;
   --lanismd-quick-open-overlay-bg: rgba(0, 0, 0, 0.25);
   /* 输入区域 */
   --lanismd-quick-open-input-bg: transparent;
