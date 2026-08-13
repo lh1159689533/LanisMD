@@ -748,10 +748,9 @@ export function configureSlash(ctx: Ctx) {
           if (state.selection.from !== state.selection.to) return false;
 
           const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc');
-          const lastSlash = textBefore.lastIndexOf('/');
-          if (lastSlash === -1) return false;
-
-          if (lastSlash > 0 && textBefore[lastSlash - 1] !== ' ') return false;
+          // 只有行首第一个字符为 `/` 时才触发斜杠命令
+          if (textBefore.charAt(0) !== '/') return false;
+          const lastSlash = 0;
 
           // 每次打开菜单前刷新 AI 分组（随设置动态变化）
           menuView.refreshCommands();

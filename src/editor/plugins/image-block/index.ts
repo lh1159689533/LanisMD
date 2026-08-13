@@ -19,7 +19,7 @@ import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 
-import { isRelativePath, buildAbsolutePath } from './types';
+import { isRelativePath, isAbsolutePath, buildAbsolutePath } from './types';
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 import { setOpenImageDialogForEdit } from './toolbar';
 
@@ -320,8 +320,13 @@ export function configureImageBlock(ctx: Ctx) {
         }
       }
     },
-    // 将本地相对路径代理到 Tauri asset protocol URL
+    // 将本地路径（相对或绝对）代理到 Tauri asset protocol URL
     proxyDomURL: (url: string): string => {
+      // 系统绝对路径：直接转换为 asset 协议 URL
+      if (isAbsolutePath(url)) {
+        return convertFileSrc(url);
+      }
+      // 相对路径：拼接文档目录后转换
       if (isRelativePath(url)) {
         const absolutePath = buildAbsolutePath(url);
         if (absolutePath) {

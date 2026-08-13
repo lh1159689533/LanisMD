@@ -22,8 +22,8 @@ export interface ImageDialogResult {
 
 /**
  * Check if a src is a relative path that needs resolving.
- * Uses an exclusion approach: anything that is NOT a full URL or data URL
- * is treated as a relative path.
+ * Uses an exclusion approach: anything that is NOT a full URL, data URL,
+ * or system absolute path is treated as a relative path.
  */
 export function isRelativePath(src: string): boolean {
   if (!src) return false;
@@ -33,7 +33,21 @@ export function isRelativePath(src: string): boolean {
   if (src.startsWith('blob:')) return false;
   // Full URLs with protocol (http://, https://, ftp://, etc.)
   if (src.includes('://')) return false;
+  // Unix/macOS absolute paths (e.g. /var/folders/...)
+  if (src.startsWith('/')) return false;
+  // Windows absolute paths (e.g. C:\Users\..., D:/images/...)
+  if (/^[a-zA-Z]:[\\/]/.test(src)) return false;
   return true;
+}
+
+/**
+ * Check if a src is a system absolute path (Unix or Windows).
+ */
+export function isAbsolutePath(src: string): boolean {
+  if (!src) return false;
+  if (src.startsWith('/')) return true;
+  if (/^[a-zA-Z]:[\\/]/.test(src)) return true;
+  return false;
 }
 
 /**
@@ -93,13 +107,23 @@ export function buildAbsolutePath(src: string): string | null {
 }
 
 /**
- * Convert a relative path to Tauri asset protocol URL for display.
+ * Convert a relative or absolute local path to Tauri asset protocol URL for display.
+ * - 相对路径：先拼接文档目录得到绝对路径，再转换为 asset 协议 URL
+ * - 系统绝对路径：直接转换为 asset 协议 URL
+ * - 其他（http/https/data/blob）：原样返回
  */
 export function resolveImageSrc(src: string): string {
+  // 系统绝对路径：直接通过 convertFileSrc 转为 asset 协议 URL
+  if (isAbsolutePath(src)) {
+    return convertFileSrc(src);
+  }
+
+  // 非相对路径（http/data/blob 等）：原样返回
   if (!isRelativePath(src)) {
     return src;
   }
 
+  // 相对路径：拼接文档目录后转换
   const absolutePath = buildAbsolutePath(src);
   if (!absolutePath) {
     return src;

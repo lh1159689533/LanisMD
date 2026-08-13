@@ -22,15 +22,14 @@ import type { SlashCommand } from './types';
 // ---------------------------------------------------------------------------
 
 /**
- * 删除光标前最后一个 `/` 到光标之间的所有字符（即斜杠触发文本）
+ * 删除行首 `/` 到光标之间的所有字符（即斜杠触发文本）
  */
 export function removeSlashTrigger(view: EditorView) {
   const { state } = view;
   const { $from } = state.selection;
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc');
-  const lastSlash = textBefore.lastIndexOf('/');
-  if (lastSlash === -1) return;
-  const from = $from.start() + lastSlash;
+  if (textBefore.charAt(0) !== '/') return;
+  const from = $from.start();
   const to = $from.pos;
   view.dispatch(state.tr.delete(from, to));
 }

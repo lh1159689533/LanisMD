@@ -6,7 +6,7 @@
 
 import { inlineImageConfig } from '@milkdown/kit/component/image-inline';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { isRelativePath, buildAbsolutePath } from '../image-block/types';
+import { isRelativePath, isAbsolutePath, buildAbsolutePath } from '../image-block/types';
 import type { Ctx } from '@milkdown/kit/ctx';
 
 /**
@@ -15,8 +15,13 @@ import type { Ctx } from '@milkdown/kit/ctx';
 export function configureImageInline(ctx: Ctx) {
   ctx.update(inlineImageConfig.key, (defaultConfig) => ({
     ...defaultConfig,
-    // Proxy local relative paths to Tauri asset protocol URLs
+    // Proxy local paths (relative or absolute) to Tauri asset protocol URLs
     proxyDomURL: (url: string): string => {
+      // 系统绝对路径：直接转换为 asset 协议 URL
+      if (isAbsolutePath(url)) {
+        return convertFileSrc(url);
+      }
+      // 相对路径：拼接文档目录后转换
       if (isRelativePath(url)) {
         const absolutePath = buildAbsolutePath(url);
         if (absolutePath) {
