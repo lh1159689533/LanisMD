@@ -55,6 +55,8 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 提高 Node 堆上限，避免 vite build 在内存受限的 CI runner 上 OOM
+          NODE_OPTIONS: --max-old-space-size=4096
         with:
           tauriScript: pnpm tauri
           tagName: v__VERSION__
