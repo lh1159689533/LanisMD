@@ -17,8 +17,9 @@ jobs:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
             rustTargets: 'aarch64-apple-darwin'
-          # x86_64 在 Intel runner (macos-13) 上原生构建，避免 arm64 交叉编译
-          - platform: 'macos-13'
+          # x86_64 在 Intel runner 上原生构建，避免 arm64 交叉编译
+          # macos-15-intel 是 GitHub 在 macos-13 下线后保留的 Intel 架构标准 runner
+          - platform: 'macos-15-intel'
             args: '--target x86_64-apple-darwin'
             rustTargets: 'x86_64-apple-darwin'
           - platform: 'windows-latest'
