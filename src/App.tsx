@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
-import { FilePreview } from './components/preview/FilePreview';
+
+// 预览窗口专用组件，按需懒加载：
+// 避免把 @open-file-viewer（及其重型依赖 three/pdfjs-dist/xlsx/heic2any 等）
+// 打进主窗口 bundle，降低 vite build 的内存峰值并缩小首屏体积
+const FilePreview = lazy(() =>
+  import('./components/preview/FilePreview').then((m) => ({ default: m.FilePreview })),
+);
 
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
@@ -186,7 +192,11 @@ export default function App() {
 
   // 预览窗口：直接渲染 FilePreview 组件，不加载主应用
   if (IS_PREVIEW_WINDOW) {
-    return <FilePreview />;
+    return (
+      <Suspense fallback={null}>
+        <FilePreview />
+      </Suspense>
+    );
   }
 
   return (
