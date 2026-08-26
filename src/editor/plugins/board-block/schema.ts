@@ -73,7 +73,10 @@ function normalizeHeight(raw: unknown): number {
  * board_block 节点 Schema。
  *
  * - 块级 atom 节点：内部为独立 Plait/React 子树，对 ProseMirror 是黑盒。
- * - isolating + selectable + draggable：selection 不进入内部，可整体选中/拖拽。
+ * - isolating + selectable：selection 不进入内部，可整体选中。
+ * - draggable: false：禁用 PM 给 DOM 设置的原生 HTML5 draggable 属性，
+ *   否则在画板内部按下拖动会触发浏览器原生 drag（拖影 + 拖走整块），
+ *   且 stopEvent 无法拦截原生 dragstart。整块拖动排序由 block-handle 抓手负责。
  * - attrs.data：base64(JSON) 编码的画板数据（不透明字符串，由 codec 边界处理）。
  */
 export const boardBlockSchema = $nodeSchema('board_block', () => ({
@@ -82,7 +85,7 @@ export const boardBlockSchema = $nodeSchema('board_block', () => ({
   marks: '',
   isolating: true,
   selectable: true,
-  draggable: true,
+  draggable: false,
   attrs: {
     /** base64(JSON) 编码的画板数据串 */
     data: { default: '' },

@@ -7,6 +7,7 @@
  * @changelog
  * | 版本   | 变更说明                                   | 关联                                                 |
  * | v1.0.0 | 初始实现：常量 + 默认思维导图工厂 + 工具栏图标  | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.0.1 | 默认思维导图布局方向改为 right（子节点向右）   | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * /@changelog
  *
  * @author hhhuilli
@@ -62,6 +63,10 @@ export function createDefaultMindmap(): PlaitElement[] {
       type: 'mind',
       // 根节点起始坐标，实际位置由 withMind 布局后 fitViewport 校正
       points: [[0, 0]],
+      // 默认布局方向：'right' 等价于 MindLayoutType.right，即中心主题在左、
+      // 子节点向右展开。不设置时 Plait 回落到 standard（左右平衡），会导致新建
+      // 子节点排到左侧。此处仅设默认值，用户后续仍可通过 Plait 交互手动切换方向。
+      layout: 'right',
       // 文本走 Slate 段落结构：{ type: 'paragraph', children: [{ text }] }
       data: {
         topic: {
