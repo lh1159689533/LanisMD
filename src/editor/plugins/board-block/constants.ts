@@ -8,6 +8,7 @@
  * | 版本   | 变更说明                                   | 关联                                                 |
  * | v1.0.0 | 初始实现：常量 + 默认思维导图工厂 + 工具栏图标  | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.0.1 | 默认思维导图布局方向改为 right（子节点向右）   | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | 新增最大化 / 还原工具栏图标                   | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §二 |
  * /@changelog
  *
  * @author hhhuilli
@@ -91,4 +92,8 @@ export const ICONS = {
   preview: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
   /** 删除图标 */
   delete: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  /** 最大化（四角外扩）图标 */
+  maximize: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>',
+  /** 还原（四角内收）图标 */
+  restore: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg>',
 } as const;

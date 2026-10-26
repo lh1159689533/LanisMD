@@ -1,0 +1,99 @@
+/**
+ * Board Block - 全屏窗口与锁定态样式
+ *
+ * 两部分职责：
+ * 1. `.lanismd-board-block--fullscreen`：独立全屏窗口中的画板布局（铺满视口、
+ *    无边框圆角、工具栏常驻）。该根容器同时带有 `.lanismd-board-block`，
+ *    因此可复用 board-block.css 中移植的全部 Plait 基础样式。
+ * 2. `.is-fullscreen-locked`：主窗口在全屏窗口打开期间的遮罩与按钮收敛。
+ *
+ * @changelog
+ * | 版本   | 变更说明                       | 关联                                                   |
+ * | v1.0.0 | 初始实现：全屏窗口布局与锁定遮罩 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §二 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/* --------------------------------------------------------------------------
+ * 全屏窗口
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block--fullscreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--lanismd-bg-color, #fff);
+}
+
+/* 全屏窗口由窗口尺寸决定画板高度，不再受 height 属性约束 */
+.lanismd-board-block--fullscreen .lanismd-board-block__host {
+  flex: 1;
+  height: auto !important;
+  min-height: 0;
+}
+
+/* 工具栏常驻显示，不随 hover 收起 */
+.lanismd-board-block--fullscreen .lanismd-board-block__toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 等待主窗口下发数据期间的占位 */
+.lanismd-board-block__fullscreen-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--lanismd-text-secondary, #8c8c8c);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+ * 主窗口锁定态
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block__lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(1px);
+  cursor: not-allowed;
+}
+
+.dark .lanismd-board-block__lock-overlay {
+  background: rgba(26, 27, 38, 0.72);
+}
+
+.lanismd-board-block__lock-text {
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 6px;
+  color: var(--lanismd-text-secondary, #595959);
+  background: var(--lanismd-bg-color, #fff);
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 锁定态下仅保留「返回全屏」按钮，避免出现两个可编辑实例 */
+.lanismd-board-block__toolbar.is-locked .lanismd-board-block__toolbar-btn--toggle,
+.lanismd-board-block__toolbar.is-locked .lanismd-board-block__toolbar-btn--delete {
+  display: none;
+}
+
+/* 锁定态下屏蔽高度拖拽 */
+.lanismd-board-block.is-fullscreen-locked .lanismd-board-block__resize-handle {
+  pointer-events: none;
+  opacity: 0;
+}

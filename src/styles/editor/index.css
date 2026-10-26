@@ -36,6 +36,7 @@
 
 @import './file-block.css';
 @import './board-block.css';
+@import './board-block-fullscreen.css';
 @import './board-style-toolbar.css';
 
 /* Table */

@@ -3,6 +3,8 @@ import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
 import { FilePreview } from './components/preview/FilePreview';
+import { BoardFullscreen } from './components/board/BoardFullscreen';
+import { BOARD_FULLSCREEN_ROUTE } from './editor/plugins/board-block/fullscreen/protocol';
 
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
@@ -33,6 +35,9 @@ const IS_TAURI = isTauri();
 
 // 检测当前是否为预览窗口（通过 URL 路径判断）
 const IS_PREVIEW_WINDOW = window.location.pathname === '/preview';
+
+// 检测当前是否为画板全屏窗口
+const IS_BOARD_FULLSCREEN_WINDOW = window.location.pathname === BOARD_FULLSCREEN_ROUTE;
 
 /**
  * Tauri desktop app mode
@@ -187,6 +192,11 @@ export default function App() {
   // 预览窗口：直接渲染 FilePreview 组件，不加载主应用
   if (IS_PREVIEW_WINDOW) {
     return <FilePreview />;
+  }
+
+  // 画板全屏窗口：直接渲染独立画板，不加载主应用
+  if (IS_BOARD_FULLSCREEN_WINDOW) {
+    return <BoardFullscreen />;
   }
 
   return (

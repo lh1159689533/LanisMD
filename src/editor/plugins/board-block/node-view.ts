@@ -17,6 +17,7 @@
  * | 版本   | 变更说明                                       | 关联                                                 |
  * | v1.0.0 | 初始实现：atom NodeView + React 挂载 + 只读态切换 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.1.0 | 编辑态挂载节点样式工具栏 + selection 联动         | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次1 |
+ * | v1.2.0 | 支持全屏窗口：最大化按钮 + 锁定态 + 跨窗口数据同步 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
  * /@changelog
  *
  * @author hhhuilli
@@ -28,10 +29,18 @@ import type { Node } from '@milkdown/kit/prose/model';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
 import type { PlaitBoard, PlaitElement, Viewport } from '@plait/core';
 
+import { useSettingsStore } from '@/stores/settings-store';
+
 import { BoardReact } from './board-react';
-import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
+import {
+  createToolbar,
+  updateToolbarFullscreenMode,
+  updateToolbarState,
+  type ToolbarCallbacks,
+} from './toolbar';
 import { createStyleToolbar } from './style-toolbar';
 import type { StyleToolbarController } from './style-toolbar/types';
+import { openBoardFullscreen, type BoardFullscreenSession } from './fullscreen';
 import { decode, encode } from './codec';
 import {
   CSS_PREFIX,
@@ -89,6 +98,23 @@ export class BoardBlockNodeView implements NodeView {
   /** 高度拖拽的清理函数 */
   private resizeCleanup: (() => void) | null = null;
 
+  /** 全屏窗口会话；非 null 表示该画板已在全屏窗口中打开 */
+  private fullscreenSession: BoardFullscreenSession | null = null;
+
+  /** 锁定遮罩 DOM（仅在全屏窗口打开期间挂载） */
+  private lockOverlay: HTMLElement | null = null;
+
+  /** 是否正在打开全屏窗口（防止连点重复建窗） */
+  private openingFullscreen = false;
+
+  /**
+   * React 子树重建计数。
+   *
+   * BoardReact 会冻结 initialElements（画板自持状态，避免被父级重渲染重置），
+   * 因此外部数据替换时必须换 key 强制 React 卸载重建，否则画板仍显示旧内容。
+   */
+  private renderKey = 0;
+
   private view: EditorView;
   private getPos: () => number | undefined;
   private node: Node;
@@ -113,6 +139,7 @@ export class BoardBlockNodeView implements NodeView {
     const callbacks: ToolbarCallbacks = {
       onToggleEdit: () => this.toggleEdit(),
       onDelete: () => this.deleteBlock(),
+      onFullscreen: () => void this.handleFullscreenClick(),
     };
     this.toolbar = createToolbar(callbacks);
     this.dom.appendChild(this.toolbar);
@@ -160,6 +187,8 @@ export class BoardBlockNodeView implements NodeView {
   private renderReact(): void {
     this.reactRoot.render(
       createElement(BoardReact, {
+        // key 变化时 React 卸载重建 BoardReact，用于外部数据替换场景
+        key: this.renderKey,
         initialElements: this.elements,
         initialViewport: this.viewport,
         readonly: this.state === 'preview',
@@ -177,6 +206,16 @@ export class BoardBlockNodeView implements NodeView {
     );
   }
 
+  /** 用新数据强制重建画板子树（外部数据替换时使用） */
+  private rerenderWithNewData(data: string): void {
+    const decoded = decode(data);
+    this.elements = decoded.elements;
+    this.viewport = decoded.viewport;
+    this.renderKey += 1;
+    this.board = null;
+    this.renderReact();
+  }
+
   /** Plait 画板内容变更：暂存最新值并防抖回写 */
   private handleBoardChange(elements: PlaitElement[], viewport?: Viewport): void {
     this.elements = elements;
@@ -191,6 +230,7 @@ export class BoardBlockNodeView implements NodeView {
   private bindEvents(): void {
     // 双击进入编辑
     this.reactHost.addEventListener('dblclick', (e) => {
+      if (this.isLocked) return;
       if (this.state === 'preview') {
         e.preventDefault();
         e.stopPropagation();
@@ -203,7 +243,8 @@ export class BoardBlockNodeView implements NodeView {
       this.toolbar.classList.add('is-visible');
     });
     this.dom.addEventListener('mouseleave', () => {
-      if (this.state === 'preview') {
+      // 锁定态下工具栏常驻，保证「返回全屏」随时可点
+      if (this.state === 'preview' && !this.isLocked) {
         this.toolbar.classList.remove('is-visible');
       }
     });
@@ -260,6 +301,111 @@ export class BoardBlockNodeView implements NodeView {
     this.styleToolbar.detach();
     this.renderReact();
     this.flushWriteBack();
+  }
+
+  // -------------------------------------------------------------------------
+  // 全屏窗口
+  // -------------------------------------------------------------------------
+
+  /** 工具栏全屏按钮点击：未打开则建窗，已打开则聚焦既有窗口 */
+  private async handleFullscreenClick(): Promise<void> {
+    if (this.fullscreenSession) {
+      const alive = await this.fullscreenSession.focus();
+      // 窗口已不存在（异常关闭未收到 closed 事件）：兜底解锁
+      if (!alive) {
+        this.fullscreenSession.dispose();
+        this.fullscreenSession = null;
+        this.unlock();
+      }
+      return;
+    }
+
+    if (this.openingFullscreen) return;
+    this.openingFullscreen = true;
+    try {
+      await this.openFullscreen();
+    } finally {
+      this.openingFullscreen = false;
+    }
+  }
+
+  /** 打开全屏窗口并进入锁定态 */
+  private async openFullscreen(): Promise<void> {
+    // 开窗前的状态即全屏窗口的初始状态；先退出本地编辑态并冲刷数据，
+    // 确保下发给全屏窗口的是最新内容，且主窗口不残留可编辑实例。
+    const initialState = this.state;
+    if (this.state === 'editing') {
+      this.exitEdit();
+    } else {
+      this.flushWriteBack();
+    }
+
+    const session = await openBoardFullscreen({
+      getData: () => encode(this.elements, this.viewport),
+      initialState,
+      title: '思维导图',
+      theme: useSettingsStore.getState().config.theme || 'system',
+      onData: (data) => this.applyFullscreenData(data),
+      onState: () => {
+        // 锁定期间主窗口不随动渲染，最终状态在 onClosed 统一恢复
+      },
+      onClosed: ({ data, state }) => this.handleFullscreenClosed(data, state),
+    });
+
+    if (!session) return;
+    this.fullscreenSession = session;
+    this.lock();
+  }
+
+  /** 接收全屏窗口回传的数据并写入文档 */
+  private applyFullscreenData(data: string): void {
+    const decoded = decode(data);
+    this.elements = decoded.elements;
+    this.viewport = decoded.viewport;
+    this.commitAttrs({ data });
+  }
+
+  /** 全屏窗口关闭：写入最终数据、解除锁定并恢复状态 */
+  private handleFullscreenClosed(data: string, state: BoardBlockState): void {
+    this.fullscreenSession = null;
+    this.commitAttrs({ data });
+    this.unlock();
+    // 用全屏窗口的最终数据强制重建画板，再按其最终状态恢复编辑/预览
+    this.rerenderWithNewData(data);
+    if (state === 'editing') {
+      this.enterEdit();
+    }
+  }
+
+  /** 进入锁定态：遮罩覆盖 + 工具栏仅留「返回全屏」 */
+  private lock(): void {
+    if (this.lockOverlay) return;
+    this.dom.classList.add('is-fullscreen-locked');
+
+    const overlay = document.createElement('div');
+    overlay.className = `${CSS_PREFIX}__lock-overlay`;
+    overlay.innerHTML = `<span class="${CSS_PREFIX}__lock-text">已在全屏窗口中打开</span>`;
+    // 遮罩必须挂在 this.dom：reactHost 由 React 托管，reconcile 会移除其内部
+    // 非托管 DOM（与 style-toolbar 同理）
+    this.dom.appendChild(overlay);
+    this.lockOverlay = overlay;
+
+    this.toolbar.classList.add('is-visible');
+    updateToolbarFullscreenMode(this.toolbar, 'focus');
+  }
+
+  /** 解除锁定态 */
+  private unlock(): void {
+    this.dom.classList.remove('is-fullscreen-locked');
+    this.lockOverlay?.remove();
+    this.lockOverlay = null;
+    this.toolbar.classList.remove('is-visible');
+    updateToolbarFullscreenMode(this.toolbar, 'maximize');
+  }
+
+  /** 是否处于锁定态 */
+  private get isLocked(): boolean {
+    return this.lockOverlay !== null;
   }
 
   // -------------------------------------------------------------------------
@@ -377,12 +523,13 @@ export class BoardBlockNodeView implements NodeView {
     // 自身回写触发的更新：仅同步引用，不重渲染画板
     if (this.selfUpdating) return true;
 
+    // 锁定态（全屏窗口打开中）：主窗口被遮罩覆盖，无需重渲染，
+    // 最终内容在全屏窗口关闭时统一恢复
+    if (this.isLocked) return true;
+
     // 外部数据变更（如 undo/redo）：预览态时用新数据重渲染；编辑态不打断用户
     if (this.state === 'preview' && node.attrs.data !== prev.attrs.data) {
-      const decoded = decode(node.attrs.data as string);
-      this.elements = decoded.elements;
-      this.viewport = decoded.viewport;
-      this.renderReact();
+      this.rerenderWithNewData(node.attrs.data as string);
     }
 
     // 高度外部变更同步
@@ -415,6 +562,11 @@ export class BoardBlockNodeView implements NodeView {
       return true;
     }
 
+    // 锁定态：画板已移交全屏窗口，吞掉块内一切交互
+    if (this.isLocked) {
+      return true;
+    }
+
     // 编辑态：全量交给 Plait，保证 IME/选择/拖拽/热键正常
     if (this.state === 'editing') {
       return true;
@@ -433,6 +585,12 @@ export class BoardBlockNodeView implements NodeView {
     if (this.writeBackTimer) clearTimeout(this.writeBackTimer);
     this.cleanupResize();
     this.styleToolbar.destroy();
+    // 节点销毁时若全屏窗口仍存活，一并关闭，避免留下无宿主的孤立窗口
+    if (this.fullscreenSession) {
+      const session = this.fullscreenSession;
+      this.fullscreenSession = null;
+      void session.close();
+    }
     // 异步卸载 React root，规避「在 render 过程中同步卸载」的告警
     const root = this.reactRoot;
     queueMicrotask(() => root.unmount());

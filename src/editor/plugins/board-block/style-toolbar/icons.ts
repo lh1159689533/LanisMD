@@ -140,13 +140,13 @@ export const ICON_LAYOUT_DOWNWARD = `<svg width="20" height="20" viewBox="0 0 20
 </svg>`;
 
 // ---------------------------------------------------------------------------
-// 文字样式图标（粗体 / 斜体 / A）
+// 文字样式图标
 // ---------------------------------------------------------------------------
 
-/** 文字样式 —— 工具栏触发按钮图标（字母 A） */
-export const ICON_TEXT_STYLE = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 5 L6 15 M10 5 L14 15 M7.2 11.5 H12.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+/**
+ * 文字样式 —— 工具栏触发按钮图标
+ */
+export const ICON_TEXT_STYLE = `<svg t="1793005446655" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="12859" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><path d="M853.333333 170.666667H170.666667a42.666667 42.666667 0 0 0-42.666667 42.666666v128a42.666667 42.666667 0 0 0 85.333333 0V256h256v554.666667H384a42.666667 42.666667 0 0 0 0 85.333333h256a42.666667 42.666667 0 0 0 0-85.333333h-85.333333V256h256v85.333333a42.666667 42.666667 0 0 0 85.333333 0V213.333333a42.666667 42.666667 0 0 0-42.666667-42.666666z" fill="#231F20" p-id="12860"></path></svg>`;
 
 /** 粗体 —— 下拉面板内加粗切换按钮 */
 export const ICON_BOLD = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
