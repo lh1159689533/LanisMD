@@ -20,6 +20,7 @@
  * | v1.2.0 | 支持全屏窗口：最大化按钮 + 锁定态 + 跨窗口数据同步 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
  * | v1.3.0 | 挂载画布级工具栏（缩放/适应画布/手型/主题）+ 主题块级持久化 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
  * | v1.4.0 | 块工具栏改为节点外右侧竖排，与画布工具栏解除横排容器耦合 | REQ: 20261026-board-toolbar-vertical |
+ * | v1.4.1 | 修复：节点处于 NodeSelection 时画板内按下触发浏览器原生 drag | REQ: 20261026-board-native-drag-fix |
  * /@changelog
  *
  * @author hhhuilli
@@ -28,6 +29,7 @@
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Node } from '@milkdown/kit/prose/model';
+import { NodeSelection } from '@milkdown/kit/prose/state';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
 import { BoardTransforms } from '@plait/core';
 import type { PlaitBoard, PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
@@ -641,8 +643,41 @@ export class BoardBlockNodeView implements NodeView {
       return true;
     }
 
+    // 预览态且本节点已处于 NodeSelection：必须拦掉画板内部的 mousedown。
+    //
+    // 原因：prosemirror-view 的 MouseDown 构造函数里，判定「本次按下可能是在拖
+    // 动节点」的条件是（见 prosemirror-view/src/input.ts）：
+    //
+    //   (button == 0 && spec.draggable && spec.selectable !== false)
+    //   || (selection instanceof NodeSelection && from <= targetPos && to > targetPos)
+    //
+    // 按运算符优先级这是 `(A && B && C) || D`，schema 里的 `draggable: false`
+    // 只能否决前半段，**后半段只看 NodeSelection**。一旦命中，PM 会执行
+    // `this.target.draggable = true` 把 NodeView 根 DOM 临时置为原生可拖拽，
+    // 于是在画板内按下并移动就会触发浏览器原生 HTML5 drag：既出现整窗拖影，
+    // 又因原生 drag 吞掉 mouseup 而使 Plait 的手型平移状态机无法收尾
+    // （松手后画布仍跟随指针）。
+    //
+    // 该状态在「退出编辑态」「切换画板主题」后会稳定残留（节点保持选中），
+    // 这正是此问题表现为偶现的原因。整块拖动排序由 block-handle 抓手负责，
+    // 画板内部本就不需要 PM 的节点拖拽，故此处直接隔离。
+    //
+    // 只拦 mousedown，不影响 dblclick 进入编辑；也只在已选中时拦，
+    // 首次点击仍可正常建立 NodeSelection。
+    if (event.type === 'mousedown' && this.isNodeSelected) {
+      return true;
+    }
+
     // 预览态：不拦截，允许 ProseMirror 选中/拖拽整个 atom 节点
     return false;
+  }
+
+  /** 本节点当前是否处于覆盖自身的 NodeSelection */
+  private get isNodeSelected(): boolean {
+    const pos = this.getPos();
+    if (pos === undefined) return false;
+    const { selection } = this.view.state;
+    return selection instanceof NodeSelection && selection.from <= pos && selection.to > pos;
   }
 
   /** DOM 内部由 React/Plait 全权管理，PM 一律忽略变更 */

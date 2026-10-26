@@ -74,9 +74,11 @@ function normalizeHeight(raw: unknown): number {
  *
  * - 块级 atom 节点：内部为独立 Plait/React 子树，对 ProseMirror 是黑盒。
  * - isolating + selectable：selection 不进入内部，可整体选中。
- * - draggable: false：禁用 PM 给 DOM 设置的原生 HTML5 draggable 属性，
- *   否则在画板内部按下拖动会触发浏览器原生 drag（拖影 + 拖走整块），
- *   且 stopEvent 无法拦截原生 dragstart。整块拖动排序由 block-handle 抓手负责。
+ * - draggable: false：不声明为可拖拽节点，避免 PM 在「未选中」时就给根 DOM
+ *   设置原生 HTML5 draggable 属性。整块拖动排序由 block-handle 抓手负责。
+ *   注意：该选项**不足以**完全阻止 PM 设置 draggable——MouseDown 还有一条
+ *   「节点已处于 NodeSelection」的独立分支不受此选项约束，那条分支由
+ *   NodeView.stopEvent 拦截 mousedown 来兜住（见 node-view.ts 的详细说明）。
  * - attrs.data：base64(JSON) 编码的画板数据（不透明字符串，由 codec 边界处理）。
  */
 export const boardBlockSchema = $nodeSchema('board_block', () => ({

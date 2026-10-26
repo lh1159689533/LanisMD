@@ -110,59 +110,12 @@ export function createStyleToolbar(): StyleToolbarController {
 
   /** 依据当前选中态刷新显隐 + 回填样式值 */
   function sync(): void {
-    // [style-toolbar-diag] sync 入口
-    console.log('[style-toolbar-diag] sync: board=', !!board);
     if (!board) {
       setVisible(false);
       return;
     }
     const selected = getSelectedMindElements(board);
     const hasSelection = selected.length > 0;
-    // [style-toolbar-diag] 选中数量
-    console.log('[style-toolbar-diag] sync: selectedMind=', selected.length);
-
-    // [style-toolbar-diag] 决定性探测：读取 Plait 选区锚点并用它做命中检测。
-    // 锚点变化 + 命中成功 → 选中缓存写入时机问题；命中失败 → 坐标/命中判定问题。
-    try {
-      const sel = (
-        board as unknown as { selection?: { anchor?: number[]; focus?: number[] } }
-      ).selection;
-      console.log('[style-toolbar-diag] probe: board.selection=', JSON.stringify(sel));
-      if (sel?.anchor) {
-        const hit = getHitElementByPoint(board, [sel.anchor[0], sel.anchor[1]]);
-        console.log(
-          '[style-toolbar-diag] probe: hitTest(anchor)=',
-          hit ? `type=${(hit as { type?: string }).type} id=${(hit as { id?: string }).id}` : 'null',
-        );
-      }
-    } catch (e) {
-      console.error('[style-toolbar-diag] probe error', e);
-    }
-
-    // [style-toolbar-diag] 决定性探测 2：isHandleSelection 的三个门槛 + 原始选中缓存。
-    // withSelection.onChange 只有 isHandleSelection(board) && hasSetSelectionOperation(board)
-    // 成立时才写选中缓存，任何一项为 false 都会导致选中缓存永远为空。
-    try {
-      const b = board as unknown as {
-        pointer?: string;
-        operations?: Array<{ type?: string }>;
-        getPluginOptions?: (key: string) => Record<string, unknown>;
-      };
-      const options = b.getPluginOptions?.('withSelection') ?? {};
-      console.log('[style-toolbar-diag] probe2: pointer=', b.pointer);
-      console.log('[style-toolbar-diag] probe2: selectionOptions=', JSON.stringify(options));
-      console.log(
-        '[style-toolbar-diag] probe2: operations=',
-        JSON.stringify((b.operations ?? []).map((o) => o.type)),
-      );
-      // PlaitBoard.isReadonly 等价判定：读 options.readonly
-      console.log(
-        '[style-toolbar-diag] probe2: board.options.readonly=',
-        (board as unknown as { options?: { readonly?: boolean } }).options?.readonly,
-      );
-    } catch (e) {
-      console.error('[style-toolbar-diag] probe2 error', e);
-    }
 
     setVisible(hasSelection);
 
@@ -175,8 +128,6 @@ export function createStyleToolbar(): StyleToolbarController {
       // 回填当前样式值到各能力组
       try {
         const styles = getCurrentStyles(board);
-        // [style-toolbar-diag] 样式快照
-        console.log('[style-toolbar-diag] sync: styles=', JSON.stringify(styles));
         if (styles) {
           structureSegment.setActiveStructure(styles.layout);
           branchSegment.setActiveBranch(styles.branchShape, styles.branchWidth, styles.branchColor);
@@ -192,10 +143,7 @@ export function createStyleToolbar(): StyleToolbarController {
             textAlign: styles.textAlign,
           });
         }
-      } catch (e) {
-        // [style-toolbar-diag] 样式回填异常（会中断 sync，需重点关注）
-        console.error('[style-toolbar-diag] sync: styles backfill error', e);
-      }
+      } catch (e) {}
     }
   }
 
@@ -237,7 +185,10 @@ export function createStyleToolbar(): StyleToolbarController {
       return [hostPoint[0] + rect.x, hostPoint[1] + rect.y];
     };
     const topLeft = toScreen(viewBoxRect.x, viewBoxRect.y);
-    const bottomRight = toScreen(viewBoxRect.x + viewBoxRect.width, viewBoxRect.y + viewBoxRect.height);
+    const bottomRight = toScreen(
+      viewBoxRect.x + viewBoxRect.width,
+      viewBoxRect.y + viewBoxRect.height,
+    );
     const screenRect = {
       x: topLeft[0],
       y: topLeft[1],
@@ -270,36 +221,6 @@ export function createStyleToolbar(): StyleToolbarController {
 
     dom.style.left = `${left}px`;
     dom.style.top = `${top}px`;
-
-    // [style-toolbar-diag] 定位结果 + 自检：选中锚点应落在节点矩形内
-    const sel = (board as unknown as { selection?: { anchor?: number[] } }).selection;
-    const anchor = sel?.anchor;
-    const containsAnchor =
-      anchor &&
-      anchor[0] >= viewBoxRect.x &&
-      anchor[0] <= viewBoxRect.x + viewBoxRect.width &&
-      anchor[1] >= viewBoxRect.y &&
-      anchor[1] <= viewBoxRect.y + viewBoxRect.height;
-    console.log('[style-toolbar-diag] pos: nodeRect(viewBox)=', {
-      x: Math.round(viewBoxRect.x),
-      y: Math.round(viewBoxRect.y),
-      w: Math.round(viewBoxRect.width),
-      h: Math.round(viewBoxRect.height),
-    });
-    console.log(
-      '[style-toolbar-diag] pos: screenRect=',
-      {
-        x: Math.round(screenRect.x),
-        y: Math.round(screenRect.y),
-        w: Math.round(screenRect.width),
-        h: Math.round(screenRect.height),
-      },
-      'anchor=',
-      anchor,
-      'containsAnchor=',
-      containsAnchor,
-    );
-    console.log('[style-toolbar-diag] pos: left=', Math.round(left), 'top=', Math.round(top));
   }
 
   /** 视口滚动/缩放时的位置跟随（仅工具栏可见期间监听） */
@@ -311,51 +232,14 @@ export function createStyleToolbar(): StyleToolbarController {
 
   /** 设置工具栏显隐 */
   function setVisible(visible: boolean): void {
-    // [style-toolbar-diag] 显隐切换 + DOM 连接状态
-    console.log(
-      '[style-toolbar-diag] setVisible:',
-      visible,
-      'isConnected=',
-      dom.isConnected,
-      'parent=',
-      dom.parentElement?.className,
-    );
     dom.setAttribute('data-visible', visible ? 'true' : 'false');
     dom.classList.toggle('is-visible', visible);
-    // [style-toolbar-diag] 位置测量：显示时对比工具栏/画板块/视口的实际矩形
     if (visible) {
       updatePosition();
-      const bar = dom.getBoundingClientRect();
-      const block = dom.parentElement?.getBoundingClientRect();
-      console.log('[style-toolbar-diag] pos: toolbarRect=', {
-        left: Math.round(bar.left),
-        right: Math.round(bar.right),
-        top: Math.round(bar.top),
-        cx: Math.round(bar.left + bar.width / 2),
-      });
-      console.log(
-        '[style-toolbar-diag] pos: blockRect=',
-        block
-          ? {
-              left: Math.round(block.left),
-              right: Math.round(block.right),
-              top: Math.round(block.top),
-              cx: Math.round(block.left + block.width / 2),
-            }
-          : 'null',
-      );
-      console.log(
-        '[style-toolbar-diag] pos: viewport=',
-        document.documentElement.clientWidth,
-        'x',
-        document.documentElement.clientHeight,
-      );
     }
   }
 
   function attach(nextBoard: PlaitBoard): void {
-    // [style-toolbar-diag] attach 调用
-    console.log('[style-toolbar-diag] attach: sameBoard=', board === nextBoard);
     if (board === nextBoard) return;
     detach();
     board = nextBoard;

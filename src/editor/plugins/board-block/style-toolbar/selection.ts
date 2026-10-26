@@ -41,7 +41,12 @@ import {
 import { Node as SlateNode } from 'slate';
 
 import { isMindElement } from './types';
-import type { ShapeOption, BranchShapeOption, LayoutDirectionOption, TextAlignOption } from './constants';
+import type {
+  ShapeOption,
+  BranchShapeOption,
+  LayoutDirectionOption,
+  TextAlignOption,
+} from './constants';
 import { DEFAULT_STROKE_WIDTH, DEFAULT_BRANCH_WIDTH } from './constants';
 
 // ---------------------------------------------------------------------------
@@ -108,8 +113,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
     const plaitShape = getShapeByElement(board, el);
     shape = plaitShape === MindElementShape.underline ? 'underline' : 'round-rectangle';
   } catch (e) {
-    // [style-toolbar-diag] 形状读取异常
-    console.error('[style-toolbar-diag] getShapeByElement error', e);
     shape = 'round-rectangle';
   }
 
@@ -118,8 +121,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
   try {
     fill = getFillByElement(board, el) || null;
   } catch (e) {
-    // [style-toolbar-diag] 填充读取异常
-    console.error('[style-toolbar-diag] getFillByElement error', e);
     fill = null;
   }
 
@@ -128,8 +129,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
   try {
     strokeColor = getStrokeColorByElement(board, el) || null;
   } catch (e) {
-    // [style-toolbar-diag] 描边色读取异常
-    console.error('[style-toolbar-diag] getStrokeColorByElement error', e);
     strokeColor = null;
   }
 
@@ -138,8 +137,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
   try {
     strokeWidth = getStrokeWidthByElement(board, el);
   } catch (e) {
-    // [style-toolbar-diag] 描边宽读取异常
-    console.error('[style-toolbar-diag] getStrokeWidthByElement error', e);
     strokeWidth = DEFAULT_STROKE_WIDTH;
   }
 
@@ -149,8 +146,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
     const plaitBranchShape = getBranchShapeByMindElement(board, el);
     branchShape = plaitBranchShape === BranchShape.polyline ? 'polyline' : 'bight';
   } catch (e) {
-    // [style-toolbar-diag] 连线结构读取异常
-    console.error('[style-toolbar-diag] getBranchShapeByMindElement error', e);
     branchShape = 'bight';
   }
 
@@ -169,8 +164,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
       layout = null;
     }
   } catch (e) {
-    // [style-toolbar-diag] 布局方向读取异常
-    console.error('[style-toolbar-diag] getLayoutByElement error', e);
     layout = null;
   }
 
@@ -179,8 +172,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
   try {
     branchColor = getBranchColorByMindElement(board, el) || null;
   } catch (e) {
-    // [style-toolbar-diag] 分支色读取异常
-    console.error('[style-toolbar-diag] getBranchColorByMindElement error', e);
     branchColor = null;
   }
 
@@ -189,8 +180,6 @@ export function getCurrentStyles(board: PlaitBoard): NodeStyleSnapshot | null {
   try {
     branchWidth = getBranchWidthByMindElement(board, el);
   } catch (e) {
-    // [style-toolbar-diag] 分支宽读取异常
-    console.error('[style-toolbar-diag] getBranchWidthByMindElement error', e);
     branchWidth = DEFAULT_BRANCH_WIDTH;
   }
 
@@ -258,17 +247,12 @@ function readTextMarks(el: MindElement): {
         }
       }
     }
-  } catch (e) {
-    // [style-toolbar-diag] 文字 mark 读取异常
-    console.error('[style-toolbar-diag] readTextMarks error', e);
-  }
+  } catch (e) {}
 
   let fontSize: number;
   try {
     fontSize = fontSizeMark ?? getDefaultFontSizeForMindElement(el);
   } catch (e) {
-    // [style-toolbar-diag] 默认字号读取异常
-    console.error('[style-toolbar-diag] getDefaultFontSizeForMindElement error', e);
     fontSize = 14;
   }
 
