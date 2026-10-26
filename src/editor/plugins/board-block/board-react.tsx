@@ -17,6 +17,8 @@
  * @changelog
  * | 版本   | 变更说明                                | 关联                                                 |
  * | v1.0.0 | 初始实现：Plait 思维导图封装 + 只读态运行时切换 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | afterInit 透出 board 实例给 NodeView（样式工具栏地基） | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §3.2 |
+ * | v1.1.1 | 修复：运行时切换 readonly 时同步 board.pointer，修复选中机制失效 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * /@changelog
  *
  * @author hhhuilli
@@ -26,6 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board, Wrapper } from '@plait-board/react-board';
 import { withMind } from '@plait/mind';
 import type { PlaitBoard, PlaitBoardOptions, PlaitElement, Viewport } from '@plait/core';
+import { PlaitPointerType } from '@plait/core';
 
 import { CSS_PREFIX } from './constants';
 
@@ -44,6 +47,12 @@ export interface BoardReactProps {
   readonly: boolean;
   /** 画板内容变更回调（透出最新元素与当前视口，用于防抖回写） */
   onChange: (elements: PlaitElement[], viewport?: Viewport) => void;
+  /**
+   * board 实例就绪回调（afterInit 时触发一次）。
+   *
+   * 供 NodeView 拿到 board 实例，用于挂载样式工具栏的 selection 联动。
+   */
+  onBoardReady?: (board: PlaitBoard) => void;
 }
 
 /**
@@ -54,6 +63,7 @@ export function BoardReact({
   initialViewport,
   readonly,
   onChange,
+  onBoardReady,
 }: BoardReactProps) {
   const boardRef = useRef<PlaitBoard | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -72,9 +82,15 @@ export function BoardReact({
 
   const plugins = useMemo(() => [withMind], []);
 
-  // 捕获 board 实例，供只读态运行时切换使用。
+  // 捕获 board 实例，供只读态运行时切换 + 样式工具栏 selection 联动使用。
+  const onBoardReadyRef = useRef(onBoardReady);
+  useEffect(() => {
+    onBoardReadyRef.current = onBoardReady;
+  }, [onBoardReady]);
+
   const handleAfterInit = useCallback((board: PlaitBoard) => {
     boardRef.current = board;
+    onBoardReadyRef.current?.(board);
   }, []);
 
   // 用 ref 持有最新 onChange，避免其身份变化触发 Wrapper 频繁重建回调。
@@ -90,10 +106,17 @@ export function BoardReact({
 
   // 运行时切换只读态：直接 mutate board.options.readonly（实时影响交互 gating），
   // 并手动同步 .plait-board-container 的 .readonly 修饰类（渲染期计算，仅外观）。
+  //
+  // 关键：必须同步 board.pointer。Plait 仅在创建 board 时依据初始 readonly 选项
+  // 一次性设定 pointer（readonly → 'hand'，可编辑 → 'selection'，见 plait-core
+  // 的 board context 初始化），运行时切换 readonly 不会重新派生 pointer。
+  // 若不同步，pointer 恒为创建时的 'hand'，withSelection 的 isHandleSelection
+  // 恒为 false，选中缓存永不写入——节点选中/拖拽/框选全部失效。
   useEffect(() => {
     const board = boardRef.current;
     if (board) {
       board.options.readonly = readonly;
+      board.pointer = readonly ? PlaitPointerType.hand : PlaitPointerType.selection;
     }
     const boardEl = containerRef.current?.querySelector('.plait-board-container');
     if (boardEl) {

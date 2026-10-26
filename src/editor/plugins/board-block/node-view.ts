@@ -16,6 +16,7 @@
  * @changelog
  * | 版本   | 变更说明                                       | 关联                                                 |
  * | v1.0.0 | 初始实现：atom NodeView + React 挂载 + 只读态切换 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | 编辑态挂载节点样式工具栏 + selection 联动         | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次1 |
  * /@changelog
  *
  * @author hhhuilli
@@ -25,10 +26,12 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Node } from '@milkdown/kit/prose/model';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
-import type { PlaitElement, Viewport } from '@plait/core';
+import type { PlaitBoard, PlaitElement, Viewport } from '@plait/core';
 
 import { BoardReact } from './board-react';
 import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
+import { createStyleToolbar } from './style-toolbar';
+import type { StyleToolbarController } from './style-toolbar/types';
 import { decode, encode } from './codec';
 import {
   CSS_PREFIX,
@@ -52,6 +55,12 @@ export class BoardBlockNodeView implements NodeView {
 
   /** 工具栏 DOM */
   private toolbar: HTMLElement;
+
+  /** 节点样式工具栏控制器（编辑态浮现，联动 selection） */
+  private styleToolbar: StyleToolbarController;
+
+  /** Plait board 实例（afterInit 后可用） */
+  private board: PlaitBoard | null = null;
 
   /** React 挂载宿主（Plait 画板渲染在此） */
   private reactHost: HTMLElement;
@@ -114,6 +123,14 @@ export class BoardBlockNodeView implements NodeView {
     this.reactHost.style.height = `${this.height}px`;
     this.dom.appendChild(this.reactHost);
 
+    // 节点样式工具栏（浮于画板视口顶部居中，编辑态选中节点时显现）
+    // 注意：必须挂到外层 this.dom，不能挂到 reactHost——reactHost 是 React root
+    // 容器（下方 createRoot(this.reactHost)），React reconcile 会移除其内部一切
+    // 非托管 DOM，导致工具栏节点被剥离（isConnected=false）。this.dom 为
+    // position: relative，可作为工具栏 absolute 定位基准。
+    this.styleToolbar = createStyleToolbar();
+    this.dom.appendChild(this.styleToolbar.dom);
+
     // 高度拖拽手柄
     this.resizeHandle = document.createElement('div');
     this.resizeHandle.className = `${CSS_PREFIX}__resize-handle`;
@@ -148,6 +165,13 @@ export class BoardBlockNodeView implements NodeView {
         readonly: this.state === 'preview',
         onChange: (elements: PlaitElement[], viewport?: Viewport) => {
           this.handleBoardChange(elements, viewport);
+        },
+        onBoardReady: (board) => {
+          this.board = board;
+          // 若已处于编辑态（如 autoEdit 首次挂载即编辑），立即联动工具栏
+          if (this.state === 'editing') {
+            this.styleToolbar.attach(board);
+          }
         },
       }),
     );
@@ -218,6 +242,10 @@ export class BoardBlockNodeView implements NodeView {
     this.toolbar.classList.add('is-visible');
     updateToolbarState(this.toolbar, 'editing');
     this.renderReact();
+    // 编辑态联动样式工具栏（board 就绪时才 attach，否则等 onBoardReady）
+    if (this.board) {
+      this.styleToolbar.attach(this.board);
+    }
   }
 
   /** 退出编辑态：切回只读挂载，并立即回写一次数据 */
@@ -228,6 +256,8 @@ export class BoardBlockNodeView implements NodeView {
     this.dom.classList.add('is-preview');
     this.toolbar.classList.remove('is-visible');
     updateToolbarState(this.toolbar, 'preview');
+    // 退出编辑态：隐藏并解绑样式工具栏
+    this.styleToolbar.detach();
     this.renderReact();
     this.flushWriteBack();
   }
@@ -402,6 +432,7 @@ export class BoardBlockNodeView implements NodeView {
   destroy(): void {
     if (this.writeBackTimer) clearTimeout(this.writeBackTimer);
     this.cleanupResize();
+    this.styleToolbar.destroy();
     // 异步卸载 React root，规避「在 render 过程中同步卸载」的告警
     const root = this.reactRoot;
     queueMicrotask(() => root.unmount());

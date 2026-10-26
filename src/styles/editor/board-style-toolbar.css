@@ -1,0 +1,812 @@
+/*
+ * Board Style Toolbar - 节点样式工具栏样式
+ *
+ * 批次 1 地基：浮于画板视口顶部居中的工具栏骨架（显隐过渡 + 基础浮条外观）。
+ * 批次 2 节点级样式：工具栏按钮 + 下拉面板 + 取色面板 + 色彩梯度。
+ *
+ * 前缀：.lanismd-board-style-toolbar
+ * 变量：复用 src/styles/variables.css 的 --lanismd-* 主题变量
+ *
+ * @changelog
+ * | 版本   | 变更说明                        | 关联                                                        |
+ * | v1.0.0 | 批次1地基：浮动工具栏骨架样式      | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次1 |
+ * | v1.1.0 | 批次2：按钮/下拉/取色面板/梯度样式  | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
+ * | v1.2.0 | 批次3：结构/分支下拉样式            | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
+ * | v1.3.0 | 批次4：文字样式下拉样式             | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.4.0 | 字号/字色/对齐改一行自实现下拉控件   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/* ========================================================================
+   工具栏根容器
+   ======================================================================== */
+
+.lanismd-board-style-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  display: none;
+  /* 定位锚点为选中节点顶部：JS 设置 left/top 为节点顶部中心点，
+     这里 translate(-50%, -100%) 使工具栏整体上移到锚点上方 */
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.lanismd-board-style-toolbar.is-visible {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ========================================================================
+   内容容器
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__content {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 4px 8px;
+  background: var(--lanismd-bg-elevated, #ffffff);
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  user-select: none;
+}
+
+.dark .lanismd-board-style-toolbar__content {
+  background: var(--lanismd-bg-elevated, #2a2a2e);
+  border-color: var(--lanismd-border-color, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================================================
+   工具栏按钮（通用）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-md, 6px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__btn:hover,
+.lanismd-board-style-toolbar__btn.is-dropdown-open {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.dark .lanismd-board-style-toolbar__btn {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__btn:hover,
+.dark .lanismd-board-style-toolbar__btn.is-dropdown-open {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.lanismd-board-style-toolbar__btn > svg,
+.lanismd-board-style-toolbar__btn-icon > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* 按钮图标容器（span 包裹，用于在不误删下拉面板的前提下动态替换图标） */
+.lanismd-board-style-toolbar__btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================================================
+   下拉面板（通用基座）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 30;
+  display: none;
+  min-width: 180px;
+  transform: translateX(-50%);
+  background: var(--lanismd-bg-elevated, #ffffff);
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 8px;
+}
+
+.lanismd-board-style-toolbar__dropdown.is-open {
+  display: block;
+}
+
+.dark .lanismd-board-style-toolbar__dropdown {
+  background: var(--lanismd-bg-elevated, #2a2a2e);
+  border-color: var(--lanismd-border-color, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================================================
+   节点形状下拉面板
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__shape-dropdown {
+  display: none;
+  flex-direction: row;
+  gap: 4px;
+  min-width: auto;
+  padding: 6px;
+}
+
+.lanismd-board-style-toolbar__shape-dropdown.is-open {
+  display: flex;
+}
+
+.lanismd-board-style-toolbar__shape-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__shape-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.lanismd-board-style-toolbar__shape-item > svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ========================================================================
+   描边/分支上方行（宽度输入 + 颜色预览）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__stroke-top,
+.lanismd-board-style-toolbar__branch-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lanismd-board-style-toolbar__stroke-width-input,
+.lanismd-board-style-toolbar__branch-width-input {
+  width: 52px;
+  height: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.15));
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: var(--lanismd-bg-color, #fff);
+  color: var(--lanismd-text-color, #333);
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+}
+
+.lanismd-board-style-toolbar__stroke-width-input:focus,
+.lanismd-board-style-toolbar__branch-width-input:focus {
+  border-color: var(--lanismd-info, #3b82f6);
+}
+
+.dark .lanismd-board-style-toolbar__stroke-width-input,
+.dark .lanismd-board-style-toolbar__branch-width-input {
+  background: var(--lanismd-bg-color, #1e1e1e);
+  border-color: var(--lanismd-border-color, rgba(255, 255, 255, 0.15));
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.lanismd-board-style-toolbar__stroke-color-preview,
+.lanismd-board-style-toolbar__branch-color-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.1));
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ========================================================================
+   取色面板
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__color-panel {
+  width: 100%;
+}
+
+/* Tab 切换栏 */
+.lanismd-board-style-toolbar__color-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 10px;
+  padding: 3px;
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.04));
+  border-radius: 8px;
+}
+
+.lanismd-board-style-toolbar__color-tab {
+  flex: 1;
+  padding: 4px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lanismd-text-secondary, #888);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__color-tab:hover {
+  color: var(--lanismd-text-color, #333);
+}
+
+.lanismd-board-style-toolbar__color-tab.is-active {
+  background: var(--lanismd-bg-elevated, #fff);
+  color: var(--lanismd-text-color, #333);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dark .lanismd-board-style-toolbar__color-tabs {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark .lanismd-board-style-toolbar__color-tab {
+  color: var(--lanismd-text-secondary, #999);
+}
+
+.dark .lanismd-board-style-toolbar__color-tab:hover {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__color-tab.is-active {
+  background: var(--lanismd-bg-elevated, #3a3a3e);
+  color: var(--lanismd-text-color, #e0e0e0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 色块网格 */
+.lanismd-board-style-toolbar__color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+/* 色块（通用） */
+.lanismd-board-style-toolbar__color-swatch {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-board-style-toolbar__color-swatch:hover {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark .lanismd-board-style-toolbar__color-swatch:hover {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+/* 选中态：灰色圆环 */
+.lanismd-board-style-toolbar__color-swatch.is-active {
+  border-color: #999;
+}
+
+/* 浅色色块：加内边框 */
+.lanismd-board-style-toolbar__color-swatch.is-light {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* 无颜色色块 */
+.lanismd-board-style-toolbar__color-swatch.is-no-color {
+  background: transparent;
+}
+
+.lanismd-board-style-toolbar__color-swatch.is-no-color > svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ========================================================================
+   色彩梯度区域
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__color-gradient {
+  margin-top: 10px;
+}
+
+.lanismd-board-style-toolbar__color-gradient-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--lanismd-text-color, #333);
+  margin-bottom: 8px;
+}
+
+.dark .lanismd-board-style-toolbar__color-gradient-label {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.lanismd-board-style-toolbar__color-gradient-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+/* 梯度色块中的勾号 */
+.lanismd-board-style-toolbar__color-check {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  pointer-events: none;
+}
+
+/* 浅色梯度上的勾号改为深色 */
+.lanismd-board-style-toolbar__color-swatch.is-gradient.is-light .lanismd-board-style-toolbar__color-check {
+  color: #666;
+}
+
+.lanismd-board-style-toolbar__color-check > svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ========================================================================
+   结构下拉面板（上/下/左/右方向）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__structure-dropdown {
+  display: none;
+  flex-direction: row;
+  gap: 4px;
+  min-width: auto;
+  padding: 6px;
+}
+
+.lanismd-board-style-toolbar__structure-dropdown.is-open {
+  display: flex;
+}
+
+.lanismd-board-style-toolbar__structure-direction-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__structure-direction-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__structure-direction-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__structure-direction-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__structure-direction-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__structure-direction-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.lanismd-board-style-toolbar__structure-direction-item > svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ========================================================================
+   分支下拉面板（连线形状 + 宽度 + 颜色）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__branch-shape-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lanismd-board-style-toolbar__branch-shape-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__branch-shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__branch-shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__branch-shape-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__branch-shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__branch-shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.lanismd-board-style-toolbar__branch-shape-item > svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ========================================================================
+   下拉面板宽度覆写（填充/描边/分支面板更宽以容纳取色面板）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__fill-dropdown,
+.lanismd-board-style-toolbar__stroke-dropdown,
+.lanismd-board-style-toolbar__branch-dropdown,
+.lanismd-board-style-toolbar__text-style-dropdown {
+  min-width: 220px;
+}
+
+/* ========================================================================
+   文字样式下拉面板
+   ======================================================================== */
+
+/* 第一行：加粗 / 斜体 / 字号 */
+.lanismd-board-style-toolbar__text-marks-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* 加粗 / 斜体切换按钮 */
+.lanismd-board-style-toolbar__text-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__text-toggle:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__text-toggle.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__text-toggle {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__text-toggle:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__text-toggle.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.lanismd-board-style-toolbar__text-toggle > svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 第二行：字号 / 字色 / 对齐（一行） */
+.lanismd-board-style-toolbar__text-style-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+/* 子控件定位锚点（相对定位，供子下拉浮层绝对定位） */
+.lanismd-board-style-toolbar__sub-wrap {
+  position: relative;
+}
+
+/* 子按钮通用（字号/字色/对齐） */
+.lanismd-board-style-toolbar__sub-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__sub-btn:hover,
+.lanismd-board-style-toolbar__sub-btn.is-dropdown-open {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.dark .lanismd-board-style-toolbar__sub-btn {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__sub-btn:hover,
+.dark .lanismd-board-style-toolbar__sub-btn.is-dropdown-open {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+/* 字号按钮：显示当前字号 */
+.lanismd-board-style-toolbar__text-size-btn {
+  min-width: 48px;
+  font-size: 13px;
+}
+
+/* 字色按钮：字母 A + 下划线（下划线颜色动态） */
+.lanismd-board-style-toolbar__text-color-btn {
+  min-width: 32px;
+}
+
+.lanismd-board-style-toolbar__text-color-btn__letter {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  padding-bottom: 2px;
+  border-bottom: 2px solid #999999;
+}
+
+/* 对齐按钮：显示当前对齐 icon */
+.lanismd-board-style-toolbar__align-btn {
+  width: 32px;
+}
+
+.lanismd-board-style-toolbar__align-btn > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* 子下拉（字号/对齐 通用基座） */
+.lanismd-board-style-toolbar__sub-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  z-index: 40;
+  display: none;
+  background: var(--lanismd-bg-elevated, #ffffff);
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 8px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+}
+
+.lanismd-board-style-toolbar__sub-dropdown.is-open {
+  display: block;
+}
+
+.dark .lanismd-board-style-toolbar__sub-dropdown {
+  background: var(--lanismd-bg-elevated, #2a2a2e);
+  border-color: var(--lanismd-border-color, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 字号下拉 */
+.lanismd-board-style-toolbar__size-dropdown {
+  left: 0;
+  min-width: 56px;
+}
+
+.lanismd-board-style-toolbar__size-item {
+  display: block;
+  width: 100%;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__size-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__size-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__size-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__size-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__size-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+/* 对齐下拉（垂直列表：icon + 文案） */
+.lanismd-board-style-toolbar__align-dropdown {
+  right: 0;
+  min-width: 128px;
+}
+
+.lanismd-board-style-toolbar__align-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 10px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__align-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__align-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.lanismd-board-style-toolbar__align-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-board-style-toolbar__align-item-icon > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dark .lanismd-board-style-toolbar__align-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__align-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__align-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+/* 字色取色浮层（第二行下方居中弹出） */
+.lanismd-board-style-toolbar__color-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 224px;
+  display: none;
+  background: var(--lanismd-bg-elevated, #ffffff);
+  border: 1px solid var(--lanismd-border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 8px;
+}
+
+.lanismd-board-style-toolbar__color-popover.is-open {
+  display: block;
+}
+
+.dark .lanismd-board-style-toolbar__color-popover {
+  background: var(--lanismd-bg-elevated, #2a2a2e);
+  border-color: var(--lanismd-border-color, rgba(255, 255, 255, 0.12));
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
