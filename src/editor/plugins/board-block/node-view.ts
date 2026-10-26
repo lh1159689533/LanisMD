@@ -18,6 +18,8 @@
  * | v1.0.0 | 初始实现：atom NodeView + React 挂载 + 只读态切换 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.1.0 | 编辑态挂载节点样式工具栏 + selection 联动         | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次1 |
  * | v1.2.0 | 支持全屏窗口：最大化按钮 + 锁定态 + 跨窗口数据同步 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
+ * | v1.3.0 | 挂载画布级工具栏（缩放/适应画布/手型/主题）+ 主题块级持久化 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
+ * | v1.4.0 | 块工具栏改为节点外右侧竖排，与画布工具栏解除横排容器耦合 | REQ: 20261026-board-toolbar-vertical |
  * /@changelog
  *
  * @author hhhuilli
@@ -27,7 +29,8 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Node } from '@milkdown/kit/prose/model';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
-import type { PlaitBoard, PlaitElement, Viewport } from '@plait/core';
+import { BoardTransforms } from '@plait/core';
+import type { PlaitBoard, PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
 
 import { useSettingsStore } from '@/stores/settings-store';
 
@@ -40,6 +43,8 @@ import {
 } from './toolbar';
 import { createStyleToolbar } from './style-toolbar';
 import type { StyleToolbarController } from './style-toolbar/types';
+import { createCanvasToolbar } from './canvas-toolbar';
+import type { CanvasToolbarController } from './canvas-toolbar';
 import { openBoardFullscreen, type BoardFullscreenSession } from './fullscreen';
 import { decode, encode } from './codec';
 import {
@@ -68,6 +73,9 @@ export class BoardBlockNodeView implements NodeView {
   /** 节点样式工具栏控制器（编辑态浮现，联动 selection） */
   private styleToolbar: StyleToolbarController;
 
+  /** 画布级工具栏控制器（预览/编辑态常驻，与块工具栏同排右对齐） */
+  private canvasToolbar: CanvasToolbarController;
+
   /** Plait board 实例（afterInit 后可用） */
   private board: PlaitBoard | null = null;
 
@@ -85,6 +93,9 @@ export class BoardBlockNodeView implements NodeView {
 
   /** 当前视口 */
   private viewport?: Viewport;
+
+  /** 当前画板主题（块级，随文档持久化） */
+  private theme: ThemeColorMode;
 
   /** 当前视口高度（px） */
   private height: number;
@@ -128,6 +139,7 @@ export class BoardBlockNodeView implements NodeView {
     const decoded = decode(node.attrs.data as string);
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
+    this.theme = decoded.theme;
     this.height = this.normalizeHeight(node.attrs.height);
 
     // 外层容器
@@ -135,14 +147,24 @@ export class BoardBlockNodeView implements NodeView {
     this.dom.className = `${CSS_PREFIX} is-preview`;
     this.dom.setAttribute('data-type', 'board-block');
 
-    // 工具栏
+    // 块级工具栏：贴在节点外右侧竖排，默认隐藏、hover 浮现
     const callbacks: ToolbarCallbacks = {
       onToggleEdit: () => this.toggleEdit(),
       onDelete: () => this.deleteBlock(),
       onFullscreen: () => void this.handleFullscreenClick(),
     };
-    this.toolbar = createToolbar(callbacks);
+    this.toolbar = createToolbar(callbacks, { layout: 'vertical' });
     this.dom.appendChild(this.toolbar);
+
+    // 画布级工具栏（预览/编辑态常驻，独立定位于节点内右上角）
+    this.canvasToolbar = createCanvasToolbar({
+      onThemeChange: (mode) => this.applyTheme(mode),
+      onPointerModeChange: (mode) => {
+        // 打标供 CSS 切换光标：Plait 自身不处理 hand 模式的光标样式
+        this.dom.setAttribute('data-canvas-pointer', mode);
+      },
+    });
+    this.dom.appendChild(this.canvasToolbar.dom);
 
     // React 挂载宿主
     this.reactHost = document.createElement('div');
@@ -191,16 +213,28 @@ export class BoardBlockNodeView implements NodeView {
         key: this.renderKey,
         initialElements: this.elements,
         initialViewport: this.viewport,
+        initialTheme: this.theme,
         readonly: this.state === 'preview',
         onChange: (elements: PlaitElement[], viewport?: Viewport) => {
           this.handleBoardChange(elements, viewport);
         },
+        onThemeChange: (mode: ThemeColorMode) => {
+          this.theme = mode;
+          this.scheduleWriteBack();
+        },
         onBoardReady: (board) => {
           this.board = board;
+          // 画布工具栏在预览/编辑态均可用，board 一就绪即绑定
+          this.canvasToolbar.attach(board);
           // 若已处于编辑态（如 autoEdit 首次挂载即编辑），立即联动工具栏
           if (this.state === 'editing') {
             this.styleToolbar.attach(board);
           }
+        },
+        // readonly 跳变时 BoardReact 会强制重设 board.pointer，该赋值不触发
+        // board.onChange，画布工具栏感知不到，需显式刷新手型按钮高亮
+        onPointerReset: () => {
+          this.canvasToolbar.sync();
         },
       }),
     );
@@ -211,9 +245,36 @@ export class BoardBlockNodeView implements NodeView {
     const decoded = decode(data);
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
+    this.theme = decoded.theme;
     this.renderKey += 1;
+    // 旧 board 实例即将被 React 卸载，先解绑工具栏还原其 onChange 包装
+    this.canvasToolbar.detach();
     this.board = null;
     this.renderReact();
+  }
+
+  /**
+   * 应用画板主题（画布工具栏发起）。
+   *
+   * 这里只负责写入 board，持久化由 BoardReact 的 onThemeChange 回调驱动：
+   * `updateThemeColor` 会产生一个 `set_theme` op，而 Wrapper 的 onValueChange
+   * 把 set_theme 排除在「真实元素变更」之外（见 board-react.tsx 的说明），
+   * 因此主题必须走 onThemeChange 才能落盘。
+   *
+   * 不在此处直接 flushWriteBack：若画板内存在「带自定义配色的根节点」，
+   * `updateThemeColor` 还会额外产生 set_node op 从而同时触发 onValueChange，
+   * 两条路径各自回写会产生两条撤销记录。交给两者共用的 scheduleWriteBack
+   * 防抖合并，最终只落一次。
+   *
+   * 已知副作用：`updateThemeColor` 会清空根节点上用户手动设过的
+   * fill / strokeColor / branchColor（@plait/mind 的 board.applyTheme 既定行为，
+   * 符合「换主题」语义），子节点的自定义配色不受影响。
+   */
+  private applyTheme(mode: ThemeColorMode): void {
+    if (!this.board) return;
+    if (this.theme === mode && this.board.theme?.themeColorMode === mode) return;
+    BoardTransforms.updateThemeColor(this.board, mode);
+    this.canvasToolbar.sync();
   }
 
   /** Plait 画板内容变更：暂存最新值并防抖回写 */
@@ -282,6 +343,7 @@ export class BoardBlockNodeView implements NodeView {
     this.dom.classList.add('is-editing');
     this.toolbar.classList.add('is-visible');
     updateToolbarState(this.toolbar, 'editing');
+    this.canvasToolbar.setBlockState('editing');
     this.renderReact();
     // 编辑态联动样式工具栏（board 就绪时才 attach，否则等 onBoardReady）
     if (this.board) {
@@ -297,6 +359,7 @@ export class BoardBlockNodeView implements NodeView {
     this.dom.classList.add('is-preview');
     this.toolbar.classList.remove('is-visible');
     updateToolbarState(this.toolbar, 'preview');
+    this.canvasToolbar.setBlockState('preview');
     // 退出编辑态：隐藏并解绑样式工具栏
     this.styleToolbar.detach();
     this.renderReact();
@@ -341,7 +404,7 @@ export class BoardBlockNodeView implements NodeView {
     }
 
     const session = await openBoardFullscreen({
-      getData: () => encode(this.elements, this.viewport),
+      getData: () => encode(this.elements, this.viewport, this.theme),
       initialState,
       title: '思维导图',
       theme: useSettingsStore.getState().config.theme || 'system',
@@ -362,6 +425,7 @@ export class BoardBlockNodeView implements NodeView {
     const decoded = decode(data);
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
+    this.theme = decoded.theme;
     this.commitAttrs({ data });
   }
 
@@ -428,7 +492,7 @@ export class BoardBlockNodeView implements NodeView {
     if (this.writeBackTimer) clearTimeout(this.writeBackTimer);
     this.writeBackTimer = setTimeout(() => {
       this.writeBackTimer = null;
-      this.commitAttrs({ data: encode(this.elements, this.viewport) });
+      this.commitAttrs({ data: encode(this.elements, this.viewport, this.theme) });
     }, WRITE_BACK_DEBOUNCE_MS);
   }
 
@@ -438,7 +502,7 @@ export class BoardBlockNodeView implements NodeView {
       clearTimeout(this.writeBackTimer);
       this.writeBackTimer = null;
     }
-    this.commitAttrs({ data: encode(this.elements, this.viewport) });
+    this.commitAttrs({ data: encode(this.elements, this.viewport, this.theme) });
   }
 
   /**
@@ -557,8 +621,13 @@ export class BoardBlockNodeView implements NodeView {
   stopEvent(event: Event): boolean {
     const target = event.target as HTMLElement | null;
 
-    // 工具栏与拖拽手柄事件由各自监听处理
-    if (target && (this.toolbar.contains(target) || target === this.resizeHandle)) {
+    // 工具栏（块级 + 画布级）与拖拽手柄事件由各自监听处理
+    if (
+      target &&
+      (this.toolbar.contains(target) ||
+        this.canvasToolbar.dom.contains(target) ||
+        target === this.resizeHandle)
+    ) {
       return true;
     }
 
@@ -585,6 +654,7 @@ export class BoardBlockNodeView implements NodeView {
     if (this.writeBackTimer) clearTimeout(this.writeBackTimer);
     this.cleanupResize();
     this.styleToolbar.destroy();
+    this.canvasToolbar.destroy();
     // 节点销毁时若全屏窗口仍存活，一并关闭，避免留下无宿主的孤立窗口
     if (this.fullscreenSession) {
       const session = this.fullscreenSession;

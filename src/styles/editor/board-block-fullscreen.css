@@ -2,14 +2,16 @@
  * Board Block - 全屏窗口与锁定态样式
  *
  * 两部分职责：
- * 1. `.lanismd-board-block--fullscreen`：独立全屏窗口中的画板布局（铺满视口、
- *    无边框圆角、工具栏常驻）。该根容器同时带有 `.lanismd-board-block`，
- *    因此可复用 board-block.css 中移植的全部 Plait 基础样式。
+ * 1. `.lanismd-board-block--fullscreen`：独立最大化窗口中的画板布局（铺满
+ *    webview、无边框圆角、画布工具栏常驻）。该根容器同时带有
+ *    `.lanismd-board-block`，因此可复用 board-block.css 中移植的全部 Plait
+ *    基础样式。
  * 2. `.is-fullscreen-locked`：主窗口在全屏窗口打开期间的遮罩与按钮收敛。
  *
  * @changelog
  * | 版本   | 变更说明                       | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏窗口布局与锁定遮罩 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §二 |
+ * | v1.1.0 | 移除块工具栏规则，改为画布工具栏留白 | REQ: 20261026-board-fullscreen-maximize |
  * /@changelog
  *
  * @author hhhuilli
@@ -28,6 +30,9 @@
   border: none;
   border-radius: 0;
   background: var(--lanismd-bg-color, #fff);
+  /* 基础类改为 overflow: visible 以容纳主窗口的外置工具栏，全屏窗口无此需求，
+     恢复裁剪避免溢出产生窗口级滚动条 */
+  overflow: hidden;
 }
 
 /* 全屏窗口由窗口尺寸决定画板高度，不再受 height 属性约束 */
@@ -37,10 +42,10 @@
   min-height: 0;
 }
 
-/* 工具栏常驻显示，不随 hover 收起 */
-.lanismd-board-block--fullscreen .lanismd-board-block__toolbar {
-  opacity: 1;
-  pointer-events: auto;
+/* 全屏窗口的画布工具栏需避让 Plait 的滚动条占位，保持与主窗口一致的留白 */
+.lanismd-board-block--fullscreen .lanismd-board-canvas-toolbar {
+  top: 12px;
+  right: 12px;
 }
 
 /* 等待主窗口下发数据期间的占位 */

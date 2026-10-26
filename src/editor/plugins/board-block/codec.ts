@@ -7,13 +7,15 @@
  * @changelog
  * | 版本   | 变更说明                          | 关联                                                 |
  * | v1.0.0 | 初始实现：base64(JSON) 编解码往返  | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | 编解码画板主题（缺失时回落默认主题） | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §六 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import type { PlaitElement, Viewport } from '@plait/core';
+import type { PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
 import { SCHEMA_VERSION, createDefaultMindmap } from './constants';
+import { DEFAULT_THEME_MODE, THEME_OPTIONS } from './canvas-toolbar/constants';
 import type { BoardPayload, DecodedBoard } from './types';
 
 // ---------------------------------------------------------------------------
@@ -60,13 +62,19 @@ function base64ToUtf8(input: string): string {
  *
  * @param elements Plait 画板元素树
  * @param viewport 视口信息（可选）
+ * @param theme 画板主题（可选；不传则不写入该字段，解码侧回落默认主题）
  * @returns base64 编码串，写入 `board_block.attrs.data`
  */
-export function encode(elements: PlaitElement[], viewport?: Viewport): string {
+export function encode(
+  elements: PlaitElement[],
+  viewport?: Viewport,
+  theme?: ThemeColorMode,
+): string {
   const payload: BoardPayload = {
     v: SCHEMA_VERSION,
     children: elements,
     viewport,
+    theme,
   };
   return utf8ToBase64(JSON.stringify(payload));
 }
@@ -91,6 +99,7 @@ export function decode(text: string): DecodedBoard {
     version: SCHEMA_VERSION,
     elements: createDefaultMindmap(),
     viewport: undefined,
+    theme: DEFAULT_THEME_MODE,
   });
 
   if (!text || !text.trim()) {
@@ -122,6 +131,8 @@ export function decode(text: string): DecodedBoard {
  * 将解析出的原始对象归一化为 `DecodedBoard`。
  *
  * 校验 `children` 是否为合法数组；非法时回落默认思维导图。
+ * `theme` 需校验是否为已知主题标识——文档是用户可直接手改的明文载体，
+ * 把非法字符串原样交给 Plait 会导致主题色查表失败、节点配色整体失效。
  */
 function normalize(parsed: Partial<BoardPayload>): DecodedBoard {
   const elements =
@@ -133,5 +144,12 @@ function normalize(parsed: Partial<BoardPayload>): DecodedBoard {
     version: typeof parsed.v === 'number' ? parsed.v : SCHEMA_VERSION,
     elements,
     viewport: parsed.viewport,
+    theme: normalizeTheme(parsed.theme),
   };
+}
+
+/** 校验主题标识合法性，非法或缺失时回落默认主题 */
+function normalizeTheme(raw: unknown): ThemeColorMode {
+  const matched = THEME_OPTIONS.find((option) => option.mode === raw);
+  return matched ? matched.mode : DEFAULT_THEME_MODE;
 }

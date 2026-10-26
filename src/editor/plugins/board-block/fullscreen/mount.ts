@@ -1,12 +1,15 @@
 /**
  * Board Block - 全屏窗口挂载（子窗口侧）
  *
- * 在独立的全屏 Tauri 窗口中挂载一份 Plait 画板，复用主窗口 NodeView 的同一套
- * 组件（BoardReact / toolbar / style-toolbar），保证两侧交互一致。
+ * 在独立的最大化 Tauri 窗口中挂载一份 Plait 画板，复用主窗口 NodeView 的同一套
+ * 组件（BoardReact / canvas-toolbar / style-toolbar），保证两侧交互一致。
  *
  * 与主窗口 NodeView 的差异：
  * - 没有 ProseMirror 上下文，数据来源与回写全部走 Tauri 事件。
- * - 工具栏仅「还原 + 编辑/完成」，不提供删除与高度拖拽（高度由窗口决定）。
+ * - 不渲染节点外的竖排块工具栏：窗口有系统标题栏承担关窗，高度由窗口决定，
+ *   删除整块不在此处提供。唯一的「编辑/完成」入口并入画布工具栏的操作卡，
+ *   与缩放/主题等按钮同排且样式统一。
+ * - 主题切换在此真实生效（写入 board 并随 change 事件回传主窗口）。
  * - Esc 为层级式：编辑态先退出编辑，预览态再按则关闭窗口。
  *
  * 数据流：
@@ -17,6 +20,7 @@
  * @changelog
  * | 版本   | 变更说明                           | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏子窗口画板挂载与事件桥接 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
+ * | v1.1.0 | 块工具栏替换为画布工具栏 + 编辑操作卡  | REQ: 20261026-board-fullscreen-maximize |
  * /@changelog
  *
  * @author hhhuilli
@@ -26,14 +30,12 @@ import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import type { PlaitBoard, PlaitElement, Viewport } from '@plait/core';
+import { BoardTransforms } from '@plait/core';
+import type { PlaitBoard, PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
 
 import { BoardReact } from '../board-react';
-import {
-  createToolbar,
-  updateToolbarState,
-  type ToolbarCallbacks,
-} from '../toolbar';
+import { createCanvasToolbar } from '../canvas-toolbar';
+import type { CanvasToolbarController } from '../canvas-toolbar';
 import { createStyleToolbar } from '../style-toolbar';
 import type { StyleToolbarController } from '../style-toolbar/types';
 import { decode, encode } from '../codec';
@@ -77,9 +79,9 @@ class FullscreenBoardSession {
   private state: BoardBlockState;
 
   private readonly root: HTMLElement;
-  private readonly toolbar: HTMLElement;
   private readonly host: HTMLElement;
   private readonly placeholder: HTMLElement;
+  private readonly canvasToolbar: CanvasToolbarController;
   private readonly styleToolbar: StyleToolbarController;
 
   private reactRoot: Root | null = null;
@@ -87,6 +89,13 @@ class FullscreenBoardSession {
 
   private elements: PlaitElement[] = [];
   private viewport?: Viewport;
+  /**
+   * 画板主题。
+   *
+   * 由画布工具栏的主题卡切换，并参与「接收 → 渲染 → 回传」的完整往返，
+   * 否则主窗口打开全屏再关闭就会把主题覆盖成默认值。
+   */
+  private theme?: ThemeColorMode;
 
   /** 是否已收到主窗口下发的初始数据 */
   private initialized = false;
@@ -107,16 +116,6 @@ class FullscreenBoardSession {
     this.root.classList.add(CSS_PREFIX, FULLSCREEN_CSS_CLASS);
     this.root.classList.add(state === 'editing' ? 'is-editing' : 'is-preview');
 
-    const callbacks: ToolbarCallbacks = {
-      onToggleEdit: () => this.toggleEdit(),
-      onFullscreen: () => void this.closeWindow(),
-    };
-    this.toolbar = createToolbar(callbacks, { fullscreenMode: 'restore' });
-    // 全屏窗口的工具栏常驻可见（无 hover 收起逻辑）
-    this.toolbar.classList.add('is-visible');
-    updateToolbarState(this.toolbar, state);
-    this.root.appendChild(this.toolbar);
-
     this.host = document.createElement('div');
     this.host.className = `${CSS_PREFIX}__host`;
     this.root.appendChild(this.host);
@@ -127,10 +126,22 @@ class FullscreenBoardSession {
     this.placeholder.textContent = '正在加载画板…';
     this.root.appendChild(this.placeholder);
 
+    // 画布级工具栏：编辑操作卡 + 视图/主题/折叠三卡，常驻于画板右上角。
+    // 全屏窗口不渲染块工具栏，编辑入口即此处的操作卡。
+    this.canvasToolbar = createCanvasToolbar({
+      onThemeChange: (mode) => this.applyTheme(mode),
+      onToggleEdit: () => this.toggleEdit(),
+      onPointerModeChange: (mode) => {
+        // 打标供 CSS 切换光标：Plait 自身不处理 hand 模式的光标样式
+        this.root.setAttribute('data-canvas-pointer', mode);
+      },
+    });
+    this.canvasToolbar.setBlockState(state);
+    this.root.appendChild(this.canvasToolbar.dom);
+
     this.styleToolbar = createStyleToolbar();
     this.root.appendChild(this.styleToolbar.dom);
   }
-
   // -------------------------------------------------------------------------
   // 生命周期
   // -------------------------------------------------------------------------
@@ -161,7 +172,7 @@ class FullscreenBoardSession {
         this.flushChange();
         await emit(BOARD_FS_EVENT.closed, {
           label: this.label,
-          data: encode(this.elements, this.viewport),
+          data: encode(this.elements, this.viewport, this.theme),
           state: this.state,
         } satisfies BoardFsClosedPayload);
       } catch (err) {
@@ -201,12 +212,13 @@ class FullscreenBoardSession {
     this.unlistens.forEach((fn) => fn());
     this.unlistens = [];
     this.styleToolbar.destroy();
+    this.canvasToolbar.destroy();
 
     // 会话可重入（StrictMode 的 mount -> cleanup -> remount），必须把构造时
     // 注入容器的 DOM 与类名全部还原，否则下一个会话会叠加出重复的工具栏与画板。
-    this.toolbar.remove();
     this.host.remove();
     this.placeholder.remove();
+    this.root.removeAttribute('data-canvas-pointer');
     this.root.classList.remove(CSS_PREFIX, FULLSCREEN_CSS_CLASS, 'is-editing', 'is-preview');
 
     const root = this.reactRoot;
@@ -226,6 +238,7 @@ class FullscreenBoardSession {
     const decoded = decode(data);
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
+    this.theme = decoded.theme;
 
     this.placeholder.remove();
     this.reactRoot = createRoot(this.host);
@@ -237,20 +250,40 @@ class FullscreenBoardSession {
       createElement(BoardReact, {
         initialElements: this.elements,
         initialViewport: this.viewport,
+        initialTheme: this.theme,
         readonly: this.state === 'preview',
         onChange: (elements: PlaitElement[], viewport?: Viewport) => {
           this.elements = elements;
           this.viewport = viewport;
           this.scheduleChange();
         },
+        onThemeChange: (mode: ThemeColorMode) => {
+          this.theme = mode;
+          this.scheduleChange();
+        },
         onBoardReady: (board) => {
           this.board = board;
+          this.canvasToolbar.attach(board);
           if (this.state === 'editing') {
             this.styleToolbar.attach(board);
           }
         },
       }),
     );
+  }
+
+  /**
+   * 应用画布工具栏选中的主题。
+   *
+   * 与主窗口 NodeView.applyTheme 同构：工具栏不直接写 board，由宿主调用
+   * `updateThemeColor`。Plait 把 set_theme 排除在「真实元素变更」之外，
+   * 故主题必须经 BoardReact 的 onThemeChange 才能进入回传链路。
+   */
+  private applyTheme(mode: ThemeColorMode): void {
+    if (!this.board) return;
+    if (this.theme === mode && this.board.theme?.themeColorMode === mode) return;
+    BoardTransforms.updateThemeColor(this.board, mode);
+    this.canvasToolbar.sync();
   }
 
   // -------------------------------------------------------------------------
@@ -270,7 +303,7 @@ class FullscreenBoardSession {
     this.state = 'editing';
     this.root.classList.remove('is-preview');
     this.root.classList.add('is-editing');
-    updateToolbarState(this.toolbar, 'editing');
+    this.canvasToolbar.setBlockState('editing');
     this.renderReact();
     if (this.board) this.styleToolbar.attach(this.board);
     this.emitState();
@@ -281,7 +314,7 @@ class FullscreenBoardSession {
     this.state = 'preview';
     this.root.classList.remove('is-editing');
     this.root.classList.add('is-preview');
-    updateToolbarState(this.toolbar, 'preview');
+    this.canvasToolbar.setBlockState('preview');
     this.styleToolbar.detach();
     this.renderReact();
     this.flushChange();
@@ -343,7 +376,7 @@ class FullscreenBoardSession {
     if (!this.initialized) return;
     void emit(BOARD_FS_EVENT.change, {
       label: this.label,
-      data: encode(this.elements, this.viewport),
+      data: encode(this.elements, this.viewport, this.theme),
     } satisfies BoardFsChangePayload);
   }
 

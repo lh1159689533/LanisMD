@@ -1,18 +1,26 @@
 /**
  * Board Block - 悬浮工具栏
  *
- * 在画板块右上角显示操作按钮，按钮顺序为「最大化 / 编辑 / 删除」。
+ * 显示操作按钮，按钮顺序为「最大化 / 编辑 / 删除」。
  * 按钮统一用 mousedown + preventDefault + stopPropagation，避免抢走编辑器焦点
  * 或触发 ProseMirror 的节点选择。
  *
- * 同一份工具栏同时服务于两种宿主：
- * - 主窗口 NodeView：三个按钮齐全，锁定态下仅露出「返回全屏」。
- * - 全屏子窗口：只渲染「还原 + 编辑」，不提供删除与高度调整。
+ * 仅服务于主窗口 NodeView：贴在节点外右侧竖排纯图标，三个按钮齐全，
+ * 编辑态隐藏删除、锁定态下仅露出「返回全屏」。
+ *
+ * 全屏子窗口不使用本工具栏——其关窗由系统标题栏承担，编辑入口并入画布工具栏
+ * 的操作卡（见 canvas-toolbar 的 `onToggleEdit`）。`horizontal` 形态与
+ * `restore` 模式因此目前无宿主使用，保留以备其它横排宿主复用。
+ *
+ * 文字标签始终渲染，竖排形态下由 CSS 隐藏并退化为 `title` 提示，
+ * 避免 JS 侧出现两条渲染分支。
  *
  * @changelog
  * | 版本   | 变更说明                   | 关联                                                 |
  * | v1.0.0 | 初始实现：编辑/完成/删除工具栏 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.1.0 | 新增最大化按钮与按钮可选渲染   | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §二 |
+ * | v1.2.0 | 支持竖排纯图标形态（节点外右侧） | REQ: 20261026-board-toolbar-vertical |
+ * | v1.3.0 | 全屏子窗口不再使用本工具栏      | REQ: 20261026-board-fullscreen-maximize |
  * /@changelog
  *
  * @author hhhuilli
@@ -47,10 +55,20 @@ export interface ToolbarCallbacks {
   onFullscreen?: () => void;
 }
 
+/**
+ * 工具栏排列形态。
+ *
+ * - `horizontal`：右上角横排，按钮内图标 + 文字（全屏子窗口）
+ * - `vertical`：节点外右侧竖排，纯图标 + tooltip（主窗口 NodeView）
+ */
+export type ToolbarLayout = 'horizontal' | 'vertical';
+
 /** 工具栏构造选项 */
 export interface ToolbarOptions {
   /** 全屏按钮初始形态，默认 `maximize` */
   fullscreenMode?: ToolbarFullscreenMode;
+  /** 排列形态，默认 `horizontal` */
+  layout?: ToolbarLayout;
 }
 
 /**
@@ -64,6 +82,9 @@ export function createToolbar(
 ): HTMLElement {
   const toolbar = document.createElement('div');
   toolbar.className = `${CSS_PREFIX}__toolbar`;
+  if (options.layout === 'vertical') {
+    toolbar.classList.add(`${CSS_PREFIX}__toolbar--vertical`);
+  }
 
   // 全屏（最大化 / 还原）按钮，位于最左侧
   if (callbacks.onFullscreen) {

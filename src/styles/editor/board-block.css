@@ -17,6 +17,7 @@
  * @changelog
  * | 版本   | 变更说明                                     | 关联                                                 |
  * | v1.0.0 | 初始实现：画板块样式 + Plait 基础/mind 样式移植 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | 块工具栏改为节点外右侧竖排纯图标，编辑态隐藏删除 | REQ: 20261026-board-toolbar-vertical |
  * /@changelog
  *
  * @author hhhuilli
@@ -32,7 +33,9 @@
   border: 1px solid var(--lanismd-border-color, #e7e9e8);
   border-radius: 8px;
   background: var(--lanismd-bg-color, #fff);
-  overflow: hidden;
+  /* 块工具栏需溢出到节点右外侧，故此处不可裁剪；画布的圆角裁剪下沉到
+     __host（其自身已 overflow: hidden，补 border-radius 即可） */
+  overflow: visible;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -53,6 +56,8 @@
 .lanismd-board-block__host {
   position: relative;
   width: 100%;
+  /* 承接原先由外层容器负责的圆角裁剪 */
+  border-radius: inherit;
   overflow: hidden;
 }
 
@@ -126,6 +131,60 @@
 
 .lanismd-board-block__toolbar-icon svg {
   display: block;
+}
+
+/* --------------------------------------------------------------------------
+ * 工具栏 · 竖排形态（主窗口 NodeView）
+ *
+ * 贴在节点边框外右侧，顶部对齐，纯图标 + tooltip，默认隐藏、hover 浮现。
+ * 节点外侧的可见空间由 .milkdown-editor-root 的右侧缓冲区（padding-inline-end
+ * + 等量负 margin）提供，与 block-handle 占用左侧缓冲区的做法一致。
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block__toolbar--vertical {
+  top: 0;
+  right: auto;
+  /* 定位百分比相对 padding box（即边框内侧），margin 需同时越过 1px 边框 */
+  left: 100%;
+  margin-left: 8px;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+}
+
+/* 桥接节点与工具栏之间的空隙，避免指针横穿时触发 mouseleave 导致闪烁 */
+.lanismd-board-block__toolbar--vertical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -9px;
+  width: 9px;
+}
+
+.dark .lanismd-board-block__toolbar--vertical {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+  background: var(--lanismd-bg-elevated, rgba(38, 38, 38, 0.95));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.lanismd-board-block__toolbar--vertical .lanismd-board-block__toolbar-btn {
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  gap: 0;
+}
+
+/* 竖排形态下文案退化为 title 提示 */
+.lanismd-board-block__toolbar--vertical .lanismd-board-block__toolbar-label {
+  display: none;
+}
+
+/* 编辑态隐藏删除按钮，避免编辑过程中误删整块 */
+.lanismd-board-block__toolbar--vertical.is-editing
+  .lanismd-board-block__toolbar-btn--delete {
+  display: none;
 }
 
 /* --------------------------------------------------------------------------

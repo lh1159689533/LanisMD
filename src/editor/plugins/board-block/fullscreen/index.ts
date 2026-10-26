@@ -11,12 +11,14 @@
  * @changelog
  * | 版本   | 变更说明                             | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏窗口创建与跨窗口事件桥接   | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §三 |
+ * | v1.1.0 | 真全屏改为「系统标题栏 + 当前屏幕最大化」 | REQ: 20261026-board-fullscreen-maximize |
  * /@changelog
  *
  * @author hhhuilli
  */
 
 import { emitTo, listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { currentMonitor } from '@tauri-apps/api/window';
 
 import type { BoardBlockState } from '../types';
 import {
@@ -62,6 +64,32 @@ export interface BoardFullscreenSession {
   close: () => Promise<void>;
   /** 仅解除事件监听，不关闭窗口 */
   dispose: () => void;
+}
+
+/**
+ * 计算新窗口的初始落点（逻辑像素），使其出生在主窗口所在的那块显示器上。
+ *
+ * `maximized: true` 只会让窗口在「它所在的显示器」上最大化，而 Tauri 没有
+ * 「指定显示器」的建窗选项。多显示器下若不给 x/y，新窗口默认落在主显示器，
+ * 从而在错误的屏幕上最大化。因此先用当前显示器的左上角作为落点。
+ *
+ * `monitor.position` 为物理像素，建窗的 x/y 为逻辑像素，需除以缩放比。
+ *
+ * @returns 落点；无法获取显示器信息时返回 undefined（交由系统默认定位）
+ */
+async function getSpawnPosition(): Promise<{ x: number; y: number } | undefined> {
+  try {
+    const monitor = await currentMonitor();
+    if (!monitor) return undefined;
+    const scale = monitor.scaleFactor || 1;
+    return {
+      x: Math.round(monitor.position.x / scale),
+      y: Math.round(monitor.position.y / scale),
+    };
+  } catch (err) {
+    console.error('[board-fullscreen] 获取当前显示器失败:', err);
+    return undefined;
+  }
 }
 
 /**
@@ -121,12 +149,18 @@ export async function openBoardFullscreen(
     );
 
     const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+    const spawn = await getSpawnPosition();
     const win = new WebviewWindow(label, {
       url: buildFullscreenUrl({ label, state: host.initialState, theme: host.theme }),
       title: host.title ?? '画板',
-      // 创建即真全屏；去掉系统装饰，退出完全交由应用内「还原」按钮与 Esc
-      fullscreen: true,
-      decorations: false,
+      // 保留系统装饰（标题栏 + 红绿灯）并在当前屏幕最大化：
+      // 相比真全屏，用户可自行拖动/缩放/关闭窗口，也不遮挡菜单栏与 Dock。
+      decorations: true,
+      maximized: true,
+      // 落点决定最大化发生在哪块显示器上，见 getSpawnPosition；
+      // 取不到显示器时传 undefined，等同于交由系统默认定位。
+      x: spawn?.x,
+      y: spawn?.y,
     });
 
     win.once('tauri://error', (e) => {
@@ -136,11 +170,11 @@ export async function openBoardFullscreen(
       host.onClosed({ data: host.getData(), state: host.initialState });
     });
 
-    // 兜底：部分平台上无装饰窗口的 fullscreen 创建选项可能不生效，
-    // 窗口就绪后再显式设置一次。
+    // 兜底：部分平台上 maximized 建窗选项可能不生效（尤其是同时指定了 x/y 时），
+    // 窗口就绪后再显式最大化一次。
     win.once('tauri://created', () => {
-      void win.setFullscreen(true).catch((err) => {
-        console.error('[board-fullscreen] 设置全屏失败:', err);
+      void win.maximize().catch((err) => {
+        console.error('[board-fullscreen] 最大化窗口失败:', err);
       });
     });
 

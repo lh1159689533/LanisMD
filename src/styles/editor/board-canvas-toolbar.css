@@ -1,0 +1,312 @@
+/**
+ * 画布级工具栏样式
+ *
+ * 前缀：.lanismd-board-canvas-toolbar
+ * 结构：若干张独立悬浮卡片（编辑操作 / 视图操作 / 主题 / 折叠），根容器绝对
+ * 定位于画板节点内右上角。操作卡仅在全屏窗口渲染（主窗口由块工具栏承担）。
+ *
+ * @changelog
+ * | 版本   | 变更说明                             | 关联                                                     |
+ * | v1.0.0 | 初始实现：三卡片布局 + 主题面板 + 折叠 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §二 |
+ * | v1.1.0 | 块工具栏移至节点外右侧，本工具栏改为独立定位 | REQ: 20261026-board-toolbar-vertical |
+ * | v1.2.0 | 新增编辑操作卡（随折叠一同收起）          | REQ: 20261026-board-fullscreen-maximize |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/* --------------------------------------------------------------------------
+ * 工具栏根与卡片
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-canvas-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  /* 根容器自身不拦截指针，交互区仅限各卡片 */
+  pointer-events: none;
+}
+
+.lanismd-board-canvas-toolbar__card {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 6px;
+  background: var(--lanismd-bg-elevated, rgba(255, 255, 255, 0.92));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+}
+
+.dark .lanismd-board-canvas-toolbar__card {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+  background: var(--lanismd-bg-elevated, rgba(38, 38, 38, 0.95));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 折叠态：仅保留折叠卡片，其余卡片移出渲染 */
+.lanismd-board-canvas-toolbar[data-collapsed='true']
+  .lanismd-board-canvas-toolbar__card--action,
+.lanismd-board-canvas-toolbar[data-collapsed='true']
+  .lanismd-board-canvas-toolbar__card--view,
+.lanismd-board-canvas-toolbar[data-collapsed='true']
+  .lanismd-board-canvas-toolbar__card--theme {
+  display: none;
+}
+
+/* 预览态：手型/选择切换不可用（预览态整块恒为手型，无需切换） */
+.lanismd-board-canvas-toolbar[data-block-state='preview']
+  .lanismd-board-canvas-toolbar__btn--pointer {
+  display: none;
+}
+
+/* 锁定态（画板已移交全屏窗口）：隐藏画布工具栏。
+ * 否则主窗口的缩放/主题操作会落在被遮罩覆盖的 board 上，
+ * 而全屏窗口关闭时又会用其最终数据整体覆盖，造成改动静默丢失。 */
+.lanismd-board-block.is-fullscreen-locked .lanismd-board-canvas-toolbar {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+ * 按钮
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-canvas-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-text-color, #262626);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lanismd-board-canvas-toolbar__btn > svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.lanismd-board-canvas-toolbar__btn:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-canvas-toolbar__btn.is-active {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.1));
+  color: var(--lanismd-primary-color, #00b96b);
+}
+
+.lanismd-board-canvas-toolbar__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dark .lanismd-board-canvas-toolbar__btn {
+  color: var(--lanismd-text-color, #e5e5e5);
+}
+
+.dark .lanismd-board-canvas-toolbar__btn:hover:not(:disabled),
+.dark .lanismd-board-canvas-toolbar__btn.is-active {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* 分隔线 */
+.lanismd-board-canvas-toolbar__divider {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--lanismd-border-color, #e7e9e8);
+}
+
+.dark .lanismd-board-canvas-toolbar__divider {
+  background: var(--lanismd-border-color, #3a3a3a);
+}
+
+/* 缩放百分比（点击重置 100%） */
+.lanismd-board-canvas-toolbar__zoom-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 26px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-text-color, #262626);
+  /* 等宽数字：避免百分比变化时按钮宽度抖动 */
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.lanismd-board-canvas-toolbar__zoom-label:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-canvas-toolbar__zoom-label:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dark .lanismd-board-canvas-toolbar__zoom-label {
+  color: var(--lanismd-text-color, #e5e5e5);
+}
+
+.dark .lanismd-board-canvas-toolbar__zoom-label:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* --------------------------------------------------------------------------
+ * 主题面板
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-canvas-toolbar__theme-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 12;
+  min-width: 184px;
+  padding: 6px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 6px;
+  background: var(--lanismd-bg-elevated, #fff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lanismd-board-canvas-toolbar__theme-panel[data-open='true'] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dark .lanismd-board-canvas-toolbar__theme-panel {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+  background: var(--lanismd-bg-elevated, #262626);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.lanismd-board-canvas-toolbar__theme-panel-title {
+  padding: 2px 6px 6px;
+  color: var(--lanismd-text-secondary, #8c8c8c);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.lanismd-board-canvas-toolbar__theme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lanismd-board-canvas-toolbar__theme-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-text-color, #262626);
+  font-size: 12px;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.lanismd-board-canvas-toolbar__theme-item:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.dark .lanismd-board-canvas-toolbar__theme-item {
+  color: var(--lanismd-text-color, #e5e5e5);
+}
+
+.dark .lanismd-board-canvas-toolbar__theme-item:hover {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* 色彩预览：画板背景作底，根节点色 + 分支色依次排开 */
+.lanismd-board-canvas-toolbar__theme-preview {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 4px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 3px;
+}
+
+.dark .lanismd-board-canvas-toolbar__theme-preview {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+}
+
+.lanismd-board-canvas-toolbar__theme-swatch {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.lanismd-board-canvas-toolbar__theme-swatch.is-root {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.lanismd-board-canvas-toolbar__theme-label {
+  flex: 1 1 auto;
+}
+
+/* 勾选标记：仅当前生效主题可见 */
+.lanismd-board-canvas-toolbar__theme-check {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--lanismd-primary-color, #00b96b);
+  opacity: 0;
+}
+
+.lanismd-board-canvas-toolbar__theme-check > svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.lanismd-board-canvas-toolbar__theme-item.is-active
+  .lanismd-board-canvas-toolbar__theme-check {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+ * 画布光标
+ *
+ * Plait 自身不处理 hand 模式的光标样式，由宿主在块根节点上打
+ * data-canvas-pointer 标记后在此切换。
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block.is-editing[data-canvas-pointer='hand']
+  .lanismd-board-block__host {
+  cursor: grab;
+}

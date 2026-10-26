@@ -8,6 +8,7 @@
  * @changelog
  * | 版本   | 变更说明                   | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏画板窗口根组件 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
+ * | v1.1.0 | 补充引入画布工具栏样式        | REQ: 20261026-board-fullscreen-maximize |
  * /@changelog
  *
  * @author hhhuilli
@@ -22,6 +23,7 @@ import { usePreviewTheme } from '@/hooks/usePreviewTheme';
 // 故此处按需单独引入画板相关样式（Vite 对同一 CSS 模块只注入一次，不会与主窗口重复）
 import '@/styles/editor/board-block.css';
 import '@/styles/editor/board-style-toolbar.css';
+import '@/styles/editor/board-canvas-toolbar.css';
 import '@/styles/editor/board-block-fullscreen.css';
 
 export function BoardFullscreen() {

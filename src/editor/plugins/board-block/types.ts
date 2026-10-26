@@ -6,12 +6,13 @@
  * @changelog
  * | 版本   | 变更说明                     | 关联                                                 |
  * | v1.0.0 | 初始实现：画板块共享类型定义   | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
+ * | v1.1.0 | 新增画板主题字段（块级持久化）  | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §六 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import type { PlaitElement, Viewport } from '@plait/core';
+import type { PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
 
 // ---------------------------------------------------------------------------
 // 状态类型
@@ -36,6 +37,13 @@ export interface BoardPayload {
   children: PlaitElement[];
   /** 视口信息（缩放、平移），可选 */
   viewport?: Viewport;
+  /**
+   * 画板主题（Plait `ThemeColorMode`），可选。
+   *
+   * 作用域为「单个画板块」：同一文档内多个画板各自独立，互不影响。
+   * 旧数据缺失该字段时由解码侧回落默认主题，无需升 `SCHEMA_VERSION`。
+   */
+  theme?: ThemeColorMode;
 }
 
 /**
@@ -51,4 +59,6 @@ export interface DecodedBoard {
   elements: PlaitElement[];
   /** 视口信息，可选 */
   viewport?: Viewport;
+  /** 画板主题；旧数据缺失时回落 `ThemeColorMode.default` */
+  theme: ThemeColorMode;
 }
