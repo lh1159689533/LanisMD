@@ -20,6 +20,7 @@
  * | v1.1.0 | afterInit 透出 board 实例给 NodeView（样式工具栏地基） | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §3.2 |
  * | v1.1.1 | 修复：运行时切换 readonly 时同步 board.pointer，修复选中机制失效 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.2.0 | pointer 与 readonly 解耦（编辑态可自由切手型）+ 注入初始主题 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
+ * | v1.2.1 | 修复：注入 MindThemeColors，使切主题真正改变节点配色 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
  * /@changelog
  *
  * @author hhhuilli
@@ -27,7 +28,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board, Wrapper } from '@plait-board/react-board';
-import { withMind } from '@plait/mind';
+import { MindThemeColors, withMind } from '@plait/mind';
 import type {
   PlaitBoard,
   PlaitBoardOptions,
@@ -110,9 +111,16 @@ export function BoardReact({
   );
 
   // options 仅在 Wrapper 挂载时生效，用初始只读态创建 board。
+  //
+  // themeColors 必须显式注入 MindThemeColors：@plait/mind 的 getMindThemeColor
+  // 读的是 board.options.themeColors，缺省时拿到 @plait/core 的 ThemeColors
+  // （只有 mode / boardBackground / textColor，没有 branchColors / rootFill /
+  // rootTextColor），isMindThemeColor 判定失败后恒回落 MindDefaultThemeColor。
+  // 结果就是切主题只有画布背景色（纯 CSS 驱动）变化，节点填充 / 描边 / 连线
+  // 配色永远停在默认主题。
   const [initialReadonly] = useState(() => readonly);
   const options = useMemo<PlaitBoardOptions>(
-    () => ({ readonly: initialReadonly }),
+    () => ({ readonly: initialReadonly, themeColors: MindThemeColors }),
     [initialReadonly],
   );
 

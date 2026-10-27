@@ -18,6 +18,7 @@
  * | 版本   | 变更说明                                     | 关联                                                 |
  * | v1.0.0 | 初始实现：画板块样式 + Plait 基础/mind 样式移植 | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.1.0 | 块工具栏改为节点外右侧竖排纯图标，编辑态隐藏删除 | REQ: 20261026-board-toolbar-vertical |
+ * | v1.1.1 | 修复：补齐全部画板主题的节点文字颜色（原仅 default/soft） | REQ: 20261026-board-canvas-toolbar |
  * /@changelog
  *
  * @author hhhuilli
@@ -478,8 +479,45 @@
   display: block;
 }
 
-/* 文本颜色（默认主题） */
+/* --------------------------------------------------------------------------
+ * 节点文字颜色（按画板主题）
+ *
+ * Plait 不在 JS 侧渲染节点文字颜色：slate leaf 只取 `leaf.color`（用户手动
+ * 设色时才有值），未设色时完全继承宿主 CSS。因此 MindThemeColors 里的
+ * textColor / rootTextColor 必须由宿主按 `.theme-*` 类落成 CSS，否则切到
+ * 暗色/星空等主题后文字会继承编辑器正文色，在深色画布上不可见。
+ *
+ * 色值与 @plait/mind 的 MindThemeColors 逐项对齐，不可自行发明：
+ * | 主题     | textColor | rootFill | rootTextColor |
+ * | default  | #333333   | #f5f5f5  | #333333       |
+ * | colorful | #333333   | #333333  | #ffffff       |
+ * | soft     | #333333   | #ffffff  | #333333       |
+ * | retro    | #333333   | #153d5d  | #ffffff       |
+ * | dark     | #ffffff   | #ffffff  | #333333       |
+ * | starry   | #ffffff   | #ffffff  | #333333       |
+ * ------------------------------------------------------------------------ */
+
 .lanismd-board-block .plait-board-container.theme-default .plait-text-container,
-.lanismd-board-block .plait-board-container.theme-soft .plait-text-container {
+.lanismd-board-block .plait-board-container.theme-colorful .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-soft .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-retro .plait-text-container {
   color: #333333;
+}
+
+.lanismd-board-block .plait-board-container.theme-dark .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-starry .plait-text-container {
+  color: #ffffff;
+}
+
+/* 根节点文字跟随 rootFill 反色，与非根节点分别取色 */
+.lanismd-board-block .plait-board-container.theme-default .root .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-soft .root .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-dark .root .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-starry .root .plait-text-container {
+  color: #333333;
+}
+
+.lanismd-board-block .plait-board-container.theme-colorful .root .plait-text-container,
+.lanismd-board-block .plait-board-container.theme-retro .root .plait-text-container {
+  color: #ffffff;
 }
