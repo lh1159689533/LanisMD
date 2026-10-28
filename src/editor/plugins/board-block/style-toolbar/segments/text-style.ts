@@ -18,6 +18,7 @@
  * | v1.0.0 | 批次4：文字样式（粗/斜/字号/字色）下拉面板  | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
  * | v1.1.0 | 新增下划线/水平对齐                         | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
  * | v1.2.0 | 字号/字色/对齐改为一行自实现下拉控件         | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.3.0 | 新增 setVisible：白板形态下无文本语义元素隐藏本组 | REQ: 20261027-board-whiteboard-draw §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -64,6 +65,12 @@ export interface TextStyleSegment {
   readonly button: HTMLElement;
   /** 更新当前文字样式回填 */
   setActiveTextStyle(state: TextStyleState): void;
+  /**
+   * 设置能力组显隐（隐藏时收起下拉面板）。
+   *
+   * 导图形态恒显示不会调用；白板形态下连线等无文本语义的元素需隐藏本组。
+   */
+  setVisible(visible: boolean): void;
   /** 绑定 board */
   setBoard(board: PlaitBoard): void;
   /** 销毁 */
@@ -433,5 +440,13 @@ export function createTextStyleSegment(): TextStyleSegment {
     button.remove();
   }
 
-  return { button, setActiveTextStyle, setBoard, destroy };
+  /** 设置能力组显隐：隐藏时先收起下拉，避免面板状态残留 */
+  function setVisible(visible: boolean): void {
+    if (!visible) {
+      closeDropdown();
+    }
+    button.style.display = visible ? '' : 'none';
+  }
+
+  return { button, setActiveTextStyle, setVisible, setBoard, destroy };
 }

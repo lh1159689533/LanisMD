@@ -14,6 +14,8 @@
  * | v1.2.0 | 批次3：结构/分支下拉样式            | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.3.0 | 批次4：文字样式下拉样式             | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
  * | v1.4.0 | 字号/字色/对齐改一行自实现下拉控件   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.5.0 | 白板：描边线型行 + 不透明度档位面板  | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.6.0 | 白板：图形切换网格 + 端点走线 + 矢量线形态 + 旋转角预设面板 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -809,4 +811,419 @@
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.4),
     0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================================================
+   白板：描边线型行（实线 / 虚线 / 点线）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__stroke-style-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lanismd-board-style-toolbar__stroke-style-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__stroke-style-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__stroke-style-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.lanismd-board-style-toolbar__stroke-style-item > svg {
+  width: 24px;
+  height: 20px;
+}
+
+.dark .lanismd-board-style-toolbar__stroke-style-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__stroke-style-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__stroke-style-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+/* ========================================================================
+   白板：不透明度下拉面板（四档）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__opacity-dropdown {
+  min-width: 168px;
+}
+
+.lanismd-board-style-toolbar__opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lanismd-board-style-toolbar__opacity-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  padding: 5px 2px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__opacity-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__opacity-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+/* 预览方块：用自身 opacity 直观呈现该档位的通透程度，
+   底部棋盘格衬底让「变淡」在深浅主题下都看得出来 */
+.lanismd-board-style-toolbar__opacity-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.lanismd-board-style-toolbar__opacity-label {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--lanismd-text-secondary, #888);
+}
+
+.dark .lanismd-board-style-toolbar__opacity-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__opacity-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__opacity-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.dark .lanismd-board-style-toolbar__opacity-label {
+  color: var(--lanismd-text-secondary, #999);
+}
+
+/* ========================================================================
+   白板批次 2：图形切换下拉面板（21 种基础图形，缩略图网格）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__shape-switch-dropdown {
+  min-width: 276px;
+}
+
+.lanismd-board-style-toolbar__shape-switch-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 52px);
+  gap: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.lanismd-board-style-toolbar__shape-switch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 5px 2px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__shape-switch-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__shape-switch-item.is-active {
+  border-color: var(--lanismd-primary-color, #00b96b);
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+/* 缩略图容器：内部 svg 由 drawGeometry 实时渲染，颜色继承 currentColor */
+.lanismd-board-style-toolbar__shape-switch-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 28px;
+  color: var(--lanismd-text-secondary, #888);
+}
+
+.lanismd-board-style-toolbar__shape-switch-thumb > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.lanismd-board-style-toolbar__shape-switch-label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark .lanismd-board-style-toolbar__shape-switch-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__shape-switch-item:hover,
+.dark .lanismd-board-style-toolbar__shape-switch-item.is-active {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__shape-switch-thumb {
+  color: var(--lanismd-text-secondary, #999);
+}
+
+/* ========================================================================
+   白板批次 2：箭头线端点与走线下拉面板
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__line-marker-dropdown {
+  min-width: 300px;
+}
+
+/* 走线形态行 */
+.lanismd-board-style-toolbar__line-marker-shape-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lanismd-board-style-toolbar__line-marker-shape-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__line-marker-shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__line-marker-shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.lanismd-board-style-toolbar__line-marker-shape-item > svg {
+  width: 24px;
+  height: 20px;
+}
+
+/* 端点标记行（标题 + 9 个标记） */
+.lanismd-board-style-toolbar__line-marker-marker-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-label {
+  width: 30px;
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--lanismd-text-secondary, #888);
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 2px;
+  flex: 1;
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.lanismd-board-style-toolbar__line-marker-marker-item > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dark .lanismd-board-style-toolbar__line-marker-shape-item,
+.dark .lanismd-board-style-toolbar__line-marker-marker-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__line-marker-shape-item:hover,
+.dark .lanismd-board-style-toolbar__line-marker-marker-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__line-marker-shape-item.is-active,
+.dark .lanismd-board-style-toolbar__line-marker-marker-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.dark .lanismd-board-style-toolbar__line-marker-marker-label {
+  color: var(--lanismd-text-secondary, #999);
+}
+
+/* ========================================================================
+   白板批次 2：矢量线形态下拉面板（直线段 / 曲线段）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__vector-line-shape-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lanismd-board-style-toolbar__vector-line-shape-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 5px 2px;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__vector-line-shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__vector-line-shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.lanismd-board-style-toolbar__vector-line-shape-item > svg {
+  width: 26px;
+  height: 20px;
+}
+
+.lanismd-board-style-toolbar__vector-line-shape-label {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--lanismd-text-secondary, #888);
+}
+
+.dark .lanismd-board-style-toolbar__vector-line-shape-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__vector-line-shape-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__vector-line-shape-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
+}
+
+.dark .lanismd-board-style-toolbar__vector-line-shape-label {
+  color: var(--lanismd-text-secondary, #999);
+}
+
+/* ========================================================================
+   白板批次 2：旋转角下拉面板（预设角度）
+   ======================================================================== */
+
+.lanismd-board-style-toolbar__rotate-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lanismd-board-style-toolbar__rotate-item {
+  flex: 1;
+  min-width: 34px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-text-color, #333);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.lanismd-board-style-toolbar__rotate-item:hover {
+  background: var(--lanismd-bg-hover, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-style-toolbar__rotate-item.is-active {
+  background: var(--lanismd-bg-active, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__rotate-item {
+  color: var(--lanismd-text-color, #e0e0e0);
+}
+
+.dark .lanismd-board-style-toolbar__rotate-item:hover {
+  background: var(--lanismd-bg-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dark .lanismd-board-style-toolbar__rotate-item.is-active {
+  background: var(--lanismd-bg-active, rgba(255, 255, 255, 0.15));
 }

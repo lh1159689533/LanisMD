@@ -21,6 +21,10 @@
  * | v1.3.0 | 挂载画布级工具栏（缩放/适应画布/手型/主题）+ 主题块级持久化 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
  * | v1.4.0 | 块工具栏改为节点外右侧竖排，与画布工具栏解除横排容器耦合 | REQ: 20261026-board-toolbar-vertical |
  * | v1.4.1 | 修复：节点处于 NodeSelection 时画板内按下触发浏览器原生 drag | REQ: 20261026-board-native-drag-fix |
+ * | v1.5.0 | 按 mode 分流：白板块额外挂载左侧创建工具条，编码带上 mode | REQ: 20261027-board-whiteboard-draw §3.1 / §3.4 |
+ * | v1.5.1 | 修复：编辑态删除画布内元素误删整个画板块（焦点未入画板宿主） | REQ: 20261027-board-whiteboard-draw |
+ * | v1.6.0 | 集成右键菜单（白板/导图 × 元素/空白四场景 + 预览态画布菜单） | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
+ * | v1.6.1 | 「添加图形」改为右键位置直接插入默认矩形并选中 | REQ: 20261028-board-context-menu |
  * /@changelog
  *
  * @author hhhuilli
@@ -31,8 +35,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { Node } from '@milkdown/kit/prose/model';
 import { NodeSelection } from '@milkdown/kit/prose/state';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
-import { BoardTransforms } from '@plait/core';
+import { BoardTransforms, PlaitPointerType, Transforms } from '@plait/core';
 import type { PlaitBoard, PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
+import { BoardCreationMode, setCreationMode } from '@plait/common';
+import { BasicShapes, DrawTransforms } from '@plait/draw';
 
 import { useSettingsStore } from '@/stores/settings-store';
 
@@ -47,6 +53,10 @@ import { createStyleToolbar } from './style-toolbar';
 import type { StyleToolbarController } from './style-toolbar/types';
 import { createCanvasToolbar } from './canvas-toolbar';
 import type { CanvasToolbarController } from './canvas-toolbar';
+import { createDrawToolbar } from './draw-toolbar';
+import type { DrawToolbarController } from './draw-toolbar';
+import { createBoardContextMenu } from './context-menu';
+import type { BoardContextMenuController } from './context-menu/types';
 import { openBoardFullscreen, type BoardFullscreenSession } from './fullscreen';
 import { decode, encode } from './codec';
 import {
@@ -56,7 +66,15 @@ import {
   MIN_HEIGHT,
   WRITE_BACK_DEBOUNCE_MS,
 } from './constants';
-import type { BoardBlockState } from './types';
+import type { BoardBlockState, BoardMode } from './types';
+
+/**
+ * 右键菜单「添加图形」默认插入的矩形边长。
+ *
+ * 对齐 `@plait/draw` 的 `DefaultBasicShapeProperty`（100 × 100），
+ * 使右键直插的矩形与其它入口创建出的默认矩形尺寸一致。
+ */
+const DEFAULT_INSERT_SHAPE_SIZE = 100;
 
 // ---------------------------------------------------------------------------
 // BoardBlockNodeView
@@ -77,6 +95,25 @@ export class BoardBlockNodeView implements NodeView {
 
   /** 画布级工具栏控制器（预览/编辑态常驻，与块工具栏同排右对齐） */
   private canvasToolbar: CanvasToolbarController;
+
+  /**
+   * 白板创建工具条控制器（画布左侧竖排）。
+   *
+   * 仅白板块创建；导图块恒为 `null`（而非创建后隐藏），避免无谓 DOM 与监听。
+   */
+  private drawToolbar: DrawToolbarController | null = null;
+
+  /** 右键菜单控制器（画布内 contextmenu 时弹出） */
+  private contextMenu: BoardContextMenuController;
+
+  /**
+   * 画板形态，挂载时由 `decode` 一次性确定，块生命周期内不可变。
+   *
+   * 不可变的依据：Plait 的 `Wrapper` 只在挂载时读取 `plugins`，形态切换等价于
+   * 换一套插件，必须重建 board。本期按「分块类型」决策（见 PRD Q1），用户换
+   * 形态的方式是删块重插，而非原地切换。
+   */
+  private mode: BoardMode;
 
   /** Plait board 实例（afterInit 后可用） */
   private board: PlaitBoard | null = null;
@@ -142,12 +179,15 @@ export class BoardBlockNodeView implements NodeView {
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
     this.theme = decoded.theme;
+    this.mode = decoded.mode;
     this.height = this.normalizeHeight(node.attrs.height);
 
     // 外层容器
     this.dom = document.createElement('div');
     this.dom.className = `${CSS_PREFIX} is-preview`;
     this.dom.setAttribute('data-type', 'board-block');
+    // 形态打标供 CSS 分流（左侧工具条留白、draw 元素光标等）
+    this.dom.setAttribute('data-board-mode', this.mode);
 
     // 块级工具栏：贴在节点外右侧竖排，默认隐藏、hover 浮现
     const callbacks: ToolbarCallbacks = {
@@ -168,9 +208,33 @@ export class BoardBlockNodeView implements NodeView {
     });
     this.dom.appendChild(this.canvasToolbar.dom);
 
+    // 白板创建工具条（画布左侧竖排，仅白板块创建）。
+    // 必须与 canvasToolbar / styleToolbar 一样挂到 this.dom 而非 reactHost：
+    // reactHost 由 React 托管，reconcile 会移除其内部一切非托管 DOM。
+    if (this.mode === 'board') {
+      this.drawToolbar = createDrawToolbar({
+        onPointerChange: (pointer) => {
+          // 打标供 CSS 切换画布光标：Plait 只在创建 board 时按 pointer 给容器
+          // 打类，运行时改写 board.pointer 不会重新计算该类名
+          this.dom.setAttribute('data-draw-pointer', pointer);
+        },
+      });
+      this.dom.appendChild(this.drawToolbar.dom);
+    }
+
+    // 右键菜单控制器：画布内 contextmenu 时弹出（编辑态元素/空白菜单，预览态画布菜单）
+    this.contextMenu = createBoardContextMenu({
+      mode: this.mode,
+      onEnterCreation: (pointer) => this.enterCreation(pointer),
+      onInsertShape: (point) => this.insertShape(point),
+    });
+
     // React 挂载宿主
+    // tabIndex = -1：使宿主可聚焦但不进 Tab 序。编辑态下焦点须落在画板 DOM 内，
+    // 否则 Delete/Backspace 会被 PM 按其 NodeSelection 处理而误删整个块（见 bindEvents）
     this.reactHost = document.createElement('div');
     this.reactHost.className = `${CSS_PREFIX}__host`;
+    this.reactHost.tabIndex = -1;
     this.reactHost.style.height = `${this.height}px`;
     this.dom.appendChild(this.reactHost);
 
@@ -179,7 +243,8 @@ export class BoardBlockNodeView implements NodeView {
     // 容器（下方 createRoot(this.reactHost)），React reconcile 会移除其内部一切
     // 非托管 DOM，导致工具栏节点被剥离（isConnected=false）。this.dom 为
     // position: relative，可作为工具栏 absolute 定位基准。
-    this.styleToolbar = createStyleToolbar();
+    // 形态在构造时即确定，直接传入以装配对应的能力组（导图/白板互斥）。
+    this.styleToolbar = createStyleToolbar(this.mode);
     this.dom.appendChild(this.styleToolbar.dom);
 
     // 高度拖拽手柄
@@ -216,6 +281,7 @@ export class BoardBlockNodeView implements NodeView {
         initialElements: this.elements,
         initialViewport: this.viewport,
         initialTheme: this.theme,
+        mode: this.mode,
         readonly: this.state === 'preview',
         onChange: (elements: PlaitElement[], viewport?: Viewport) => {
           this.handleBoardChange(elements, viewport);
@@ -228,15 +294,20 @@ export class BoardBlockNodeView implements NodeView {
           this.board = board;
           // 画布工具栏在预览/编辑态均可用，board 一就绪即绑定
           this.canvasToolbar.attach(board);
+          // 创建工具条同样一就绪即绑定（其可见性由 CSS 按块状态控制）
+          this.drawToolbar?.attach(board);
+          // 右键菜单同样一就绪即绑定
+          this.contextMenu.attach(board);
           // 若已处于编辑态（如 autoEdit 首次挂载即编辑），立即联动工具栏
           if (this.state === 'editing') {
             this.styleToolbar.attach(board);
           }
         },
         // readonly 跳变时 BoardReact 会强制重设 board.pointer，该赋值不触发
-        // board.onChange，画布工具栏感知不到，需显式刷新手型按钮高亮
+        // board.onChange，两条工具栏都感知不到，需显式刷新高亮
         onPointerReset: () => {
           this.canvasToolbar.sync();
+          this.drawToolbar?.sync();
         },
       }),
     );
@@ -248,9 +319,14 @@ export class BoardBlockNodeView implements NodeView {
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
     this.theme = decoded.theme;
+    // 刻意不采用 decoded.mode：形态决定注册哪套 Plait 插件，而工具条等宿主 DOM
+    // 已按挂载时的形态装配完毕。正常链路下外部数据的 mode 必然与本块一致
+    // （同一节点的 data 往返），故此处保持 this.mode 不变。
     this.renderKey += 1;
     // 旧 board 实例即将被 React 卸载，先解绑工具栏还原其 onChange 包装
     this.canvasToolbar.detach();
+    this.drawToolbar?.detach();
+    this.contextMenu.detach();
     this.board = null;
     this.renderReact();
   }
@@ -291,6 +367,26 @@ export class BoardBlockNodeView implements NodeView {
   // -------------------------------------------------------------------------
 
   private bindEvents(): void {
+    // 编辑态下把焦点拉入画板宿主。
+    //
+    // 根因：Plait 的画布容器是不可聚焦的 div（无 tabindex），点击画布内元素后
+    // DOM 焦点仍停留在 ProseMirror 编辑器根节点上。此时按 Delete/Backspace，
+    // keydown 的 target 不在本块 DOM 内，prosemirror-view 的 eventBelongsToView
+    // 不会调用本块的 stopEvent，PM 便按它自己的 NodeSelection（覆盖整个
+    // board_block）执行删除——整块画布被误删。Plait 的删除元素逻辑（全局
+    // keydown 监听，isFocus = !!board.selection）因事件先被 PM 消费而无从生效。
+    // 因此必须在编辑态下主动把焦点移入画板宿主，让键盘事件归属画板。
+    //
+    // Plait 的 pointerdown 会 preventDefault，焦点不会随点击自动转移，
+    // 故这里在 mousedown 冒泡到本块时显式 focus。
+    this.dom.addEventListener('mousedown', (e) => {
+      if (this.state !== 'editing') return;
+      const target = e.target as Element | null;
+      if (target && this.reactHost.contains(target)) {
+        this.reactHost.focus();
+      }
+    });
+
     // 双击进入编辑
     this.reactHost.addEventListener('dblclick', (e) => {
       if (this.isLocked) return;
@@ -321,6 +417,14 @@ export class BoardBlockNodeView implements NodeView {
       }
     });
 
+    // 右键菜单：画布内 contextmenu 弹出画板专属菜单
+    // 挂在 reactHost（画布区域）而非 this.dom：工具栏 / 拖拽手柄上的右键不弹菜单
+    this.reactHost.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.contextMenu.show(e.clientX, e.clientY);
+    });
+
     // 高度拖拽
     this.resizeHandle.addEventListener('mousedown', (e) => this.startResize(e));
   }
@@ -346,7 +450,12 @@ export class BoardBlockNodeView implements NodeView {
     this.toolbar.classList.add('is-visible');
     updateToolbarState(this.toolbar, 'editing');
     this.canvasToolbar.setBlockState('editing');
+    this.drawToolbar?.setBlockState('editing');
+    this.contextMenu.setBlockState('editing');
     this.renderReact();
+    // 焦点移入画板宿主：键盘事件必须归属画板（Delete 删元素而非删整个块），
+    // 同时把焦点从 PM 编辑器上移走，避免编辑态残留 PM 的键位处理
+    this.reactHost.focus();
     // 编辑态联动样式工具栏（board 就绪时才 attach，否则等 onBoardReady）
     if (this.board) {
       this.styleToolbar.attach(this.board);
@@ -362,10 +471,49 @@ export class BoardBlockNodeView implements NodeView {
     this.toolbar.classList.remove('is-visible');
     updateToolbarState(this.toolbar, 'preview');
     this.canvasToolbar.setBlockState('preview');
+    this.drawToolbar?.setBlockState('preview');
+    this.contextMenu.setBlockState('preview');
     // 退出编辑态：隐藏并解绑样式工具栏
     this.styleToolbar.detach();
     this.renderReact();
     this.flushWriteBack();
+  }
+
+  /**
+   * 右键菜单「添加连线」：进入对应 pointer 的创建态。
+   *
+   * 与 draw-toolbar 的创建入口同路径：写 `board.pointer` + 设置 creation mode，
+   * 二者必须成对（仅写 pointer 不设 creation mode 会导致拖拽画不出图形，
+   * 见 draw-toolbar 的 handleSelect 说明）。随后同步工具条高亮。
+   */
+  private enterCreation(pointer: string): void {
+    if (!this.board) return;
+    BoardTransforms.updatePointerType(this.board, pointer);
+    setCreationMode(this.board, BoardCreationMode.drawing);
+    this.drawToolbar?.sync();
+  }
+
+  /**
+   * 右键菜单「添加图形」：在右键位置直接插入默认矩形并选中。
+   *
+   * 与「进入创建态」不同，这里是一次性插入：`insertGeometry` 用默认边长在
+   * 点击处落一个矩形，再把选区设为该矩形外接框，使其立即处于选中态（可拖动 /
+   * 用样式工具栏改样式）。插入前强制 pointer 回到 selection——手型下
+   * `isHandleSelection` 为 false，setSelection 不会写入选中缓存，图形会
+   * 「插入成功但不可拖动」。选区比图形外框略微外扩，确保基于几何边界的
+   * 矩形命中判定可靠命中（无填充矩形不做点命中判定）。
+   */
+  private insertShape(point: [number, number]): void {
+    if (!this.board) return;
+    const end: [number, number] = [point[0] + DEFAULT_INSERT_SHAPE_SIZE, point[1] + DEFAULT_INSERT_SHAPE_SIZE];
+    DrawTransforms.insertGeometry(this.board, [point, end], BasicShapes.rectangle);
+    BoardTransforms.updatePointerType(this.board, PlaitPointerType.selection);
+    const pad = 2;
+    Transforms.setSelection(this.board, {
+      anchor: [point[0] - pad, point[1] - pad],
+      focus: [end[0] + pad, end[1] + pad],
+    });
+    this.drawToolbar?.sync();
   }
 
   // -------------------------------------------------------------------------
@@ -406,9 +554,9 @@ export class BoardBlockNodeView implements NodeView {
     }
 
     const session = await openBoardFullscreen({
-      getData: () => encode(this.elements, this.viewport, this.theme),
+      getData: () => this.encodeCurrent(),
       initialState,
-      title: '思维导图',
+      title: this.mode === 'board' ? '白板' : '思维导图',
       theme: useSettingsStore.getState().config.theme || 'system',
       onData: (data) => this.applyFullscreenData(data),
       onState: () => {
@@ -494,7 +642,7 @@ export class BoardBlockNodeView implements NodeView {
     if (this.writeBackTimer) clearTimeout(this.writeBackTimer);
     this.writeBackTimer = setTimeout(() => {
       this.writeBackTimer = null;
-      this.commitAttrs({ data: encode(this.elements, this.viewport, this.theme) });
+      this.commitAttrs({ data: this.encodeCurrent() });
     }, WRITE_BACK_DEBOUNCE_MS);
   }
 
@@ -504,7 +652,20 @@ export class BoardBlockNodeView implements NodeView {
       clearTimeout(this.writeBackTimer);
       this.writeBackTimer = null;
     }
-    this.commitAttrs({ data: encode(this.elements, this.viewport, this.theme) });
+    this.commitAttrs({ data: this.encodeCurrent() });
+  }
+
+  /**
+   * 编码当前画板状态。
+   *
+   * `mode` 必须显式带上：白板块缺失该字段时重开会被解码成导图块。
+   */
+  private encodeCurrent(): string {
+    return encode(this.elements, {
+      viewport: this.viewport,
+      theme: this.theme,
+      mode: this.mode,
+    });
   }
 
   /**
@@ -623,11 +784,12 @@ export class BoardBlockNodeView implements NodeView {
   stopEvent(event: Event): boolean {
     const target = event.target as HTMLElement | null;
 
-    // 工具栏（块级 + 画布级）与拖拽手柄事件由各自监听处理
+    // 工具栏（块级 + 画布级 + 创建工具条）与拖拽手柄事件由各自监听处理
     if (
       target &&
       (this.toolbar.contains(target) ||
         this.canvasToolbar.dom.contains(target) ||
+        this.drawToolbar?.dom.contains(target) ||
         target === this.resizeHandle)
     ) {
       return true;
@@ -690,6 +852,8 @@ export class BoardBlockNodeView implements NodeView {
     this.cleanupResize();
     this.styleToolbar.destroy();
     this.canvasToolbar.destroy();
+    this.drawToolbar?.destroy();
+    this.contextMenu.destroy();
     // 节点销毁时若全屏窗口仍存活，一并关闭，避免留下无宿主的孤立窗口
     if (this.fullscreenSession) {
       const session = this.fullscreenSession;

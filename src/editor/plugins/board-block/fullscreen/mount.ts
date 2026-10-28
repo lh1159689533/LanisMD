@@ -21,6 +21,7 @@
  * | 版本   | 变更说明                           | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏子窗口画板挂载与事件桥接 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
  * | v1.1.0 | 块工具栏替换为画布工具栏 + 编辑操作卡  | REQ: 20261026-board-fullscreen-maximize |
+ * | v1.2.0 | 支持白板形态：透传 mode 并按形态挂载创建工具条 | REQ: 20261027-board-whiteboard-draw §3.4 |
  * /@changelog
  *
  * @author hhhuilli
@@ -38,9 +39,11 @@ import { createCanvasToolbar } from '../canvas-toolbar';
 import type { CanvasToolbarController } from '../canvas-toolbar';
 import { createStyleToolbar } from '../style-toolbar';
 import type { StyleToolbarController } from '../style-toolbar/types';
+import { createDrawToolbar } from '../draw-toolbar';
+import type { DrawToolbarController } from '../draw-toolbar';
 import { decode, encode } from '../codec';
 import { CSS_PREFIX, WRITE_BACK_DEBOUNCE_MS } from '../constants';
-import type { BoardBlockState } from '../types';
+import type { BoardBlockState, BoardMode } from '../types';
 import {
   BOARD_FS_EVENT,
   parseFullscreenUrl,
@@ -84,6 +87,14 @@ class FullscreenBoardSession {
   private readonly canvasToolbar: CanvasToolbarController;
   private readonly styleToolbar: StyleToolbarController;
 
+  /**
+   * 白板创建工具条（仅白板块创建）。
+   *
+   * 与主窗口 NodeView 的差异：形态在构造时还不可知（要等主窗口下发数据后
+   * 解码才知道），故延迟到 `applyInitialData` 中按 mode 决定是否创建。
+   */
+  private drawToolbar: DrawToolbarController | null = null;
+
   private reactRoot: Root | null = null;
   private board: PlaitBoard | null = null;
 
@@ -96,6 +107,14 @@ class FullscreenBoardSession {
    * 否则主窗口打开全屏再关闭就会把主题覆盖成默认值。
    */
   private theme?: ThemeColorMode;
+
+  /**
+   * 画板形态，由主窗口下发数据解码得出。
+   *
+   * 初始数据到达前保持 `'mindmap'`：此时画板尚未挂载，该值不参与任何渲染，
+   * 且 `emitChange` 以 `initialized` 为前置守卫，不会以错误形态回传。
+   */
+  private mode: BoardMode = 'mindmap';
 
   /** 是否已收到主窗口下发的初始数据 */
   private initialized = false;
@@ -172,7 +191,7 @@ class FullscreenBoardSession {
         this.flushChange();
         await emit(BOARD_FS_EVENT.closed, {
           label: this.label,
-          data: encode(this.elements, this.viewport, this.theme),
+          data: this.encodeCurrent(),
           state: this.state,
         } satisfies BoardFsClosedPayload);
       } catch (err) {
@@ -213,12 +232,16 @@ class FullscreenBoardSession {
     this.unlistens = [];
     this.styleToolbar.destroy();
     this.canvasToolbar.destroy();
+    this.drawToolbar?.destroy();
+    this.drawToolbar = null;
 
     // 会话可重入（StrictMode 的 mount -> cleanup -> remount），必须把构造时
     // 注入容器的 DOM 与类名全部还原，否则下一个会话会叠加出重复的工具栏与画板。
     this.host.remove();
     this.placeholder.remove();
     this.root.removeAttribute('data-canvas-pointer');
+    this.root.removeAttribute('data-draw-pointer');
+    this.root.removeAttribute('data-board-mode');
     this.root.classList.remove(CSS_PREFIX, FULLSCREEN_CSS_CLASS, 'is-editing', 'is-preview');
 
     const root = this.reactRoot;
@@ -239,6 +262,23 @@ class FullscreenBoardSession {
     this.elements = decoded.elements;
     this.viewport = decoded.viewport;
     this.theme = decoded.theme;
+    this.mode = decoded.mode;
+    this.root.setAttribute('data-board-mode', this.mode);
+
+    // 样式工具栏在构造时按默认形态（导图）装配，此刻形态才真正可知，
+    // 需补一次 setMode 以装配白板能力组（同形态时内部直接 return）
+    this.styleToolbar.setMode(this.mode);
+
+    // 白板形态才创建左侧创建工具条，并继承当前显示状态
+    if (this.mode === 'board') {
+      this.drawToolbar = createDrawToolbar({
+        onPointerChange: (pointer) => {
+          this.root.setAttribute('data-draw-pointer', pointer);
+        },
+      });
+      this.drawToolbar.setBlockState(this.state);
+      this.root.appendChild(this.drawToolbar.dom);
+    }
 
     this.placeholder.remove();
     this.reactRoot = createRoot(this.host);
@@ -251,6 +291,7 @@ class FullscreenBoardSession {
         initialElements: this.elements,
         initialViewport: this.viewport,
         initialTheme: this.theme,
+        mode: this.mode,
         readonly: this.state === 'preview',
         onChange: (elements: PlaitElement[], viewport?: Viewport) => {
           this.elements = elements;
@@ -264,9 +305,16 @@ class FullscreenBoardSession {
         onBoardReady: (board) => {
           this.board = board;
           this.canvasToolbar.attach(board);
+          this.drawToolbar?.attach(board);
           if (this.state === 'editing') {
             this.styleToolbar.attach(board);
           }
+        },
+        // readonly 跳变时 BoardReact 会强制重设 board.pointer 且不触发
+        // board.onChange，需显式刷新两条工具栏的高亮
+        onPointerReset: () => {
+          this.canvasToolbar.sync();
+          this.drawToolbar?.sync();
         },
       }),
     );
@@ -304,6 +352,7 @@ class FullscreenBoardSession {
     this.root.classList.remove('is-preview');
     this.root.classList.add('is-editing');
     this.canvasToolbar.setBlockState('editing');
+    this.drawToolbar?.setBlockState('editing');
     this.renderReact();
     if (this.board) this.styleToolbar.attach(this.board);
     this.emitState();
@@ -315,6 +364,7 @@ class FullscreenBoardSession {
     this.root.classList.remove('is-editing');
     this.root.classList.add('is-preview');
     this.canvasToolbar.setBlockState('preview');
+    this.drawToolbar?.setBlockState('preview');
     this.styleToolbar.detach();
     this.renderReact();
     this.flushChange();
@@ -376,8 +426,17 @@ class FullscreenBoardSession {
     if (!this.initialized) return;
     void emit(BOARD_FS_EVENT.change, {
       label: this.label,
-      data: encode(this.elements, this.viewport, this.theme),
+      data: this.encodeCurrent(),
     } satisfies BoardFsChangePayload);
+  }
+
+  /** 编码当前画板状态；`mode` 必须显式带上，否则白板会被主窗口解码成导图 */
+  private encodeCurrent(): string {
+    return encode(this.elements, {
+      viewport: this.viewport,
+      theme: this.theme,
+      mode: this.mode,
+    });
   }
 
   private emitState(): void {

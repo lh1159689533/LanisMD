@@ -13,6 +13,7 @@ import { createLinkDialog } from '../tooltip-toolbar';
 import { setMermaidAutoEdit } from '../mermaid-block';
 import { insertFileBlock } from '../file-block';
 import { createDefaultMindmap, encode, DEFAULT_HEIGHT, SCHEMA_VERSION } from '../board-block';
+import type { BoardMode } from '../board-block';
 import type { GfmAlertType } from '../gfm-alert/types';
 
 import { icons, getIcon } from './icons';
@@ -370,12 +371,19 @@ function insertTocBlock(view: EditorView) {
 }
 
 /**
- * 插入一个思维导图画板并自动进入编辑态。
+ * 插入一个画板块并自动进入编辑态。
  *
- * 插入即预置一份含中心主题的默认思维导图（base64 编码写入 data），
- * autoEdit 让 NodeView 挂载后立即进入可编辑状态。
+ * 两种形态共用本函数，区别仅在初始元素与写入的 `mode`：
+ * - 导图：预置一份含中心主题的默认思维导图（`mode` 省略，解码侧回落 'mindmap'）
+ * - 白板：空画布，不预置任何元素（`mode` 必须显式写 'board'，否则重开会被
+ *   解码成导图块，且空 children 会被兜底成一个思维导图根节点）
+ *
+ * `autoEdit` 让 NodeView 挂载后立即进入可编辑状态。
+ *
+ * @param view 编辑器视图
+ * @param mode 画板形态，默认导图
  */
-function insertBoardBlock(view: EditorView) {
+function insertBoardBlock(view: EditorView, mode: BoardMode = 'mindmap'): void {
   removeSlashTrigger(view);
 
   const { state, dispatch } = view;
@@ -386,8 +394,11 @@ function insertBoardBlock(view: EditorView) {
   const { $from } = state.selection;
   const parent = $from.parent;
 
+  const data =
+    mode === 'board' ? encode([], { mode: 'board' }) : encode(createDefaultMindmap());
+
   const boardNode = boardBlock.create({
-    data: encode(createDefaultMindmap()),
+    data,
     version: SCHEMA_VERSION,
     height: DEFAULT_HEIGHT,
     autoEdit: true,
@@ -716,7 +727,30 @@ export function getBasicSlashCommands(): SlashCommand[] {
     description: '插入可编辑的思维导图画板',
     icon: getIcon('board'),
     keywords: ['board', 'mindmap', 'mind', '思维导图', '导图', '脑图', '画板', 'swdt', 'hb'],
-    execute: (view) => insertBoardBlock(view),
+    execute: (view) => insertBoardBlock(view, 'mindmap'),
+  },
+  {
+    id: 'whiteboard',
+    label: '白板',
+    description: '插入可绘制图形与流程图的白板',
+    // 与「思维导图」刻意共享 board / 画板 两个泛化关键词：两者都是「画板」的一种，
+    // 输入泛化词时同时列出两条由用户看图标与标题选择；专属词
+    //（导图 / swdt vs 白板 / bb）仍可精准命中单条。
+    icon: getIcon('whiteboard'),
+    keywords: [
+      'board',
+      'whiteboard',
+      'draw',
+      '白板',
+      '画板',
+      '绘图',
+      '图形',
+      '流程图',
+      'bb',
+      'hb',
+      'lct',
+    ],
+    execute: (view) => insertBoardBlock(view, 'board'),
   },
   {
     id: 'file',

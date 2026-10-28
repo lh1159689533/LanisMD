@@ -10,6 +10,8 @@
  * | v1.0.1 | 移除「直角矩形」图标                        | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.1.0 | 批次3：连线结构/布局方向图标                 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.2.0 | 批次4：文字样式（粗体/斜体/A）图标           | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.3.0 | 白板：不透明度 + 描边线型（实线/虚线/点线）图标 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.4.0 | 白板：图形切换/旋转/端点走线/矢量线形态及 9 种端点标记图标 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -183,3 +185,135 @@ export const ICON_ALIGN_CENTER = `<svg width="20" height="20" viewBox="0 0 20 20
 export const ICON_ALIGN_RIGHT = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M4 5 H16 M9 9 H16 M4 13 H16 M12 17 H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
 </svg>`;
+
+// ---------------------------------------------------------------------------
+// 不透明度图标（白板专属）
+// ---------------------------------------------------------------------------
+
+/**
+ * 不透明度 —— 工具栏触发按钮图标。
+ *
+ * 用「半边实心、半边棋盘格」表达透明：左半实色块代表不透明，
+ * 右半的小方格代表透过去看到的底层。
+ */
+export const ICON_OPACITY = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  <path d="M10 3 A7 7 0 0 1 10 17 Z" fill="currentColor"/>
+  <path d="M4 7 H7 M4 10 H7 M4 13 H7" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+</svg>`;
+
+// ---------------------------------------------------------------------------
+// 描边线型图标（白板专属：实线 / 虚线 / 点线）
+// ---------------------------------------------------------------------------
+
+/** 线型 —— 实线 */
+export const ICON_STROKE_SOLID = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>`;
+
+/** 线型 —— 虚线 */
+export const ICON_STROKE_DASHED = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 3"/>
+</svg>`;
+
+/** 线型 —— 点线 */
+export const ICON_STROKE_DOTTED = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="1 3"/>
+</svg>`;
+
+// ---------------------------------------------------------------------------
+// 白板批次 2 - 能力组触发按钮图标
+// ---------------------------------------------------------------------------
+
+/** 图形切换 —— 方块与圆叠放（与创建工具条图形图标统一造型） */
+export const ICON_SHAPE_SWITCH = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2.5" y="2.5" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="15" cy="15" r="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+/** 旋转角 —— 圆弧旋转箭头 */
+export const ICON_ROTATE = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M17 10a7 7 0 1 1-2.05-4.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M17 2v3.5h-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+/** 端点 / 走线 —— 带两端箭头的连线 */
+export const ICON_LINE_MARKER = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M5 7l-2 3 2 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15 7l2 3-2 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+/** 矢量线形态 —— 自由折线 */
+export const ICON_VECTOR_LINE_SHAPE = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 L8 6 L13 13 L17 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+// ---------------------------------------------------------------------------
+// 白板批次 2 - 箭头线走线形态图标（直线 / 曲线 / 折线）
+// ---------------------------------------------------------------------------
+
+/** 箭头线走线形态图标集（走线 id → 图标） */
+export const ARROW_LINE_SHAPE_ICONS = {
+  straight: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 L17 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+  curve: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 C8 16 12 4 17 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+  elbow: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 H10 V4 H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`,
+} as const;
+
+// ---------------------------------------------------------------------------
+// 白板批次 2 - 矢量线形态图标（直线段 / 曲线段）
+// ---------------------------------------------------------------------------
+
+/** 矢量线形态图标集（形态 id → 图标） */
+export const VECTOR_LINE_SHAPE_ICONS = {
+  straight: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 L8 6 L13 13 L17 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`,
+  curve: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 16 Q5 11 8 8 T13 12 T17 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+} as const;
+
+// ---------------------------------------------------------------------------
+// 白板批次 2 - 箭头线端点标记图标（9 种）
+//
+// 统一朝向：连线自左向右，端点落在右侧（x≈14~16）。
+// 实心类用 fill，空心/线条类用 stroke，与画布上 Plait 的渲染语义一致。
+// ---------------------------------------------------------------------------
+
+/** 箭头线端点标记图标集（标记 id → 图标） */
+export const ARROW_LINE_MARKER_ICONS = {
+  arrow: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 6 L14 10 L4 14 L8.5 10 Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+</svg>`,
+  none: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+  'open-triangle': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 5 L14 10 L3 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`,
+  'solid-triangle': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 4 L16 10 L3 16 Z" fill="currentColor"/>
+</svg>`,
+  'sharp-arrow': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 6 L14 10 L3 14 Z" fill="currentColor"/>
+</svg>`,
+  'one-side-up': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 L14 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+  'one-side-down': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 10 L14 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+  'hollow-triangle': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 5 L16 10 L3 15 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>`,
+  'single-slash': `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M7 15 L15 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+} as const;

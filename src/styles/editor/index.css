@@ -39,6 +39,7 @@
 @import './board-block-fullscreen.css';
 @import './board-style-toolbar.css';
 @import './board-canvas-toolbar.css';
+@import './board-draw-toolbar.css';
 
 /* Table */
 @import './table.css';

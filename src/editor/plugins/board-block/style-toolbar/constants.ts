@@ -10,6 +10,8 @@
  * | v1.0.1 | 移除「直角矩形」选项（Plait 无此节点形状）   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.1.0 | 批次3：连线结构/布局方向/分支宽度常量        | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.2.0 | 批次4：文字字号档位常量                       | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.3.0 | 白板：描边线型档位 + 不透明度档位常量           | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.4.0 | 白板：箭头线走线/端点、矢量线形态、旋转角预设常量 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -189,3 +191,155 @@ export const TEXT_ALIGN_OPTIONS: readonly TextAlignItem[] = [
   { id: 'center', label: '居中' },
   { id: 'right', label: '右对齐' },
 ];
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 描边线型（StrokeStyle）
+// ---------------------------------------------------------------------------
+
+/**
+ * 描边线型选项 ID。
+ *
+ * 与 `@plait/common` 的 `StrokeStyle` 枚举字符串值一致（solid/dashed/dotted）。
+ * 这里用字面量而非直接引枚举，使常量层不依赖 Plait，便于单测。
+ */
+export type StrokeStyleOption = 'solid' | 'dashed' | 'dotted';
+
+export interface StrokeStyleItem {
+  id: StrokeStyleOption;
+  label: string;
+}
+
+/** 描边线型选项列表（与下拉面板顺序一致） */
+export const STROKE_STYLE_OPTIONS: readonly StrokeStyleItem[] = [
+  { id: 'solid', label: '实线' },
+  { id: 'dashed', label: '虚线' },
+  { id: 'dotted', label: '点线' },
+];
+
+/** 描边线型默认值（Plait 未显式写入 strokeStyle 时的视觉表现） */
+export const DEFAULT_STROKE_STYLE: StrokeStyleOption = 'solid';
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 不透明度
+// ---------------------------------------------------------------------------
+
+/**
+ * 不透明度档位（0~1）。
+ *
+ * 采用固定四档而非滑块（PRD Q21）：与现有 segment 的「方格选项」风格一致，
+ * 且避免滑块拖动过程中高频产生 op 需要额外做节流/合并。
+ */
+export const OPACITY_OPTIONS: readonly number[] = [1, 0.75, 0.5, 0.25];
+
+/** 不透明度默认值（元素未显式写入 opacity 时） */
+export const DEFAULT_OPACITY = 1;
+
+/**
+ * 白板文本的默认字号（px）。
+ *
+ * 取 `@plait/text-plugins` 的 `DEFAULT_FONT_SIZE`（实测为 14）。与导图不同，
+ * draw 元素没有「根/子节点」之分，所有文本共用同一个默认字号。
+ * 该包是 Plait 的传递依赖、未被本项目直接依赖，故以常量复刻而非 import。
+ */
+export const DRAW_DEFAULT_FONT_SIZE = 14;
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 箭头线走线形态（ArrowLineShape）
+// ---------------------------------------------------------------------------
+
+/**
+ * 箭头线走线形态选项 ID。
+ *
+ * 与 `@plait/draw` 的 `ArrowLineShape` 枚举字符串值一致（straight/curve/elbow）。
+ * 这里用字面量而非直接引枚举，使常量层不依赖 Plait，便于单测。
+ */
+export type ArrowLineShapeOption = 'straight' | 'curve' | 'elbow';
+
+export interface ArrowLineShapeItem {
+  id: ArrowLineShapeOption;
+  label: string;
+}
+
+/** 箭头线走线形态选项列表（与下拉面板顺序一致） */
+export const ARROW_LINE_SHAPE_OPTIONS: readonly ArrowLineShapeItem[] = [
+  { id: 'straight', label: '直线' },
+  { id: 'curve', label: '曲线' },
+  { id: 'elbow', label: '折线' },
+];
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 箭头线端点标记（ArrowLineMarkerType）
+// ---------------------------------------------------------------------------
+
+/**
+ * 箭头线端点标记选项 ID。
+ *
+ * 与 `@plait/draw` 的 `ArrowLineMarkerType` 枚举字符串值一致（共 9 种）。
+ * 用字面量而非直接引枚举，使常量层不依赖 Plait，便于单测。
+ */
+export type ArrowLineMarkerOption =
+  | 'arrow'
+  | 'none'
+  | 'open-triangle'
+  | 'solid-triangle'
+  | 'sharp-arrow'
+  | 'one-side-up'
+  | 'one-side-down'
+  | 'hollow-triangle'
+  | 'single-slash';
+
+export interface ArrowLineMarkerItem {
+  id: ArrowLineMarkerOption;
+  label: string;
+}
+
+/** 箭头线端点标记选项列表（与下拉面板顺序一致） */
+export const ARROW_LINE_MARKER_OPTIONS: readonly ArrowLineMarkerItem[] = [
+  { id: 'arrow', label: '箭头' },
+  { id: 'none', label: '无' },
+  { id: 'open-triangle', label: '开放三角' },
+  { id: 'solid-triangle', label: '实心三角' },
+  { id: 'sharp-arrow', label: '尖箭头' },
+  { id: 'one-side-up', label: '单边上' },
+  { id: 'one-side-down', label: '单边下' },
+  { id: 'hollow-triangle', label: '空心三角' },
+  { id: 'single-slash', label: '单斜线' },
+];
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 矢量线形态（VectorLineShape）
+// ---------------------------------------------------------------------------
+
+/**
+ * 矢量线形态选项 ID。
+ *
+ * 与 `@plait/draw` 的 `VectorLineShape` 枚举字符串值一致（straight/curve）。
+ */
+export type VectorLineShapeOption = 'straight' | 'curve';
+
+export interface VectorLineShapeItem {
+  id: VectorLineShapeOption;
+  label: string;
+}
+
+/** 矢量线形态选项列表（与下拉面板顺序一致） */
+export const VECTOR_LINE_SHAPE_OPTIONS: readonly VectorLineShapeItem[] = [
+  { id: 'straight', label: '直线段' },
+  { id: 'curve', label: '曲线段' },
+];
+
+// ---------------------------------------------------------------------------
+// 白板专属 - 旋转角预设（度）
+// ---------------------------------------------------------------------------
+
+/**
+ * 旋转角预设档位（度）。
+ *
+ * 画布上已有拖拽旋转手柄，这里提供固定角度的精确入口（PRD Q: rotate_ui）。
+ * 采用预设按钮而非输入框：与既有 segment 的「方格选项」风格一致，且避免
+ * 输入框的数值解析与非法值校验开销。
+ */
+export const ROTATION_OPTIONS: readonly number[] = [0, 45, 90, 135, 180];
+
+/** 角度比较容差（度）：angle 存储为浮点弧度，回填时需容忍微小误差 */
+export const ANGLE_EPSILON_DEG = 0.5;

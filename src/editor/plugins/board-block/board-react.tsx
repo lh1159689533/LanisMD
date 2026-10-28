@@ -21,6 +21,9 @@
  * | v1.1.1 | 修复：运行时切换 readonly 时同步 board.pointer，修复选中机制失效 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.2.0 | pointer 与 readonly 解耦（编辑态可自由切手型）+ 注入初始主题 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
  * | v1.2.1 | 修复：注入 MindThemeColors，使切主题真正改变节点配色 | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §三 |
+ * | v1.3.0 | 按 mode 分流 Plait 插件与主题色表（白板接入 withDraw） | REQ: 20261027-board-whiteboard-draw §3.3 / §4.4 |
+ * | v1.3.1 | 修复：白板插件链挂载 withImageRender，修复图片插入后静默不渲染 | REQ: 20261027-board-whiteboard-draw §3.9 |
+ * | v1.3.2 | 白板插件链挂载 withHitTest，修复无文字图形点击内部无法选中 | REQ: 20261028-board-interior-hit |
  * /@changelog
  *
  * @author hhhuilli
@@ -29,10 +32,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board, Wrapper } from '@plait-board/react-board';
 import { MindThemeColors, withMind } from '@plait/mind';
+import { withDraw } from '@plait/draw';
 import type {
   PlaitBoard,
   PlaitBoardOptions,
   PlaitElement,
+  PlaitPlugin,
   PlaitTheme,
   ThemeColorMode,
   Viewport,
@@ -40,6 +45,9 @@ import type {
 import { PlaitPointerType } from '@plait/core';
 
 import { CSS_PREFIX } from './constants';
+import { withImageRender } from './image-render';
+import { withHitTest } from './with-hit-test';
+import type { BoardMode } from './types';
 
 // 说明：@plait-board/react-board 与 react-text 的 package.json 仅在 exports 中
 // 暴露了 "." 入口，未声明 "./index.css" 子路径。Vite 5 严格遵循 exports，
@@ -54,6 +62,14 @@ export interface BoardReactProps {
   initialViewport?: Viewport;
   /** 初始画板主题（仅在挂载时生效，后续由画布工具栏运行时切换） */
   initialTheme?: ThemeColorMode;
+  /**
+   * 画板形态，决定注册哪套 Plait 插件与主题色表。
+   *
+   * 仅在挂载时读取：`Wrapper` 不响应 `plugins` 的运行时变化，而 `mode` 是
+   * 块级不可变属性（由 codec 在 NodeView 边界一次性解出），天然契合。
+   * 缺省为 `'mindmap'`，保证未传该 prop 的既有调用点行为不变。
+   */
+  mode?: BoardMode;
   /** 是否只读；运行时切换会实时影响交互能力 */
   readonly: boolean;
   /** 画板内容变更回调（透出最新元素与当前视口，用于防抖回写） */
@@ -84,12 +100,13 @@ export interface BoardReactProps {
 }
 
 /**
- * Plait 思维导图画板组件。
+ * Plait 画板组件（思维导图 / 白板双形态）。
  */
 export function BoardReact({
   initialElements,
   initialViewport,
   initialTheme,
+  mode = 'mindmap',
   readonly,
   onChange,
   onThemeChange,
@@ -112,19 +129,40 @@ export function BoardReact({
 
   // options 仅在 Wrapper 挂载时生效，用初始只读态创建 board。
   //
-  // themeColors 必须显式注入 MindThemeColors：@plait/mind 的 getMindThemeColor
-  // 读的是 board.options.themeColors，缺省时拿到 @plait/core 的 ThemeColors
-  // （只有 mode / boardBackground / textColor，没有 branchColors / rootFill /
-  // rootTextColor），isMindThemeColor 判定失败后恒回落 MindDefaultThemeColor。
-  // 结果就是切主题只有画布背景色（纯 CSS 驱动）变化，节点填充 / 描边 / 连线
-  // 配色永远停在默认主题。
+  // themeColors 需按 mode 分流：
+  //
+  // - 导图：必须显式注入 MindThemeColors。@plait/mind 的 getMindThemeColor
+  //   读的是 board.options.themeColors，缺省时拿到 @plait/core 的 ThemeColors
+  //   （只有 mode / boardBackground / textColor，没有 branchColors / rootFill /
+  //   rootTextColor），isMindThemeColor 判定失败后恒回落 MindDefaultThemeColor。
+  //   结果就是切主题只有画布背景色（纯 CSS 驱动）变化，节点填充 / 描边 / 连线
+  //   配色永远停在默认主题。
+  //
+  // - 白板：必须「不注入」。@plait/draw 的图形配色走自己的 DrawThemeColors
+  //   常量（getDrawDefaultStrokeColor / getFlowchartDefaultFill 直接按
+  //   themeColorMode 查表），完全不读 board.options.themeColors；该选项只影响
+  //   core 侧的 textColor / boardBackground 取值。此处留空让 core 回落自带的
+  //   ThemeColors，若错误沿用 MindThemeColors 会让文本色走导图色表。
   const [initialReadonly] = useState(() => readonly);
   const options = useMemo<PlaitBoardOptions>(
-    () => ({ readonly: initialReadonly, themeColors: MindThemeColors }),
-    [initialReadonly],
+    () => ({
+      readonly: initialReadonly,
+      ...(mode === 'board' ? {} : { themeColors: MindThemeColors }),
+    }),
+    [initialReadonly, mode],
   );
 
-  const plugins = useMemo(() => [withMind], []);
+  // 插件按形态分流；mode 为块级不可变属性，Wrapper 只在挂载时读取一次。
+  // 白板模式额外挂载：
+  // - withImageRender：react-board 内置 withImage 把 renderImage 留为 throw 占位，
+  //   宿主不实现会导致图片元素数据正常但静默不渲染（初始化异常被 @plait/core
+  //   的 list-render 吞掉）。
+  // - withHitTest：放宽点选命中（须在 withDraw 之后，才能包装到 draw 定义的
+  //   board.isHit），修复无文字未填充图形点击内部空白区无法选中。
+  const plugins = useMemo<PlaitPlugin[]>(
+    () => (mode === 'board' ? [withDraw, withImageRender, withHitTest] : [withMind]),
+    [mode],
+  );
 
   // 捕获 board 实例，供只读态运行时切换 + 样式工具栏 selection 联动使用。
   const onBoardReadyRef = useRef(onBoardReady);
@@ -196,6 +234,7 @@ export function BoardReact({
       className={`${CSS_PREFIX}__canvas`}
       // 阻止画板内部事件冒泡到编辑器外层（进一步隔离由 NodeView.stopEvent 兜底）
       data-board-readonly={readonly ? 'true' : 'false'}
+      data-board-mode={mode}
     >
       <Wrapper
         value={value}

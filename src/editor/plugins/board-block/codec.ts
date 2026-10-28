@@ -8,6 +8,7 @@
  * | 版本   | 变更说明                          | 关联                                                 |
  * | v1.0.0 | 初始实现：base64(JSON) 编解码往返  | REQ: 20260702-board-block-mindmap TECH: 画板插件技术方案 |
  * | v1.1.0 | 编解码画板主题（缺失时回落默认主题） | REQ: 20261026-board-canvas-toolbar TECH: 画布级工具栏方案 §六 |
+ * | v1.2.0 | encode 改 options 签名；mode 编解码与空数据兜底分流 | REQ: 20261027-board-whiteboard-draw §3.1 / §4.3 |
  * /@changelog
  *
  * @author hhhuilli
@@ -16,7 +17,7 @@
 import type { PlaitElement, ThemeColorMode, Viewport } from '@plait/core';
 import { SCHEMA_VERSION, createDefaultMindmap } from './constants';
 import { DEFAULT_THEME_MODE, THEME_OPTIONS } from './canvas-toolbar/constants';
-import type { BoardPayload, DecodedBoard } from './types';
+import type { BoardMode, BoardPayload, DecodedBoard } from './types';
 
 // ---------------------------------------------------------------------------
 // UTF-8 安全的 base64 编解码
@@ -57,24 +58,35 @@ function base64ToUtf8(input: string): string {
 // 编码
 // ---------------------------------------------------------------------------
 
+/** `encode` 的可选参数 */
+export interface EncodeOptions {
+  /** 视口信息（缩放、平移） */
+  viewport?: Viewport;
+  /** 画板主题；不传则不写入该字段，解码侧回落默认主题 */
+  theme?: ThemeColorMode;
+  /**
+   * 画板形态。
+   *
+   * 不传则不写入该字段，解码侧回落 `'mindmap'`。因此导图块可以不传，
+   * 但白板块**必须显式传入** `'board'`，否则重开后会被解码成导图块。
+   */
+  mode?: BoardMode;
+}
+
 /**
  * 将 Plait 画板元素编码为持久化字符串（`base64(JSON)`）。
  *
  * @param elements Plait 画板元素树
- * @param viewport 视口信息（可选）
- * @param theme 画板主题（可选；不传则不写入该字段，解码侧回落默认主题）
+ * @param options 视口 / 主题 / 形态（均可选）
  * @returns base64 编码串，写入 `board_block.attrs.data`
  */
-export function encode(
-  elements: PlaitElement[],
-  viewport?: Viewport,
-  theme?: ThemeColorMode,
-): string {
+export function encode(elements: PlaitElement[], options?: EncodeOptions): string {
   const payload: BoardPayload = {
     v: SCHEMA_VERSION,
+    mode: options?.mode,
     children: elements,
-    viewport,
-    theme,
+    viewport: options?.viewport,
+    theme: options?.theme,
   };
   return utf8ToBase64(JSON.stringify(payload));
 }
@@ -87,16 +99,19 @@ export function encode(
  * 将持久化字符串解码为 Plait 画板元素。
  *
  * 解码策略（逐级兜底，保证任何输入都不抛出未捕获异常）：
- * 1. 当前格式：`base64(JSON)` → 解析 `{ v, children, viewport }`
+ * 1. 当前格式：`base64(JSON)` → 解析 `{ v, mode, children, viewport }`
  * 2. 兼容旧数据：直接按明文 JSON 解析
  * 3. 彻底失败：返回默认思维导图（空画板兜底，不崩溃）
  *
  * @param text `board_block.attrs.data` 的原始字符串
- * @returns 归一化的解码结果，`elements` 一定为非空数组
+ * @returns 归一化的解码结果；`mode` 必填，`elements` 必为数组
+ *          （导图形态非空，白板形态可为空）
  */
 export function decode(text: string): DecodedBoard {
+  // 彻底解码失败时无从得知原始形态，统一回落导图 + 默认内容，与本期之前一致
   const fallback = (): DecodedBoard => ({
     version: SCHEMA_VERSION,
+    mode: 'mindmap',
     elements: createDefaultMindmap(),
     viewport: undefined,
     theme: DEFAULT_THEME_MODE,
@@ -130,22 +145,30 @@ export function decode(text: string): DecodedBoard {
 /**
  * 将解析出的原始对象归一化为 `DecodedBoard`。
  *
- * 校验 `children` 是否为合法数组；非法时回落默认思维导图。
- * `theme` 需校验是否为已知主题标识——文档是用户可直接手改的明文载体，
- * 把非法字符串原样交给 Plait 会导致主题色查表失败、节点配色整体失效。
+ * 文档是用户可直接手改的明文载体，因此 `mode` / `theme` 都必须做合法性校验，
+ * 把非法字符串原样交给下游会导致插件注册错位或主题色查表失败。
  */
 function normalize(parsed: Partial<BoardPayload>): DecodedBoard {
-  const elements =
-    Array.isArray(parsed.children) && parsed.children.length > 0
-      ? (parsed.children as PlaitElement[])
-      : createDefaultMindmap();
+  const mode = normalizeMode(parsed.mode);
+  const raw = Array.isArray(parsed.children) ? (parsed.children as PlaitElement[]) : [];
+
+  // 空数据兜底必须按形态分流：
+  // - 导图：空画板无意义（没有根节点就无法新建任何节点），回落默认思维导图
+  // - 白板：空画布是合法状态（插入即空），绝不能兜底成一个思维导图根节点
+  const elements = raw.length > 0 ? raw : mode === 'board' ? [] : createDefaultMindmap();
 
   return {
     version: typeof parsed.v === 'number' ? parsed.v : SCHEMA_VERSION,
+    mode,
     elements,
     viewport: parsed.viewport,
     theme: normalizeTheme(parsed.theme),
   };
+}
+
+/** 校验画板形态合法性；缺失或非法时回落 `'mindmap'`，保证旧文档零迁移 */
+function normalizeMode(raw: unknown): BoardMode {
+  return raw === 'board' ? 'board' : 'mindmap';
 }
 
 /** 校验主题标识合法性，非法或缺失时回落默认主题 */

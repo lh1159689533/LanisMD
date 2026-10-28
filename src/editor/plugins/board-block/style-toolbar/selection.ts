@@ -18,12 +18,21 @@
  * | v1.2.0 | 批次3：读取连线结构/布局方向/分支宽色   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.3.0 | 新增 hasAnyNonUnderlineShape：全下划线时隐藏填充/描边 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.4.0 | 批次4：读取文字样式（粗/斜/字号/字色）    | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.5.0 | 新增白板分支：draw 元素选中读取/样式快照/能力位/包围盒 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.6.0 | 新增图形类型/旋转角/箭头线端点走线/矢量线形态的读取与能力位 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
+ * | v1.7.0 | 新增 isAllImage 判定：图片元素无适用样式能力组，用于隐藏工具栏 | REQ: 20261027-board-whiteboard-draw §3.9 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import { getSelectedElements, PlaitBoard, PlaitElement } from '@plait/core';
+import {
+  getAngleByElement,
+  getSelectedElements,
+  PlaitBoard,
+  PlaitElement,
+  RectangleClient,
+} from '@plait/core';
 import {
   MindElement,
   MindElementShape,
@@ -38,16 +47,40 @@ import {
   getBranchColorByMindElement,
   getDefaultFontSizeForMindElement,
 } from '@plait/mind';
+// draw 侧的同名读取函数与 mind 侧签名/取值路径都不同，必须别名导入区分：
+// mind 的 getStrokeWidthByElement 签名为 (board, element)，draw 的只收 element。
+import {
+  PlaitDrawElement,
+  type GeometryShapes,
+  type PlaitArrowLine,
+  type PlaitGeometry,
+  type PlaitVectorLine,
+  getFillByElement as getDrawFillByElement,
+  getStrokeColorByElement as getDrawStrokeColorByElement,
+  getStrokeStyleByElement as getDrawStrokeStyleByElement,
+  getStrokeWidthByElement as getDrawStrokeWidthByElement,
+  isClosedDrawElement,
+} from '@plait/draw';
 import { Node as SlateNode } from 'slate';
 
-import { isMindElement } from './types';
+import { isDrawElement, isMindElement } from './types';
 import type {
   ShapeOption,
   BranchShapeOption,
   LayoutDirectionOption,
+  StrokeStyleOption,
   TextAlignOption,
+  ArrowLineShapeOption,
+  ArrowLineMarkerOption,
+  VectorLineShapeOption,
 } from './constants';
-import { DEFAULT_STROKE_WIDTH, DEFAULT_BRANCH_WIDTH } from './constants';
+import {
+  DEFAULT_BRANCH_WIDTH,
+  DEFAULT_OPACITY,
+  DEFAULT_STROKE_STYLE,
+  DEFAULT_STROKE_WIDTH,
+  DRAW_DEFAULT_FONT_SIZE,
+} from './constants';
 
 // ---------------------------------------------------------------------------
 // 选中态读取
@@ -281,6 +314,312 @@ export function hasAnyNonUnderlineShape(board: PlaitBoard): boolean {
       return true;
     }
   });
+}
+
+// ---------------------------------------------------------------------------
+// 白板分支：选中态读取
+// ---------------------------------------------------------------------------
+
+/** 读取当前选中的 draw 元素（过滤掉非 draw 元素） */
+export function getSelectedDrawElements(board: PlaitBoard): PlaitElement[] {
+  const all = getSelectedElements(board);
+  return all.filter(isDrawElement);
+}
+
+/**
+ * 判断选中集合是否全部为图片元素。
+ *
+ * 图片没有本期样式工具栏的任何能力组语义（填充/描边/不透明度/文字等均不适用），
+ * 其拖移 / 缩放 / 旋转 / 删除由 `withDraw` 内置的 resize / rotate / hotkey 提供。
+ * 因此图片被选中时样式工具栏应整体隐藏，而非显示「描边 + 不透明度」等无意义项。
+ */
+export function isAllImage(elements: PlaitElement[]): boolean {
+  return elements.length > 0 && elements.every((element) => PlaitDrawElement.isImage(element));
+}
+
+/** draw 元素的当前样式快照（含文字样式，供工具栏回填） */
+export interface DrawStyleSnapshot {
+  /** 填充色（无自定义时为 Plait 按主题算出的默认值） */
+  fill: string | null;
+  /** 描边色 */
+  strokeColor: string | null;
+  /** 描边宽度 */
+  strokeWidth: number;
+  /** 描边线型（实线 / 虚线 / 点线） */
+  strokeStyle: StrokeStyleOption;
+  /** 不透明度（0~1） */
+  opacity: number;
+  /** 图形类型（仅选中 geometry 时有值） */
+  shape: GeometryShapes | null;
+  /** 旋转角（弧度，仅选中 geometry 时有值） */
+  angle: number;
+  /** 箭头线走线形态（仅选中 arrow-line 时有值） */
+  arrowLineShape: ArrowLineShapeOption | null;
+  /** 箭头线源端点标记（仅选中 arrow-line 时有值） */
+  sourceMarker: ArrowLineMarkerOption | null;
+  /** 箭头线目标端点标记（仅选中 arrow-line 时有值） */
+  targetMarker: ArrowLineMarkerOption | null;
+  /** 矢量线形态（仅选中 vector-line 时有值） */
+  vectorLineShape: VectorLineShapeOption | null;
+  /** 文字是否加粗 */
+  bold: boolean;
+  /** 文字是否斜体 */
+  italic: boolean;
+  /** 文字是否下划线 */
+  underlined: boolean;
+  /** 文字颜色（无自定义 mark 时为 null） */
+  textColor: string | null;
+  /** 文字字号（无显式 mark 时回退默认字号） */
+  fontSize: number;
+  /** 文字水平对齐（无显式 align 时为 null） */
+  textAlign: TextAlignOption | null;
+}
+
+/**
+ * 白板模式下各能力组的可用性。
+ *
+ * PRD §3.8 验收要求「多选不同类型元素（图形 + 连线）时，只显示两者共有的
+ * 能力组」，故这里一律取**全体选中元素都支持**的交集语义：
+ * 只要有一个元素不支持，该能力组即隐藏。
+ */
+export interface DrawCapabilities {
+  /** 是否可改填充：要求全部选中元素都是「闭合」图形（连线/开放折线无填充语义） */
+  fill: boolean;
+  /** 是否可改文字样式：要求全部选中元素都承载单段文本 */
+  text: boolean;
+  /** 是否可切换图形：要求全部选中元素都是非文本的 geometry */
+  shapeSwitch: boolean;
+  /** 是否可旋转：要求全部选中元素都是 geometry（带 angle 字段） */
+  rotate: boolean;
+  /** 是否可改端点/走线：要求全部选中元素都是 arrow-line */
+  arrowLine: boolean;
+  /** 是否可改矢量线形态：要求全部选中元素都是 vector-line */
+  vectorLine: boolean;
+}
+
+/** 计算白板模式下的能力组可用性 */
+export function getDrawCapabilities(board: PlaitBoard): DrawCapabilities {
+  const elements = getSelectedDrawElements(board);
+  if (elements.length === 0) {
+    return {
+      fill: false,
+      text: false,
+      shapeSwitch: false,
+      rotate: false,
+      arrowLine: false,
+      vectorLine: false,
+    };
+  }
+  const fill = elements.every((element) => {
+    try {
+      return isClosedDrawElement(element);
+    } catch (e) {
+      // 判定异常时保守返回 false，避免把填充写到不支持的元素上
+      return false;
+    }
+  });
+  const text = elements.every((element) => hasSingleText(element));
+  // 图形切换：`switchGeometryShape` 内部会跳过 text 图形，故这里同样排除 text
+  const shapeSwitch = elements.every(
+    (element) => PlaitDrawElement.isGeometry(element) && !PlaitDrawElement.isText(element),
+  );
+  const rotate = elements.every((element) => PlaitDrawElement.isGeometry(element));
+  const arrowLine = elements.every((element) => PlaitDrawElement.isArrowLine(element));
+  const vectorLine = elements.every((element) => PlaitDrawElement.isVectorLine(element));
+  return { fill, text, shapeSwitch, rotate, arrowLine, vectorLine };
+}
+
+/**
+ * 判定元素是否承载「单段文本」。
+ *
+ * 本期只支持单文本图形（`PlaitGeometry.text`）。多文本图形
+ * （`PlaitMultipleTextGeometry.texts`，如 UML 的 class / interface）与连线文字
+ * （`PlaitArrowLine.texts`）的读写路径不同，顺延后续批次（PRD §3.11 / §3.6）。
+ */
+function hasSingleText(element: PlaitElement): boolean {
+  try {
+    if (!PlaitDrawElement.isGeometry(element)) return false;
+    // 多文本图形带 texts 数组，不走 text 字段
+    if ('texts' in element) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * 读取首个选中 draw 元素的当前样式值。
+ *
+ * draw 侧的读取函数全部来自 `@plait/draw`：它们在元素未显式写入属性时，会按
+ * 主题（`DrawThemeColors`）算出 Plait 实际渲染用的默认值，因此工具栏回填出的
+ * 颜色与画布所见一致。
+ *
+ * 若无选中元素返回 null。
+ */
+export function getDrawStyles(board: PlaitBoard): DrawStyleSnapshot | null {
+  const elements = getSelectedDrawElements(board);
+  if (elements.length === 0) return null;
+
+  const el = elements[0];
+
+  let fill: string | null;
+  try {
+    fill = getDrawFillByElement(board, el) || null;
+  } catch (e) {
+    fill = null;
+  }
+
+  let strokeColor: string | null;
+  try {
+    strokeColor = getDrawStrokeColorByElement(board, el) || null;
+  } catch (e) {
+    strokeColor = null;
+  }
+
+  let strokeWidth: number;
+  try {
+    strokeWidth = Number(getDrawStrokeWidthByElement(el)) || DEFAULT_STROKE_WIDTH;
+  } catch (e) {
+    strokeWidth = DEFAULT_STROKE_WIDTH;
+  }
+
+  let strokeStyle: StrokeStyleOption;
+  try {
+    const raw = getDrawStrokeStyleByElement(board, el);
+    strokeStyle =
+      raw === 'dashed' || raw === 'dotted' || raw === 'solid' ? raw : DEFAULT_STROKE_STYLE;
+  } catch (e) {
+    strokeStyle = DEFAULT_STROKE_STYLE;
+  }
+
+  // opacity 是元素自有字段，无需走 Plait 的默认值计算
+  const rawOpacity = (el as { opacity?: number }).opacity;
+  const opacity = typeof rawOpacity === 'number' ? rawOpacity : DEFAULT_OPACITY;
+
+  // 批次 2 按元素类型分流读取：图形取 shape/angle，箭头线取走线+端点，矢量线取形态。
+  // Plait 枚举值恒与本地字面量联合一一对应，`as unknown as` 仅为绕过枚举名义类型断言。
+  let shape: GeometryShapes | null = null;
+  let angle = 0;
+  let arrowLineShape: ArrowLineShapeOption | null = null;
+  let sourceMarker: ArrowLineMarkerOption | null = null;
+  let targetMarker: ArrowLineMarkerOption | null = null;
+  let vectorLineShape: VectorLineShapeOption | null = null;
+
+  try {
+    if (PlaitDrawElement.isGeometry(el)) {
+      shape = (el as PlaitGeometry).shape;
+      angle = getAngleByElement(el) || 0;
+    } else if (PlaitDrawElement.isArrowLine(el)) {
+      const line = el as PlaitArrowLine;
+      arrowLineShape = line.shape as unknown as ArrowLineShapeOption;
+      sourceMarker = line.source.marker as unknown as ArrowLineMarkerOption;
+      targetMarker = line.target.marker as unknown as ArrowLineMarkerOption;
+    } else if (PlaitDrawElement.isVectorLine(el)) {
+      vectorLineShape = (el as PlaitVectorLine).shape as unknown as VectorLineShapeOption;
+    }
+  } catch (e) {}
+
+  return {
+    fill,
+    strokeColor,
+    strokeWidth,
+    strokeStyle,
+    opacity,
+    shape,
+    angle,
+    arrowLineShape,
+    sourceMarker,
+    targetMarker,
+    vectorLineShape,
+    ...readDrawTextMarks(el),
+  };
+}
+
+/**
+ * 读取 draw 元素的文字样式 mark。
+ *
+ * 与导图的差异仅在取值入口：导图是 `element.data.topic`，draw 是 `element.text`，
+ * 两者都是 Slate 的 `ParagraphElement`，因此展平与汇总逻辑完全一致。
+ * 字号无显式 mark 时回退 draw 的统一默认字号（导图是按根/子分 18 / 14）。
+ */
+function readDrawTextMarks(element: PlaitElement): {
+  bold: boolean;
+  italic: boolean;
+  underlined: boolean;
+  textColor: string | null;
+  fontSize: number;
+  textAlign: TextAlignOption | null;
+} {
+  let bold = false;
+  let italic = false;
+  let underlined = false;
+  let textColor: string | null = null;
+  let fontSizeMark: number | null = null;
+  let textAlign: TextAlignOption | null = null;
+
+  try {
+    const text = (element as { text?: unknown }).text;
+    if (text) {
+      const align = (text as { align?: string }).align;
+      if (align === 'left' || align === 'center' || align === 'right') {
+        textAlign = align;
+      }
+      for (const [node] of SlateNode.texts(text as never)) {
+        const textNode = node as {
+          bold?: boolean;
+          italic?: boolean;
+          underlined?: boolean;
+          color?: string;
+          'font-size'?: number | string;
+        };
+        if (textNode.bold) bold = true;
+        if (textNode.italic) italic = true;
+        if (textNode.underlined) underlined = true;
+        if (typeof textNode.color === 'string') textColor = textNode.color;
+        const rawSize = textNode['font-size'];
+        if (rawSize !== undefined && rawSize !== null) {
+          fontSizeMark = Number(rawSize);
+        }
+      }
+    }
+  } catch (e) {}
+
+  return {
+    bold,
+    italic,
+    underlined,
+    textColor,
+    fontSize: fontSizeMark ?? DRAW_DEFAULT_FONT_SIZE,
+    textAlign,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 白板分支：选中包围盒（工具栏定位）
+// ---------------------------------------------------------------------------
+
+/**
+ * 计算全部选中 draw 元素的联合包围盒（viewBox 坐标系）。
+ *
+ * draw 元素没有导图的 `MindElement.getNode()` 布局节点，但它们的 `points`
+ * 就是权威几何数据（resize / 拖移都会实时写回 points），因此直接把所有选中
+ * 元素的 points 汇总后交给 `RectangleClient.getRectangleByPoints` 求外接矩形。
+ *
+ * 已知近似：旋转过的图形（`angle` 非 0）返回的是**未旋转**的包围盒，
+ * 工具栏可能略微偏移。旋转角本身在批次 2 才引入，届时一并处理。
+ */
+export function getDrawSelectionRectangle(
+  board: PlaitBoard,
+): { x: number; y: number; width: number; height: number } | null {
+  const elements = getSelectedDrawElements(board);
+  if (elements.length === 0) return null;
+  const points = elements.flatMap((element) => (element as { points?: number[][] }).points ?? []);
+  if (points.length === 0) return null;
+  try {
+    return RectangleClient.getRectangleByPoints(points as never);
+  } catch (e) {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------

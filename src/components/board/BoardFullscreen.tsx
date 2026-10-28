@@ -24,6 +24,7 @@ import { usePreviewTheme } from '@/hooks/usePreviewTheme';
 import '@/styles/editor/board-block.css';
 import '@/styles/editor/board-style-toolbar.css';
 import '@/styles/editor/board-canvas-toolbar.css';
+import '@/styles/editor/board-draw-toolbar.css';
 import '@/styles/editor/board-block-fullscreen.css';
 
 export function BoardFullscreen() {

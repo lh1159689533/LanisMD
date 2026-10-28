@@ -39,4 +39,5 @@ export const boardBlockView = $view(boardBlockSchema.node, () => {
 export { boardBlockSchema, remarkBoardPlugin };
 export { createDefaultMindmap, DEFAULT_HEIGHT, SCHEMA_VERSION } from './constants';
 export { encode, decode } from './codec';
-export type { BoardBlockState } from './types';
+export type { EncodeOptions } from './codec';
+export type { BoardBlockState, BoardMode } from './types';

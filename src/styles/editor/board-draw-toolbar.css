@@ -1,0 +1,393 @@
+/**
+ * 白板创建工具条样式
+ *
+ * 前缀：.lanismd-board-draw-toolbar
+ * 结构：单张悬浮卡片，竖排若干工具按钮，按分组以分隔线区隔。
+ *       根容器绝对定位于画板节点内左侧，垂直居中。
+ *
+ * 位置约定（不与既有浮层冲突）：
+ * - 右上角为 canvas-toolbar、节点外右侧为块工具栏、底部为 resize-handle，
+ *   左侧为空白区域，故本工具条占据左侧。
+ * - 顶部中间为 style-toolbar（选中元素时浮现），本工具条垂直居中可错开。
+ *
+ * @changelog
+ * | 版本   | 变更说明                           | 关联                                      |
+ * | v1.0.0 | 初始实现：左侧竖排卡片 + 光标分流    | REQ: 20261027-board-whiteboard-draw §3.4  |
+ * | v1.1.0 | 新增弹出面板：图形网格（三 tab）与连线走线列表 | REQ: 20261027-board-whiteboard-draw §3.5 / §3.6 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/* --------------------------------------------------------------------------
+ * 工具条根与分组
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-draw-toolbar {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 6px;
+  background: var(--lanismd-bg-elevated, rgba(255, 255, 255, 0.92));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-50%);
+}
+
+.dark .lanismd-board-draw-toolbar {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+  background: var(--lanismd-bg-elevated, rgba(38, 38, 38, 0.95));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 仅编辑态显示：预览态为只读挂载，没有创建元素的语义 */
+.lanismd-board-draw-toolbar[data-block-state='preview'] {
+  display: none;
+}
+
+/* 锁定态（画板已移交全屏窗口）：与 canvas-toolbar 同理整条隐藏，
+ * 否则在主窗口创建的元素会被全屏窗口关闭时的数据整体覆盖而静默丢失。 */
+.lanismd-board-block.is-fullscreen-locked .lanismd-board-draw-toolbar {
+  display: none;
+}
+
+.lanismd-board-draw-toolbar__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 分组之间插入一条横向分隔线（首个分组不加） */
+.lanismd-board-draw-toolbar__group + .lanismd-board-draw-toolbar__group {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--lanismd-border-color, #e7e9e8);
+}
+
+.dark .lanismd-board-draw-toolbar__group + .lanismd-board-draw-toolbar__group {
+  border-top-color: var(--lanismd-border-color, #3a3a3a);
+}
+
+/* --------------------------------------------------------------------------
+ * 按钮
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-draw-toolbar__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-text-color, #262626);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lanismd-board-draw-toolbar__btn > svg,
+.lanismd-board-draw-toolbar__btn-icon > svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.lanismd-board-draw-toolbar__btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-board-draw-toolbar__btn:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-draw-toolbar__btn.is-active {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.1));
+  color: var(--lanismd-primary-color, #00b96b);
+}
+
+.lanismd-board-draw-toolbar__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dark .lanismd-board-draw-toolbar__btn {
+  color: var(--lanismd-text-color, #e5e5e5);
+}
+
+.dark .lanismd-board-draw-toolbar__btn:hover:not(:disabled),
+.dark .lanismd-board-draw-toolbar__btn.is-active {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* 面板展开时按钮保持「按下」反馈，即便 pointer 还没切换 */
+.lanismd-board-draw-toolbar__btn.is-panel-open {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.1));
+}
+
+.dark .lanismd-board-draw-toolbar__btn.is-panel-open {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* --------------------------------------------------------------------------
+ * 弹出面板（图形网格 / 连线走线）
+ *
+ * 面板是触发按钮的子节点，借此继承根容器上的 plait-board-attached 类；
+ * 工具条位于画布左侧，故面板一律朝右侧弹出。
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-draw-toolbar__panel {
+  position: absolute;
+  top: -4px;
+  left: calc(100% + 8px);
+  z-index: 20;
+  display: none;
+  padding: 6px;
+  border: 1px solid var(--lanismd-border-color, #e7e9e8);
+  border-radius: 6px;
+  background: var(--lanismd-bg-elevated, #ffffff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+  color: var(--lanismd-text-color, #262626);
+  cursor: default;
+}
+
+.lanismd-board-draw-toolbar__panel[data-open='true'] {
+  display: block;
+}
+
+.dark .lanismd-board-draw-toolbar__panel {
+  border-color: var(--lanismd-border-color, #3a3a3a);
+  background: var(--lanismd-bg-elevated, #262626);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  color: var(--lanismd-text-color, #e5e5e5);
+}
+
+/* --- tab 栏 --------------------------------------------------------------- */
+
+.lanismd-board-draw-toolbar__panel-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--lanismd-border-color, #e7e9e8);
+}
+
+.dark .lanismd-board-draw-toolbar__panel-tabs {
+  border-bottom-color: var(--lanismd-border-color, #3a3a3a);
+}
+
+.lanismd-board-draw-toolbar__panel-tab {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lanismd-board-draw-toolbar__panel-tab:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-draw-toolbar__panel-tab.is-active {
+  background: var(--lanismd-primary-color, #00b96b);
+  color: #ffffff;
+}
+
+.lanismd-board-draw-toolbar__panel-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dark .lanismd-board-draw-toolbar__panel-tab:hover:not(:disabled) {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* --- 图形网格 ------------------------------------------------------------- */
+
+.lanismd-board-draw-toolbar__panel-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 56px);
+  gap: 2px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.lanismd-board-draw-toolbar__panel-grid[hidden] {
+  display: none;
+}
+
+.lanismd-board-draw-toolbar__panel-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 5px 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.lanismd-board-draw-toolbar__panel-item:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-draw-toolbar__panel-item.is-active {
+  border-color: var(--lanismd-primary-color, #00b96b);
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.dark .lanismd-board-draw-toolbar__panel-item:hover,
+.dark .lanismd-board-draw-toolbar__panel-item.is-active {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* 缩略图容器：内部 svg 由 drawGeometry 实时渲染，颜色继承 currentColor */
+.lanismd-board-draw-toolbar__panel-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 28px;
+  color: var(--lanismd-text-secondary, #595959);
+}
+
+.lanismd-board-draw-toolbar__panel-thumb > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.dark .lanismd-board-draw-toolbar__panel-thumb {
+  color: var(--lanismd-text-secondary, #bfbfbf);
+}
+
+.lanismd-board-draw-toolbar__panel-label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 未实现分类的占位说明 */
+.lanismd-board-draw-toolbar__panel-empty {
+  grid-column: 1 / -1;
+  padding: 16px 8px;
+  color: var(--lanismd-text-secondary, #8c8c8c);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* --- 连线走线列表 --------------------------------------------------------- */
+
+.lanismd-board-draw-toolbar__panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 108px;
+}
+
+.lanismd-board-draw-toolbar__panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lanismd-board-draw-toolbar__panel-row:hover {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.lanismd-board-draw-toolbar__panel-row.is-active {
+  background: var(--lanismd-hover-bg, rgba(0, 0, 0, 0.1));
+  color: var(--lanismd-primary-color, #00b96b);
+}
+
+.dark .lanismd-board-draw-toolbar__panel-row:hover,
+.dark .lanismd-board-draw-toolbar__panel-row.is-active {
+  background: var(--lanismd-hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.lanismd-board-draw-toolbar__panel-row-icon {
+  display: inline-flex;
+}
+
+.lanismd-board-draw-toolbar__panel-row-icon > svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+ * 画布光标
+ * ------------------------------------------------------------------------ */
+
+/*
+ * @plait/draw 自带的 styles.scss 用 .plait-board-container.pointer-xxx 做光标分流，
+ * 但 Plait 只在创建 board 时按初始 pointer 给容器打类，运行时改写 board.pointer
+ * 不会重算该类名（canvas-toolbar 的手型光标已踩过同一个坑）。
+ * 因此改由宿主在块根节点上打 data-draw-pointer，在此按值分流光标。
+ *
+ * selection / hand / vectorLine 三态不在此列（对齐 @plait/draw 官方
+ * styles.scss 的 cursor 分流语义，官方把 .pointer-vectorLine 排除出 crosshair，
+ * 使矢量绘图落回默认箭头光标）：
+ * - selection 用 Plait/浏览器默认光标
+ * - hand 由 canvas-toolbar 的 data-canvas-pointer 规则接管
+ * - vectorLine 落回默认箭头（官方无钢笔光标，见 styles.scss）
+ */
+.lanismd-board-block[data-board-mode='board'].is-editing:not([data-draw-pointer='selection']):not(
+    [data-draw-pointer='hand']
+  ):not([data-draw-pointer='vectorLine'])
+  .plait-board-container
+  .board-host-svg {
+  cursor: crosshair;
+}
+
+/* --------------------------------------------------------------------------
+ * 矢量绘图钢笔光标
+ *
+ * 复用 plait 官方（angular-board/styles.scss）的钢笔笔尖光标：
+ * - 常规绘制态：钢笔笔尖，热点在笔尖 (6, 0)，兜底 crosshair
+ * - 闭合提示态：钢笔 + 圆环（@plait/draw 在指针靠近起点时给
+ *   .plait-board-container 加 vector-line-closed 类，此处按类切换）
+ * ------------------------------------------------------------------------ */
+
+.lanismd-board-block[data-board-mode='board'].is-editing[data-draw-pointer='vectorLine']
+  .plait-board-container
+  .board-host-svg {
+  cursor: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+6ZKi56yUPC90aXRsZT4KICAgIDxkZWZzPgogICAgICAgIDxwYXRoIGQ9Ik01Ljk4NjM5OTY5LDAgQzYuNzQ5NjgyMzIsMCA3LjQwMjAwMjIxLDAuNDc1MDg3OTczIDcuNjYzNzgyOSwxLjE0NTY3NTk4IEw5LjM3ODYyODQzLDMuODY2MTk5OTMgQzEwLjI5MzMzMDQsNS4yOTc1NjU2MyAxMC45MDU5NDAxLDYuMjIwMjA4MDMgMTEuMTczMjcwMSw2LjU3MDk4ODcyIEwxMS4yNjMwMjE0LDYuNjgwNjY3NCBMMTEuMzEwMjQyOCw2LjcyMDc3ODk2IEMxMS44NzIxMTcyLDcuMjI0NDMyNjEgMTIuMDYwMjE2NCw4LjAyNTA3ODE0IDExLjc4MTM5NDcsOC43MjYyNDAyMSBMMTAuOTU5NzY1OCwxMC44MTU3ODA0IEMxMC42MzQ0OTk1LDExLjY1MzQ5OTEgMTAuMzU0NTk4LDEyLjM4ODg0NDUgMTAuMTI3NzEyNiwxMi45OTkzNzE5IEMxMC4xODUzMzM2LDEzLjA2NDIyMTUgMTAuMjM4NTUxNCwxMy4xMzM3Mjg2IDEwLjI4ODQ4MTksMTMuMjA1Njg5MiBDMTAuNTMyMjM4NSwxMi41MDM2Mjk4IDExLjIwMDM0MTksMTIgMTEuOTg1NTMyNCwxMiBMMTIuMTg2Mzk5NywxMiBMMTIuMTg2Mzk5NywxMS44IEMxMi4xODYzOTk3LDEwLjg1NTU5MzEgMTIuOTEzNzEzMSwxMC4wODEwNTkzIDEzLjgzODc3MTcsMTAuMDA1OTY2OSBMMTMuOTg2Mzk5NywxMCBDMTQuOTgwNTEyMiwxMCAxNS43ODYzOTk3LDEwLjgwNTg4NzUgMTUuNzg2Mzk5NCwxMS44MDA4NjY3IEwxNS43ODUzOTk3LDEyIEwxNS45ODYzOTk3LDEyIEMxNi45MzA4MDY2LDEyIDE3LjcwNTM0MDQsMTIuNzI3MzEzNCAxNy43ODA0MzI3LDEzLjY1MjM3MiBMMTcuNzg2Mzk5NywxMy44IEMxNy43ODYzOTk3LDE0Ljc5NDExMjUgMTYuOTgwNTEyMiwxNS42IDE1Ljk4NjM5OTcsMTUuNiBMMTUuNzg2Mzk5NywxNS42IEwxNS43ODYzOTk3LDE1LjggQzE1Ljc4NjM5OTcsMTYuNzQ0NDA2OSAxNS4wNTkwODYzLDE3LjUxODk0MDcgMTQuMTM0MDI3NywxNy41OTQwMzMxIEwxMy45ODYzOTk3LDE3LjYgQzEyLjk5MjI4NzEsMTcuNiAxMi4xODYzOTk3LDE2Ljc5NDExMjUgMTIuMTg2Mzk5NywxNS44MDA4NjYxIEwxMi4xODYzOTk3LDE1LjYgTDExLjk4NjM5OTcsMTUuNiBDMTEuNTI1NTQwNSwxNS42IDExLjEwNTEzMzUsMTUuNDI2ODAzMiAxMC43ODY3MTc3LDE1LjE0MTk0ODQgTDEwLjc4NjM5OTcsMTUuOCBDMTAuNzg2Mzk5NywxNi43OTQxMTI1IDkuOTgwNTEyMjQsMTcuNiA4Ljk4NjM5OTY5LDE3LjYgTDIuOTg2Mzk5NjksMTcuNiBDMS45OTIyODcxNCwxNy42IDEuMTg2Mzk5NjksMTYuNzk0MTEyNSAxLjE4NjM5OTY5LDE1LjggTDEuMTg2Mzk5NjksMTQuOCBDMS4xODYzOTk2OSwxNC4xMzc5MTI5IDEuNDE2MTk4NjUsMTMuNTI5NDk4MSAxLjgwMDM4ODMyLDEzLjA1MDE2NDEgQzEuNTIxMDc0MzQsMTIuMjk4MzE5NSAxLjE1OTMxMDg1LDExLjM1MTIzOTEgMC43Mjk2NjgxNjgsMTAuMjUyNzM0IEwwLjEyNzQ3MDgwNCw4LjcyNjI0MDIxIEMtMC4xNTEzNTA4MzYsOC4wMjUwNzgxNCAwLjAzNjc0ODM2MjQsNy4yMjQ0MzI2MSAwLjU5ODYyMjY5Myw2LjcyMDc3ODk2IEwwLjY0OTI4NTcyMSw2LjY3NDUyNTAyIEwwLjc0MTY5MDgwMyw2LjU2NDIzMjc2IEMwLjk5Mjk4MDIxNSw2LjIzODU1MTQ2IDEuNTM2NzQ2Niw1LjQ0MTk2NTY2IDIuMzQ0MzU0NjEsNC4yMTYwOTQwMiBMNC4yNzM5NjE2OCwxLjI0Mzg0NzU0IEM0LjQ5MzcwMiwwLjU2Njc3NjIwOCA1LjEwMzgyODExLDAuMDY1NjI2NTczNCA1LjgzODc3MTcxLDAuMDA1OTY2OTQ4MDggTDUuOTg2Mzk5NjksMCBaIE01LjAyMzkxNTc1LDExLjM4OTU0MDUgTDUuMDQyNjMxMTIsMTEuNDM3NjgwMSBDNS4xMTYzNTQ5NCwxMS42MzU0MDkgNS4xODU1ODEzOSwxMS44MjMyNTgzIDUuMjUwNDM3NjIsMTIuMDAxNzA0NiBMNi42NTg0Mjc5LDEyLjAwMTcwNDYgQzYuNzI0NzgxNjIsMTEuODE5MTM4MSA2Ljc5NTcwOTcsMTEuNjI2NzI5MyA2Ljg3MTM0ODMsMTEuNDIzOTY4IEM2LjU5OTI5MDAyLDExLjUzNzE2NDIgNi4zMDAxODI5LDExLjYgNS45ODYzOTk2OSwxMS42IEM1LjY0Mjc2MTQ5LDExLjYgNS4zMTY3MjQ5NiwxMS41MjQ2MzgzIDUuMDIzOTE1NzUsMTEuMzg5NTQwNSBaIiBpZD0icGF0aC0xIj48L3BhdGg+CiAgICAgICAgPGZpbHRlciB4PSItMTkuNyUiIHk9Ii0xNC4yJSIgd2lkdGg9IjEzOS40JSIgaGVpZ2h0PSIxMzkuOCUiIGZpbHRlclVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgaWQ9ImZpbHRlci0yIj4KICAgICAgICAgICAgPGZlT2Zmc2V0IGR4PSIwIiBkeT0iMSIgaW49IlNvdXJjZUFscGhhIiByZXN1bHQ9InNoYWRvd09mZnNldE91dGVyMSI+PC9mZU9mZnNldD4KICAgICAgICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMSIgaW49InNoYWRvd09mZnNldE91dGVyMSIgcmVzdWx0PSJzaGFkb3dCbHVyT3V0ZXIxIj48L2ZlR2F1c3NpYW5CbHVyPgogICAgICAgICAgICA8ZmVDb2xvck1hdHJpeCB2YWx1ZXM9IjAgMCAwIDAgMCAgIDAgMCAwIDAgMCAgIDAgMCAwIDAgMCAgMCAwIDAgMC4yODk5ODQ0MyAwIiB0eXBlPSJtYXRyaXgiIGluPSJzaGFkb3dCbHVyT3V0ZXIxIj48L2ZlQ29sb3JNYXRyaXg+CiAgICAgICAgPC9maWx0ZXI+CiAgICA8L2RlZnM+CiAgICA8ZyBpZD0i6ZKi56yUIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyBpZD0i57yW57uELTXlpIfku70tNSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMS4xMDAwMDAsIC0wLjAwMDAwMCkiPgogICAgICAgICAgICA8ZyBpZD0i5b2i54q257uT5ZCIIiBmaWxsLXJ1bGU9Im5vbnplcm8iPgogICAgICAgICAgICAgICAgPHVzZSBmaWxsPSJibGFjayIgZmlsbC1vcGFjaXR5PSIxIiBmaWx0ZXI9InVybCgjZmlsdGVyLTIpIiB4bGluazpocmVmPSIjcGF0aC0xIj48L3VzZT4KICAgICAgICAgICAgICAgIDx1c2UgZmlsbD0iI0Q1RDVENSIgeGxpbms6aHJlZj0iI3BhdGgtMSI+PC91c2U+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPHBhdGggZD0iTTEzLjk4NjM5OTcsMTAuNSBDMTQuNzA0MzY5OSwxMC41IDE1LjI4NjM5OTcsMTEuMDgyMDI5OCAxNS4yODYzOTk1LDExLjgwMDUzMzMgTDE1LjI4NTM5OTcsMTIuNSBMMTUuOTg2Mzk5NywxMi41IEMxNi42NTk0OTY3LDEyLjUgMTcuMjEzMTE0OSwxMy4wMTE1NDk3IDE3LjI3OTY4NzksMTMuNjY3MDgyNiBMMTcuMjg2Mzk5NywxMy44IEMxNy4yODYzOTk3LDE0LjUxNzk3MDIgMTYuNzA0MzY5OSwxNS4xIDE1Ljk4NjM5OTcsMTUuMSBMMTUuMjg1Mzk5NywxNS4xIEwxNS4yODYzOTk3LDE1LjggQzE1LjI4NjM5OTcsMTYuNDczMDk3IDE0Ljc3NDg1LDE3LjAyNjcxNTMgMTQuMTE5MzE3MSwxNy4wOTMyODgyIEwxMy45ODYzOTk3LDE3LjEgQzEzLjI2ODQyOTUsMTcuMSAxMi42ODYzOTk3LDE2LjUxNzk3MDIgMTIuNjg2Mzk5NywxNS44MDA1MzMgTDEyLjY4NjM5OTcsMTUuMDk5IEwxMS45ODYzOTk3LDE1LjEgQzExLjMxMzMwMjcsMTUuMSAxMC43NTk2ODQ0LDE0LjU4ODQ1MDMgMTAuNjkzMTExNCwxMy45MzI5MTc0IEwxMC42ODYzOTk3LDEzLjggQzEwLjY4NjM5OTcsMTMuMDgyMDI5OCAxMS4yNjg0Mjk1LDEyLjUgMTEuOTg1ODY2LDEyLjUgTDEyLjY4NjM5OTcsMTIuNSBMMTIuNjg2Mzk5NywxMS44IEMxMi42ODYzOTk3LDExLjEyNjkwMyAxMy4xOTc5NDkzLDEwLjU3MzI4NDcgMTMuODUzNDgyMiwxMC41MDY3MTE4IEwxMy45ODYzOTk3LDEwLjUgWiBNNS45ODYzOTk2OSwwLjUgQzYuNTU0NDE4ODEsMC41IDcuMDM3MzUxMjYsMC44NjQyOTkyOTUgNy4yMTQyOTkxNCwxLjM3MTk5MjI0IEw4LjM1NzE1NTcyLDMuMTkxNzMyMTEgQzkuMDkyOTMyMjIsNC4zNTM3MjM4NiA5LjY4MTM2NjA4LDUuMjY2NjI5NTggMTAuMTA5ODUxNSw1LjkxMTg2MzExIEwxMC41NzU3NTI2LDYuNTk4MzY1NjYgQzEwLjY1NTAzMiw2LjcxMTM2MDMzIDEwLjcyMTczMzEsNi44MDMzODgxNyAxMC43NzU1OTE2LDYuODc0MDU5NDIgTDEwLjg3NDczMSw2Ljk5NTY3NjE3IEwxMC45NzY1MDU1LDcuMDkzMDk1MjIgQzExLjM4MjMwMzYsNy40NTY4NDUwNyAxMS41MTgxNTMsOC4wMzUwODkwNyAxMS4zMTY3ODE5LDguNTQxNDgzODkgTDEwLjcwNjUzNywxMC4wODgyODI0IEMxMC4yMzIwODgzLDExLjMwMTMxNDMgOS44NDExNzU4OCwxMi4zMjc4MDU4IDkuNTUxMDE2MTQsMTMuMTE4MDA3NCBDMTAuMDAzOTIxOSwxMy41MzUzNzQzIDEwLjI4NjM5OTcsMTQuMTM0Njk5IDEwLjI4NjM5OTcsMTQuOCBMMTAuMjg2Mzk5NywxNS44IEMxMC4yODYzOTk3LDE2LjUxNzk3MDIgOS43MDQzNjk4NywxNy4xIDguOTg2Mzk5NjksMTcuMSBMMi45ODYzOTk2OSwxNy4xIEMyLjI2ODQyOTUyLDE3LjEgMS42ODYzOTk2OSwxNi41MTc5NzAyIDEuNjg2Mzk5NjksMTUuOCBMMS42ODYzOTk2OSwxNC44IEMxLjY4NjM5OTY5LDE0LjE1ODQ0MjEgMS45NDkwNzUyNCwxMy41NzgyMzU0IDIuMzcyNzQ0OTYsMTMuMTYxMDYxMiBDMi4wODI1MTY3OSwxMi4zNjY3NTIgMS42ODU3OTM0LDExLjMyNDM2NiAxLjIwMjMyODQ4LDEwLjA4ODI4MjQgTDAuNTkyMDgzNjU5LDguNTQxNDgzODkgQzAuMzkwNzEyNDc1LDguMDM1MDg5MDcgMC41MjY1NjE4OTYsNy40NTY4NDUwNyAwLjkzMjM2MDAyMyw3LjA5MzA5NTIyIEwxLjAzNjA0MzQ0LDYuOTkzMzMyMjggTDEuMTM3NTUyOCw2Ljg2OTY3MjI0IEMxLjUwMjgwMTg4LDYuMzk2Mjk0NTggMi40NDM1ODczNyw0Ljk5MzY4MDUgMy44OTAwNzAzLDIuNzY0MDA0OTUgTDQuNzMxMzk0ODQsMS40NTk2OTUxIEM0Ljg2OTc3OTk5LDAuOTQ4MTE0Nzk5IDUuMzEyNjIzOSwwLjU2MTYzODkxIDUuODUzNDgyMjQsMC41MDY3MTE3NTMgTDUuOTg2Mzk5NjksMC41IFoiIGlkPSLlvaLnirbnu5PlkIgiIGZpbGw9IiNGRkZGRkYiIGZpbGwtcnVsZT0ibm9uemVybyI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTMuOTg2Mzk5NywxMS4zIEMxNC4yNjI1NDIxLDExLjMgMTQuNDg2Mzk5NywxMS41MjM4NTc2IDE0LjQ4NjM5OTcsMTEuOCBMMTQuNDg1Mzk5NywxMy4zIEwxNS45ODYzOTk3LDEzLjMgQzE2LjI2MjU0MjEsMTMuMyAxNi40ODYzOTk3LDEzLjUyMzg1NzYgMTYuNDg2Mzk5NywxMy44IEMxNi40ODYzOTk3LDE0LjA3NjE0MjQgMTYuMjYyNTQyMSwxNC4zIDE1Ljk4NjM5OTcsMTQuMyBMMTQuNDg1Mzk5NywxNC4zIEwxNC40ODYzOTk3LDE1LjggQzE0LjQ4NjM5OTcsMTYuMDc2MTQyNCAxNC4yNjI1NDIxLDE2LjMgMTMuOTg2Mzk5NywxNi4zIEMxMy43MTAyNTczLDE2LjMgMTMuNDg2Mzk5NywxNi4wNzYxNDI0IDEzLjQ4NjM5OTcsMTUuOCBMMTMuNDg1Mzk5NywxNC4yOTkgTDExLjk4NjM5OTcsMTQuMyBDMTEuNzEwMjU3MywxNC4zIDExLjQ4NjM5OTcsMTQuMDc2MTQyNCAxMS40ODYzOTk3LDEzLjggQzExLjQ4NjM5OTcsMTMuNTIzODU3NiAxMS43MTAyNTczLDEzLjMgMTEuOTg2Mzk5NywxMy4zIEwxMy40ODUzOTk3LDEzLjI5OSBMMTMuNDg2Mzk5NywxMS44IEMxMy40ODYzOTk3LDExLjUyMzg1NzYgMTMuNzEwMjU3MywxMS4zIDEzLjk4NjM5OTcsMTEuMyBaIE01Ljk4NjM5OTY5LDEuMyBDNi4yMjkzMzI3OSwxLjMgNi40MzE4MDA2MywxLjQ3MzI1MjM2IDYuNDc2OTg1MjgsMS43MDI5MzkxNCBDNi42NTQzNTM4OSwxLjk4NzM5NDYxIDYuOTE3MDQxNzgsMi40MDYwODk0MyA3LjI2MzYxODc5LDIuOTU4NDk0MDMgQzguNzgxNzM5NzksNS4zNjc1NzgwMyA5Ljc1MjA1NzA5LDYuODUwODM4MzYgMTAuMTM5MzA2MSw3LjM1ODk3MjU1IEwxMC4yNTM0NjYyLDcuNDk5NjkwMjEgQzEwLjMxNTYwMTMsNy41Njg1MTkzMyAxMC4zNzg2MzQ2LDcuNjMxNTMwNCAxMC40NDI1MjU4LDcuNjg4ODAxMjMgQzEwLjU5ODYwMiw3LjgyODcwNTAyIDEwLjY1MDg1MTgsOC4wNTExMDY1NSAxMC41NzM0MDEzLDguMjQ1ODczOCBDOS42NTE2MjQ4MywxMC41NjM4OTU4IDguOTgxOTgwMTEsMTIuMzE5ODE0IDguNTg5MDM0NjcsMTMuNDI3NzUxNSBDOS4xMTc5NDQ0NiwxMy42NTg4MTU2IDkuNDg2Mzk5NjksMTQuMTg2Mzc5MiA5LjQ4NjM5OTY5LDE0LjggTDkuNDg2Mzk5NjksMTUuOCBDOS40ODYzOTk2OSwxNi4wNzYxNDI0IDkuMjYyNTQyMDcsMTYuMyA4Ljk4NjM5OTY5LDE2LjMgTDIuOTg2Mzk5NjksMTYuMyBDMi43MTAyNTczMiwxNi4zIDIuNDg2Mzk5NjksMTYuMDc2MTQyNCAyLjQ4NjM5OTY5LDE1LjggTDIuNDg2Mzk5NjksMTQuOCBDMi40ODYzOTk2OSwxNC4yMDc4MjA4IDIuODI5NTU1MDgsMTMuNjk1Nzg5OCAzLjMyNzg2MjE2LDEzLjQ1MTkxMDggQzIuOTM3MjAxMjUsMTIuMzQ2ODY5NyAyLjI2NDM1MDk3LDEwLjU4MTc3NjIgMS4zMzU0NjQyMyw4LjI0NTg3MzggQzEuMjU4MDEzNzcsOC4wNTExMDY1NSAxLjMxMDI2MzU1LDcuODI4NzA1MDIgMS40NjYzMzk3NSw3LjY4ODgwMTIzIEMxLjUzMDIzMDg5LDcuNjMxNTMwNCAxLjU5MzI2NDE5LDcuNTY4NTE5MzMgMS42NTUzOTkyOCw3LjQ5OTY5MDIxIEwxLjc3MDkzMTk5LDcuMzU4Mzc1NDMgQzIuMjI1MjgzNyw2Ljc2OTUxNzE0IDMuNDgyMDU0NzcsNC44ODA1NzQ2MSA1LjQ4OTY5ODc3LDEuNzYyNDQwNCBMNS40ODYzOTk2OSwxLjggQzUuNDg2Mzk5NjksMS41MjM4NTc2MyA1LjcxMDI1NzMyLDEuMyA1Ljk4NjM5OTY5LDEuMyBaIE02LjUzNDI0MTM0LDMuNjY5OTI1MTggTDYuNDg2MDU1NjcsMy41OTMgTDYuNDg2NTI5Miw4LjQzMzg1NzEyIEM2Ljc4NTM1ODQ2LDguNjA2NzgwMjYgNi45ODYzOTk2OSw4LjkyOTkxMjI4IDYuOTg2Mzk5NjksOS4zIEM2Ljk4NjM5OTY5LDkuODUyMjg0NzUgNi41Mzg2ODQ0NCwxMC4zIDUuOTg2Mzk5NjksMTAuMyBDNS40MzQxMTQ5NCwxMC4zIDQuOTg2Mzk5NjksOS44NTIyODQ3NSA0Ljk4NjM5OTY5LDkuMyBDNC45ODYzOTk2OSw4LjkzMDMxODk3IDUuMTg2OTk5MzIsOC42MDc0OTA0OSA1LjQ4NTI4NTM5LDguNDM0NDI3NzQgTDUuNDg2MDU1NjcsMy42MDQgTDUuNDQ5OTc2OTcsMy42NjA3MTUyNSBDNS4yNTkyMzMsMy45NTUxOTU3IDQuOTk0MzEwODEsNC4zNjQxOTYzMiA0LjY1NTIxMDQxLDQuODg3NzE3MTIgQzMuNTE4MjA3NjQsNi42MjQ5MTc5MSAyLjc5OTIzODAxLDcuNjc4MDY1MjMgMi40Nzg1MDAwMSw4LjA3NDM5MjM4IEwyLjM4NTA3NzA4LDguMTgxMzMxMTEgTDMuMTY3MzM0MzIsMTAuMTcwMiBDMy42ODgyNzA2MywxMS41MTIxMjU2IDQuMDc0MTQyNDcsMTIuNTQ3NDk0NiA0LjMzMjEwMzk3LDEzLjMwMTMxNDcgTDcuNTc2NzYxNTUsMTMuMzAxMzE0NyBDNy44MzQ3MjMwNSwxMi41NDc0OTQ2IDguMjIwNTk0ODksMTEuNTEyMTI1NiA4Ljc0MTUzMTIsMTAuMTcwMiBMOS41MjM3ODg0NCw4LjE4MTMzMTExIEw5LjQ3MzM3NDcxLDguMTI2MzMwMTcgQzkuMTc3MDEwODIsNy43NzUwODMxNCA4LjQ2MDQ2OTUzLDYuNzA1NzI5NzggNy4yOTk3MTg5OSw0Ljg4NDY3MTgyIEM2LjkyNjQ1NzUxLDQuMjkyMzM4MjIgNi42NDY1MTEzOSwzLjg0ODA4ODAyIDYuNDU5ODgwNjUsMy41NTE5MjEyMyBaIiBpZD0i5b2i54q257uT5ZCIIiBmaWxsPSIjMDAwMDAwIj48L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=) 6 0, crosshair;
+}
+
+.lanismd-board-block[data-board-mode='board'].is-editing[data-draw-pointer='vectorLine']
+  .plait-board-container.vector-line-closed
+  .board-host-svg {
+  cursor: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjBweCIgaGVpZ2h0PSIyMHB4IiB2aWV3Qm94PSIwIDAgMjAgMjAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+6ZKi56yU6Zet5ZCIPC90aXRsZT4KICAgIDxkZWZzPgogICAgICAgIDxwYXRoIGQ9Ik01Ljg4NjM5NTQxLDAgQzYuNzE3MjA2NSwwIDcuNDA4ODE5MDgsMC41OTU5Nzk2NTEgNy41NTcwMzExMiwxLjM4MzU5NzI4IEw5LjA4NDAwOTI0LDMuNzM5MzczMDcgQzEwLjA1MDI2MDQsNS4yMTMzMTY5MyAxMC42OTMzMzM0LDYuMTYwNjQwMjIgMTAuOTc0NzEzOCw2LjUyNTMyMDY1IEwxMS4wNjkyMTE1LDYuNjQwMTUzMzIgTDExLjEzMDIwNjgsNi42OTUyNDIyMSBDMTEuNjYwODY1OSw3LjE3MDkxNTEgMTEuODM4NTE1Miw3LjkyNzA4MDMyIDExLjU3NTE4MzYsOC41ODkyODg5NCBMMTAuOTcxMzg4LDEwLjExOTgyOTcgQzEwLjU0MzM0MTcsMTEuMjE0MjgwOSAxMC4xODI4NjQ3LDEyLjE1ODAyNDYgOS45MDQzMjk1MywxMi45MDkyMzYzIEMxMC4wMTg2MTkzLDEzLjAzNDc4NzYgMTAuMTE5NTU5NiwxMy4xNzI0MjE5IDEwLjIwNjk5OTEsMTMuMzE5MDQxNyBDMTAuMzk2MTYyOSwxMS40NTQ4NTE3IDExLjk3MTM3OTcsMTAgMTMuODg2Mzk1NCwxMCBDMTUuOTI5ODQ5LDEwIDE3LjU4NjM5NTQsMTEuNjU2NTQ2NCAxNy41ODYzOTU0LDEzLjcgQzE3LjU4NjM5NTQsMTUuNzQzNDUzNiAxNS45Mjk4NDksMTcuNCAxMy44ODYzOTU0LDE3LjQgQzEyLjQ0NjI1MSwxNy40IDExLjE5ODI3ODIsMTYuNTc3MjE1NCAxMC41ODY5MDc5LDE1LjM3NjA3NzEgTDEwLjU4NjM5NTQsMTUuNyBDMTAuNTg2Mzk1NCwxNi42Mzg4ODQxIDkuODI1Mjc5NDksMTcuNCA4Ljg4NjM5NTQxLDE3LjQgTDIuODg2Mzk1NDEsMTcuNCBDMS45NDc1MTEzNCwxNy40IDEuMTg2Mzk1NDEsMTYuNjM4ODg0MSAxLjE4NjM5NTQxLDE1LjcgTDEuMTg2Mzk1NDEsMTQuNyBDMS4xODYzOTU0MSwxNC4wNDE2MTAzIDEuNDIyMDUxMjEsMTMuNDM4MjYwOSAxLjgxMzYxNjQsMTIuOTY5Njk4MyBDMS41MzI2NDY3NSwxMi4yMTAyNDUxIDEuMTY0MDk5OTcsMTEuMjQ0NjI3OSAwLjcyNDE4NDcxNCwxMC4xMTk4Mjk3IEwwLjEyMDM4OTA5Miw4LjU4OTI4ODk0IEMtMC4xNDI5NDI0NTYsNy45MjcwODAzMiAwLjAzNDcwNjc4NjcsNy4xNzA5MTUxIDAuNTY1MzY1ODc2LDYuNjk1MjQyMjEgTDAuNjI2MzYxMjQzLDYuNjQwMTUzMzIgTDAuNzIwODU4OTE5LDYuNTI1MzIwNjUgQzEuMDAyMjM5MzIsNi4xNjA2NDAyMiAxLjY0NTMxMjI3LDUuMjEzMzE2OTMgMi42MTE1NjM0NywzLjczOTM3MzA3IEw0LjI2NDU4OTQyLDEuMTg4ODMxMDIgQzQuNDY3NDgwNzcsMC41NDQ0ODY2NTQgNS4wNDM3NjA4MywwLjA2NTcxNzQyMTYgNS43Mzk3MTI5LDAuMDA2MjQwMDE0NTcgTDUuODg2Mzk1NDEsMCBaIE00LjczNzA0MzA5LDExLjA3NjMzNjIgTDQuNzQ5NjA4NjgsMTEuMTA3NTM1NSBDNC44NzA4MjUyMiwxMS40Mjk3MDc0IDQuOTgwOTIzNzYsMTEuNzI3MjE5MiA1LjA4MDM3NTQsMTIuMDAxODIwOSBMNi42MTUxOTczMSwxMi4wMDE4MjA5IEM2LjcxMzcwMzI4LDExLjcyOTgzMDMgNi44MjI2NTQ2NCwxMS40MzUzNjMzIDYuOTQyNTA5MTgsMTEuMTE2NzE5MiBDNi42MTQzNTE3OSwxMS4yOTY2NjY2IDYuMjMxMzcxNzgsMTEuMzk4NjUyNSA1LjgxNzI4Mzc3LDExLjM5ODAxMTIgTDUuNjMxMzI2OSwxMS4zODUyNTkgQzUuMzA1MjUxNzUsMTEuMzQ3Mzg1OSA1LjAwMjIyMjczLDExLjIzOTA0MzMgNC43MzcwNDMwOSwxMS4wNzYzMzYyIFogTTQuMTg0MTcwMiw3LjUxMjI0MTM3IEM0LjEwNDMxMjc1LDcuNjI5MTk2OSA0LjAyODY4MjkyLDcuNzM5MDg2ODIgMy45NTcxNjk1OSw3Ljg0MjA1NzA3IEwzLjY1MDA1MTM5LDguMjc1MDExNzkgTDMuNzcyNzMxMDksOC41ODg3ODA2NyBDMy44NTMxNzI1NCw4LjMxMDM3OTg4IDMuOTg3NTg1ODgsOC4wNTIxMzA3NSA0LjE2NjQ4NjEzLDcuODI3OTU0NDggTDQuMTg1Mzk1NDEsNy44MDUgWiIgaWQ9InBhdGgtMSI+PC9wYXRoPgogICAgICAgIDxmaWx0ZXIgeD0iLTE5LjklIiB5PSItMTQuNCUiIHdpZHRoPSIxMzkuOCUiIGhlaWdodD0iMTQwLjIlIiBmaWx0ZXJVbml0cz0ib2JqZWN0Qm91bmRpbmdCb3giIGlkPSJmaWx0ZXItMiI+CiAgICAgICAgICAgIDxmZU9mZnNldCBkeD0iMCIgZHk9IjEiIGluPSJTb3VyY2VBbHBoYSIgcmVzdWx0PSJzaGFkb3dPZmZzZXRPdXRlcjEiPjwvZmVPZmZzZXQ+CiAgICAgICAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjEiIGluPSJzaGFkb3dPZmZzZXRPdXRlcjEiIHJlc3VsdD0ic2hhZG93Qmx1ck91dGVyMSI+PC9mZUdhdXNzaWFuQmx1cj4KICAgICAgICAgICAgPGZlQ29sb3JNYXRyaXggdmFsdWVzPSIwIDAgMCAwIDAgICAwIDAgMCAwIDAgICAwIDAgMCAwIDAgIDAgMCAwIDAuMjg5OTg0NDMgMCIgdHlwZT0ibWF0cml4IiBpbj0ic2hhZG93Qmx1ck91dGVyMSI+PC9mZUNvbG9yTWF0cml4PgogICAgICAgIDwvZmlsdGVyPgogICAgPC9kZWZzPgogICAgPGcgaWQ9IumSoueslOmXreWQiCIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9Iue8lue7hC015aSH5Lu9LTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEuMjAwMDAwLCAwLjAwMDAwMCkiIGZpbGwtcnVsZT0ibm9uemVybyI+CiAgICAgICAgICAgIDxnIGlkPSLlvaLnirbnu5PlkIgiPgogICAgICAgICAgICAgICAgPHVzZSBmaWxsPSJibGFjayIgZmlsbC1vcGFjaXR5PSIxIiBmaWx0ZXI9InVybCgjZmlsdGVyLTIpIiB4bGluazpocmVmPSIjcGF0aC0xIj48L3VzZT4KICAgICAgICAgICAgICAgIDx1c2UgZmlsbD0iI0Q2RDZENiIgeGxpbms6aHJlZj0iI3BhdGgtMSI+PC91c2U+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPHBhdGggZD0iTTEzLjg4NjM5NTQsMTAuNCBDMTUuNzA4OTM1MSwxMC40IDE3LjE4NjM5NTQsMTEuODc3NDYwMyAxNy4xODYzOTU0LDEzLjcgQzE3LjE4NjM5NTQsMTUuNTIyNTM5NyAxNS43MDg5MzUxLDE3IDEzLjg4NjM5NTQsMTcgQzEyLjA2Mzg1NTcsMTcgMTAuNTg2Mzk1NCwxNS41MjI1Mzk3IDEwLjU4NjM5NTQsMTMuNyBDMTAuNTg2Mzk1NCwxMS44Nzc0NjAzIDEyLjA2Mzg1NTcsMTAuNCAxMy44ODYzOTU0LDEwLjQgWiBNNS44ODYzOTU0MSwwLjQgQzYuNTQ2OTY5NzEsMC40IDcuMDkyNDY5NTYsMC44OTI2OTIzMSA3LjE3NTQ2NDU3LDEuNTMwNTQxOSBMOC41OTg0NTYzNSwzLjcyODA2MDg2IEM5LjY1NTAwMzc1LDUuMzQzMzg5MzYgMTAuMzU0ODUxMiw2LjM3Njc0NzcxIDEwLjY1ODAyNDIsNi43Njk2NzIyNCBMMTAuNzU5NTMzNiw2Ljg5MzMzMjI4IEwxMC44NjMyMTcsNi45OTMwOTUyMiBDMTEuMjY5MDE1MSw3LjM1Njg0NTA3IDExLjQwNDg2NDUsNy45MzUwODkwNyAxMS4yMDM0OTMzLDguNDQxNDgzODkgTDEwLjU5MzI0ODUsOS45ODgyODI0MyBDMTAuMTIwODAzMywxMS4xOTYxOTE3IDkuNzMxMTkwNDcsMTIuMjE5MTMyNyA5LjQ0MTQwOTAxLDEzLjAwNzk4MzggQzkuODk5NzAxNjMsMTMuNDI2NDY2IDEwLjE4NjM5NTQsMTQuMDI5NzUyNiAxMC4xODYzOTU0LDE0LjcgTDEwLjE4NjM5NTQsMTUuNyBDMTAuMTg2Mzk1NCwxNi40MTc5NzAyIDkuNjA0MzY1NTksMTcgOC44ODYzOTU0MSwxNyBMMi44ODYzOTU0MSwxNyBDMi4xNjg0MjUyNCwxNyAxLjU4NjM5NTQxLDE2LjQxNzk3MDIgMS41ODYzOTU0MSwxNS43IEwxLjU4NjM5NTQxLDE0LjcgQzEuNTg2Mzk1NDEsMTQuMDU4NDQyMSAxLjg0OTA3MDk1LDEzLjQ3ODIzNTQgMi4yNzI3NDA2OCwxMy4wNjEwNjEyIEMxLjk4MjUxMjUsMTIuMjY2NzUyIDEuNTg1Nzg5MTIsMTEuMjI0MzY2IDEuMTAyMzI0Miw5Ljk4ODI4MjQzIEwwLjQ5MjA3OTM3Nyw4LjQ0MTQ4Mzg5IEMwLjI5MDcwODE5Miw3LjkzNTA4OTA3IDAuNDI2NTU3NjEzLDcuMzU2ODQ1MDcgMC44MzIzNTU3NDEsNi45OTMwOTUyMiBMMC45MzYwMzkxNTksNi44OTMzMzIyOCBMMS4wMzc1NDg1MSw2Ljc2OTY3MjI0IEMxLjM0MDcyMTUyLDYuMzc2NzQ3NzEgMi4wNDA1Njg5Niw1LjM0MzM4OTM2IDMuMDk3MTE2MzYsMy43MjgwNjA4NiBMNC42MzE2NTkzLDEuMzU4NzAzMTkgQzQuNzcwMzQ4MjcsMC44NDc2MTUyOTIgNS4yMTI5NjkyMywwLjQ2MTYwMzQwNCA1Ljc1MzQ3Nzk2LDAuNDA2NzExNzUzIEw1Ljg4NjM5NTQxLDAuNCBaIiBpZD0i5b2i54q257uT5ZCIIiBmaWxsPSIjRkZGRkZGIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0xMy44ODYzOTU0LDExLjIgQzE1LjI2NzEwNzMsMTEuMiAxNi4zODYzOTU0LDEyLjMxOTI4ODEgMTYuMzg2Mzk1NCwxMy43IEMxNi4zODYzOTU0LDE1LjA4MDcxMTkgMTUuMjY3MTA3MywxNi4yIDEzLjg4NjM5NTQsMTYuMiBDMTIuNTA1NjgzNSwxNi4yIDExLjM4NjM5NTQsMTUuMDgwNzExOSAxMS4zODYzOTU0LDEzLjcgQzExLjM4NjM5NTQsMTIuMzE5Mjg4MSAxMi41MDU2ODM1LDExLjIgMTMuODg2Mzk1NCwxMS4yIFogTTUuODg2Mzk1NDEsMS4yIEM2LjE2MjUzNzc5LDEuMiA2LjM4NjM5NTQxLDEuNDIzODU3NjMgNi4zODYzOTU0MSwxLjcgTDYuMzg2OTM4MTksMS43ODgzMDI1OSBDOC4zNDczNzYxMiw0LjgzMTQ0MDIxIDkuNTc2NDM5MzIsNi42Nzc0ODI2MyAxMC4wMjQ2NDUsNy4yNTgzNzU0MyBMMTAuMTQwMTc3Nyw3LjM5OTY5MDIxIEMxMC4yMDIzMTI4LDcuNDY4NTE5MzMgMTAuMjY1MzQ2MSw3LjUzMTUzMDQgMTAuMzI5MjM3Miw3LjU4ODgwMTIzIEMxMC40ODUzMTM0LDcuNzI4NzA1MDIgMTAuNTM3NTYzMiw3Ljk1MTEwNjU1IDEwLjQ2MDExMjgsOC4xNDU4NzM4IEM5LjUzOTc1ODM2LDEwLjQ2MDMxOTcgOC44NzA3NTgzNSwxMi4yMTQzOTQ5IDguNDc3NTY2NzQsMTMuMzIyNjE5MSBDOS4wMTIzMDA2MywxMy41NTA3NzY1IDkuMzg2Mzk1NDEsMTQuMDgxNzAxIDkuMzg2Mzk1NDEsMTQuNyBMOS4zODYzOTU0MSwxNS43IEM5LjM4NjM5NTQxLDE1Ljk3NjE0MjQgOS4xNjI1Mzc3OSwxNi4yIDguODg2Mzk1NDEsMTYuMiBMMi44ODYzOTU0MSwxNi4yIEMyLjYxMDI1MzA0LDE2LjIgMi4zODYzOTU0MSwxNS45NzYxNDI0IDIuMzg2Mzk1NDEsMTUuNyBMMi4zODYzOTU0MSwxNC43IEMyLjM4NjM5NTQxLDE0LjEwNzgyMDggMi43Mjk1NTA4LDEzLjU5NTc4OTggMy4yMjc4NTc4OCwxMy4zNTE5MTA4IEMyLjgzNzE5Njk2LDEyLjI0Njg2OTcgMi4xNjQzNDY2OSwxMC40ODE3NzYyIDEuMjM1NDU5OTQsOC4xNDU4NzM4IEMxLjE1ODAwOTQ5LDcuOTUxMTA2NTUgMS4yMTAyNTkyNyw3LjcyODcwNTAyIDEuMzY2MzM1NDcsNy41ODg4MDEyMyBDMS40MzAyMjY2MSw3LjUzMTUzMDQgMS40OTMyNTk5LDcuNDY4NTE5MzMgMS41NTUzOTQ5OSw3LjM5OTY5MDIxIEwxLjY3MDkyNzcxLDcuMjU4Mzc1NDMgQzIuMTI1MjczMiw2LjY2OTUyNTIgMy4zODIwMTYwOSw0Ljc4MDYyNjMgNS4zODk2MTIwNywxLjY2MjU2ODQgTDUuMzg2Mzk1NDEsMS43IEM1LjM4NjM5NTQxLDEuNDIzODU3NjMgNS42MTAyNTMwNCwxLjIgNS44ODYzOTU0MSwxLjIgWiBNMTMuODg2Mzk1NCwxMi4yIEMxMy4wNTc5NjgzLDEyLjIgMTIuMzg2Mzk1NCwxMi44NzE1NzI5IDEyLjM4NjM5NTQsMTMuNyBDMTIuMzg2Mzk1NCwxNC41Mjg0MjcxIDEzLjA1Nzk2ODMsMTUuMiAxMy44ODYzOTU0LDE1LjIgQzE0LjcxNDgyMjUsMTUuMiAxNS4zODYzOTU0LDE0LjUyODQyNzEgMTUuMzg2Mzk1NCwxMy43IEMxNS4zODYzOTU0LDEyLjg3MTU3MjkgMTQuNzE0ODIyNSwxMi4yIDEzLjg4NjM5NTQsMTIuMiBaIE01LjM4NjI2NTkxLDguMzMzODU3MTIgTDUuMzg2MDUxMzksMy41MDQgTDUuMzQyMjA4NTksMy41NzI3MDE4NyBDNS4xNTMzMjgsMy44NjQzMDU1MyA0Ljg5MDk5Mzg1LDQuMjY5MzEwNjEgNC41NTUyMDYxMyw0Ljc4NzcxNzEyIEMzLjQxODIwMzM2LDYuNTI0OTE3OTEgMi42OTkyMzM3Miw3LjU3ODA2NTIzIDIuMzc4NDk1NzIsNy45NzQzOTIzOCBMMi4yODUwNzI4LDguMDgxMzMxMTEgTDMuMDY3MzMwMDQsMTAuMDcwMiBDMy41ODgyNjYzNSwxMS40MTIxMjU2IDMuOTc0MTM4MTksMTIuNDQ3NDk0NiA0LjIzMjA5OTY5LDEzLjIwMTMxNDcgTDcuNDYzNDczMDIsMTMuMjAxMzE0NyBDNy43MjE0MzQ1MywxMi40NDc0OTQ2IDguMTA3MzA2MzcsMTEuNDEyMTI1NiA4LjYyODI0MjY4LDEwLjA3MDIgTDkuNDEwNDk5OTEsOC4wODEzMzExMSBMOS4zMTcwNzY5OSw3Ljk3NDM5MjM4IEM4Ljk5NjMzODk5LDcuNTc4MDY1MjMgOC4yNzczNjkzNSw2LjUyNDkxNzkxIDcuMTQwMzY2NTgsNC43ODc3MTcxMiBDNi44MjM0NzYwMSw0LjI5ODQ4NSA2LjU3MjAwNDEzLDMuOTEwMjQ5NjcgNi4zODU5NTA5NiwzLjYyMzAxMTEyIEw2LjM4NzUwOTcxLDguMzM0NDI3NzQgQzYuNjg1Nzk1NzksOC41MDc0OTA0OSA2Ljg4NjM5NTQxLDguODMwMzE4OTcgNi44ODYzOTU0MSw5LjIgQzYuODg2Mzk1NDEsOS43NTIyODQ3NSA2LjQzODY4MDE2LDEwLjIgNS44ODYzOTU0MSwxMC4yIEw1Ljc2OTc3NDI5LDEwLjE5MzI3MjMgQzUuMjcyNDM1NiwxMC4xMzU1MDcyIDQuODg2Mzk1NDEsOS43MTI4MzU4NCA0Ljg4NjM5NTQxLDkuMiBDNC44ODYzOTU0MSw4LjgyOTkxMjI4IDUuMDg3NDM2NjQsOC41MDY3ODAyNiA1LjM4NjI2NTkxLDguMzMzODU3MTIgWiIgaWQ9IuW9oueKtue7k+WQiCIgZmlsbD0iIzAwMDAwMCI+PC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+) 6 0, crosshair;
+}

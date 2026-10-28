@@ -11,12 +11,22 @@
  * | v1.1.0 | 批次3：连线结构/布局方向/分支宽色写操作      | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.1.1 | 分支样式（形状/宽/色）改为应用到整棵树        | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.2.0 | 批次4：文字样式（粗/斜/字号/字色）写操作     | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
+ * | v1.3.0 | 新增白板写操作（填充/描边/线型/不透明度）；文字写操作改为形态无关 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.4.0 | 新增白板写操作（图形切换/箭头线端点走线/矢量线形态/旋转） | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import { PlaitBoard, Transforms, getSelectedElements } from '@plait/core';
+import {
+  degreesToRadians,
+  getAngleByElement,
+  getSelectedElements,
+  normalizeAngle,
+  PlaitBoard,
+  rotateElements,
+  Transforms,
+} from '@plait/core';
 import {
   MindTransforms,
   MindElementShape,
@@ -24,12 +34,29 @@ import {
   MindElement,
   getDefaultFontSizeForMindElement,
 } from '@plait/mind';
-import { PropertyTransforms, getTextEditorsByElement } from '@plait/common';
+import { PropertyTransforms, StrokeStyle, getTextEditorsByElement } from '@plait/common';
+import { DrawTransforms, PlaitDrawElement, getMemorizeKey } from '@plait/draw';
+import type {
+  ArrowLineHandleKey,
+  ArrowLineMarkerType,
+  ArrowLineShape,
+  GeometryShapes,
+  VectorLineShape,
+} from '@plait/draw';
 import { Editor, Transforms as SlateTransforms } from 'slate';
 
 import { isMindElement } from './types';
-import type { ShapeOption, BranchShapeOption, LayoutDirectionOption, TextAlignOption } from './constants';
-import { COLOR_NONE } from './constants';
+import type {
+  ShapeOption,
+  BranchShapeOption,
+  LayoutDirectionOption,
+  StrokeStyleOption,
+  TextAlignOption,
+  ArrowLineShapeOption,
+  ArrowLineMarkerOption,
+  VectorLineShapeOption,
+} from './constants';
+import { COLOR_NONE, DRAW_DEFAULT_FONT_SIZE } from './constants';
 
 // ---------------------------------------------------------------------------
 // 节点形状
@@ -163,6 +190,133 @@ export function applyBranchColor(board: PlaitBoard, color: string | null): void 
 }
 
 // ---------------------------------------------------------------------------
+// 白板（draw 元素）样式写操作
+// ---------------------------------------------------------------------------
+
+/**
+ * draw 元素的样式写入选项。
+ *
+ * `getMemorizeKey` 来自 `@plait/draw`：`PropertyTransforms.setProperty` 会用它
+ * 把本次写入的属性记进 Plait 的「最近样式」缓存，使**随后新建的图形自动继承**
+ * 刚设置的填充/描边（与 Plait 自身应用的行为一致）。不传则每次新建都回落默认样式。
+ *
+ * 导图侧刻意不传该选项（保持已交付行为不变），故此处单独定义而非抽公共。
+ */
+const DRAW_PROPERTY_OPTIONS = { getMemorizeKey };
+
+/**
+ * 设置选中 draw 元素的填充色。
+ *
+ * @param color 十六进制色值，传 `null` 清除自定义填充（恢复主题默认）
+ */
+export function applyDrawFillColor(board: PlaitBoard, color: string | null): void {
+  PropertyTransforms.setFillColor(board, color, DRAW_PROPERTY_OPTIONS);
+}
+
+/**
+ * 设置选中 draw 元素的描边色。
+ *
+ * @param color 十六进制色值，传 `null` 清除自定义描边色
+ */
+export function applyDrawStrokeColor(board: PlaitBoard, color: string | null): void {
+  PropertyTransforms.setStrokeColor(board, color, DRAW_PROPERTY_OPTIONS);
+}
+
+/** 设置选中 draw 元素的描边宽度 */
+export function applyDrawStrokeWidth(board: PlaitBoard, width: number): void {
+  PropertyTransforms.setStrokeWidth(board, width, DRAW_PROPERTY_OPTIONS);
+}
+
+/**
+ * 设置选中 draw 元素的描边线型（实线 / 虚线 / 点线）。
+ *
+ * 业务侧用字面量联合类型表达，这里映射到 `@plait/common` 的 `StrokeStyle` 枚举。
+ */
+export function applyDrawStrokeStyle(board: PlaitBoard, style: StrokeStyleOption): void {
+  const plaitStyle =
+    style === 'dashed'
+      ? StrokeStyle.dashed
+      : style === 'dotted'
+        ? StrokeStyle.dotted
+        : StrokeStyle.solid;
+  PropertyTransforms.setStrokeStyle(board, plaitStyle, DRAW_PROPERTY_OPTIONS);
+}
+
+/**
+ * 设置选中 draw 元素的不透明度。
+ *
+ * `opacity` 没有专门的 PropertyTransforms 方法，走通用 `setProperty`
+ * （底层为 `Transforms.setNode`，与填充/描边同一条持久化链路）。
+ *
+ * @param opacity 0~1 的数值
+ */
+export function applyOpacity(board: PlaitBoard, opacity: number): void {
+  PropertyTransforms.setProperty(board, { opacity }, DRAW_PROPERTY_OPTIONS);
+}
+
+// ---------------------------------------------------------------------------
+// 白板（draw 元素）批次 2 写操作：图形切换 / 箭头线端点与走线 / 矢量线形态 / 旋转
+// ---------------------------------------------------------------------------
+
+/**
+ * 切换选中图形的类型（同类图形间切换，不丢失文本与位置）。
+ *
+ * `switchGeometryShape` 内部仅对「非 text 图形」执行 `setNode({ shape })`，
+ * points / text / fill / angle 等其余字段原样保留；text 图形会被跳过。
+ */
+export function applyGeometryShape(board: PlaitBoard, shape: GeometryShapes): void {
+  DrawTransforms.switchGeometryShape(board, shape);
+}
+
+/**
+ * 设置选中箭头线的走线形态（直线 / 曲线 / 折线）。
+ *
+ * 本地字面量联合 `ArrowLineShapeOption` 的值与 `ArrowLineShape` 枚举字符串值
+ * 一一对应，此处断言仅为绕过枚举名义类型。
+ */
+export function applyArrowLineShape(board: PlaitBoard, shape: ArrowLineShapeOption): void {
+  DrawTransforms.setArrowLineShape(board, { shape: shape as unknown as ArrowLineShape });
+}
+
+/**
+ * 设置选中箭头线某个端点（源 / 目标）的标记。
+ *
+ * @param handleKey 端点键（`source` / `target`）
+ * @param marker    端点标记（9 种之一）
+ */
+export function applyArrowLineMark(
+  board: PlaitBoard,
+  handleKey: ArrowLineHandleKey,
+  marker: ArrowLineMarkerOption,
+): void {
+  DrawTransforms.setArrowLineMark(board, handleKey, marker as unknown as ArrowLineMarkerType);
+}
+
+/**
+ * 设置选中矢量线的形态（直线段 / 曲线段）。
+ */
+export function applyVectorLineShape(board: PlaitBoard, shape: VectorLineShapeOption): void {
+  DrawTransforms.setVectorLineShape(board, { shape: shape as unknown as VectorLineShape });
+}
+
+/**
+ * 将选中图形旋转到指定绝对角度（度）。
+ *
+ * Plait 没有「直接设置绝对角度」的公开 API，`rotateElements` 是**相对旋转**
+ * （绕选中包围盒中心旋转 points 并在原 angle 上累加 delta）。因此这里先取首个
+ * 选中元素当前角度，算出 `delta = normalizeAngle(target - current)` 再调用。
+ * 多选时沿用内置旋转手柄语义：所有元素按同一 delta 旋转。
+ */
+export function applyRotation(board: PlaitBoard, angleDeg: number): void {
+  const elements = getSelectedElements(board).filter(PlaitDrawElement.isGeometry);
+  if (elements.length === 0) return;
+  const target = degreesToRadians(angleDeg);
+  const current = getAngleByElement(elements[0]) || 0;
+  const delta = normalizeAngle(target - current);
+  rotateElements(board, elements, delta);
+}
+
+// ---------------------------------------------------------------------------
 // 颜色工具函数
 // ---------------------------------------------------------------------------
 
@@ -176,14 +330,15 @@ export function resolveColor(value: string): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * 收集当前选中 mind 节点对应的 Slate editor 列表。
+ * 收集当前选中元素对应的 Slate editor 列表。
  *
- * 每个 mind 节点由 `TextManage` 承载主题文本，`getTextEditorsByElement`
- * 返回其 Slate editor 实例。文字 mark 需写入这些 editor，再经 TextManage
- * 的 onChange → `MindTransforms.setTopic` 回写到 `element.data.topic`。
+ * 导图节点由 `TextManage` 承载主题文本，draw 的图形同样用 `TextManage` 承载
+ * 内部文本，两者都能用 `@plait/common` 的 `getTextEditorsByElement` 取到 editor。
+ * 因此这里**刻意不按形态过滤元素**：不承载文本的元素（如箭头连线）返回空数组，
+ * 天然被跳过。导图模式下选中项只可能是 mind 节点，行为与过滤版完全一致。
  */
 function getSelectedTextEditors(board: PlaitBoard): Editor[] {
-  const selected = getSelectedElements(board).filter(isMindElement);
+  const selected = getSelectedElements(board);
   const editors: Editor[] = [];
   selected.forEach((element) => {
     editors.push(...getTextEditorsByElement(element));
@@ -293,17 +448,23 @@ export function applyTextColor(board: PlaitBoard, color: string | null): void {
 }
 
 /**
- * 设置选中节点的文字字号。
+ * 设置选中元素的文字字号。
  *
- * 字号以 `CustomText['font-size']` mark 存储（运行时为数值）。根节点默认 18、
- * 子节点默认 14，因此按节点分别判定：目标字号等于该节点默认字号时移除 mark
- * （恢复默认），否则写入数值。这样多选根/子节点时各自回到正确的默认字号。
+ * 字号以 `CustomText['font-size']` mark 存储（运行时为数值）。「目标字号等于该
+ * 元素的默认字号时移除 mark」以回到默认，故需按元素分别判定默认值：
+ * - 导图：根节点 18 / 子节点 14（`getDefaultFontSizeForMindElement`）
+ * - 白板：统一 14（draw 元素无根/子之分）
+ *
+ * 这样多选根/子节点（或图形）时各自回到正确的默认字号。
  */
 export function applyFontSize(board: PlaitBoard, size: number): void {
-  const selected = getSelectedElements(board).filter(isMindElement);
+  const selected = getSelectedElements(board);
   selected.forEach((element) => {
-    const defaultSize = getDefaultFontSizeForMindElement(element as MindElement);
     const editors = getTextEditorsByElement(element);
+    if (editors.length === 0) return;
+    const defaultSize = isMindElement(element)
+      ? getDefaultFontSizeForMindElement(element as MindElement)
+      : DRAW_DEFAULT_FONT_SIZE;
     if (size === defaultSize) {
       removeMarkFromEditors(editors, 'font-size');
     } else {
