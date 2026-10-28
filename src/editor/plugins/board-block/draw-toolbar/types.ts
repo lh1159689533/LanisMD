@@ -1,7 +1,7 @@
 /**
  * Board Draw Toolbar - 类型定义
  *
- * 白板块左侧竖排创建工具条的共享类型。
+ * 画板块左侧竖排创建工具条的共享类型。
  *
  * @changelog
  * | 版本   | 变更说明                           | 关联                                      |
@@ -93,7 +93,7 @@ export interface DrawToolbarCallbacks {
  * - `readonly` 跳变导致 pointer 被强制重设后调用 `sync()`
  * - 卸载时 `destroy()`
  *
- * **仅白板块创建本控制器**；导图块完全不创建，避免无谓 DOM 与监听。
+ * **仅画板块创建本控制器**；导图块完全不创建，避免无谓 DOM 与监听。
  */
 export interface DrawToolbarController {
   /** 工具条根 DOM（绝对定位于画板块左侧） */

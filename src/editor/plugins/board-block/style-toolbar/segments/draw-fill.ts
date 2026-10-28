@@ -6,12 +6,12 @@
  * 与导图的 `fill.ts` 的区别只有两点，其余完全同构：
  * 1. 写入走 `applyDrawFillColor`，它带 `getMemorizeKey`，使随后新建的图形
  *    自动继承刚设置的填充色；导图侧不做这种记忆。
- * 2. 显隐条件不同：导图看「是否为下划线节点」，白板看「选中元素是否都是闭合图形」
+ * 2. 显隐条件不同：导图看「是否为下划线节点」，画板看「选中元素是否都是闭合图形」
  *    （连线没有填充语义），由 `index.ts` 依 `getDrawCapabilities().fill` 传入。
  *
  * @changelog
  * | 版本   | 变更说明               | 关联                                      |
- * | v1.0.0 | 初始实现：白板填充下拉面板 | REQ: 20261027-board-whiteboard-draw §3.8  |
+ * | v1.0.0 | 初始实现：画板填充下拉面板 | REQ: 20261027-board-whiteboard-draw §3.8  |
  * /@changelog
  *
  * @author hhhuilli

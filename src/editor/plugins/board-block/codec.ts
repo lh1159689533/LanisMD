@@ -68,7 +68,7 @@ export interface EncodeOptions {
    * 画板形态。
    *
    * 不传则不写入该字段，解码侧回落 `'mindmap'`。因此导图块可以不传，
-   * 但白板块**必须显式传入** `'board'`，否则重开后会被解码成导图块。
+   * 但画板块**必须显式传入** `'board'`，否则重开后会被解码成导图块。
    */
   mode?: BoardMode;
 }
@@ -105,7 +105,7 @@ export function encode(elements: PlaitElement[], options?: EncodeOptions): strin
  *
  * @param text `board_block.attrs.data` 的原始字符串
  * @returns 归一化的解码结果；`mode` 必填，`elements` 必为数组
- *          （导图形态非空，白板形态可为空）
+ *          （导图形态非空，画板形态可为空）
  */
 export function decode(text: string): DecodedBoard {
   // 彻底解码失败时无从得知原始形态，统一回落导图 + 默认内容，与本期之前一致
@@ -154,7 +154,7 @@ function normalize(parsed: Partial<BoardPayload>): DecodedBoard {
 
   // 空数据兜底必须按形态分流：
   // - 导图：空画板无意义（没有根节点就无法新建任何节点），回落默认思维导图
-  // - 白板：空画布是合法状态（插入即空），绝不能兜底成一个思维导图根节点
+  // - 画板：空画布是合法状态（插入即空），绝不能兜底成一个思维导图根节点
   const elements = raw.length > 0 ? raw : mode === 'board' ? [] : createDefaultMindmap();
 
   return {

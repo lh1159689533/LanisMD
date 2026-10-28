@@ -22,19 +22,15 @@ import type { BoardBlockState, BoardMode } from '../types';
 /**
  * 右键菜单触发场景。
  *
- * 由 `mode`（导图/白板）× `state`（预览/编辑）× 命中结果 共同确定：
+ * 由 `mode`（导图/画板）× `state`（预览/编辑）× 命中结果 共同确定：
  * - `preview`：只读态，任何位置都只显示「实际尺寸 / 适应画布」
- * - `board-element`：白板编辑态，命中某个图形/连线/图片
- * - `board-blank`：白板编辑态，未命中任何元素
+ * - `board-element`：画板编辑态，命中某个图形/连线/图片
+ * - `board-blank`：画板编辑态，未命中任何元素
  * - `mind-node`：导图编辑态，命中某个导图节点
  * - `mind-blank`：导图编辑态，未命中任何节点
  */
 export type BoardContextScene =
-  | 'preview'
-  | 'board-element'
-  | 'board-blank'
-  | 'mind-node'
-  | 'mind-blank';
+  'preview' | 'board-element' | 'board-blank' | 'mind-node' | 'mind-blank';
 
 // ---------------------------------------------------------------------------
 // 动作上下文

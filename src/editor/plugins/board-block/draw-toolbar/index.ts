@@ -1,7 +1,7 @@
 /**
- * Board Draw Toolbar - 白板创建工具条
+ * Board Draw Toolbar - 画板创建工具条
  *
- * 浮于白板块画布左侧的竖排工具条，用于选择「待创建的元素类型」。
+ * 浮于画板块画布左侧的竖排工具条，用于选择「待创建的元素类型」。
  * 批次 1 的工具项：选择 / 手型 / 图形（弹出网格面板）/ 连线（弹出走线面板）。
  *
  * 实现约定（与 canvas-toolbar / style-toolbar 保持一致）：
@@ -52,25 +52,24 @@ import {
 import { DRAW_ICONS } from './icons';
 import { createShapePanel } from './shape-panel';
 import { createLinePanel } from './line-panel';
-import { bindImageDrop, IMAGE_ACCEPT_TYPES, insertImageFile, overrideImagePaste } from './image-insert';
-import type {
-  DrawToolItem,
-  DrawToolbarCallbacks,
-  DrawToolbarController,
-} from './types';
+import {
+  bindImageDrop,
+  IMAGE_ACCEPT_TYPES,
+  insertImageFile,
+  overrideImagePaste,
+} from './image-insert';
+import type { DrawToolItem, DrawToolbarCallbacks, DrawToolbarController } from './types';
 import type { BoardBlockState } from '../types';
 
 export { DRAW_TOOLBAR_PREFIX } from './constants';
 export type { DrawToolbarCallbacks, DrawToolbarController } from './types';
 
 /**
- * 创建白板创建工具条控制器。
+ * 创建画板创建工具条控制器。
  *
  * @param callbacks 宿主回调（当前仅指针模式变更通知）
  */
-export function createDrawToolbar(
-  callbacks: DrawToolbarCallbacks = {},
-): DrawToolbarController {
+export function createDrawToolbar(callbacks: DrawToolbarCallbacks = {}): DrawToolbarController {
   let board: PlaitBoard | null = null;
   let blockState: BoardBlockState = 'preview';
   /** 还原被包装的 board.onChange */

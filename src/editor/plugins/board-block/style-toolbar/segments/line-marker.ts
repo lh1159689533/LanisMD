@@ -1,5 +1,5 @@
 /**
- * Board Style Toolbar - 白板箭头线端点与走线能力组
+ * Board Style Toolbar - 画板箭头线端点与走线能力组
  *
  * 仅箭头线（arrow-line）选中时显示。下拉面板分三块：
  * 1. 走线形态：直线 / 曲线 / 折线（`setArrowLineShape`）

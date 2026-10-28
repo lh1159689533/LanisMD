@@ -1,5 +1,5 @@
 /**
- * Board Style Toolbar - 白板矢量线形态能力组
+ * Board Style Toolbar - 画板矢量线形态能力组
  *
  * 仅矢量线（vector-line）选中时显示，下拉面板提供直线段 / 曲线段两档，
  * 调 `DrawTransforms.setVectorLineShape` 切换。

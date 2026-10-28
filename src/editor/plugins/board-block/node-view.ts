@@ -23,7 +23,7 @@
  * | v1.4.1 | 修复：节点处于 NodeSelection 时画板内按下触发浏览器原生 drag | REQ: 20261026-board-native-drag-fix |
  * | v1.5.0 | 按 mode 分流：白板块额外挂载左侧创建工具条，编码带上 mode | REQ: 20261027-board-whiteboard-draw §3.1 / §3.4 |
  * | v1.5.1 | 修复：编辑态删除画布内元素误删整个画板块（焦点未入画板宿主） | REQ: 20261027-board-whiteboard-draw |
- * | v1.6.0 | 集成右键菜单（白板/导图 × 元素/空白四场景 + 预览态画布菜单） | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
+ * | v1.6.0 | 集成右键菜单（画板/导图 × 元素/空白四场景 + 预览态画布菜单） | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
  * | v1.6.1 | 「添加图形」改为右键位置直接插入默认矩形并选中 | REQ: 20261028-board-context-menu |
  * /@changelog
  *
@@ -97,9 +97,9 @@ export class BoardBlockNodeView implements NodeView {
   private canvasToolbar: CanvasToolbarController;
 
   /**
-   * 白板创建工具条控制器（画布左侧竖排）。
+   * 画板创建工具条控制器（画布左侧竖排）。
    *
-   * 仅白板块创建；导图块恒为 `null`（而非创建后隐藏），避免无谓 DOM 与监听。
+   * 仅画板块创建；导图块恒为 `null`（而非创建后隐藏），避免无谓 DOM 与监听。
    */
   private drawToolbar: DrawToolbarController | null = null;
 
@@ -208,7 +208,7 @@ export class BoardBlockNodeView implements NodeView {
     });
     this.dom.appendChild(this.canvasToolbar.dom);
 
-    // 白板创建工具条（画布左侧竖排，仅白板块创建）。
+    // 画板创建工具条（画布左侧竖排，仅画板块创建）。
     // 必须与 canvasToolbar / styleToolbar 一样挂到 this.dom 而非 reactHost：
     // reactHost 由 React 托管，reconcile 会移除其内部一切非托管 DOM。
     if (this.mode === 'board') {
@@ -243,7 +243,7 @@ export class BoardBlockNodeView implements NodeView {
     // 容器（下方 createRoot(this.reactHost)），React reconcile 会移除其内部一切
     // 非托管 DOM，导致工具栏节点被剥离（isConnected=false）。this.dom 为
     // position: relative，可作为工具栏 absolute 定位基准。
-    // 形态在构造时即确定，直接传入以装配对应的能力组（导图/白板互斥）。
+    // 形态在构造时即确定，直接传入以装配对应的能力组（导图/画板互斥）。
     this.styleToolbar = createStyleToolbar(this.mode);
     this.dom.appendChild(this.styleToolbar.dom);
 
@@ -505,7 +505,10 @@ export class BoardBlockNodeView implements NodeView {
    */
   private insertShape(point: [number, number]): void {
     if (!this.board) return;
-    const end: [number, number] = [point[0] + DEFAULT_INSERT_SHAPE_SIZE, point[1] + DEFAULT_INSERT_SHAPE_SIZE];
+    const end: [number, number] = [
+      point[0] + DEFAULT_INSERT_SHAPE_SIZE,
+      point[1] + DEFAULT_INSERT_SHAPE_SIZE,
+    ];
     DrawTransforms.insertGeometry(this.board, [point, end], BasicShapes.rectangle);
     BoardTransforms.updatePointerType(this.board, PlaitPointerType.selection);
     const pad = 2;
@@ -556,7 +559,7 @@ export class BoardBlockNodeView implements NodeView {
     const session = await openBoardFullscreen({
       getData: () => this.encodeCurrent(),
       initialState,
-      title: this.mode === 'board' ? '白板' : '思维导图',
+      title: this.mode === 'board' ? '画板' : '思维导图',
       theme: useSettingsStore.getState().config.theme || 'system',
       onData: (data) => this.applyFullscreenData(data),
       onState: () => {
@@ -658,7 +661,7 @@ export class BoardBlockNodeView implements NodeView {
   /**
    * 编码当前画板状态。
    *
-   * `mode` 必须显式带上：白板块缺失该字段时重开会被解码成导图块。
+   * `mode` 必须显式带上：画板块缺失该字段时重开会被解码成导图块。
    */
   private encodeCurrent(): string {
     return encode(this.elements, {

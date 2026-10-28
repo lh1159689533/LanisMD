@@ -7,7 +7,7 @@
  *
  * 能力来源：
  * - 剪切 / 复制 / 粘贴：@plait/core 的 setFragment / getClipboardData
- * - 删除：@plait/core 的 deleteFragment（删除选中元素，白板）/ 导图删除子树
+ * - 删除：@plait/core 的 deleteFragment（删除选中元素，画板）/ 导图删除子树
  * - 层级：Transforms.moveUp / moveDown / moveToTop / moveToBottom
  * - 导图插入 / 折叠：@plait/mind 的 MindTransforms / Transforms.setNode
  * - 实际尺寸 / 适应画布：canvas-toolbar/viewport-actions 的 resetZoom / fitViewport
@@ -91,7 +91,7 @@ export function createActions(options: CreateActionsOptions = {}): BoardContextA
       ctx.board.insertFragment(data, point, WritableClipboardOperationType.paste);
     },
 
-    /** 删除选中元素（白板）/ 选中节点及其子树（导图） */
+    /** 删除选中元素（画板）/ 选中节点及其子树（导图） */
     delete: (ctx) => {
       deleteFragment(ctx.board);
     },
@@ -147,14 +147,14 @@ export function createActions(options: CreateActionsOptions = {}): BoardContextA
       MindTransforms.insertMind(ctx.board as never, mind as never);
     },
 
-    /** 白板：在右键位置直接插入默认矩形并选中 */
+    /** 画板：在右键位置直接插入默认矩形并选中 */
     addShape: (ctx) => {
       if (ctx.viewBoxPoint) {
         options.onInsertShape?.(ctx.viewBoxPoint);
       }
     },
 
-    /** 白板：进入默认连线（直线）创建态 */
+    /** 画板：进入默认连线（直线）创建态 */
     addLine: (ctx) => {
       options.onEnterCreation?.(DEFAULT_ARROW_LINE_SHAPE);
     },

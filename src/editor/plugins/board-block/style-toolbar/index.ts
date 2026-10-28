@@ -7,13 +7,13 @@
  * 批次 2 节点级样式：在骨架内挂载节点形状/填充/描边三个能力组按钮，
  * 选中节点时回填当前样式值。
  *
- * 白板形态分流（PRD §3.8）：
+ * 画板形态分流（PRD §3.8）：
  * 同一条工具栏按 `mode` 装配两套互斥的能力组，并在三处做分流——
- * 1. **选中态读取**：导图 `getSelectedMindElements` / 白板 `getSelectedDrawElements`
- * 2. **样式快照**：导图 `getCurrentStyles` / 白板 `getDrawStyles`
- * 3. **定位锚点**：导图 `MindElement.getNode()` / 白板 `points` 包围盒
- * 导图侧的函数与能力组一行不改，白板侧全部是并列新增，两者回归面相互隔离。
- * 导图专属能力组（结构/分支/节点形状）在白板模式**不创建**，不产生无用 DOM。
+ * 1. **选中态读取**：导图 `getSelectedMindElements` / 画板 `getSelectedDrawElements`
+ * 2. **样式快照**：导图 `getCurrentStyles` / 画板 `getDrawStyles`
+ * 3. **定位锚点**：导图 `MindElement.getNode()` / 画板 `points` 包围盒
+ * 导图侧的函数与能力组一行不改，画板侧全部是并列新增，两者回归面相互隔离。
+ * 导图专属能力组（结构/分支/节点形状）在画板模式**不创建**，不产生无用 DOM。
  *
  * 定位策略：绝对定位于画板块内，锚定选中元素上方居中（上方空间不足则改放下方）。
  *
@@ -27,8 +27,8 @@
  * | v1.2.0 | 批次3：挂载结构/分支能力组 + 样式回填          | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.3.0 | 下划线节点隐藏填充/描边能力组                   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.4.0 | 批次4：挂载文字样式能力组 + 样式回填           | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
- * | v1.5.0 | 按画板形态分流：白板装配填充/描边/不透明度/文字样式 | REQ: 20261027-board-whiteboard-draw §3.8 |
- * | v1.6.0 | 白板新增图形切换/旋转/端点走线/矢量线形态四个能力组 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
+ * | v1.5.0 | 按画板形态分流：画板装配填充/描边/不透明度/文字样式 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.6.0 | 画板新增图形切换/旋转/端点走线/矢量线形态四个能力组 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * | v1.7.0 | 图片元素选中时隐藏样式工具栏（无适用能力组） | REQ: 20261027-board-whiteboard-draw §3.9 |
  * /@changelog
  *
@@ -81,7 +81,7 @@ interface MindSegmentSet {
   textStyle: TextStyleSegment;
 }
 
-/** 白板形态的能力组集合 */
+/** 画板形态的能力组集合 */
 interface DrawSegmentSet {
   fill: DrawFillSegment;
   stroke: DrawStrokeSegment;
@@ -150,7 +150,7 @@ export function createStyleToolbar(initialMode: BoardMode = 'mindmap'): StyleToo
   }
 
   /**
-   * 创建白板形态的能力组。
+   * 创建画板形态的能力组。
    *
    * 顺序即视觉顺序：填充 → 描边 → 不透明度 → 图形切换 → 旋转 → 端点/走线 →
    * 矢量线形态 → 文字样式。前四者为通用样式，中间三个按元素类型分流显示，
@@ -285,11 +285,7 @@ export function createStyleToolbar(initialMode: BoardMode = 'mindmap'): StyleToo
       const styles = getCurrentStyles(target);
       if (styles) {
         segments.structure.setActiveStructure(styles.layout);
-        segments.branch.setActiveBranch(
-          styles.branchShape,
-          styles.branchWidth,
-          styles.branchColor,
-        );
+        segments.branch.setActiveBranch(styles.branchShape, styles.branchWidth, styles.branchColor);
         segments.shape.setActiveShape(styles.shape);
         segments.fill.setActiveFill(styles.fill);
         segments.stroke.setActiveStroke(styles.strokeColor, styles.strokeWidth);
@@ -306,7 +302,7 @@ export function createStyleToolbar(initialMode: BoardMode = 'mindmap'): StyleToo
   }
 
   /**
-   * 白板形态的同步逻辑。
+   * 画板形态的同步逻辑。
    *
    * 能力组显隐取「全体选中元素都支持」的交集语义，满足 PRD §3.8 验收：
    * 多选「图形 + 连线」时填充组隐藏（连线无填充语义），描边与不透明度保留。
@@ -372,7 +368,7 @@ export function createStyleToolbar(initialMode: BoardMode = 'mindmap'): StyleToo
    *   实时坐标，与命中检测 `isHitMindElement` 同源。不能用
    *   `getRectangleByElement`（`element.points` 仅创建时写入，布局重排后不更新），
    *   也不能用 core 的 `board.getRectangle`（对 mind 返回 topic 文字矩形）。
-   * - 白板：draw 元素没有布局节点，`points` 本身就是权威几何（resize/拖移都会
+   * - 画板：draw 元素没有布局节点，`points` 本身就是权威几何（resize/拖移都会
    *   实时写回），故取全部选中元素 points 的联合外接矩形。
    */
   function getAnchorRectangle(

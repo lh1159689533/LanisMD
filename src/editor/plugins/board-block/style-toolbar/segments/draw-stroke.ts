@@ -13,7 +13,7 @@
  *
  * @changelog
  * | 版本   | 变更说明                           | 关联                                      |
- * | v1.0.0 | 初始实现：白板描边下拉面板（色/宽/线型） | REQ: 20261027-board-whiteboard-draw §3.8  |
+ * | v1.0.0 | 初始实现：画板描边下拉面板（色/宽/线型） | REQ: 20261027-board-whiteboard-draw §3.8  |
  * /@changelog
  *
  * @author hhhuilli
@@ -30,12 +30,7 @@ import {
   STROKE_STYLE_OPTIONS,
   type StrokeStyleOption,
 } from '../constants';
-import {
-  ICON_STROKE,
-  ICON_STROKE_DASHED,
-  ICON_STROKE_DOTTED,
-  ICON_STROKE_SOLID,
-} from '../icons';
+import { ICON_STROKE, ICON_STROKE_DASHED, ICON_STROKE_DOTTED, ICON_STROKE_SOLID } from '../icons';
 import { createColorPanel, type ColorPanelController } from '../color-panel';
 import {
   applyDrawStrokeColor,

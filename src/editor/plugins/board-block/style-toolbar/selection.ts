@@ -18,7 +18,7 @@
  * | v1.2.0 | 批次3：读取连线结构/布局方向/分支宽色   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.3.0 | 新增 hasAnyNonUnderlineShape：全下划线时隐藏填充/描边 | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.4.0 | 批次4：读取文字样式（粗/斜/字号/字色）    | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
- * | v1.5.0 | 新增白板分支：draw 元素选中读取/样式快照/能力位/包围盒 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.5.0 | 新增画板分支：draw 元素选中读取/样式快照/能力位/包围盒 | REQ: 20261027-board-whiteboard-draw §3.8 |
  * | v1.6.0 | 新增图形类型/旋转角/箭头线端点走线/矢量线形态的读取与能力位 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * | v1.7.0 | 新增 isAllImage 判定：图片元素无适用样式能力组，用于隐藏工具栏 | REQ: 20261027-board-whiteboard-draw §3.9 |
  * /@changelog
@@ -317,7 +317,7 @@ export function hasAnyNonUnderlineShape(board: PlaitBoard): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// 白板分支：选中态读取
+// 画板分支：选中态读取
 // ---------------------------------------------------------------------------
 
 /** 读取当前选中的 draw 元素（过滤掉非 draw 元素） */
@@ -376,7 +376,7 @@ export interface DrawStyleSnapshot {
 }
 
 /**
- * 白板模式下各能力组的可用性。
+ * 画板模式下各能力组的可用性。
  *
  * PRD §3.8 验收要求「多选不同类型元素（图形 + 连线）时，只显示两者共有的
  * 能力组」，故这里一律取**全体选中元素都支持**的交集语义：
@@ -397,7 +397,7 @@ export interface DrawCapabilities {
   vectorLine: boolean;
 }
 
-/** 计算白板模式下的能力组可用性 */
+/** 计算画板模式下的能力组可用性 */
 export function getDrawCapabilities(board: PlaitBoard): DrawCapabilities {
   const elements = getSelectedDrawElements(board);
   if (elements.length === 0) {
@@ -595,7 +595,7 @@ function readDrawTextMarks(element: PlaitElement): {
 }
 
 // ---------------------------------------------------------------------------
-// 白板分支：选中包围盒（工具栏定位）
+// 画板分支：选中包围盒（工具栏定位）
 // ---------------------------------------------------------------------------
 
 /**

@@ -11,8 +11,8 @@
  * | v1.1.0 | 批次3：连线结构/布局方向/分支宽色写操作      | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.1.1 | 分支样式（形状/宽/色）改为应用到整棵树        | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.2.0 | 批次4：文字样式（粗/斜/字号/字色）写操作     | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
- * | v1.3.0 | 新增白板写操作（填充/描边/线型/不透明度）；文字写操作改为形态无关 | REQ: 20261027-board-whiteboard-draw §3.8 |
- * | v1.4.0 | 新增白板写操作（图形切换/箭头线端点走线/矢量线形态/旋转） | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
+ * | v1.3.0 | 新增画板写操作（填充/描边/线型/不透明度）；文字写操作改为形态无关 | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.4.0 | 新增画板写操作（图形切换/箭头线端点走线/矢量线形态/旋转） | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -146,8 +146,7 @@ function applyBranchPropertyToAll(
  * Plait `BranchShape` 仅 2 种枚举：`bight`（曲线）、`polyline`（折线）。
  */
 export function applyBranchShape(board: PlaitBoard, branchShape: BranchShapeOption): void {
-  const plaitBranchShape =
-    branchShape === 'bight' ? BranchShape.bight : BranchShape.polyline;
+  const plaitBranchShape = branchShape === 'bight' ? BranchShape.bight : BranchShape.polyline;
   applyBranchPropertyToAll(board, 'branchShape', plaitBranchShape);
 }
 
@@ -162,7 +161,10 @@ export function applyBranchShape(board: PlaitBoard, branchShape: BranchShapeOpti
  * 其枚举值与字符串字面量一致，运行时等价。这里以断言传入对应的方向字符串。
  */
 export function applyLayout(board: PlaitBoard, layout: LayoutDirectionOption): void {
-  MindTransforms.setLayout(board, layout as unknown as Parameters<typeof MindTransforms.setLayout>[1]);
+  MindTransforms.setLayout(
+    board,
+    layout as unknown as Parameters<typeof MindTransforms.setLayout>[1],
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -190,7 +192,7 @@ export function applyBranchColor(board: PlaitBoard, color: string | null): void 
 }
 
 // ---------------------------------------------------------------------------
-// 白板（draw 元素）样式写操作
+// 画板（draw 元素）样式写操作
 // ---------------------------------------------------------------------------
 
 /**
@@ -255,7 +257,7 @@ export function applyOpacity(board: PlaitBoard, opacity: number): void {
 }
 
 // ---------------------------------------------------------------------------
-// 白板（draw 元素）批次 2 写操作：图形切换 / 箭头线端点与走线 / 矢量线形态 / 旋转
+// 画板（draw 元素）批次 2 写操作：图形切换 / 箭头线端点与走线 / 矢量线形态 / 旋转
 // ---------------------------------------------------------------------------
 
 /**
@@ -453,7 +455,7 @@ export function applyTextColor(board: PlaitBoard, color: string | null): void {
  * 字号以 `CustomText['font-size']` mark 存储（运行时为数值）。「目标字号等于该
  * 元素的默认字号时移除 mark」以回到默认，故需按元素分别判定默认值：
  * - 导图：根节点 18 / 子节点 14（`getDefaultFontSizeForMindElement`）
- * - 白板：统一 14（draw 元素无根/子之分）
+ * - 画板：统一 14（draw 元素无根/子之分）
  *
  * 这样多选根/子节点（或图形）时各自回到正确的默认字号。
  */

@@ -21,7 +21,7 @@
  * | 版本   | 变更说明                           | 关联                                                   |
  * | v1.0.0 | 初始实现：全屏子窗口画板挂载与事件桥接 | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §四 |
  * | v1.1.0 | 块工具栏替换为画布工具栏 + 编辑操作卡  | REQ: 20261026-board-fullscreen-maximize |
- * | v1.2.0 | 支持白板形态：透传 mode 并按形态挂载创建工具条 | REQ: 20261027-board-whiteboard-draw §3.4 |
+ * | v1.2.0 | 支持画板形态：透传 mode 并按形态挂载创建工具条 | REQ: 20261027-board-whiteboard-draw §3.4 |
  * /@changelog
  *
  * @author hhhuilli
@@ -88,7 +88,7 @@ class FullscreenBoardSession {
   private readonly styleToolbar: StyleToolbarController;
 
   /**
-   * 白板创建工具条（仅白板块创建）。
+   * 画板创建工具条（仅画板块创建）。
    *
    * 与主窗口 NodeView 的差异：形态在构造时还不可知（要等主窗口下发数据后
    * 解码才知道），故延迟到 `applyInitialData` 中按 mode 决定是否创建。
@@ -266,10 +266,10 @@ class FullscreenBoardSession {
     this.root.setAttribute('data-board-mode', this.mode);
 
     // 样式工具栏在构造时按默认形态（导图）装配，此刻形态才真正可知，
-    // 需补一次 setMode 以装配白板能力组（同形态时内部直接 return）
+    // 需补一次 setMode 以装配画板能力组（同形态时内部直接 return）
     this.styleToolbar.setMode(this.mode);
 
-    // 白板形态才创建左侧创建工具条，并继承当前显示状态
+    // 画板形态才创建左侧创建工具条，并继承当前显示状态
     if (this.mode === 'board') {
       this.drawToolbar = createDrawToolbar({
         onPointerChange: (pointer) => {
@@ -430,7 +430,7 @@ class FullscreenBoardSession {
     } satisfies BoardFsChangePayload);
   }
 
-  /** 编码当前画板状态；`mode` 必须显式带上，否则白板会被主窗口解码成导图 */
+  /** 编码当前画板状态；`mode` 必须显式带上，否则画板会被主窗口解码成导图 */
   private encodeCurrent(): string {
     return encode(this.elements, {
       viewport: this.viewport,

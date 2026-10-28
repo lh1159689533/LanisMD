@@ -10,8 +10,8 @@
  * | v1.0.1 | 移除「直角矩形」选项（Plait 无此节点形状）   | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次2 |
  * | v1.1.0 | 批次3：连线结构/布局方向/分支宽度常量        | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次3 |
  * | v1.2.0 | 批次4：文字字号档位常量                       | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §四批次4 |
- * | v1.3.0 | 白板：描边线型档位 + 不透明度档位常量           | REQ: 20261027-board-whiteboard-draw §3.8 |
- * | v1.4.0 | 白板：箭头线走线/端点、矢量线形态、旋转角预设常量 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
+ * | v1.3.0 | 画板：描边线型档位 + 不透明度档位常量           | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.4.0 | 画板：箭头线走线/端点、矢量线形态、旋转角预设常量 | REQ: 20261027-board-whiteboard-draw §3.7 / §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -193,7 +193,7 @@ export const TEXT_ALIGN_OPTIONS: readonly TextAlignItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 描边线型（StrokeStyle）
+// 画板专属 - 描边线型（StrokeStyle）
 // ---------------------------------------------------------------------------
 
 /**
@@ -220,7 +220,7 @@ export const STROKE_STYLE_OPTIONS: readonly StrokeStyleItem[] = [
 export const DEFAULT_STROKE_STYLE: StrokeStyleOption = 'solid';
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 不透明度
+// 画板专属 - 不透明度
 // ---------------------------------------------------------------------------
 
 /**
@@ -235,7 +235,7 @@ export const OPACITY_OPTIONS: readonly number[] = [1, 0.75, 0.5, 0.25];
 export const DEFAULT_OPACITY = 1;
 
 /**
- * 白板文本的默认字号（px）。
+ * 画板文本的默认字号（px）。
  *
  * 取 `@plait/text-plugins` 的 `DEFAULT_FONT_SIZE`（实测为 14）。与导图不同，
  * draw 元素没有「根/子节点」之分，所有文本共用同一个默认字号。
@@ -244,7 +244,7 @@ export const DEFAULT_OPACITY = 1;
 export const DRAW_DEFAULT_FONT_SIZE = 14;
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 箭头线走线形态（ArrowLineShape）
+// 画板专属 - 箭头线走线形态（ArrowLineShape）
 // ---------------------------------------------------------------------------
 
 /**
@@ -268,7 +268,7 @@ export const ARROW_LINE_SHAPE_OPTIONS: readonly ArrowLineShapeItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 箭头线端点标记（ArrowLineMarkerType）
+// 画板专属 - 箭头线端点标记（ArrowLineMarkerType）
 // ---------------------------------------------------------------------------
 
 /**
@@ -307,7 +307,7 @@ export const ARROW_LINE_MARKER_OPTIONS: readonly ArrowLineMarkerItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 矢量线形态（VectorLineShape）
+// 画板专属 - 矢量线形态（VectorLineShape）
 // ---------------------------------------------------------------------------
 
 /**
@@ -329,7 +329,7 @@ export const VECTOR_LINE_SHAPE_OPTIONS: readonly VectorLineShapeItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 白板专属 - 旋转角预设（度）
+// 画板专属 - 旋转角预设（度）
 // ---------------------------------------------------------------------------
 
 /**

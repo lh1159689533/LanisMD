@@ -11,7 +11,7 @@
  * @changelog
  * | 版本   | 变更说明                     | 关联                                                        |
  * | v1.0.0 | 批次1地基：selection 联动类型  | REQ: 20260826-board-style-toolbar TECH: board-style-toolbar-技术方案 §3.1 |
- * | v1.1.0 | 新增白板分支：draw 元素判定 + 控制器 setMode | REQ: 20261027-board-whiteboard-draw §3.8 |
+ * | v1.1.0 | 新增画板分支：draw 元素判定 + 控制器 setMode | REQ: 20261027-board-whiteboard-draw §3.8 |
  * /@changelog
  *
  * @author hhhuilli
@@ -60,7 +60,7 @@ export function isMindElement(element: PlaitElement): boolean {
 }
 
 /**
- * 白板模式下工具栏关注的元素类型。
+ * 画板模式下工具栏关注的元素类型。
  *
  * 刻意不直接用 `@plait/draw` 的 `PlaitDrawElement.isDrawElement`：后者还覆盖
  * table / swimlane（本期明确不接入，见 PRD Q4），放进来会让工具栏对不支持的
