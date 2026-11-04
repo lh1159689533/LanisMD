@@ -2,14 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 import { TitleBar } from './components/layout/TitleBar';
 import { MainLayout } from './components/layout/MainLayout';
 import { BrowserLayout } from './components/layout/BrowserLayout';
-
-// 预览窗口专用组件，按需懒加载：
-// 避免把 @open-file-viewer（及其重型依赖 three/pdfjs-dist/xlsx/heic2any 等）
-// 打进主窗口 bundle，降低 vite build 的内存峰值并缩小首屏体积
-const FilePreview = lazy(() =>
-  import('./components/preview/FilePreview').then((m) => ({ default: m.FilePreview })),
-);
-
+import { BoardFullscreen } from './components/board/BoardFullscreen';
+import { BOARD_FULLSCREEN_ROUTE } from './editor/plugins/board-block/fullscreen/protocol';
 import { SettingsDialog } from './components/settings/SettingsDialog';
 import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
@@ -34,11 +28,21 @@ import { useBrowserFile } from './hooks/useBrowserFile';
 import { cn } from './utils/cn';
 import { isTauri } from './utils/platform';
 
+// 预览窗口专用组件，按需懒加载：
+// 避免把 @open-file-viewer（及其重型依赖 three/pdfjs-dist/xlsx/heic2any 等）
+// 打进主窗口 bundle，降低 vite build 的内存峰值并缩小首屏体积
+const FilePreview = lazy(() =>
+  import('./components/preview/FilePreview').then((m) => ({ default: m.FilePreview })),
+);
+
 // Check platform once at module level
 const IS_TAURI = isTauri();
 
 // 检测当前是否为预览窗口（通过 URL 路径判断）
 const IS_PREVIEW_WINDOW = window.location.pathname === '/preview';
+
+// 检测当前是否为画板全屏窗口
+const IS_BOARD_FULLSCREEN_WINDOW = window.location.pathname === BOARD_FULLSCREEN_ROUTE;
 
 /**
  * Tauri desktop app mode
@@ -99,8 +103,12 @@ function TauriApp() {
   const listenProgress = useSyncStore((s) => s.listenProgress);
   useEffect(() => {
     let unlisten: (() => void) | undefined;
-    listenProgress().then((fn) => { unlisten = fn; });
-    return () => { unlisten?.(); };
+    listenProgress().then((fn) => {
+      unlisten = fn;
+    });
+    return () => {
+      unlisten?.();
+    };
   }, [listenProgress]);
 
   // 启动时恢复上次会话（仅当 settings.restoreSession 为 true）
@@ -197,6 +205,11 @@ export default function App() {
         <FilePreview />
       </Suspense>
     );
+  }
+
+  // 画板全屏窗口：直接渲染独立画板，不加载主应用
+  if (IS_BOARD_FULLSCREEN_WINDOW) {
+    return <BoardFullscreen />;
   }
 
   return (

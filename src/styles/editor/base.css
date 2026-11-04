@@ -20,6 +20,9 @@
      overflow-x 继续生效，长代码块等仍会被裁剪 */
   padding-inline-start: 80px;
   margin-inline-start: -80px;
+  /* 同理为画板块的右侧竖排工具栏预留右侧缓冲区 */
+  padding-inline-end: 48px;
+  margin-inline-end: -48px;
 }
 
 .milkdown-editor-root:focus {

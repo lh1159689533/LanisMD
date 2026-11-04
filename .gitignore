@@ -20,3 +20,6 @@ src-tauri/Cargo.lock
 # Self-improvement local logs (per-developer, not shared)
 .codebuddy/.learnings/
 .codebuddy/
+
+# TypeScript 增量编译缓存
+*.tsbuildinfo
