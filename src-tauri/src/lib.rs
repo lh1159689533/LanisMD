@@ -19,6 +19,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式
             #[cfg(target_os = "macos")]

@@ -11,6 +11,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // 依赖预构建：排除 Node 端原生模块，避免 esbuild 尝试打包 .node 二进制
+  // @napi-rs/canvas 是 pdfjs-dist 在 Node 端的可选 Canvas 后端，浏览器端无需预构建
+  optimizeDeps: {
+    exclude: ['@napi-rs/canvas'],
+  },
   clearScreen: false,
   server: {
     port: 1420,
