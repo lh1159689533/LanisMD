@@ -168,7 +168,7 @@ function TauriApp() {
   }, []);
 
   return (
-    <>
+    <div className='lanis-app flex h-screen flex-col'>
       <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
       <MainLayout />
       {settingsOpen && <SettingsDialog />}
@@ -176,7 +176,7 @@ function TauriApp() {
       <ToastContainer />
       <LinkConfirmDialog />
       <DeleteConfirmDialog />
-    </>
+    </div>
   );
 }
 
@@ -215,8 +215,7 @@ export default function App() {
   return (
     <div
       className={cn(
-        'flex h-screen flex-col overflow-hidden',
-        'bg-white text-slate-900',
+        'bg-white text-slate-900 overflow-hidden',
         'dark:bg-[#1a1b26] dark:text-slate-100',
       )}
     >

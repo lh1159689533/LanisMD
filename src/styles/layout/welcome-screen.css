@@ -256,7 +256,6 @@
   align-items: center;
   justify-content: center;
   gap: 48px;
-  opacity: 0.55;
   user-select: none;
   padding: 24px;
 }
@@ -268,12 +267,11 @@
   gap: 12px;
 }
 
-.lanismd-welcome-minimal-title {
-  font-size: 32px;
-  font-weight: 300;
-  letter-spacing: 0.5px;
-  margin: 0;
-  color: var(--lanismd-text-color);
+/* 淡化 logo、slogan、提示轮播，保持标题（重力字母）完全清晰 */
+.lanismd-welcome-minimal-brand > img,
+.lanismd-welcome-minimal-slogan,
+.lanismd-welcome-tip {
+  opacity: 0.55;
 }
 
 .lanismd-welcome-minimal-slogan {
