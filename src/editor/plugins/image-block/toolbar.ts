@@ -19,7 +19,7 @@ const imageToolbarPluginKey = new PluginKey('IMAGE_BLOCK_TOOLBAR');
 // SVG Icons
 // ---------------------------------------------------------------------------
 
-const toolbarIcons = {
+export const toolbarIcons = {
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
   alignLeft:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>',
@@ -185,7 +185,7 @@ function createSeparator(): HTMLElement {
 // Find the position of an image-block node from its DOM element
 // ---------------------------------------------------------------------------
 
-function findNodePos(view: EditorView, blockEl: HTMLElement): number | null {
+export function findNodePos(view: EditorView, blockEl: HTMLElement): number | null {
   // Walk through the document to find the image-block at this DOM position
   const pos = view.posAtDOM(blockEl, 0);
   if (pos == null) return null;

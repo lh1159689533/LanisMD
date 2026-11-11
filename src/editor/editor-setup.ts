@@ -35,6 +35,7 @@ import {
   linkTooltip,
   configureLinkTooltip,
   linkClickPlugin,
+  linkContextMenuPlugin,
 } from './plugins/link';
 import { underlineMarkSchema, remarkUnderlinePlugin } from './plugins/underline-mark';
 import {
@@ -59,6 +60,7 @@ import {
   remarkHtmlImagePlugin,
   imageBlockPastePlugin,
   imageBlockToolbarPlugin,
+  imageBlockContextMenuPlugin,
   imageUploadProgressPlugin,
   imageInputRulePlugin,
   imageResizePlugin,
@@ -248,11 +250,13 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(linkPastePlugin)
     .use(imageBlockPastePlugin)
     .use(imageBlockToolbarPlugin)
+    .use(imageBlockContextMenuPlugin)
     .use(imageUploadProgressPlugin)
     .use(imageInputRulePlugin)
     .use(linkInputRulePlugin)
     .use(linkBlurPlugin)
     .use(linkClickPlugin)
+    .use(linkContextMenuPlugin)
     .use(imageResizePlugin)
     .use(imageBlockClickPlugin)
     .use(imageInlineToolbarPlugin)

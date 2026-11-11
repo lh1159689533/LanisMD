@@ -234,7 +234,7 @@ let selectedBlockEl: HTMLElement | null = null;
 /**
  * Select an image block (shows resize handles and toolbar)
  */
-function selectImageBlock(blockEl: HTMLElement) {
+export function selectImageBlock(blockEl: HTMLElement) {
   // Deselect previous
   if (selectedBlockEl && selectedBlockEl !== blockEl) {
     selectedBlockEl.classList.remove('image-selected');

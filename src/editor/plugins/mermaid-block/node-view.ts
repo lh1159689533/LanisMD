@@ -19,6 +19,7 @@ import { renderMermaid } from './renderer';
 import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
 import { exportAsPng, exportAsSvg } from './export';
 import { onThemeChange } from './theme';
+import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer';
 import { CSS_PREFIX, ICONS, RENDER_DEBOUNCE_MS, type MermaidBlockState } from './types';
 
 // ---------------------------------------------------------------------------
@@ -174,6 +175,22 @@ export class MermaidNodeView implements NodeView {
         e.stopPropagation();
         this.cancelEdit();
       }
+    });
+
+    // 右键菜单：预览态弹出「编辑 / 导出为PNG / 导出为SVG / 删除」，编辑态不拦截
+    this.dom.addEventListener('contextmenu', (e) => {
+      if (this.state !== 'preview') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const items: ContextMenuItem[] = [
+        { label: '编辑', icon: ICONS.edit, action: () => this.enterEdit() },
+        { label: '导出为PNG', icon: ICONS.png, action: () => { void this.handleExportPng(); } },
+        { label: '导出为SVG', icon: ICONS.svg, action: () => { void this.handleExportSvg(); } },
+        { label: '删除', icon: ICONS.delete, danger: true, action: () => this.deleteBlock() },
+      ];
+
+      showContextMenu(items, e.clientX, e.clientY);
     });
   }
 

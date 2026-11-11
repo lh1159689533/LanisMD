@@ -18,6 +18,7 @@ import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/pro
 import { TextSelection } from '@milkdown/kit/prose/state';
 import { renderBlockMath } from '../math-inline/renderer';
 import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
+import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer';
 import { CSS_PREFIX, ICONS, RENDER_DEBOUNCE_MS, type MathBlockState } from './types';
 
 // ---------------------------------------------------------------------------
@@ -175,6 +176,20 @@ export class MathBlockNodeView implements NodeView {
         e.stopPropagation();
         this.cancelEdit();
       }
+    });
+
+    // 右键菜单：预览态弹出「编辑 / 删除」，编辑态不拦截（保留代码区复制粘贴）
+    this.dom.addEventListener('contextmenu', (e) => {
+      if (this.state !== 'preview') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const items: ContextMenuItem[] = [
+        { label: '编辑', icon: ICONS.edit, action: () => this.enterEdit() },
+        { label: '删除', icon: ICONS.delete, danger: true, action: () => this.deleteBlock() },
+      ];
+
+      showContextMenu(items, e.clientX, e.clientY);
     });
   }
 

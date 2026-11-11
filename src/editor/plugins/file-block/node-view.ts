@@ -17,6 +17,26 @@ import { useSettingsStore } from '@/stores';
 import { useUIStore } from '@/stores/ui-store';
 import { getFileIcon } from './file-icons';
 import { Event as TauriEvent } from '@tauri-apps/api/event';
+import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer';
+import { copyNode, cutNode } from '../context-menu/node-actions';
+
+// ---------------------------------------------------------------------------
+// 图标
+// ---------------------------------------------------------------------------
+
+/** 附件块操作图标集（工具栏按钮与右键菜单共用） */
+const FILE_ICONS = {
+  preview:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  reveal:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+  delete:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  copy:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  cut:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+} as const;
 
 export class FileBlockNodeView implements NodeView {
   dom: HTMLElement;
@@ -35,6 +55,7 @@ export class FileBlockNodeView implements NodeView {
     this.sizeEl = this.dom.querySelector('.lanismd-file-block__size')!;
     this.iconEl = this.dom.querySelector('.lanismd-file-block__icon')!;
     this.bindEvents(node);
+    this.bindContextMenu();
     this.loadAsyncData(node);
   }
 
@@ -72,23 +93,11 @@ export class FileBlockNodeView implements NodeView {
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'lanismd-file-block__actions';
 
-    const previewBtn = this.createButton(
-      '预览',
-      'preview',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
-    );
+    const previewBtn = this.createButton('预览', 'preview', FILE_ICONS.preview);
 
-    const revealBtn = this.createButton(
-      '在 Finder 中显示',
-      'reveal',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
-    );
+    const revealBtn = this.createButton('在 Finder 中显示', 'reveal', FILE_ICONS.reveal);
 
-    const deleteBtn = this.createButton(
-      '删除',
-      'delete',
-      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
-    );
+    const deleteBtn = this.createButton('删除', 'delete', FILE_ICONS.delete);
 
     actionsDiv.appendChild(previewBtn);
     actionsDiv.appendChild(revealBtn);
@@ -141,6 +150,44 @@ export class FileBlockNodeView implements NodeView {
           this.handleDelete(src);
           break;
       }
+    });
+  }
+
+  /**
+   * 绑定右键菜单：弹出「预览 / 在 Finder 中显示 / 复制 / 剪切 / 删除」。
+   */
+  private bindContextMenu() {
+    this.dom.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const src = this.dom.getAttribute('data-src') || '';
+      const name = this.dom.getAttribute('data-name') || '未知文件';
+      const pos = this.getPos();
+
+      const items: ContextMenuItem[] = [
+        { label: '预览', icon: FILE_ICONS.preview, action: () => { void this.handlePreview(src, name); } },
+        { label: '在 Finder 中显示', icon: FILE_ICONS.reveal, action: () => { void this.handleReveal(src); } },
+        { label: '', separator: true },
+        {
+          label: '复制',
+          icon: FILE_ICONS.copy,
+          action: () => {
+            if (pos !== undefined) copyNode(this.view, pos);
+          },
+        },
+        {
+          label: '剪切',
+          icon: FILE_ICONS.cut,
+          action: () => {
+            if (pos !== undefined) cutNode(this.view, pos);
+          },
+        },
+        { label: '', separator: true },
+        { label: '删除', icon: FILE_ICONS.delete, danger: true, action: () => { void this.handleDelete(src); } },
+      ];
+
+      showContextMenu(items, e.clientX, e.clientY);
     });
   }
 

@@ -22,6 +22,7 @@ import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { isRelativePath, isAbsolutePath, buildAbsolutePath } from './types';
 import { insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 import { setOpenImageDialogForEdit } from './toolbar';
+import { setImageContextMenuEditHandler } from './context-menu';
 
 // 重新导出所有子模块
 export { extendedImageBlockSchema, remarkHtmlImagePlugin } from './schema-extend';
@@ -30,6 +31,7 @@ export { imageInputRulePlugin } from './input-rule';
 export { imageBlockPastePlugin } from './paste-handler';
 export { imageResizePlugin } from './resize';
 export { imageBlockToolbarPlugin } from './toolbar';
+export { imageBlockContextMenuPlugin } from './context-menu';
 export { imageUploadProgressPlugin, insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 export { imageViewPlugin } from './view';
 
@@ -554,6 +556,8 @@ export async function openImageDialogForEdit(
 
 // Register the openImageDialogForEdit function with the toolbar module
 setOpenImageDialogForEdit(openImageDialogForEdit);
+// Register with the context menu module (right-click 编辑)
+setImageContextMenuEditHandler(openImageDialogForEdit);
 
 // ---------------------------------------------------------------------------
 // Exports

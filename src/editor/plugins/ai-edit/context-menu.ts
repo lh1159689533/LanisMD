@@ -12,35 +12,14 @@
 
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
+import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
 import { AI_COMMANDS } from '@/services/ai/commands';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { toggleImmersiveReading } from '@/utils/immersive-reading';
 import { runAiCommand } from './generator';
-
-/** 当前显示的右键菜单（全局唯一） */
-let activeMenu: HTMLElement | null = null;
-
-/** 关闭当前活跃的右键菜单 */
-function closeActiveMenu() {
-  if (activeMenu) {
-    activeMenu.remove();
-    activeMenu = null;
-  }
-}
-
-/** 菜单项定义 */
-interface MenuItem {
-  label: string;
-  icon?: string;
-  /** 分隔线标记 */
-  separator?: boolean;
-  /** 是否禁用 */
-  disabled?: boolean;
-  /** 点击回调 */
-  action?: () => void;
-}
+import { showContextMenu, closeActiveMenu, type ContextMenuItem } from '../context-menu/renderer';
 
 /**
  * 在编辑器上注册自定义右键菜单。
@@ -52,100 +31,18 @@ export function registerContextMenu(view: EditorView): () => void {
     e.stopPropagation();
     closeActiveMenu();
 
+    // 右键时 macOS WebKit 会自动选中光标下的词（英文整词、中文单字），
+    // 但它只改了 DOM 选区、未同步到编辑器 state。此处清掉该自动选词，
+    // 让屏幕高亮与「编辑器内部无选中」保持一致，菜单据此正确显示为无选中。
+    if (view.state.selection.empty) {
+      const domSelection = window.getSelection();
+      if (domSelection && !domSelection.isCollapsed) {
+        domSelection.removeAllRanges();
+      }
+    }
+
     const items = buildMenuItems(view);
-    if (items.length === 0) return;
-
-    // 创建菜单 DOM
-    const menu = document.createElement('div');
-    menu.className = 'lanismd-context-menu';
-
-    for (const item of items) {
-      if (item.separator) {
-        const sep = document.createElement('div');
-        sep.className = 'lanismd-context-menu-separator';
-        menu.appendChild(sep);
-        continue;
-      }
-
-      const btn = document.createElement('button');
-      btn.className = 'lanismd-context-menu-item';
-      if (item.disabled) {
-        btn.classList.add('lanismd-context-menu-item-disabled');
-        btn.disabled = true;
-      }
-      btn.type = 'button';
-
-      if (item.icon) {
-        const iconSpan = document.createElement('span');
-        iconSpan.className = 'lanismd-context-menu-icon';
-        iconSpan.innerHTML = item.icon;
-        btn.appendChild(iconSpan);
-      }
-
-      const labelSpan = document.createElement('span');
-      labelSpan.textContent = item.label;
-      btn.appendChild(labelSpan);
-
-      if (!item.disabled && item.action) {
-        btn.addEventListener('mousedown', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          closeActiveMenu();
-          item.action!();
-        });
-      }
-
-      menu.appendChild(btn);
-    }
-
-    // 定位菜单（position: fixed 已在 CSS 中设置）
-    menu.style.left = `${e.clientX}px`;
-    menu.style.top = `${e.clientY}px`;
-
-    document.body.appendChild(menu);
-    activeMenu = menu;
-
-    // 延迟调整位置确保在视口内
-    requestAnimationFrame(() => {
-      const rect = menu.getBoundingClientRect();
-      if (rect.right > window.innerWidth - 8) {
-        menu.style.left = `${window.innerWidth - rect.width - 8}px`;
-      }
-      if (rect.bottom > window.innerHeight - 8) {
-        menu.style.top = `${window.innerHeight - rect.height - 8}px`;
-      }
-    });
-
-    // 点击其他位置关闭
-    function handleOutsideClick(ev: MouseEvent) {
-      if (!menu.contains(ev.target as Node)) {
-        closeActiveMenu();
-        document.removeEventListener('mousedown', handleOutsideClick, true);
-        document.removeEventListener('keydown', handleEscape);
-      }
-    }
-
-    // Escape 键关闭
-    function handleEscape(ev: KeyboardEvent) {
-      if (ev.key === 'Escape') {
-        closeActiveMenu();
-        document.removeEventListener('mousedown', handleOutsideClick, true);
-        document.removeEventListener('keydown', handleEscape);
-      }
-    }
-
-    // 延迟绑定，避免当前事件立刻触发
-    requestAnimationFrame(() => {
-      document.addEventListener('mousedown', handleOutsideClick, true);
-      document.addEventListener('keydown', handleEscape);
-    });
-
-    // 滚动时关闭
-    function handleScroll() {
-      closeActiveMenu();
-      document.removeEventListener('scroll', handleScroll, true);
-    }
-    document.addEventListener('scroll', handleScroll, true);
+    showContextMenu(items, e.clientX, e.clientY);
   }
 
   view.dom.addEventListener('contextmenu', handleContextMenu);
@@ -184,13 +81,13 @@ const ICON_AI =
 const ICON_BOOK =
   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
 
-function buildMenuItems(view: EditorView): MenuItem[] {
+function buildMenuItems(view: EditorView): ContextMenuItem[] {
   const { state } = view;
   const { from, to } = state.selection;
   const hasSelection = from !== to;
   const immersive = useUIStore.getState().immersiveReading;
 
-  const items: MenuItem[] = [];
+  const items: ContextMenuItem[] = [];
 
   // -- 沉浸式阅读切换项（始终位于菜单顶部） --
   // 开启时显示「关闭沉浸式阅读」，关闭时显示「开启沉浸式阅读」
@@ -254,9 +151,9 @@ function buildMenuItems(view: EditorView): MenuItem[] {
     label: '粘贴',
     icon: ICON_PASTE,
     action: () => {
-      // 使用 Clipboard API 粘贴
-      void navigator.clipboard
-        .readText()
+      // 优先走 Tauri 剪贴板插件（Rust 侧读取，不经 WebKit），
+      // 避免触发 WKWebView 的原生「Paste」确认按钮
+      readText()
         .then((text) => {
           if (text) {
             const { state: s, dispatch } = view;
@@ -266,9 +163,20 @@ function buildMenuItems(view: EditorView): MenuItem[] {
           view.focus();
         })
         .catch(() => {
-          // 回退到 execCommand
-          document.execCommand('paste');
-          view.focus();
+          // 浏览器环境（pnpm dev）回退到 Clipboard API
+          void navigator.clipboard
+            .readText()
+            .then((text) => {
+              if (text) {
+                const { state: s, dispatch } = view;
+                const tr = s.tr.insertText(text, s.selection.from, s.selection.to);
+                dispatch(tr);
+              }
+              view.focus();
+            })
+            .catch(() => {
+              view.focus();
+            });
         });
     },
   });
