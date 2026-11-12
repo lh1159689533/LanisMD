@@ -10,13 +10,21 @@
  *   <img src="./assets/image.png" alt="" data-align="left" data-ratio="0.50">
  *
  * 图片大小通过 ratio（宽高比）控制，保存在 data-ratio 属性中。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                              | 关联                                     |
+ * | v1.0.0 | 初始实现：image-block 对齐扩展与 HTML img 序列化        | -                                        |
+ * | v1.0.1 | 修复 tight list 中 paragraph 混合内容被整体丢弃的问题； | BUGFIX: 源码模式 tight list 切预览渲染丢失  |
+ * |        | 转换逻辑抽取至 html-image-transform.ts                 |                                          |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import { imageBlockSchema } from '@milkdown/kit/component/image-block';
 import { $remark } from '@milkdown/kit/utils';
 import type { Root } from 'mdast';
-import { visit } from 'unist-util-visit';
-import { escapeHtml, extractAttr } from './types';
+import { escapeHtml, transformHtmlImageNodes } from './html-image-transform';
 
 // ---------------------------------------------------------------------------
 // Extend image-block schema to add align attr
@@ -142,90 +150,13 @@ export const extendedImageBlockSchema = imageBlockSchema.extendSchema((prev) => 
  * Remark 插件：将 HTML <img> 标签解析为 image-block 节点
  *
  * 注意：milkdown 的 image-block 是 block 级别节点，不能嵌套在 paragraph 内。
- * 需要处理两种情况：
- * 1. <img> 标签独占一行（顶层 html 节点）
+ * 覆盖三种上下文（详见 html-image-transform.ts）：
+ * 1. <img> 标签独占一行（块级 html 节点）
  * 2. <img> 标签是 paragraph 的唯一子节点
+ * 3. <img> 标签是 paragraph 的混合内容子节点（拆分 paragraph）
  */
 export const remarkHtmlImagePlugin = $remark('remarkHtmlImage', () => {
   return () => (tree: Root) => {
-    // 辅助函数：从 html 值创建 image-block 节点
-    const createImageBlockFromHtml = (
-      htmlValue: string,
-    ): {
-      type: string;
-      url: string;
-      title: string;
-      alt: string;
-      data: { align: string };
-    } | null => {
-      // 支持更宽松的匹配：允许 img 标签前后有空白字符
-      const trimmedValue = htmlValue.trim();
-      const imgMatch = trimmedValue.match(/^<img\s+([^>]*)\/?>$/i);
-      if (!imgMatch) return null;
-
-      const attrStr = imgMatch[1];
-      const src = extractAttr(attrStr, 'src');
-      if (!src) return null;
-
-      const dataAlign = extractAttr(attrStr, 'data-align');
-      // 只有当有 data-align 属性时才转换为 image-block
-      if (!dataAlign) return null;
-
-      const title = extractAttr(attrStr, 'title') || '';
-      const alt = extractAttr(attrStr, 'alt') || '';
-      const ratioStr = extractAttr(attrStr, 'data-ratio');
-      let ratio = ratioStr ? Number(ratioStr) : 1;
-      if (Number.isNaN(ratio) || ratio === 0) ratio = 1;
-
-      return {
-        type: 'image-block',
-        url: src,
-        title: title || alt,
-        alt: String(ratio),
-        data: { align: dataAlign },
-      };
-    };
-
-    // 收集需要替换的节点（避免在遍历时修改导致问题）
-    const replacements: { parent: unknown; index: number; newNode: unknown }[] = [];
-
-    // 情况 1：处理顶层 html 节点（<img> 标签独占一行）
-    visit(tree, 'html', (node, index, parent) => {
-      if (typeof node.value !== 'string') return;
-      const imageBlock = createImageBlockFromHtml(node.value);
-      if (!imageBlock) return;
-
-      // 记录替换（稍后执行）
-      if (parent && typeof index === 'number') {
-        replacements.push({ parent, index, newNode: imageBlock });
-      }
-    });
-
-    // 情况 2：处理 paragraph 内只有一个 html img 标签的情况
-    // 注意：需要将整个 paragraph 替换为 image-block，而不是替换 paragraph 内的 html 子节点
-    visit(tree, 'paragraph', (node, index, parent) => {
-      const children = (node as { children?: unknown[] }).children;
-      if (!children || children.length !== 1) return;
-
-      const firstChild = children[0] as { type?: string; value?: string };
-      if (!firstChild || firstChild.type !== 'html') return;
-
-      const htmlValue = firstChild.value;
-      if (typeof htmlValue !== 'string') return;
-
-      const imageBlock = createImageBlockFromHtml(htmlValue);
-      if (!imageBlock) return;
-
-      // 记录替换：用 image-block 替换整个 paragraph
-      if (parent && typeof index === 'number') {
-        replacements.push({ parent, index, newNode: imageBlock });
-      }
-    });
-
-    // 执行所有替换（从后往前，避免索引错位）
-    replacements.sort((a, b) => b.index - a.index);
-    for (const { parent, index, newNode } of replacements) {
-      (parent as { children: unknown[] }).children[index] = newNode;
-    }
+    transformHtmlImageNodes(tree);
   };
 });
