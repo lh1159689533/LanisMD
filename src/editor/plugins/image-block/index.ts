@@ -34,6 +34,7 @@ export { imageBlockToolbarPlugin } from './toolbar';
 export { imageBlockContextMenuPlugin } from './context-menu';
 export { imageUploadProgressPlugin, insertLoadingPlaceholder, replaceLoadingWithImage } from './upload-progress';
 export { imageViewPlugin } from './view';
+export { insertBlockAtCursor } from './insert-block';
 
 // 重新导出类型
 export type { ImageDialogResult } from './types';

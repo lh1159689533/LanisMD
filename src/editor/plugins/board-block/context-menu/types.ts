@@ -23,7 +23,7 @@ import type { BoardBlockState, BoardMode } from '../types';
  * 右键菜单触发场景。
  *
  * 由 `mode`（导图/画板）× `state`（预览/编辑）× 命中结果 共同确定：
- * - `preview`：只读态，任何位置都只显示「实际尺寸 / 适应画布」
+ * - `preview`：只读态，任何位置都显示「实际尺寸 / 适应画布 / 导出」
  * - `board-element`：画板编辑态，命中某个图形/连线/图片
  * - `board-blank`：画板编辑态，未命中任何元素
  * - `mind-node`：导图编辑态，命中某个导图节点

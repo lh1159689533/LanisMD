@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { ask as tauriAsk, message as tauriMessage } from '@tauri-apps/plugin-dialog';
 
 export interface DialogFilter {
   name: string;
@@ -55,27 +56,29 @@ export async function saveFileDialog(defaultName?: string): Promise<string | nul
 
 export async function showMessage(title: string, message: string): Promise<void> {
   try {
-    await invoke('plugin:dialog|message', {
-      message,
-      title,
-      kind: 'info',
-    });
-  } catch {
-    // fallback: alert
+    await tauriMessage(message, { title, kind: 'info' });
+  } catch (err) {
+    console.error('Failed to show message dialog:', err);
   }
 }
 
+/**
+ * 显示「是 / 否」确认对话框，用户点击「是」时返回 true。
+ *
+ * 必须走 @tauri-apps/plugin-dialog 的 ask()：Rust 端插件已移除独立的 `ask`
+ * 命令（仅保留 open / save / message），直接 invoke('plugin:dialog|ask') 会被拒绝，
+ * 若再被 catch 吞掉返回 false，就会表现为对话框不弹出、操作静默取消。
+ */
 export async function showConfirmDialog(title: string, message: string): Promise<boolean> {
   try {
-    const answer = await invoke<boolean>('plugin:dialog|ask', {
-      message,
+    return await tauriAsk(message, {
       title,
-      kind: 'info',
-      yesButtonLabel: '是',
-      noButtonLabel: '否',
+      kind: 'warning',
+      okLabel: '是',
+      cancelLabel: '否',
     });
-    return answer;
-  } catch {
+  } catch (err) {
+    console.error('Failed to show confirm dialog:', err);
     return false;
   }
 }

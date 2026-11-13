@@ -25,7 +25,11 @@ import { AI_COMMANDS } from '@/services/ai/commands';
 import type { AiCommand } from '@/types/ai';
 import { withShortcut } from '@/utils/shortcut';
 
-import { insertLoadingPlaceholder, replaceLoadingWithImage } from './image-block';
+import {
+  insertLoadingPlaceholder,
+  replaceLoadingWithImage,
+  insertBlockAtCursor,
+} from './image-block';
 import { runAiCommand } from './ai-edit';
 
 // ---------------------------------------------------------------------------
@@ -856,26 +860,10 @@ class TooltipToolbarView {
         tr = tr.delete(from, to);
       }
 
-      // 删除后，解析位置以找到父块边界
+      // 删除后在当前光标行插入 image-block（空行替换 / 行前 / 行后 / 拆分）
       const mappedPos = tr.mapping.map(from);
-      const $pos = tr.doc.resolve(mappedPos);
-
-      // 找到当前块（段落）的末尾，在其后插入 image-block
-      // 如果当前块在删除后变空，则完全替换它
-      const parentNode = $pos.parent;
-
       const imageBlock = imageBlockType.create({ src: '', caption: '', ratio: 1 });
-
-      if (parentNode.content.size === 0 || parentNode.textContent.trim() === '') {
-        // 删除后父块为空 — 用 image-block 替换它
-        const blockStart = $pos.before($pos.depth);
-        const blockEnd = $pos.after($pos.depth);
-        tr = tr.replaceWith(blockStart, blockEnd, imageBlock);
-      } else {
-        // 父块仍有内容 — 在当前块后插入 image-block
-        const blockEnd = $pos.after($pos.depth);
-        tr = tr.insert(blockEnd, imageBlock);
-      }
+      insertBlockAtCursor(tr, mappedPos, imageBlock);
 
       dispatch(tr.scrollIntoView());
       view.focus();

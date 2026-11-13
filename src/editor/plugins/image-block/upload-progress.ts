@@ -10,6 +10,7 @@ import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import { Decoration, DecorationSet } from '@milkdown/kit/prose/view';
 import type { EditorView } from '@milkdown/kit/prose/view';
+import { insertBlockAtCursor } from './insert-block';
 
 // ---------------------------------------------------------------------------
 // Plugin Key & Types
@@ -151,12 +152,12 @@ export function replaceLoadingWithImage(
   const found = decoSet.find(undefined, undefined, (spec) => spec.id === placeholderId);
 
   // Remove the placeholder decoration
-  let tr = state.tr.setMeta(uploadProgressPluginKey, {
+  const tr = state.tr.setMeta(uploadProgressPluginKey, {
     type: 'remove',
     id: placeholderId,
   } as RemovePlaceholderAction);
 
-  // Insert the image-block node at the placeholder position (or fallback to cursor)
+  // 在占位符所在的光标行插入 image-block（占位符丢失时回退到当前光标）
   if (src) {
     const schema = state.schema;
     const imageBlockType = schema.nodes['image-block'] || schema.nodes.image_block;
@@ -164,7 +165,9 @@ export function replaceLoadingWithImage(
     if (imageBlockType) {
       const imageNode = imageBlockType.create({ src, caption: '' });
       const insertPos = found.length > 0 ? found[0].from : state.selection.from;
-      tr = tr.insert(insertPos, imageNode);
+      // 光标仍停留在占位符处（用户未移走）时，插入后把光标放到图片之后，便于继续输入
+      const cursorAtPlaceholder = state.selection.empty && state.selection.from === insertPos;
+      insertBlockAtCursor(tr, insertPos, imageNode, { moveCursorAfter: cursorAtPlaceholder });
     }
   }
 

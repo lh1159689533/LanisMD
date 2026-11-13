@@ -8,7 +8,7 @@
 import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
 
-import { openImageDialog } from '../image-block';
+import { openImageDialog, insertBlockAtCursor } from '../image-block';
 import { createLinkDialog } from '../tooltip-toolbar';
 import { setMermaidAutoEdit } from '../mermaid-block';
 import { insertFileBlock } from '../file-block';
@@ -480,21 +480,11 @@ function insertImage(view: EditorView) {
   const imageBlockType = schema.nodes['image-block'] || schema.nodes.image_block;
 
   if (imageBlockType) {
-    const { $from } = state.selection;
-    const parent = $from.parent;
-
     const imageBlock = imageBlockType.create({ src: '', caption: '', ratio: 1 });
-
-    if (parent.type === schema.nodes.paragraph && parent.content.size === 0) {
-      const from = $from.before();
-      const to = $from.after();
-      const tr = state.tr.replaceWith(from, to, imageBlock);
-      dispatch(tr.scrollIntoView());
-    } else {
-      const insertPos = $from.after();
-      const tr = state.tr.insert(insertPos, imageBlock);
-      dispatch(tr.scrollIntoView());
-    }
+    // 在当前光标行插入：空行直接替换，否则按光标位置插在行前/行后/拆分处
+    const tr = state.tr;
+    insertBlockAtCursor(tr, state.selection.from, imageBlock);
+    dispatch(tr.scrollIntoView());
     view.focus();
   } else {
     // 回退：打开图片选择对话框

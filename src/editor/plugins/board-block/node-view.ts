@@ -25,6 +25,7 @@
  * | v1.5.1 | 修复：编辑态删除画布内元素误删整个画板块（焦点未入画板宿主） | REQ: 20261027-board-whiteboard-draw |
  * | v1.6.0 | 集成右键菜单（画板/导图 × 元素/空白四场景 + 预览态画布菜单） | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
  * | v1.6.1 | 「添加图形」改为右键位置直接插入默认矩形并选中 | REQ: 20261028-board-context-menu |
+ * | v1.7.0 | 块工具栏与右键菜单新增导出 PNG / SVG             | FEAT: 文本绘图/导图/画板导出 |
  * /@changelog
  *
  * @author hhhuilli
@@ -41,8 +42,11 @@ import { BoardCreationMode, setCreationMode } from '@plait/common';
 import { BasicShapes, DrawTransforms } from '@plait/draw';
 
 import { useSettingsStore } from '@/stores/settings-store';
+import type { DiagramExportFormat } from '@/utils/diagram-export';
 
+import { showContextMenu } from '../context-menu/renderer';
 import { BoardReact } from './board-react';
+import { exportBoard } from './export';
 import {
   createToolbar,
   updateToolbarFullscreenMode,
@@ -62,6 +66,7 @@ import { decode, encode } from './codec';
 import {
   CSS_PREFIX,
   DEFAULT_HEIGHT,
+  ICONS,
   MAX_HEIGHT,
   MIN_HEIGHT,
   WRITE_BACK_DEBOUNCE_MS,
@@ -194,6 +199,7 @@ export class BoardBlockNodeView implements NodeView {
       onToggleEdit: () => this.toggleEdit(),
       onDelete: () => this.deleteBlock(),
       onFullscreen: () => void this.handleFullscreenClick(),
+      onExport: (anchor) => this.showExportMenu(anchor),
     };
     this.toolbar = createToolbar(callbacks, { layout: 'vertical' });
     this.dom.appendChild(this.toolbar);
@@ -623,6 +629,31 @@ export class BoardBlockNodeView implements NodeView {
   /** 是否处于锁定态 */
   private get isLocked(): boolean {
     return this.lockOverlay !== null;
+  }
+
+  // -------------------------------------------------------------------------
+  // 导出
+  // -------------------------------------------------------------------------
+
+  /** 在导出按钮右侧弹出格式菜单 */
+  private showExportMenu(anchor: HTMLElement): void {
+    if (!this.board || this.isLocked) return;
+    const rect = anchor.getBoundingClientRect();
+    showContextMenu(
+      [
+        { label: '导出为 PNG', icon: ICONS.png, action: () => void this.exportAs('png') },
+        { label: '导出为 SVG', icon: ICONS.svg, action: () => void this.exportAs('svg') },
+      ],
+      rect.right + 4,
+      rect.top,
+    );
+  }
+
+  /** 导出前先冲刷待回写数据，保证文档与导出内容一致 */
+  private async exportAs(format: DiagramExportFormat): Promise<void> {
+    if (!this.board) return;
+    if (this.writeBackTimer) this.flushWriteBack();
+    await exportBoard(this.board, this.mode, format);
   }
 
   // -------------------------------------------------------------------------

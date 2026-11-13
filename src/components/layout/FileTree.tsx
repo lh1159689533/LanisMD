@@ -1039,9 +1039,13 @@ export function FileTree() {
         await fileService.moveToTrash(targetPath);
         await refreshTree();
 
-        // If the trashed file was currently open, clear the editor
-        const currentFile = useFileStore.getState().currentFile;
-        if (currentFile?.filePath === targetPath) {
+        // 被删除的是当前打开的文件，或当前文件位于被删除的目录内时，清空编辑器
+        const currentPath = useFileStore.getState().currentFile?.filePath?.replace(/\\/g, '/');
+        const trashedPath = targetPath.replace(/\\/g, '/').replace(/\/+$/, '');
+        if (
+          currentPath &&
+          (currentPath === trashedPath || currentPath.startsWith(`${trashedPath}/`))
+        ) {
           useFileStore.getState().closeFile();
         }
       } catch (err) {

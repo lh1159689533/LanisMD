@@ -15,9 +15,10 @@
 import type { Node } from '@milkdown/kit/prose/model';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
+import { resolveBackgroundColor } from '@/utils/diagram-export';
 import { renderMermaid } from './renderer';
 import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
-import { exportAsPng, exportAsSvg } from './export';
+import { exportMermaid } from './export';
 import { onThemeChange } from './theme';
 import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer';
 import { CSS_PREFIX, ICONS, RENDER_DEBOUNCE_MS, type MermaidBlockState } from './types';
@@ -421,21 +422,11 @@ export class MermaidNodeView implements NodeView {
   // -------------------------------------------------------------------------
 
   private async handleExportPng(): Promise<void> {
-    const svg = this.lastSuccessfulSvg;
-    if (!svg) {
-      console.warn('没有可导出的图表');
-      return;
-    }
-    await exportAsPng(svg, { format: 'png' });
+    await exportMermaid(this.lastSuccessfulSvg, 'png', resolveBackgroundColor(this.dom));
   }
 
   private async handleExportSvg(): Promise<void> {
-    const svg = this.lastSuccessfulSvg;
-    if (!svg) {
-      console.warn('没有可导出的图表');
-      return;
-    }
-    await exportAsSvg(svg, { format: 'svg' });
+    await exportMermaid(this.lastSuccessfulSvg, 'svg', resolveBackgroundColor(this.dom));
   }
 
   // -------------------------------------------------------------------------

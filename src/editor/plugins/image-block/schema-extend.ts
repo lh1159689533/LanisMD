@@ -16,6 +16,8 @@
  * | v1.0.0 | 初始实现：image-block 对齐扩展与 HTML img 序列化        | -                                        |
  * | v1.0.1 | 修复 tight list 中 paragraph 混合内容被整体丢弃的问题； | BUGFIX: 源码模式 tight list 切预览渲染丢失  |
  * |        | 转换逻辑抽取至 html-image-transform.ts                 |                                          |
+ * | v1.0.2 | 修复无 title 图片解析时 caption 为 null 触发属性校验    | BUGFIX: 源码模式切预览图片未渲染          |
+ * |        | 失败，导致图片及后续内容丢失                           |                                          |
  * /@changelog
  *
  * @author hhhuilli
@@ -82,8 +84,11 @@ export const extendedImageBlockSchema = imageBlockSchema.extendSchema((prev) => 
         match: ({ type }) => type === 'image-block',
         runner: (state, node, type) => {
           // 处理 image-block 节点（包括从 HTML <img> 转换来的）
-          const src = node.url as string;
-          const caption = node.title as string;
+          // 注意：markdown 省略 title 时 mdast 给出的是 null，而 schema 中
+          // src / caption 声明了 validate: 'string'，传入 null 会在 createAndFill
+          // 时抛错，导致该节点及后续内容在切回预览时整体丢失，必须兜底为空串
+          const src = (node.url as string | null) ?? '';
+          const caption = (node.title as string | null) ?? '';
           let ratio = Number((node.alt as string) || 1);
           if (Number.isNaN(ratio) || ratio === 0) ratio = 1;
 

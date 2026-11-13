@@ -3,7 +3,7 @@
  *
  * 在 image-block 上注册捕获阶段的 contextmenu 监听：
  * - 右键落在图片节点上时：先选中该图片（与点击选中一致），
- *   再弹出图片专属菜单（编辑 / 左对齐 / 居中 / 右对齐 / 删除），
+ *   再弹出图片专属菜单（预览 / 编辑 / 左对齐 / 居中 / 右对齐 / 删除），
  *   不再触发默认右键菜单。
  * - 右键其他区域：不拦截，交由默认右键菜单处理。
  */
@@ -16,6 +16,11 @@ import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer'
 import { copyNode, cutNode } from '../context-menu/node-actions';
 import { findNodePos, toolbarIcons } from './toolbar';
 import { selectImageBlock } from './resize';
+import { openImagePreview } from '../image-preview';
+
+/** 预览图标 */
+const ICON_PREVIEW =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
 /** 复制图标 */
 const ICON_COPY =
@@ -128,6 +133,13 @@ function handleContextMenu(view: EditorView, e: MouseEvent): void {
   const currentAlign = getCurrentAlign(view, nodePos);
 
   const items: ContextMenuItem[] = [
+    {
+      label: '预览',
+      icon: ICON_PREVIEW,
+      action: () => {
+        openImagePreview(view, imgEl);
+      },
+    },
     {
       label: '编辑',
       icon: toolbarIcons.edit,
