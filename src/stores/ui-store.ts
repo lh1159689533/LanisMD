@@ -28,9 +28,12 @@ function writeImmersivePersisted(value: boolean): void {
   }
 }
 
+/** 侧边栏面板：changes / history 仅在 Git 仓库下可用 */
+export type SidebarPanel = 'outline' | 'files' | 'search' | 'changes' | 'history';
+
 interface UIState {
   sidebarOpen: boolean;
-  sidebarPanel: 'outline' | 'files' | 'search';
+  sidebarPanel: SidebarPanel;
   sidebarWidth: number;
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
@@ -80,7 +83,7 @@ interface UIState {
   collapseSidebar: (nextWidth: number) => void;
   /** 原子地以给定宽度打开侧边栏 */
   expandSidebar: (width: number) => void;
-  setSidebarPanel: (panel: 'outline' | 'files' | 'search') => void;
+  setSidebarPanel: (panel: SidebarPanel) => void;
   setSidebarWidth: (width: number) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;

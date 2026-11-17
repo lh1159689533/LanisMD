@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
-import { RiFolderOpenLine, RiSettings3Line, RiCommandLine, RiHistoryLine } from 'react-icons/ri';
+import {
+  RiFolderOpenLine,
+  RiSettings3Line,
+  RiCommandLine,
+  RiHistoryLine,
+  RiFileTextLine,
+  RiGitRepositoryLine,
+} from 'react-icons/ri';
 import { useFile } from '@/hooks/useFile';
+import { useOpenFolder } from '@/hooks/useOpenFolder';
 import { useUIStore } from '@/stores/ui-store';
 
 interface ActionItem {
@@ -19,6 +27,7 @@ interface ActionItem {
  */
 export function StartActions() {
   const { openFileFromDisk } = useFile();
+  const { openLocalFolder, openRemoteFolder } = useOpenFolder();
   const openSettings = useUIStore((s) => s.openSettings);
   const openCommandPalette = useUIStore((s) => s.openCommandPalette);
   const openRecentFolders = useUIStore((s) => s.toggleRecentFolders);
@@ -28,12 +37,26 @@ export function StartActions() {
 
   const actions: ActionItem[] = [
     {
-      icon: <RiFolderOpenLine size={16} />,
+      icon: <RiFileTextLine size={16} />,
       label: '打开文件',
       shortcut: `${modKey}O`,
       onClick: () => {
         void openFileFromDisk();
       },
+    },
+    {
+      icon: <RiFolderOpenLine size={16} />,
+      label: '打开本地文件夹',
+      shortcut: '',
+      onClick: () => {
+        void openLocalFolder();
+      },
+    },
+    {
+      icon: <RiGitRepositoryLine size={16} />,
+      label: '打开远程仓库',
+      shortcut: '',
+      onClick: openRemoteFolder,
     },
     {
       icon: <RiCommandLine size={16} />,

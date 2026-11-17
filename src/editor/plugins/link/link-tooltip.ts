@@ -14,14 +14,13 @@ import { tooltipFactory } from '@milkdown/kit/plugin/tooltip';
 import type { Ctx } from '@milkdown/kit/ctx';
 import type { EditorView } from '@milkdown/kit/prose/view';
 import type { EditorState } from '@milkdown/kit/prose/state';
-import { navigateLink } from './click';
-import { createLinkDialog } from '../tooltip-toolbar';
+import { openLink, copyLink, editLink, unlinkLink, findLinkAtPos, type LinkInfo } from './actions';
 
 // ---------------------------------------------------------------------------
 // SVG Icons
 // ---------------------------------------------------------------------------
 
-const linkTooltipIcons = {
+export const linkTooltipIcons = {
   open: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
   edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
   copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
@@ -148,10 +147,7 @@ class LinkTooltipView {
     const href = this.linkHref;
     const view = this.view ?? undefined;
     this.hide();
-    // navigateLink 是 async（外部 URL 可能要弹确认框），需要捕获异常避免静默失败
-    Promise.resolve(navigateLink(href, view)).catch((err) => {
-      console.error('Failed to open link from tooltip:', err);
-    });
+    openLink(view, href);
   }
 
   private handleEdit() {
@@ -161,42 +157,13 @@ class LinkTooltipView {
     // Hide the tooltip while dialog is open
     this.hide();
 
-    const dialog = createLinkDialog(view, this.linkText, this.linkHref, (text, href) => {
-      const linkType = view.state.schema.marks.link;
-      if (!linkType) return;
-
-      const { state, dispatch } = view;
-      let tr = state.tr;
-
-      // Remove existing link marks first
-      tr = tr.removeMark(this.linkFrom, this.linkTo, linkType);
-
-      // If the text changed, replace the text content
-      const currentText = state.doc.textBetween(this.linkFrom, this.linkTo, ' ');
-      if (text !== currentText) {
-        tr = tr.insertText(text, this.linkFrom, this.linkTo);
-        const newTo = this.linkFrom + text.length;
-        tr = tr.addMark(this.linkFrom, newTo, linkType.create({ href }));
-      } else {
-        tr = tr.addMark(this.linkFrom, this.linkTo, linkType.create({ href }));
-      }
-
-      dispatch(tr);
-      view.focus();
-    });
-
-    document.body.appendChild(dialog);
-    setTimeout(() => {
-      const firstInput = dialog.querySelector('input') as HTMLInputElement;
-      if (firstInput) firstInput.focus();
-    }, 50);
+    editLink(view, this.linkFrom, this.linkTo, this.linkText, this.linkHref);
   }
 
   private handleCopy(btn: HTMLButtonElement) {
     if (!this.linkHref) return;
 
-    navigator.clipboard
-      .writeText(this.linkHref)
+    copyLink(this.linkHref)
       .then(() => {
         // Show checkmark feedback
         const origIcon = btn.innerHTML;
@@ -214,13 +181,7 @@ class LinkTooltipView {
 
   private handleUnlink() {
     if (!this.view) return;
-    const { state, dispatch } = this.view;
-    const linkType = state.schema.marks.link;
-    if (!linkType) return;
-
-    const tr = state.tr.removeMark(this.linkFrom, this.linkTo, linkType);
-    dispatch(tr);
-    this.view.focus();
+    unlinkLink(this.view, this.linkFrom, this.linkTo);
     this.hide();
   }
 
@@ -245,66 +206,6 @@ class LinkTooltipView {
 // ---------------------------------------------------------------------------
 // Helpers: detect link under mouse
 // ---------------------------------------------------------------------------
-
-interface LinkInfo {
-  from: number;
-  to: number;
-  href: string;
-  text: string;
-}
-
-/**
- * Given a mouse position, find a link mark under it (if any).
- */
-function findLinkAtPos(view: EditorView, x: number, y: number): LinkInfo | null {
-  const pos = view.posAtCoords({ left: x, top: y });
-  if (!pos) return null;
-
-  const { state } = view;
-  const linkType = state.schema.marks.link;
-  if (!linkType) return null;
-
-  const $pos = state.doc.resolve(pos.pos);
-
-  // Check the marks at this position
-  const marks = $pos.marks();
-  const linkMark = marks.find((m) => m.type === linkType);
-  if (!linkMark) return null;
-
-  // Walk backward to find the start of the link
-  let from = pos.pos;
-  while (from > 0) {
-    const $before = state.doc.resolve(from - 1);
-    if ($before.parent !== $pos.parent) break;
-    const beforeMarks = $before.marksAcross($pos);
-    if (
-      !beforeMarks ||
-      !beforeMarks.find((m) => m.type === linkType && m.attrs.href === linkMark.attrs.href)
-    ) {
-      break;
-    }
-    from--;
-  }
-
-  // Walk forward to find the end of the link
-  let to = pos.pos;
-  const parentEnd = $pos.end();
-  while (to < parentEnd) {
-    const $after = state.doc.resolve(to + 1);
-    if ($after.parent !== $pos.parent) break;
-    const node = $pos.parent.childAfter(to - $pos.start());
-    if (!node.node) break;
-    const nodeMarks = node.node.marks;
-    if (!nodeMarks.find((m) => m.type === linkType && m.attrs.href === linkMark.attrs.href)) {
-      break;
-    }
-    to = $pos.start() + node.offset + node.node.nodeSize;
-  }
-
-  const text = state.doc.textBetween(from, to, ' ');
-
-  return { from, to, href: linkMark.attrs.href || '', text };
-}
 
 /**
  * Find the DOM `<a>` element at the given coordinates (if any).

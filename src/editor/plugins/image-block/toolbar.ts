@@ -2,6 +2,7 @@
  * Image Block Toolbar Plugin
  *
  * 为 image-block 组件添加操作栏（悬浮在图片右上角）：
+ * - 预览按钮：打开图片预览层
  * - 编辑按钮：点击弹出图片选择弹窗（本地/URL）
  * - 对齐按钮：左对齐 / 居中 / 右对齐
  * - 删除按钮：删除图片块
@@ -13,13 +14,15 @@ import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import { openImagePreview, previewIcons } from '../image-preview';
+
 const imageToolbarPluginKey = new PluginKey('IMAGE_BLOCK_TOOLBAR');
 
 // ---------------------------------------------------------------------------
 // SVG Icons
 // ---------------------------------------------------------------------------
 
-const toolbarIcons = {
+export const toolbarIcons = {
   edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
   alignLeft:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>',
@@ -101,6 +104,13 @@ function createToolbar(
       btnEl.classList.toggle('active', btnEl.dataset.align === align);
     });
   };
+
+  // 预览按钮
+  const previewBtn = createToolbarButton(previewIcons.preview, '预览图片（双击图片）', () => {
+    const img = blockEl.querySelector('.image-wrapper > img') as HTMLImageElement | null;
+    openImagePreview(view, img);
+  });
+  toolbar.appendChild(previewBtn);
 
   // Edit button
   const editBtn = createToolbarButton(toolbarIcons.edit, '编辑图片', () => {
@@ -185,7 +195,7 @@ function createSeparator(): HTMLElement {
 // Find the position of an image-block node from its DOM element
 // ---------------------------------------------------------------------------
 
-function findNodePos(view: EditorView, blockEl: HTMLElement): number | null {
+export function findNodePos(view: EditorView, blockEl: HTMLElement): number | null {
   // Walk through the document to find the image-block at this DOM position
   const pos = view.posAtDOM(blockEl, 0);
   if (pos == null) return null;

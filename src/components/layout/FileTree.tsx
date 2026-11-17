@@ -15,25 +15,20 @@ import {
   RiClipboardLine,
   RiFolderOpenFill,
   RiHistoryLine,
-  RiDownloadCloud2Line,
-  RiUploadCloud2Line,
+  RiGitRepositoryLine,
 } from 'react-icons/ri';
-import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
 import { save as tauriSave } from '@tauri-apps/plugin-dialog';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useFileStore } from '@/stores/file-store';
 import { useUIStore } from '@/stores/ui-store';
-import { useRecentFoldersStore } from '@/stores/recent-folders-store';
-import { useSyncStore } from '@/stores/sync-store';
-import { useSettingsStore } from '@/stores/settings-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
 import { timeAgo } from '@/utils/time';
 import { cn } from '@/utils/cn';
 import { ContextMenu } from '@/components/common/ContextMenu';
 import type { ContextMenuGroup } from '@/components/common/ContextMenu';
-import { SyncPullDialog } from '@/components/sync/SyncPullDialog';
-import { SyncPushDialog } from '@/components/sync/SyncPushDialog';
+import { OpenFolderMenu } from '@/components/git/OpenFolderMenu';
+import { useOpenFolder } from '@/hooks/useOpenFolder';
 import type { FileTreeNode } from '@/types';
 
 import '../../styles/layout/file-tree.css';
@@ -724,34 +719,15 @@ function FileListItem({
 export function FileTree() {
   const rootPath = useFileTreeStore((s) => s.rootPath);
   const tree = useFileTreeStore((s) => s.tree);
-  const openFolder = useFileTreeStore((s) => s.openFolder);
   const refreshTree = useFileTreeStore((s) => s.refreshTree);
   const { openFile } = useFileStore();
-  const activeSync = useSyncStore((s) => s.activeSync);
-  const syncEnabled = useSettingsStore((s) => s.config.sync.enabled);
-  // 仅在同步真正进行中时禁用按钮（completed/error 状态不算进行中）
-  const isSyncing = Boolean(
-    activeSync && activeSync.phase !== 'completed' && activeSync.phase !== 'error',
-  );
+  const { openLocalFolder, openRemoteFolder } = useOpenFolder();
 
   const [showMenu, setShowMenu] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('tree');
-  const [showPullDialog, setShowPullDialog] = useState(false);
-  const [showPushDialog, setShowPushDialog] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const fileTreeRootRef = useRef<HTMLDivElement>(null);
-
-  // 文件夹变化时加载同步清单
-  const loadManifest = useSyncStore((s) => s.loadManifest);
-  const clearManifest = useSyncStore((s) => s.clearManifest);
-  useEffect(() => {
-    if (rootPath) {
-      loadManifest(rootPath);
-    } else {
-      clearManifest();
-    }
-  }, [rootPath, loadManifest, clearManifest]);
 
   // Recent folders panel state（浮层已提升至 Sidebar，此处仅保留 empty state 触发按钮所需绑定）
   const toggleRecentFolders = useUIStore((s) => s.toggleRecentFolders);
@@ -759,7 +735,6 @@ export function FileTree() {
   const unregisterRecentFoldersTriggerEl = useUIStore((s) => s.unregisterRecentFoldersTriggerEl);
   // empty state 中的「最近打开」按钮 ref，仅在该状态下挂载，需注册到 store 以排除 outside-click
   const emptyRecentBtnRef = useRef<HTMLButtonElement>(null);
-  const addRecentFolder = useRecentFoldersStore((s) => s.addRecentFolder);
 
   // Context menu state
   const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
@@ -828,71 +803,6 @@ export function FileTree() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
-
-  // ─── Folder open ──────────────────────────────────────
-
-  const handleOpenFolder = useCallback(async () => {
-    const selected = await tauriOpen({
-      multiple: false,
-      directory: true,
-      title: '打开文件夹',
-    });
-
-    if (!selected) return;
-
-    const folderPath =
-      typeof selected === 'string'
-        ? selected
-        : selected && typeof selected === 'object' && 'path' in selected
-          ? (selected as { path: string }).path
-          : null;
-
-    if (folderPath) {
-      // Handle unsaved changes before switching folder
-      await handleUnsavedBeforeSwitchFolder();
-      await openFolder(folderPath);
-      addRecentFolder(folderPath);
-    }
-  }, [openFolder, addRecentFolder]);
-
-  /** Handle unsaved changes before switching folders (same logic as useFile.ts) */
-  const handleUnsavedBeforeSwitchFolder = useCallback(async () => {
-    const current = useFileStore.getState().currentFile;
-    if (!current?.isDirty) return;
-
-    if (current.filePath) {
-      // Has a path → silent auto-save
-      try {
-        await fileService.writeFile({
-          path: current.filePath,
-          content: current.content,
-          encoding: current.encoding,
-        });
-        useFileStore.getState().markSaved();
-      } catch (err) {
-        console.error('Failed to auto-save before switching folder:', err);
-      }
-    } else {
-      // Untitled with changes → prompt Save As
-      const { save: tauriSaveDialog } = await import('@tauri-apps/plugin-dialog');
-      const savePath = await tauriSaveDialog({
-        defaultPath: `${current.fileName}.md`,
-        filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
-      });
-
-      if (savePath) {
-        try {
-          await fileService.writeFile({
-            path: savePath,
-            content: current.content,
-            encoding: current.encoding,
-          });
-        } catch (err) {
-          console.error('Failed to save untitled file:', err);
-        }
-      }
-    }
-  }, []);
 
   // ─── Context menu actions ─────────────────────────────
 
@@ -1039,9 +949,13 @@ export function FileTree() {
         await fileService.moveToTrash(targetPath);
         await refreshTree();
 
-        // If the trashed file was currently open, clear the editor
-        const currentFile = useFileStore.getState().currentFile;
-        if (currentFile?.filePath === targetPath) {
+        // 被删除的是当前打开的文件，或当前文件位于被删除的目录内时，清空编辑器
+        const currentPath = useFileStore.getState().currentFile?.filePath?.replace(/\\/g, '/');
+        const trashedPath = targetPath.replace(/\\/g, '/').replace(/\/+$/, '');
+        if (
+          currentPath &&
+          (currentPath === trashedPath || currentPath.startsWith(`${trashedPath}/`))
+        ) {
           useFileStore.getState().closeFile();
         }
       } catch (err) {
@@ -1443,9 +1357,13 @@ export function FileTree() {
         <RiFolderAddLine size={32} className="file-tree-empty-icon" />
         <p className="file-tree-empty-text">打开文件夹以浏览 Markdown 文件</p>
         <div className="file-tree-empty-actions">
-          <button onClick={handleOpenFolder} className="file-tree-empty-btn">
+          <button onClick={() => void openLocalFolder()} className="file-tree-empty-btn">
             <RiFolderOpenLine size={14} />
-            打开文件夹
+            打开本地文件夹
+          </button>
+          <button onClick={openRemoteFolder} className="file-tree-empty-btn">
+            <RiGitRepositoryLine size={14} />
+            打开远程仓库
           </button>
           <button
             ref={emptyRecentBtnRef}
@@ -1495,35 +1413,11 @@ export function FileTree() {
 
           <span className="file-tree-header-separator" />
 
-          <button
-            onClick={handleOpenFolder}
-            className="file-tree-header-btn"
+          <OpenFolderMenu
+            trigger={<RiFolderOpenLine size={13} />}
+            triggerClassName="file-tree-header-btn"
             title="打开其他文件夹"
-          >
-            <RiFolderOpenLine size={13} />
-          </button>
-
-          {/* 同步按钮：仅在远程同步启用时显示 */}
-          {syncEnabled && (
-            <>
-              <button
-                onClick={() => setShowPullDialog(true)}
-                className="file-tree-header-btn"
-                title="拉取远程文档"
-                disabled={isSyncing}
-              >
-                <RiDownloadCloud2Line size={13} />
-              </button>
-              <button
-                onClick={() => setShowPushDialog(true)}
-                className="file-tree-header-btn"
-                title="推送到远程仓库"
-                disabled={isSyncing}
-              >
-                <RiUploadCloud2Line size={13} />
-              </button>
-            </>
-          )}
+          />
         </div>
       </div>
 
@@ -1613,10 +1507,6 @@ export function FileTree() {
           onClose={closeCtxMenu}
         />
       )}
-
-      {/* 同步弹窗 */}
-      {showPullDialog && <SyncPullDialog onClose={() => setShowPullDialog(false)} />}
-      {showPushDialog && <SyncPushDialog onClose={() => setShowPushDialog(false)} />}
     </div>
   );
 }

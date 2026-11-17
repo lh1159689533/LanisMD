@@ -4,6 +4,7 @@
  * 处理行内图片的点击行为：
  * - 阻止点击时选中图片内文字（Live Text/OCR）
  * - 点击图片时选中该节点
+ * - 编辑器不可编辑（沉浸式阅读）时不处理，交由 image-preview 插件打开预览
  */
 
 import { $prose } from '@milkdown/kit/utils';
@@ -56,7 +57,6 @@ function selectInlineImage(view: EditorView, wrapperEl: HTMLElement): boolean {
   try {
     const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, imagePos));
     view.dispatch(tr);
-    console.log('[ImageInlineClick] Selected inline image at pos:', imagePos);
     return true;
   } catch (e) {
     console.warn('[ImageInlineClick] Failed to select inline image:', e);
@@ -76,8 +76,8 @@ export const imageInlineClickPlugin = $prose(() => {
           // Check if clicking on an inline image or its wrapper
           const inlineImageWrapper = target.closest('.milkdown-image-inline');
           if (!inlineImageWrapper) return false;
-
-          console.log('[ImageInlineClick] Click detected on inline image');
+          // 只读状态下不选中节点，避免与预览插件的单击打开冲突
+          if (!view.editable) return false;
 
           // Prevent default browser behavior
           event.preventDefault();
@@ -99,7 +99,6 @@ export const imageInlineClickPlugin = $prose(() => {
             if (imgEl && (target === imgEl || target.closest('.milkdown-image-inline'))) {
               // Prevent default to avoid text selection (Live Text)
               event.preventDefault();
-              console.log('[ImageInlineClick] Mousedown prevented on inline image');
               return true;
             }
           }

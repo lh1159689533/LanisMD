@@ -7,4 +7,4 @@ export { useSearchStore } from './search-store';
 export { useGlobalSearchStore } from './global-search-store';
 export { useAiStore } from './ai-store';
 export { useSessionStore } from './session-store';
-export { useSyncStore } from './sync-store';
+export { useGitStore } from './git-store';

@@ -39,8 +39,16 @@ const DEFAULT_CONFIG: AppConfig = {
     assetsFolderName: 'assets',
     previewMode: 'builtin',
   },
-  sync: {
-    enabled: false,
+  git: {
+    cloneDir: '',
+    autoSync: {
+      enabled: false,
+      intervalMinutes: 10,
+    },
+    autoCommit: {
+      enabled: false,
+      idleMinutes: 5,
+    },
   },
   ai: {
     enabled: false,

@@ -11,6 +11,7 @@
  * @changelog
  * | 版本   | 变更说明             | 关联                                          |
  * | v1.0.0 | 初始实现：四场景菜单构建 | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
+ * | v1.1.0 | 预览态与空白处菜单新增「导出」子菜单 | FEAT: 文本绘图/导图/画板导出 |
  * /@changelog
  *
  * @author hhhuilli
@@ -68,6 +69,18 @@ const MENU_ICONS = {
 /** 分隔线 */
 const SEP: MenuItemDef = { label: '', separator: true };
 
+/** 「导出」子菜单：导出范围为画板全部内容，与命中元素无关 */
+function buildExportMenu(actions: BoardContextActions): MenuItemDef {
+  return {
+    label: '导出',
+    icon: ICONS.export,
+    children: [
+      { label: '导出为 PNG', icon: ICONS.png, action: actions.exportPng },
+      { label: '导出为 SVG', icon: ICONS.svg, action: actions.exportSvg },
+    ],
+  };
+}
+
 /**
  * 依据场景产出菜单项。
  *
@@ -96,7 +109,7 @@ export function buildMenu(
   }
 }
 
-/** 预览态：仅画布操作 */
+/** 预览态：画布操作 + 导出 */
 function buildViewportOnlyMenu(actions: BoardContextActions): MenuItemDef[] {
   return [
     {
@@ -109,6 +122,8 @@ function buildViewportOnlyMenu(actions: BoardContextActions): MenuItemDef[] {
       icon: MENU_ICONS.fit,
       action: actions.fitViewport,
     },
+    SEP,
+    buildExportMenu(actions),
   ];
 }
 
@@ -134,7 +149,7 @@ function buildBoardElementMenu(actions: BoardContextActions): MenuItemDef[] {
   ];
 }
 
-/** 画板空白：添加图形 / 添加连线 / 粘贴 / 实际尺寸 / 适应画布 */
+/** 画板空白：添加图形 / 添加连线 / 粘贴 / 实际尺寸 / 适应画布 / 导出 */
 function buildBoardBlankMenu(actions: BoardContextActions): MenuItemDef[] {
   return [
     { label: '添加图形', icon: MENU_ICONS.addShape, action: actions.addShape },
@@ -144,6 +159,8 @@ function buildBoardBlankMenu(actions: BoardContextActions): MenuItemDef[] {
     SEP,
     { label: '实际尺寸', icon: MENU_ICONS.actualSize, action: actions.resetZoom },
     { label: '适应画布', icon: MENU_ICONS.fit, action: actions.fitViewport },
+    SEP,
+    buildExportMenu(actions),
   ];
 }
 
@@ -184,7 +201,7 @@ function buildMindNodeMenu(
   ];
 }
 
-/** 导图空白：添加思维导图 / 粘贴 / 实际尺寸 / 适应画布 */
+/** 导图空白：添加思维导图 / 粘贴 / 实际尺寸 / 适应画布 / 导出 */
 function buildMindBlankMenu(actions: BoardContextActions): MenuItemDef[] {
   return [
     { label: '添加思维导图', icon: MENU_ICONS.addMind, action: actions.addMind },
@@ -193,5 +210,7 @@ function buildMindBlankMenu(actions: BoardContextActions): MenuItemDef[] {
     SEP,
     { label: '实际尺寸', icon: MENU_ICONS.actualSize, action: actions.resetZoom },
     { label: '适应画布', icon: MENU_ICONS.fit, action: actions.fitViewport },
+    SEP,
+    buildExportMenu(actions),
   ];
 }

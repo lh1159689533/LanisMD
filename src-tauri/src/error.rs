@@ -19,6 +19,9 @@ pub enum AppError {
 
     #[error("Config error: {0}")]
     Config(String),
+
+    #[error("Git error: {0}")]
+    Git(String),
 }
 
 impl Serialize for AppError {
@@ -39,6 +42,7 @@ impl Serialize for AppError {
             Self::InvalidPath(msg) => ("INVALID_PATH".to_string(), msg.clone()),
             Self::WriteFailed(msg) => ("WRITE_FAILED".to_string(), msg.clone()),
             Self::Config(msg) => ("CONFIG_ERROR".to_string(), msg.clone()),
+            Self::Git(msg) => ("GIT_ERROR".to_string(), msg.clone()),
         };
 
         ErrorInfo {

@@ -2,6 +2,7 @@
  * Image Inline Toolbar Plugin
  *
  * 为行内图片添加操作栏（悬浮在图片上方）：
+ * - 预览按钮：打开图片预览层
  * - 编辑按钮：点击弹出图片选择弹窗（本地/URL）
  * - 对齐按钮：左对齐 / 居中 / 右对齐（转为块级图片）
  * - 删除按钮：删除图片
@@ -12,6 +13,8 @@
 import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey, NodeSelection } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
+
+import { openImagePreview, previewIcons } from '../image-preview';
 
 const imageInlineToolbarPluginKey = new PluginKey('IMAGE_INLINE_TOOLBAR');
 
@@ -72,6 +75,14 @@ function createToolbar(view: EditorView, wrapperEl: HTMLElement, nodePos: number
     e.preventDefault();
     e.stopPropagation();
   });
+
+  // 预览按钮
+  const previewBtn = createToolbarButton(previewIcons.preview, '预览图片（双击图片）', () => {
+    if (!currentView || !currentToolbarWrapper) return;
+    const img = currentToolbarWrapper.querySelector('img.image-inline') as HTMLImageElement | null;
+    openImagePreview(currentView, img);
+  });
+  toolbar.appendChild(previewBtn);
 
   // Edit button
   const editBtn = createToolbarButton(toolbarIcons.edit, '编辑图片', () => {

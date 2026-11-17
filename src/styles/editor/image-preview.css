@@ -1,0 +1,226 @@
+/**
+ * LanisMD Editor - Image Preview
+ * 图片预览遮罩层样式
+ *
+ * 看图场景惯例：无论浅色 / 深色主题，遮罩统一使用深色半透明背景，
+ * 头部与工具栏使用浅色文字；深色主题仅微调背景透明度。
+ */
+
+.lanismd-image-preview {
+  --lanismd-image-preview-duration: 220ms;
+  --lanismd-image-preview-easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --lanismd-image-preview-backdrop: rgba(15, 15, 17, 0.9);
+  --lanismd-image-preview-chrome-bg: rgba(40, 40, 44, 0.86);
+  --lanismd-image-preview-chrome-hover: rgba(255, 255, 255, 0.12);
+  --lanismd-image-preview-text: #f1f1f3;
+  --lanismd-image-preview-text-secondary: rgba(241, 241, 243, 0.6);
+
+  position: fixed;
+  inset: 0;
+  /* 高于右键菜单（10000）与普通对话框 */
+  z-index: 10050;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overscroll-behavior: contain;
+  font-family: var(--lanismd-font-ui);
+  color: var(--lanismd-image-preview-text);
+  cursor: zoom-out;
+}
+
+.dark .lanismd-image-preview {
+  --lanismd-image-preview-backdrop: rgba(0, 0, 0, 0.92);
+}
+
+/* ===== 背景 ===== */
+.lanismd-image-preview-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--lanismd-image-preview-backdrop);
+  opacity: 0;
+  transition: opacity var(--lanismd-image-preview-duration) ease;
+}
+
+/* ===== 舞台：图片居中摆放的区域，四周为头部、工具栏、切换按钮留白 ===== */
+.lanismd-image-preview-stage {
+  position: absolute;
+  inset: 56px 72px 80px;
+  pointer-events: none;
+}
+
+.lanismd-image-preview-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  max-height: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  pointer-events: auto;
+  cursor: grab;
+  -webkit-user-drag: none;
+  transition: opacity 150ms ease;
+}
+
+.lanismd-image-preview.is-animating .lanismd-image-preview-img {
+  transition:
+    transform var(--lanismd-image-preview-duration) var(--lanismd-image-preview-easing),
+    opacity 150ms ease;
+}
+
+.lanismd-image-preview.is-dragging,
+.lanismd-image-preview.is-dragging .lanismd-image-preview-img {
+  cursor: grabbing;
+}
+
+/* 切换图片时先隐藏，解码完成后再淡入，避免闪现上一张的尺寸 */
+.lanismd-image-preview.is-switching .lanismd-image-preview-img,
+.lanismd-image-preview.is-leaving .lanismd-image-preview-img {
+  opacity: 0;
+}
+
+/* ===== 头部、工具栏、切换按钮：随 is-open 淡入淡出 ===== */
+.lanismd-image-preview-header,
+.lanismd-image-preview-toolbar,
+.lanismd-image-preview-nav {
+  opacity: 0;
+  transition: opacity var(--lanismd-image-preview-duration) ease;
+  cursor: default;
+}
+
+.lanismd-image-preview.is-open .lanismd-image-preview-backdrop,
+.lanismd-image-preview.is-open .lanismd-image-preview-header,
+.lanismd-image-preview.is-open .lanismd-image-preview-toolbar,
+.lanismd-image-preview.is-open .lanismd-image-preview-nav {
+  opacity: 1;
+}
+
+/* ===== 头部 ===== */
+.lanismd-image-preview-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  padding: 0 var(--lanismd-spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lanismd-spacing-xl);
+  font-size: var(--lanismd-font-size-base);
+}
+
+.lanismd-image-preview-title {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--lanismd-spacing-md);
+}
+
+.lanismd-image-preview-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-image-preview-meta,
+.lanismd-image-preview-counter {
+  flex-shrink: 0;
+  color: var(--lanismd-image-preview-text-secondary);
+  font-size: var(--lanismd-font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.lanismd-image-preview-header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-lg);
+}
+
+/* ===== 通用按钮 ===== */
+.lanismd-image-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--lanismd-spacing-sm);
+  border: none;
+  border-radius: var(--lanismd-radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--lanismd-transition-fast);
+}
+
+.lanismd-image-preview-btn:hover:not(:disabled) {
+  background: var(--lanismd-image-preview-chrome-hover);
+}
+
+.lanismd-image-preview-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.lanismd-image-preview-btn:focus-visible {
+  outline: 2px solid var(--lanismd-accent, #2563eb);
+  outline-offset: 1px;
+}
+
+/* ===== 左右切换 ===== */
+.lanismd-image-preview-nav {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  border-radius: 50%;
+  background: var(--lanismd-image-preview-chrome-bg);
+}
+
+.lanismd-image-preview-nav[hidden] {
+  display: none;
+}
+
+.lanismd-image-preview-nav-prev {
+  left: var(--lanismd-spacing-xl);
+}
+
+.lanismd-image-preview-nav-next {
+  right: var(--lanismd-spacing-xl);
+}
+
+/* ===== 底部工具栏 ===== */
+.lanismd-image-preview-toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: var(--lanismd-spacing-xl);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+  padding: var(--lanismd-spacing-sm);
+  border-radius: var(--lanismd-radius-xl);
+  background: var(--lanismd-image-preview-chrome-bg);
+}
+
+.lanismd-image-preview-zoom-label {
+  min-width: 56px;
+  font-size: var(--lanismd-font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.lanismd-image-preview-separator {
+  width: 1px;
+  height: 16px;
+  margin: 0 var(--lanismd-spacing-sm);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lanismd-image-preview {
+    --lanismd-image-preview-duration: 1ms;
+  }
+}

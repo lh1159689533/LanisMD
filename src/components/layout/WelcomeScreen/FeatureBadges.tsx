@@ -23,8 +23,8 @@ const FEATURES: FeatureItem[] = [
   { icon: <RiPaletteLine size={14} />, label: '主题', desc: '多套内置主题 + 自定义主题' },
   {
     icon: <RiGitBranchLine size={14} />,
-    label: '远程同步',
-    desc: '实现本地和远程仓库（GitHub/Gitee）的文档同步',
+    label: 'Git',
+    desc: '克隆任意 Git 仓库，查看更改与提交历史，一键 Commit & Push、自动同步',
   },
   {
     icon: <RiAttachmentLine size={14} />,

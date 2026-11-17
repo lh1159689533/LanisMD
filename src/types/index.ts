@@ -40,15 +40,13 @@ export {
   type AiConfig,
 } from './ai';
 export {
-  type Platform,
-  type SyncRepoConfig,
-  type SyncManifest,
-  type SyncManifestRepoConfig,
-  type SyncFileEntry,
-  type RemoteEntry,
-  type PullRequest,
-  type PushRequest,
-  type SyncResult,
-  type DiffResult,
-  type SyncProgress,
-} from './sync';
+  type GitAvailability,
+  type RepoInfo,
+  type ChangeStatus,
+  type ChangedFile,
+  type CommitInfo,
+  type FileVersions,
+  type BranchInfo,
+  type GitCredentialView,
+  type DiffTarget,
+} from './git';

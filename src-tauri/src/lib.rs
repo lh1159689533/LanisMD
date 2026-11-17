@@ -8,7 +8,7 @@ use commands::file_block_commands;
 use commands::config_commands;
 use commands::search_commands;
 use commands::ai_commands;
-use commands::sync_commands;
+use commands::git_commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,6 +19,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式
             #[cfg(target_os = "macos")]
@@ -102,17 +103,29 @@ pub fn run() {
             ai_commands::ai_test_connection,
             ai_commands::ai_chat_stream,
             ai_commands::cancel_ai_stream,
-            sync_commands::sync_get_repos,
-            sync_commands::sync_save_repo,
-            sync_commands::sync_delete_repo,
-            sync_commands::sync_test_connection,
-            sync_commands::sync_list_branches,
-            sync_commands::sync_browse_remote,
-            sync_commands::sync_preview_pull,
-            sync_commands::sync_pull,
-            sync_commands::sync_push,
-            sync_commands::sync_diff,
-            sync_commands::sync_read_manifest,
+            git_commands::git_check,
+            git_commands::git_install_tools,
+            git_commands::git_repo_info,
+            git_commands::git_status,
+            git_commands::git_log,
+            git_commands::git_commit_files,
+            git_commands::git_file_versions,
+            git_commands::git_diff_text,
+            git_commands::git_commit,
+            git_commands::git_push,
+            git_commands::git_pull,
+            git_commands::git_discard,
+            git_commands::git_resolve_conflict,
+            git_commands::git_abort_merge,
+            git_commands::git_branches,
+            git_commands::git_checkout,
+            git_commands::git_set_identity,
+            git_commands::git_ls_remote,
+            git_commands::git_clone,
+            git_commands::git_cancel_clone,
+            git_commands::git_get_credentials,
+            git_commands::git_save_credential,
+            git_commands::git_delete_credential,
             file_block_commands::copy_file_to_attachments,
             file_block_commands::get_file_size_formatted,
             file_block_commands::delete_file_permanent,

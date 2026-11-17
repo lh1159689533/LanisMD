@@ -91,8 +91,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* 锁定态下仅保留「返回全屏」按钮，避免出现两个可编辑实例 */
+/* 锁定态下仅保留「返回全屏」按钮，避免出现两个可编辑实例；
+ * 导出同样隐藏：全屏窗口中的最新编辑尚未回写，此时导出的是旧内容 */
 .lanismd-board-block__toolbar.is-locked .lanismd-board-block__toolbar-btn--toggle,
+.lanismd-board-block__toolbar.is-locked .lanismd-board-block__toolbar-btn--export,
 .lanismd-board-block__toolbar.is-locked .lanismd-board-block__toolbar-btn--delete {
   display: none;
 }

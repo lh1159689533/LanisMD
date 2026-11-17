@@ -1,0 +1,584 @@
+/**
+ * Git 面板样式：侧边栏「更改」「历史」视图、状态栏弹出层、打开文件夹菜单、通用徽标
+ *
+ * 类名前缀：.lanismd-git-* / .lanismd-open-folder-*
+ */
+
+/* ===== 通用：旋转 / 统计 / 状态徽标 ===== */
+.lanismd-git-spin {
+  animation: lanismd-git-spin 1s linear infinite;
+}
+
+@keyframes lanismd-git-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lanismd-git-stats {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 4px;
+  font-family: var(--lanismd-font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.lanismd-git-stats .is-add,
+.lanismd-git-commit-meta .is-add {
+  color: #16a34a;
+}
+
+.lanismd-git-stats .is-del,
+.lanismd-git-commit-meta .is-del {
+  color: #dc2626;
+}
+
+.lanismd-git-commit-meta .is-mod {
+  color: #d97706;
+}
+
+.lanismd-git-stats.is-binary {
+  color: var(--lanismd-text-secondary);
+  font-family: var(--lanismd-font-ui);
+}
+
+.lanismd-git-status-letter {
+  flex-shrink: 0;
+  width: 14px;
+  font-family: var(--lanismd-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.lanismd-git-status-letter.is-added,
+.lanismd-git-status-letter.is-untracked {
+  color: #16a34a;
+}
+
+.lanismd-git-status-letter.is-modified,
+.lanismd-git-status-letter.is-renamed {
+  color: #d97706;
+}
+
+.lanismd-git-status-letter.is-deleted,
+.lanismd-git-status-letter.is-conflicted {
+  color: #dc2626;
+}
+
+.lanismd-git-status-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.lanismd-git-status-badge.is-added,
+.lanismd-git-status-badge.is-untracked {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.lanismd-git-status-badge.is-modified,
+.lanismd-git-status-badge.is-renamed {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.lanismd-git-status-badge.is-deleted,
+.lanismd-git-status-badge.is-conflicted {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.lanismd-git-hash,
+.lanismd-git-hash-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--lanismd-font-mono);
+  font-size: 11px;
+  color: var(--lanismd-text-secondary);
+}
+
+.lanismd-git-hash-link {
+  color: var(--lanismd-accent);
+  cursor: pointer;
+}
+
+.lanismd-git-hash-link:hover {
+  text-decoration: underline;
+}
+
+.lanismd-git-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-text-secondary);
+  transition: all var(--lanismd-transition-fast);
+}
+
+.lanismd-git-icon-btn:hover,
+.lanismd-git-icon-btn.active {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-git-conflict-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lanismd-git-conflict-actions button {
+  padding: 2px 10px;
+  border-radius: var(--lanismd-radius-sm);
+  border: 1px solid var(--lanismd-border-color);
+  font-size: 11px;
+  color: var(--lanismd-editor-text);
+  background-color: var(--lanismd-editor-bg);
+}
+
+.lanismd-git-conflict-actions button:hover:not(:disabled) {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+/* ===== 侧边栏图标角标 ===== */
+.sidebar-icon-badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background-color: var(--lanismd-accent);
+  color: #fff;
+  font-size: 9px;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ===== 面板骨架 ===== */
+.lanismd-git-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-sidebar-text);
+}
+
+.lanismd-git-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border-bottom: 1px solid var(--lanismd-sidebar-border);
+}
+
+.lanismd-git-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.lanismd-git-panel-title-icon {
+  color: var(--lanismd-accent);
+}
+
+.lanismd-git-panel-count {
+  padding: 0 6px;
+  border-radius: 8px;
+  background-color: var(--lanismd-hover-bg);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.lanismd-git-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-xs);
+}
+
+.lanismd-git-panel-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--lanismd-spacing-lg);
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.lanismd-git-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--lanismd-spacing-sm) 0;
+}
+
+.lanismd-git-panel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  font-size: var(--lanismd-font-size-xs);
+  opacity: 0.6;
+}
+
+.lanismd-git-section-label {
+  padding: 6px var(--lanismd-spacing-sm) 2px;
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.lanismd-git-merge-banner {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px var(--lanismd-spacing-sm) 0;
+  padding: 8px 10px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #d97706;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.lanismd-git-merge-banner > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.lanismd-git-merge-banner button {
+  padding: 1px 8px;
+  border-radius: var(--lanismd-radius-sm);
+  border: 1px solid currentColor;
+  color: inherit;
+  font-size: 11px;
+}
+
+/* ===== 更改视图条目（复用 file-list-item 外观） ===== */
+.lanismd-git-change-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lanismd-git-change-name .file-list-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-git-change-name .is-deleted .file-list-item-stem {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.lanismd-git-change-item.is-conflicted {
+  box-shadow: inset 2px 0 0 #dc2626;
+}
+
+/* ===== 历史视图 ===== */
+.lanismd-git-day + .lanismd-git-day {
+  margin-top: 2px;
+}
+
+.lanismd-git-day-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 6px var(--lanismd-spacing-md);
+  background-color: var(--lanismd-hover-bg);
+  font-size: var(--lanismd-font-size-xs);
+  text-align: left;
+  opacity: 0.85;
+}
+
+.lanismd-git-day-count {
+  opacity: 0.7;
+}
+
+.lanismd-git-commit {
+  border-bottom: 1px solid var(--lanismd-sidebar-border);
+}
+
+.lanismd-git-commit-row {
+  display: block;
+  width: 100%;
+  padding: 8px var(--lanismd-spacing-md);
+  text-align: left;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-git-commit-row:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-git-commit.expanded .lanismd-git-commit-row {
+  background-color: var(--lanismd-sidebar-active);
+}
+
+.lanismd-git-commit-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lanismd-git-commit-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.lanismd-git-commit-subject {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-git-commit-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  padding-left: 20px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.lanismd-git-commit-author {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.lanismd-git-unpushed {
+  padding: 0 5px;
+  border-radius: var(--lanismd-radius-sm);
+  background-color: rgba(79, 142, 247, 0.12);
+  color: var(--lanismd-accent);
+}
+
+.lanismd-git-commit-files {
+  padding: 2px 0 6px;
+}
+
+.lanismd-git-commit-files.is-loading,
+.lanismd-git-commit-files.is-empty {
+  padding: 8px 32px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.lanismd-git-commit-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px var(--lanismd-spacing-md) 4px 30px;
+  font-size: var(--lanismd-font-size-xs);
+  text-align: left;
+}
+
+.lanismd-git-commit-file:hover {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-git-commit-file.selected {
+  background-color: var(--lanismd-sidebar-active);
+  color: var(--lanismd-accent);
+}
+
+.lanismd-git-commit-file-name {
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-git-commit-file-dir {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.5;
+}
+
+.lanismd-git-load-more {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-accent);
+}
+
+.lanismd-git-load-more:disabled {
+  opacity: 0.6;
+}
+
+/* ===== 状态栏弹出层 ===== */
+.lanismd-git-popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 6px 0;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-editor-bg);
+  box-shadow: var(--lanismd-shadow-lg);
+  font-size: 12px;
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-git-popover-title {
+  padding: 2px 12px 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.lanismd-git-popover-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.lanismd-git-popover-section {
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.lanismd-git-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 12px;
+  text-align: left;
+}
+
+.lanismd-git-popover-item:hover:not(:disabled) {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-git-popover-item.active {
+  color: var(--lanismd-accent);
+}
+
+.lanismd-git-popover-check {
+  display: inline-flex;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.lanismd-git-popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.lanismd-git-popover-row select {
+  padding: 2px 4px;
+  border-radius: var(--lanismd-radius-sm);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+  color: var(--lanismd-editor-text);
+  font-size: 12px;
+}
+
+.lanismd-git-popover-row input[type='checkbox'] {
+  accent-color: var(--lanismd-accent);
+}
+
+.lanismd-git-popover-divider {
+  margin: 4px 0;
+  border-top: 1px solid var(--lanismd-editor-border);
+}
+
+.lanismd-git-popover-hint,
+.lanismd-git-popover-empty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px 2px;
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.lanismd-git-auto-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+/* ===== 打开文件夹菜单 ===== */
+.lanismd-open-folder {
+  position: relative;
+  display: inline-flex;
+}
+
+.lanismd-open-folder-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 180px;
+  padding: 4px 0;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-context-menu-border, var(--lanismd-editor-border));
+  background-color: var(--lanismd-context-menu-bg, var(--lanismd-editor-bg));
+  box-shadow: var(--lanismd-shadow-lg);
+}
+
+.lanismd-open-folder-menu.align-left {
+  right: auto;
+  left: 0;
+}
+
+.lanismd-open-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.lanismd-open-folder-item:hover {
+  background-color: var(--lanismd-context-menu-item-hover-bg, var(--lanismd-sidebar-hover));
+}

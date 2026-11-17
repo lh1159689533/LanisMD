@@ -12,11 +12,13 @@
  * - 导图插入 / 折叠：@plait/mind 的 MindTransforms / Transforms.setNode
  * - 实际尺寸 / 适应画布：canvas-toolbar/viewport-actions 的 resetZoom / fitViewport
  * - 添加图形：回调宿主在右键位置直接插入默认矩形并选中；添加连线：回调宿主进入创建态
+ * - 导出 PNG / SVG：board-block/export 的 exportBoard
  *
  * @changelog
  * | 版本   | 变更说明             | 关联                                          |
  * | v1.0.0 | 初始实现：菜单动作封装 | REQ: 20261028-board-context-menu TECH: 画板右键菜单方案 |
  * | v1.1.0 | 「添加图形」改为右键位置直接插入默认矩形并选中 | REQ: 20261028-board-context-menu |
+ * | v1.2.0 | 新增导出 PNG / SVG 动作 | FEAT: 文本绘图/导图/画板导出 |
  * /@changelog
  *
  * @author hhhuilli
@@ -34,6 +36,7 @@ import { MindTransforms } from '@plait/mind';
 
 import { createDefaultMindmap } from '../constants';
 import { DEFAULT_ARROW_LINE_SHAPE } from '../draw-toolbar/constants';
+import { exportBoard } from '../export';
 import { fitViewport, resetZoom } from '../canvas-toolbar/viewport-actions';
 import type { ContextMenuActionContext, MenuAction } from './types';
 
@@ -55,6 +58,8 @@ export interface BoardContextActions {
   addLine: MenuAction;
   resetZoom: MenuAction;
   fitViewport: MenuAction;
+  exportPng: MenuAction;
+  exportSvg: MenuAction;
 }
 
 /** 创建动作集的入参 */
@@ -168,5 +173,11 @@ export function createActions(options: CreateActionsOptions = {}): BoardContextA
     fitViewport: (ctx) => {
       fitViewport(ctx.board);
     },
+
+    /** 导出全部内容为 PNG */
+    exportPng: (ctx) => exportBoard(ctx.board, ctx.mode, 'png'),
+
+    /** 导出全部内容为 SVG */
+    exportSvg: (ctx) => exportBoard(ctx.board, ctx.mode, 'svg'),
   };
 }

@@ -23,3 +23,6 @@ src-tauri/Cargo.lock
 
 # TypeScript 增量编译缓存
 *.tsbuildinfo
+
+# deep-ask 临时工作区
+.scratch/

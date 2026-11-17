@@ -1,7 +1,7 @@
 /**
  * Board Block - 悬浮工具栏
  *
- * 显示操作按钮，按钮顺序为「最大化 / 编辑 / 删除」。
+ * 显示操作按钮，按钮顺序为「最大化 / 编辑 / 导出 / 删除」。
  * 按钮统一用 mousedown + preventDefault + stopPropagation，避免抢走编辑器焦点
  * 或触发 ProseMirror 的节点选择。
  *
@@ -21,6 +21,7 @@
  * | v1.1.0 | 新增最大化按钮与按钮可选渲染   | REQ: 20261026-board-fullscreen TECH: 画板全屏窗口方案 §二 |
  * | v1.2.0 | 支持竖排纯图标形态（节点外右侧） | REQ: 20261026-board-toolbar-vertical |
  * | v1.3.0 | 全屏子窗口不再使用本工具栏      | REQ: 20261026-board-fullscreen-maximize |
+ * | v1.4.0 | 新增导出按钮                   | FEAT: 文本绘图/导图/画板导出 |
  * /@changelog
  *
  * @author hhhuilli
@@ -53,6 +54,8 @@ export interface ToolbarCallbacks {
   onDelete?: () => void;
   /** 点击全屏按钮；不传则不渲染全屏按钮 */
   onFullscreen?: () => void;
+  /** 点击导出按钮（参数为按钮自身，用于定位格式菜单）；不传则不渲染导出按钮 */
+  onExport?: (anchor: HTMLElement) => void;
 }
 
 /**
@@ -112,6 +115,21 @@ export function createToolbar(
     callbacks.onToggleEdit();
   });
   toolbar.appendChild(toggleBtn);
+
+  // 导出按钮：点击后由宿主在按钮旁弹出格式菜单
+  if (callbacks.onExport) {
+    const exportBtn = document.createElement('button');
+    exportBtn.className = `${CSS_PREFIX}__toolbar-btn ${CSS_PREFIX}__toolbar-btn--export`;
+    exportBtn.type = 'button';
+    exportBtn.innerHTML = `<span class="${CSS_PREFIX}__toolbar-icon">${ICONS.export}</span><span class="${CSS_PREFIX}__toolbar-label">导出</span>`;
+    exportBtn.title = '导出为图片';
+    exportBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      callbacks.onExport?.(exportBtn);
+    });
+    toolbar.appendChild(exportBtn);
+  }
 
   // 删除按钮（全屏窗口不提供）
   if (callbacks.onDelete) {

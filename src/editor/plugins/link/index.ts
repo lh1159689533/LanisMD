@@ -14,3 +14,4 @@ export { linkBlurPlugin } from './blur';
 export { linkPastePlugin } from './paste';
 export { linkTooltip, configureLinkTooltip } from './link-tooltip';
 export { linkClickPlugin, navigateLink } from './click';
+export { linkContextMenuPlugin } from './context-menu';

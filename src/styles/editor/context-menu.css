@@ -81,6 +81,23 @@
   color: var(--lanismd-editor-text);
 }
 
+/* 激活态（如当前对齐方式，右侧显示勾选标记） */
+.lanismd-context-menu-item-active {
+  color: var(--lanismd-accent);
+}
+
+.lanismd-context-menu-item-active::after {
+  content: '✓';
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 危险操作（如删除） */
+.lanismd-context-menu-item-danger {
+  color: var(--lanismd-danger, #ef4444);
+}
+
 /* ---------------------------------------------------------------------- */
 /* 图标                                                                    */
 /* ---------------------------------------------------------------------- */

@@ -1,0 +1,434 @@
+/**
+ * Git 弹窗样式：打开远程仓库（克隆）、提交（Commit & Push）
+ * 基础布局由通用 Dialog 提供，表单视觉沿用旧版同步弹窗。
+ *
+ * 类名前缀：.git-dialog-*
+ */
+
+/* ===== 头部图标 ===== */
+.git-dialog-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--lanismd-radius-md);
+  color: #fff;
+}
+
+.git-dialog-header-icon.clone {
+  background-color: var(--lanismd-accent, #4f8ef7);
+}
+
+.git-dialog-header-icon.commit {
+  background-color: #10b981;
+}
+
+.git-dialog--commit.lanismd-dialog {
+  max-width: 560px;
+}
+
+/* ===== 布局 ===== */
+.git-dialog-body-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.git-dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.git-dialog-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.git-dialog-row > .git-dialog-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.git-dialog-grow {
+  flex: 1;
+}
+
+.git-dialog-label,
+.git-dialog-label-row {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  font-weight: 500;
+}
+
+.git-dialog-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ===== 输入控件 ===== */
+.git-dialog-select,
+.git-dialog-input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  background-color: var(--lanismd-input-bg, var(--lanismd-editor-bg));
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  outline: none;
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.git-dialog-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  cursor: pointer;
+}
+
+.dark .git-dialog-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.git-dialog-select:hover:not(:disabled),
+.git-dialog-input:hover:not(:disabled) {
+  border-color: var(--lanismd-text-secondary);
+}
+
+.git-dialog-select:focus,
+.git-dialog-input:focus {
+  border-color: var(--lanismd-accent);
+}
+
+.git-dialog-select:disabled,
+.git-dialog-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.git-dialog-textarea {
+  resize: vertical;
+  min-height: 84px;
+  line-height: 1.5;
+  font-family: var(--lanismd-font-ui);
+}
+
+.git-dialog-static {
+  padding: 7px 10px;
+  border-radius: var(--lanismd-radius-md);
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-dialog-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.git-dialog-checkbox-label input,
+.git-dialog-change-item input {
+  accent-color: var(--lanismd-accent, #4f8ef7);
+}
+
+/* ===== 提示文字 ===== */
+.git-dialog-field-hint,
+.git-dialog-field-ok,
+.git-dialog-field-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--lanismd-text-secondary);
+  white-space: pre-wrap;
+}
+
+.git-dialog-field-ok {
+  color: #10b981;
+}
+
+.git-dialog-field-error {
+  color: #ef4444;
+}
+
+.git-dialog-footer-hint {
+  margin-right: auto;
+  font-size: 11px;
+  color: var(--lanismd-text-secondary);
+  opacity: 0.7;
+}
+
+/* ===== 提示块 ===== */
+.git-dialog-warning,
+.git-dialog-error,
+.git-dialog-info {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.git-dialog-warning svg,
+.git-dialog-error svg,
+.git-dialog-info svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.git-dialog-warning > span:not(.git-dialog-warning-actions),
+.git-dialog-error > span,
+.git-dialog-info > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.git-dialog-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #d97706;
+}
+
+.git-dialog-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+.git-dialog-info {
+  background-color: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #059669;
+}
+
+.git-dialog-warning-actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  padding-left: 22px;
+}
+
+.git-dialog-warning-actions button {
+  padding: 2px 10px;
+  border-radius: var(--lanismd-radius-sm);
+  border: 1px solid currentColor;
+  font-size: 11px;
+  color: inherit;
+}
+
+/* ===== 按钮 ===== */
+.git-dialog-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.git-dialog-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.git-dialog-btn-cancel {
+  color: var(--lanismd-text-secondary);
+  background-color: transparent;
+}
+
+.git-dialog-btn-cancel:hover:not(:disabled) {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.git-dialog-btn-primary {
+  color: #fff;
+  background-color: var(--lanismd-accent, #4f8ef7);
+}
+
+.git-dialog-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.git-dialog-btn-secondary {
+  padding: 6px 12px;
+  border: 1px solid var(--lanismd-border-color);
+  color: var(--lanismd-editor-text);
+}
+
+.git-dialog-btn-secondary:hover:not(:disabled) {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.git-dialog-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--lanismd-ai-accent, var(--lanismd-accent));
+  background-color: var(--lanismd-ai-accent-bg, rgba(79, 142, 247, 0.1));
+}
+
+.git-dialog-ai-btn:hover:not(:disabled) {
+  background-color: var(--lanismd-ai-accent-bg-hover, rgba(79, 142, 247, 0.18));
+}
+
+.git-dialog-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== 提交弹窗：摘要与文件预览 ===== */
+.git-dialog-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+}
+
+.git-dialog-summary-count {
+  font-weight: 500;
+}
+
+.git-dialog-summary-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-dialog-summary-target {
+  opacity: 0.75;
+}
+
+.git-dialog-files-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  align-self: flex-start;
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-text-secondary);
+}
+
+.git-dialog-files-toggle:hover {
+  color: var(--lanismd-accent);
+}
+
+.git-dialog-change-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+}
+
+.git-dialog-change-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-editor-text);
+  cursor: pointer;
+}
+
+.git-dialog-change-item:hover {
+  background-color: var(--lanismd-hover-bg);
+}
+
+.git-dialog-change-all {
+  border-bottom: 1px solid var(--lanismd-border-color);
+  color: var(--lanismd-text-secondary);
+}
+
+.git-dialog-change-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-dialog-change-list .git-dialog-field-hint {
+  padding: 6px 10px;
+}
+
+/* ===== 克隆进度 ===== */
+.git-dialog-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.git-dialog-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+}
+
+.git-dialog-progress-bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--lanismd-border-color);
+}
+
+.git-dialog-progress-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--lanismd-accent);
+  transition: width 0.3s ease;
+}
+
+.git-dialog-progress-bar > span.is-indeterminate {
+  width: 30%;
+  animation: git-dialog-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes git-dialog-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}

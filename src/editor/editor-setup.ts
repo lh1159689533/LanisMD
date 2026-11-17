@@ -35,6 +35,7 @@ import {
   linkTooltip,
   configureLinkTooltip,
   linkClickPlugin,
+  linkContextMenuPlugin,
 } from './plugins/link';
 import { underlineMarkSchema, remarkUnderlinePlugin } from './plugins/underline-mark';
 import {
@@ -59,6 +60,7 @@ import {
   remarkHtmlImagePlugin,
   imageBlockPastePlugin,
   imageBlockToolbarPlugin,
+  imageBlockContextMenuPlugin,
   imageUploadProgressPlugin,
   imageInputRulePlugin,
   imageResizePlugin,
@@ -72,6 +74,7 @@ import {
   imageInlineClickPlugin,
   setOpenImageDialogForInlineEdit,
 } from './plugins/image-inline';
+import { imagePreviewPlugin } from './plugins/image-preview';
 import { codeBlockComponent, configureCodeBlock } from './plugins/code-block';
 import { tableHandlePlugin, extendedTableSchema } from './plugins/table-block';
 import { remarkGfmAlertPlugin, gfmAlertSchema } from './plugins/gfm-alert';
@@ -248,15 +251,18 @@ export function createEditor(root: HTMLElement, defaultValue: string) {
     .use(linkPastePlugin)
     .use(imageBlockPastePlugin)
     .use(imageBlockToolbarPlugin)
+    .use(imageBlockContextMenuPlugin)
     .use(imageUploadProgressPlugin)
     .use(imageInputRulePlugin)
     .use(linkInputRulePlugin)
     .use(linkBlurPlugin)
     .use(linkClickPlugin)
+    .use(linkContextMenuPlugin)
     .use(imageResizePlugin)
     .use(imageBlockClickPlugin)
     .use(imageInlineToolbarPlugin)
     .use(imageInlineResizePlugin)
+    .use(imagePreviewPlugin)
     .use(imageInlineClickPlugin)
     .use(codeBlockComponent)
     .use(extendedTableSchema)

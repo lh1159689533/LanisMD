@@ -15,10 +15,12 @@
 import type { Node } from '@milkdown/kit/prose/model';
 import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
+import { resolveBackgroundColor } from '@/utils/diagram-export';
 import { renderMermaid } from './renderer';
 import { createToolbar, updateToolbarState, type ToolbarCallbacks } from './toolbar';
-import { exportAsPng, exportAsSvg } from './export';
+import { exportMermaid } from './export';
 import { onThemeChange } from './theme';
+import { showContextMenu, type ContextMenuItem } from '../context-menu/renderer';
 import { CSS_PREFIX, ICONS, RENDER_DEBOUNCE_MS, type MermaidBlockState } from './types';
 
 // ---------------------------------------------------------------------------
@@ -174,6 +176,22 @@ export class MermaidNodeView implements NodeView {
         e.stopPropagation();
         this.cancelEdit();
       }
+    });
+
+    // 右键菜单：预览态弹出「编辑 / 导出为PNG / 导出为SVG / 删除」，编辑态不拦截
+    this.dom.addEventListener('contextmenu', (e) => {
+      if (this.state !== 'preview') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const items: ContextMenuItem[] = [
+        { label: '编辑', icon: ICONS.edit, action: () => this.enterEdit() },
+        { label: '导出为PNG', icon: ICONS.png, action: () => { void this.handleExportPng(); } },
+        { label: '导出为SVG', icon: ICONS.svg, action: () => { void this.handleExportSvg(); } },
+        { label: '删除', icon: ICONS.delete, danger: true, action: () => this.deleteBlock() },
+      ];
+
+      showContextMenu(items, e.clientX, e.clientY);
     });
   }
 
@@ -404,21 +422,11 @@ export class MermaidNodeView implements NodeView {
   // -------------------------------------------------------------------------
 
   private async handleExportPng(): Promise<void> {
-    const svg = this.lastSuccessfulSvg;
-    if (!svg) {
-      console.warn('没有可导出的图表');
-      return;
-    }
-    await exportAsPng(svg, { format: 'png' });
+    await exportMermaid(this.lastSuccessfulSvg, 'png', resolveBackgroundColor(this.dom));
   }
 
   private async handleExportSvg(): Promise<void> {
-    const svg = this.lastSuccessfulSvg;
-    if (!svg) {
-      console.warn('没有可导出的图表');
-      return;
-    }
-    await exportAsSvg(svg, { format: 'svg' });
+    await exportMermaid(this.lastSuccessfulSvg, 'svg', resolveBackgroundColor(this.dom));
   }
 
   // -------------------------------------------------------------------------

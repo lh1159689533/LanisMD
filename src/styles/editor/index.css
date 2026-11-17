@@ -6,6 +6,7 @@
  * - typography.css: 标题、段落、链接
  * - code-block.css: 代码块组件
  * - image-block.css: 图片块组件
+ * - image-preview.css: 图片预览遮罩层
  * - table.css: 表格基础样式
  * - table-handle.css: 表格操作手柄
  * - list.css: 列表、任务列表
@@ -30,6 +31,7 @@
 @import './code-block.css';
 @import './code-block-lazy.css';
 @import './image-block.css';
+@import './image-preview.css';
 @import './blockquote.css';
 @import './gfm-alert.css';
 @import './list.css';

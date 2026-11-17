@@ -1,0 +1,199 @@
+/**
+ * Git diff 面板样式（主区域）
+ *
+ * @codemirror/merge 默认配色依赖 light/dark 主题判断，这里统一改为半透明色，
+ * 保证在所有内置主题与自定义主题下均可读。
+ *
+ * 类名前缀：.lanismd-git-diff-*
+ */
+
+.lanismd-git-diff {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.lanismd-git-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+}
+
+.lanismd-git-diff-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lanismd-git-diff-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+}
+
+.lanismd-git-diff-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.lanismd-git-diff-commit {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  background-color: var(--lanismd-hover-bg);
+  font-size: var(--lanismd-font-size-xs);
+}
+
+.lanismd-git-diff-commit-subject {
+  font-weight: 500;
+}
+
+.lanismd-git-diff-commit-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lanismd-text-secondary);
+}
+
+.lanismd-git-diff-conflict {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.25);
+  background-color: rgba(239, 68, 68, 0.06);
+  color: #dc2626;
+  font-size: var(--lanismd-font-size-xs);
+}
+
+.lanismd-git-diff-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.lanismd-git-diff-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 32px;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-secondary);
+  white-space: pre-wrap;
+  text-align: center;
+}
+
+.lanismd-git-diff-empty.is-error {
+  color: #dc2626;
+}
+
+/* ===== CodeMirror merge 适配 ===== */
+.lanismd-git-diff-editor {
+  min-height: 100%;
+}
+
+.lanismd-git-diff-editor .cm-mergeView,
+.lanismd-git-diff-editor > .cm-editor {
+  min-height: 100%;
+}
+
+.lanismd-git-diff-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.lanismd-git-diff-editor .cm-mergeViewEditor + .cm-mergeViewEditor,
+.lanismd-git-diff-editor .cm-mergeViewEditors > .cm-mergeViewEditor:last-child {
+  border-left: 1px solid var(--lanismd-editor-border);
+}
+
+/* 并排：左侧（修改前）删除为红，右侧（修改后）新增为绿 */
+.lanismd-git-diff-editor .cm-merge-a .cm-changedLine,
+.lanismd-git-diff-editor .cm-deletedChunk {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.lanismd-git-diff-editor .cm-merge-b .cm-changedLine,
+.lanismd-git-diff-editor .cm-insertedLine {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+.lanismd-git-diff-editor .cm-merge-a .cm-changedText,
+.lanismd-git-diff-editor .cm-deletedChunk .cm-deletedText {
+  background: rgba(239, 68, 68, 0.28);
+}
+
+.lanismd-git-diff-editor .cm-merge-b .cm-changedText,
+.lanismd-git-diff-editor .cm-insertedLine .cm-changedText {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.lanismd-git-diff-editor .cm-changeGutter {
+  width: 3px;
+  padding-left: 1px;
+}
+
+.lanismd-git-diff-editor .cm-merge-a .cm-changedLineGutter,
+.lanismd-git-diff-editor .cm-deletedLineGutter {
+  background-color: #ef4444;
+}
+
+.lanismd-git-diff-editor .cm-merge-b .cm-changedLineGutter,
+.lanismd-git-diff-editor .cm-insertedLineGutter {
+  background-color: #10b981;
+}
+
+.lanismd-git-diff-editor .cm-collapsedLines {
+  padding: 4px 12px;
+  background: var(--lanismd-hover-bg);
+  color: var(--lanismd-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ===== 图片对比 ===== */
+.lanismd-git-diff-images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.lanismd-git-diff-images figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-editor-border);
+}
+
+.lanismd-git-diff-images figcaption {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+}
+
+.lanismd-git-diff-images img {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}

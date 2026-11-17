@@ -1,155 +1,98 @@
 /**
  * Mermaid Block - 导出功能
  *
- * 支持导出为 PNG 和 SVG 格式：
- * - PNG：通过 Canvas 渲染，2x 分辨率
- * - SVG：直接序列化 SVG DOM
- * - 使用 Tauri plugin-dialog 选择保存路径
- * - 使用 Tauri plugin-fs 写入文件
+ * 支持导出为 PNG 和 SVG：
+ * - PNG：把渲染结果临时挂到屏外完成排版，将 htmlLabels 产生的 foreignObject
+ *   扁平化为原生 SVG 文本后再光栅化（2x）。直接光栅化含 foreignObject 的 SVG
+ *   在 WebKit 中会污染 canvas，导致编码抛错、导出静默失败。
+ * - SVG：保留 Mermaid 原始输出（自带 <style>，浏览器中保真度最高），仅把
+ *   width="100%" 换成实际尺寸，便于独立打开。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                         | 关联                       |
+ * | v1.0.0 | 初始实现：PNG / SVG 导出                          | -                          |
+ * | v1.1.0 | 改用统一导出流程；修复 WebKit 下 PNG 导出静默失败、 | FEAT: 文本绘图/导图/画板导出 |
+ * |        | 暗色主题导出白底；默认保存到文档目录并提示结果       |                            |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
-import { save } from '@tauri-apps/plugin-dialog';
-import { writeFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import type { ExportOptions } from './types';
+import {
+  DiagramExportError,
+  exportDiagram,
+  flattenForeignObjects,
+  serializeSvg,
+  svgToPngBytes,
+  type DiagramExportFormat,
+} from '@/utils/diagram-export';
 
-// ---------------------------------------------------------------------------
-// PNG 导出
-// ---------------------------------------------------------------------------
+/** 导出默认文件名中的图表类型名 */
+const EXPORT_LABEL = '文本绘图';
 
 /**
- * 将 SVG 字符串导出为 PNG
- * @param svgString SVG 字符串
- * @param options 导出选项
+ * 导出 Mermaid 图表。
+ *
+ * @param svgString 最近一次成功渲染的 SVG
+ * @param format 导出格式
+ * @param background PNG 背景色（取编辑器中的实际底色）
  */
-export async function exportAsPng(
-  svgString: string,
-  options: ExportOptions = { format: 'png' },
+export async function exportMermaid(
+  svgString: string | null,
+  format: DiagramExportFormat,
+  background: string,
 ): Promise<void> {
-  const scale = options.scale ?? 2;
-  const filename = options.filename ?? 'mermaid-diagram';
-
-  // 解析 SVG 尺寸
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
-  const svgEl = svgDoc.querySelector('svg');
-  if (!svgEl) {
-    console.warn('导出 PNG 失败：无法解析 SVG');
-    return;
-  }
-
-  // 获取尺寸
-  let width = parseFloat(svgEl.getAttribute('width') || '0');
-  let height = parseFloat(svgEl.getAttribute('height') || '0');
-
-  // 如果没有 width/height，尝试从 viewBox 获取
-  if (!width || !height) {
-    const viewBox = svgEl.getAttribute('viewBox');
-    if (viewBox) {
-      const parts = viewBox.split(/[\s,]+/);
-      width = parseFloat(parts[2]) || 800;
-      height = parseFloat(parts[3]) || 600;
-    } else {
-      width = 800;
-      height = 600;
-    }
-  }
-
-  // 选择保存路径
-  const savePath = await save({
-    defaultPath: `${filename}.png`,
-    filters: [{
-      name: 'PNG 图片',
-      extensions: ['png'],
-    }],
-  });
-  if (!savePath) return;
-
-  // 创建 Canvas
-  const canvas = document.createElement('canvas');
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    console.warn('导出 PNG 失败：无法创建 Canvas 上下文');
-    return;
-  }
-
-  // 绘制白色背景
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // 将 SVG 绘制到 Canvas
-  const img = new Image();
-  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-
-  return new Promise<void>((resolve) => {
-    img.onload = async () => {
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-
-      // 转换为二进制数据
-      const dataUrl = canvas.toDataURL('image/png');
-      const base64 = dataUrl.split(',')[1];
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-
-      // 写入文件
-      try {
-        await writeFile(savePath, bytes);
-      } catch (err) {
-        console.error('导出 PNG 写入失败：', err);
-      }
-
-      resolve();
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      console.warn('导出 PNG 失败：SVG 图片加载失败');
-      resolve();
-    };
-
-    img.src = url;
+  await exportDiagram({
+    label: EXPORT_LABEL,
+    format,
+    render: async () => {
+      if (!svgString) throw new DiagramExportError('图表尚未成功渲染，没有可导出的内容');
+      return format === 'png'
+        ? renderPng(svgString, background)
+        : serializeSvg(parseSized(svgString).svg);
+    },
   });
 }
 
-// ---------------------------------------------------------------------------
-// SVG 导出
-// ---------------------------------------------------------------------------
+/** 屏外挂载 → 扁平化 → 光栅化 */
+async function renderPng(svgString: string, background: string): Promise<Uint8Array> {
+  const { svg, width, height } = parseSized(svgString);
+
+  // 屏外但保持可见：visibility:hidden 会让所有元素被判定为不可见而被剔除
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
+  host.appendChild(svg);
+  document.body.appendChild(host);
+  try {
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    flattenForeignObjects(svg, clone);
+    return await svgToPngBytes(clone, { width, height, scale: 2, background });
+  } finally {
+    host.remove();
+  }
+}
 
 /**
- * 将 SVG 字符串导出为 SVG 文件
- * @param svgString SVG 字符串
- * @param options 导出选项
+ * 解析 SVG 并按 viewBox 设定实际宽高。
+ * Mermaid 输出为 width="100%" + max-width 样式，脱离容器后尺寸不确定。
  */
-export async function exportAsSvg(
-  svgString: string,
-  options: ExportOptions = { format: 'svg' },
-): Promise<void> {
-  const filename = options.filename ?? 'mermaid-diagram';
+function parseSized(svgString: string): { svg: SVGSVGElement; width: number; height: number } {
+  const parsed = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+  const source = parsed.querySelector('svg');
+  if (!source) throw new DiagramExportError('无法解析图表 SVG');
+  const svg = document.importNode(source, true) as SVGSVGElement;
 
-  // 选择保存路径
-  const savePath = await save({
-    defaultPath: `${filename}.svg`,
-    filters: [{
-      name: 'SVG 文件',
-      extensions: ['svg'],
-    }],
-  });
-  if (!savePath) return;
+  const viewBox = svg
+    .getAttribute('viewBox')
+    ?.split(/[\s,]+/)
+    .map(Number);
+  let width = viewBox?.[2] ?? Number.parseFloat(svg.getAttribute('width') ?? '');
+  let height = viewBox?.[3] ?? Number.parseFloat(svg.getAttribute('height') ?? '');
+  if (!Number.isFinite(width) || width <= 0) width = 800;
+  if (!Number.isFinite(height) || height <= 0) height = 600;
 
-  // 添加 XML 声明头
-  const xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  const fullSvg = xmlDeclaration + svgString;
-
-  // 写入文件
-  try {
-    await writeTextFile(savePath, fullSvg);
-  } catch (err) {
-    console.error('导出 SVG 写入失败：', err);
-  }
+  svg.setAttribute('width', String(width));
+  svg.setAttribute('height', String(height));
+  svg.style.removeProperty('max-width');
+  return { svg, width, height };
 }
