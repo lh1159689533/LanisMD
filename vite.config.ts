@@ -9,12 +9,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // @napi-rs/canvas 是 pdfjs-dist 在 Node 端的可选 Canvas 后端（原生 .node 二进制）。
+      // 浏览器端不会执行该代码路径，用空实现替换，避免 esbuild/rollup 在构建时解析原生二进制
+      '@napi-rs/canvas': path.resolve(__dirname, './src/shims/napi-rs-canvas.ts'),
     },
-  },
-  // 依赖预构建：排除 Node 端原生模块，避免 esbuild 尝试打包 .node 二进制
-  // @napi-rs/canvas 是 pdfjs-dist 在 Node 端的可选 Canvas 后端，浏览器端无需预构建
-  optimizeDeps: {
-    exclude: ['@napi-rs/canvas'],
   },
   clearScreen: false,
   server: {
