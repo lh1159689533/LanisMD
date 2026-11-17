@@ -6,7 +6,9 @@ import {
   RiFolderLine,
   RiSettings3Line,
   RiHistoryLine,
+  RiPulseLine,
 } from 'react-icons/ri';
+import { VscSourceControl } from 'react-icons/vsc';
 import { useUIStore } from '@/stores/ui-store';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
@@ -19,6 +21,9 @@ import { withShortcut } from '@/utils/shortcut';
 import { FileTree } from './FileTree';
 import { SearchPanel } from './SearchPanel';
 import { RecentFoldersPanel } from './RecentFolders';
+import { ChangesPanel } from '@/components/git/ChangesPanel';
+import { HistoryPanel } from '@/components/git/HistoryPanel';
+import { useGitStore } from '@/stores/git-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { fileService } from '@/services/tauri';
@@ -122,6 +127,9 @@ export function Sidebar() {
   const openFolder = useFileTreeStore((s) => s.openFolder);
   const addRecentFolder = useRecentFoldersStore((s) => s.addRecentFolder);
   const setRecentFoldersOpen = useUIStore((s) => s.setRecentFoldersOpen);
+  // Git 视图仅在 Git 仓库中显示
+  const isGitRepo = useGitStore((s) => s.repo !== null);
+  const gitChangesCount = useGitStore((s) => s.changes.length);
 
   // 编辑器模式和大纲数据
   const editorMode = useEditorStore((s) => s.mode);
@@ -387,6 +395,29 @@ export function Sidebar() {
         >
           <RiSearchLine size={16} />
         </button>
+        {isGitRepo && (
+          <>
+            <button
+              onClick={() => setSidebarPanel('changes')}
+              className={cn('sidebar-icon-btn relative', sidebarPanel === 'changes' && 'active')}
+              title="更改"
+            >
+              <VscSourceControl size={16} />
+              {gitChangesCount > 0 && (
+                <span className="sidebar-icon-badge">
+                  {gitChangesCount > 99 ? '99+' : gitChangesCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setSidebarPanel('history')}
+              className={cn('sidebar-icon-btn', sidebarPanel === 'history' && 'active')}
+              title="提交历史"
+            >
+              <RiPulseLine size={16} />
+            </button>
+          </>
+        )}
 
         {/* 切换按钮 - 置底 */}
         <button
@@ -423,7 +454,10 @@ export function Sidebar() {
       >
         <div
           ref={innerPanelRef}
-          className={cn('sidebar-content-inner', sidebarPanel === 'files' && 'files-panel')}
+          className={cn(
+            'sidebar-content-inner',
+            ['files', 'changes', 'history'].includes(sidebarPanel) && 'files-panel',
+          )}
           style={{ width: `${sidebarWidth}px` }}
         >
           {sidebarPanel === 'outline' && (
@@ -440,6 +474,8 @@ export function Sidebar() {
           )}
           {sidebarPanel === 'files' && <FileTree />}
           {sidebarPanel === 'search' && <SearchPanel />}
+          {sidebarPanel === 'changes' && isGitRepo && <ChangesPanel />}
+          {sidebarPanel === 'history' && isGitRepo && <HistoryPanel />}
         </div>
 
         {/* 最近打开的文件夹浮层 — 提升到 Sidebar 层级，不依赖当前面板 */}

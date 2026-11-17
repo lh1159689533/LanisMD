@@ -1,17 +1,17 @@
 /**
- * 同步设置面板样式
- * 用于 SettingsDialog 中的远程仓库配置
+ * Git 设置面板样式（HTTPS 凭据列表与表单）
+ * 由旧版 sync-settings.css 迁移而来
  */
 
 /* ===== 设置区域头部 ===== */
-.sync-settings-header {
+.git-settings-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 4px;
 }
 
-.sync-settings-add-btn {
+.git-settings-add-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -26,34 +26,34 @@
   cursor: pointer;
 }
 
-.sync-settings-add-btn:hover {
+.git-settings-add-btn:hover {
   background-color: var(--lanismd-accent);
   color: #fff;
 }
 
 /* ===== 仓库列表 ===== */
-.sync-repo-list {
+.git-cred-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 12px;
 }
 
-.sync-repo-empty {
+.git-cred-empty {
   text-align: center;
   padding: 24px 16px;
   color: var(--lanismd-text-secondary);
   font-size: var(--lanismd-font-size-sm);
 }
 
-.sync-repo-empty-hint {
+.git-cred-empty-hint {
   margin-top: 4px;
   font-size: var(--lanismd-font-size-xs);
   opacity: 0.7;
 }
 
 /* ===== 仓库列表项 ===== */
-.sync-repo-item {
+.git-cred-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -64,11 +64,11 @@
   transition: border-color var(--lanismd-transition-fast);
 }
 
-.sync-repo-item:hover {
+.git-cred-item:hover {
   border-color: var(--lanismd-accent);
 }
 
-.sync-repo-item-icon {
+.git-cred-item-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,12 +80,12 @@
   flex-shrink: 0;
 }
 
-.sync-repo-item-info {
+.git-cred-item-info {
   flex: 1;
   min-width: 0;
 }
 
-.sync-repo-item-name {
+.git-cred-item-name {
   font-size: var(--lanismd-font-size-sm);
   font-weight: 500;
   color: var(--lanismd-editor-text);
@@ -94,7 +94,7 @@
   text-overflow: ellipsis;
 }
 
-.sync-repo-item-detail {
+.git-cred-item-detail {
   font-size: var(--lanismd-font-size-xs);
   color: var(--lanismd-text-secondary);
   margin-top: 2px;
@@ -103,14 +103,14 @@
   text-overflow: ellipsis;
 }
 
-.sync-repo-item-actions {
+.git-cred-item-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.sync-repo-item-btn {
+.git-cred-item-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,18 +121,18 @@
   transition: all var(--lanismd-transition-fast);
 }
 
-.sync-repo-item-btn:hover {
+.git-cred-item-btn:hover {
   background-color: var(--lanismd-hover-bg);
   color: var(--lanismd-editor-text);
 }
 
-.sync-repo-item-btn-danger:hover {
+.git-cred-item-btn-danger:hover {
   background-color: rgba(239, 68, 68, 0.1);
   color: #dc2626;
 }
 
 /* ===== 仓库编辑表单 ===== */
-.sync-repo-form {
+.git-cred-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -142,39 +142,39 @@
   border: 1px solid var(--lanismd-border-color);
 }
 
-.sync-form-row {
+.git-form-row {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.sync-form-row-double {
+.git-form-row-double {
   flex-direction: row;
   align-items: flex-end;
   gap: 0;
 }
 
-.sync-form-field {
+.git-form-field {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.sync-form-separator {
+.git-form-separator {
   padding: 0 8px;
   padding-bottom: 7px;
   color: var(--lanismd-text-secondary);
   font-size: var(--lanismd-font-size-md);
 }
 
-.sync-form-label {
+.git-form-label {
   font-size: var(--lanismd-font-size-xs);
   color: var(--lanismd-text-secondary);
   font-weight: 500;
 }
 
-.sync-form-input {
+.git-form-input {
   width: 100%;
   padding: 6px 10px;
   border-radius: var(--lanismd-radius-md);
@@ -186,25 +186,25 @@
   outline: none;
 }
 
-.sync-form-input:focus {
+.git-form-input:focus {
   border-color: var(--lanismd-accent);
 }
 
-.sync-form-input--readonly {
+.git-form-input--readonly {
   opacity: 0.6;
   cursor: not-allowed;
   background-color: var(--lanismd-bg-secondary);
 }
 
 /* 分段控件 */
-.sync-form-segmented {
+.git-form-segmented {
   display: flex;
   border-radius: var(--lanismd-radius-md);
   border: 1px solid var(--lanismd-border-color);
   overflow: hidden;
 }
 
-.sync-form-seg-item {
+.git-form-seg-item {
   flex: 1;
   padding: 5px 12px;
   font-size: var(--lanismd-font-size-sm);
@@ -214,21 +214,21 @@
   cursor: pointer;
 }
 
-.sync-form-seg-item:not(:last-child) {
+.git-form-seg-item:not(:last-child) {
   border-right: 1px solid var(--lanismd-border-color);
 }
 
-.sync-form-seg-item.active {
+.git-form-seg-item.active {
   background-color: var(--lanismd-accent);
   color: #fff;
 }
 
-.sync-form-seg-item:hover:not(.active) {
+.git-form-seg-item:hover:not(.active) {
   background-color: var(--lanismd-hover-bg);
 }
 
 /* 操作按钮 */
-.sync-form-actions {
+.git-form-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -237,13 +237,13 @@
   border-top: 1px solid var(--lanismd-border-color);
 }
 
-.sync-form-actions-right {
+.git-form-actions-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.sync-form-btn {
+.git-form-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -255,13 +255,13 @@
   cursor: pointer;
 }
 
-.sync-form-btn:disabled {
+.git-form-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* 测试连接按钮包裹层 */
-.sync-form-test-wrap {
+.git-form-test-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -270,7 +270,7 @@
 }
 
 /* 测试连接失败错误信息 */
-.sync-form-test-error {
+.git-form-test-error {
   font-size: var(--lanismd-font-size-xs);
   color: #dc2626;
   white-space: nowrap;
@@ -278,70 +278,109 @@
   text-overflow: ellipsis;
 }
 
-.sync-form-btn-test {
+.git-form-btn-test {
   color: var(--lanismd-text-secondary);
   border: 1px solid var(--lanismd-border-color);
   background-color: transparent;
   flex-shrink: 0;
 }
 
-.sync-form-btn-test:hover:not(:disabled) {
+.git-form-btn-test:hover:not(:disabled) {
   border-color: var(--lanismd-accent);
   color: var(--lanismd-accent);
 }
 
 /* 成功状态 */
-.sync-form-btn-test--success {
+.git-form-btn-test--success {
   color: #16a34a;
   border-color: #16a34a;
   background-color: rgba(22, 163, 74, 0.06);
 }
 
-.sync-form-btn-test--success:hover:not(:disabled) {
+.git-form-btn-test--success:hover:not(:disabled) {
   color: #16a34a;
   border-color: #16a34a;
 }
 
 /* 失败状态 */
-.sync-form-btn-test--fail {
+.git-form-btn-test--fail {
   color: #dc2626;
   border-color: #dc2626;
   background-color: rgba(220, 38, 38, 0.06);
 }
 
-.sync-form-btn-test--fail:hover:not(:disabled) {
+.git-form-btn-test--fail:hover:not(:disabled) {
   color: #dc2626;
   border-color: #dc2626;
 }
 
-.sync-form-btn-cancel {
+.git-form-btn-cancel {
   color: var(--lanismd-text-secondary);
   background-color: transparent;
 }
 
-.sync-form-btn-cancel:hover {
+.git-form-btn-cancel:hover {
   background-color: var(--lanismd-hover-bg);
 }
 
-.sync-form-btn-save {
+.git-form-btn-save {
   color: #fff;
   background-color: var(--lanismd-accent);
 }
 
-.sync-form-btn-save:hover:not(:disabled) {
+.git-form-btn-save:hover:not(:disabled) {
   filter: brightness(1.1);
 }
 
 /* 旋转动画（同步复用） */
-.sync-spin {
-  animation: sync-spin 1s linear infinite;
+.lanismd-git-spin {
+  animation: lanismd-git-spin 1s linear infinite;
 }
 
-@keyframes sync-spin {
+@keyframes lanismd-git-spin {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ===== Git 状态 / 克隆目录 ===== */
+.git-settings-status {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-secondary);
+}
+
+.git-settings-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 260px;
+}
+
+.git-settings-path .git-form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.git-settings-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--lanismd-radius-md);
+  border: 1px solid var(--lanismd-border-color);
+  color: var(--lanismd-text-secondary);
+}
+
+.git-settings-icon-btn:hover {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+.git-settings .git-dialog-warning {
+  margin: 4px 0 8px;
 }

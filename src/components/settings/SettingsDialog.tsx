@@ -22,10 +22,9 @@ import {
   SettingsSegmentedControl,
 } from './SettingsControls';
 import { AiSettings } from './AiSettings';
-import { SyncSettings } from './SyncSettings';
+import { GitSettings } from './GitSettings';
 
 import '../../styles/settings.css';
-import '../../styles/sync/sync-settings.css';
 
 // ---------------------------------------------------------------------------
 // 快捷键数据定义
@@ -129,7 +128,7 @@ const SECTIONS = [
   { id: 'image', label: '图片' },
   { id: 'attachment', label: '附件' },
   { id: 'ai', label: 'AI 助手' },
-  { id: 'sync', label: '远程同步' },
+  { id: 'git', label: 'Git' },
   { id: 'shortcuts', label: '快捷键' },
 ];
 
@@ -701,7 +700,7 @@ export function SettingsDialog() {
 
             {settingsActiveSection === 'ai' && <AiSettings />}
 
-            {settingsActiveSection === 'sync' && <SyncSettings />}
+            {settingsActiveSection === 'git' && <GitSettings />}
 
             {settingsActiveSection === 'shortcuts' && (
               <div className="settings-section settings-shortcuts">

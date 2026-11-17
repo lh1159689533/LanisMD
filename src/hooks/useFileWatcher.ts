@@ -3,6 +3,7 @@ import { watch } from '@tauri-apps/plugin-fs';
 import type { WatchEvent } from '@tauri-apps/plugin-fs';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useFileStore } from '@/stores/file-store';
+import { useGitStore } from '@/stores/git-store';
 import { fileService } from '@/services/tauri';
 import { showConfirmDialog } from '@/services/tauri/dialog-service';
 
@@ -37,6 +38,19 @@ function isRelevantChange(event: WatchEvent): boolean {
     if ('access' in type) return false;
   }
   return false;
+}
+
+/** 路径是否位于 .git 目录内部 */
+function isInsideGitDir(path: string): boolean {
+  return /[\\/]\.git([\\/]|$)/.test(path);
+}
+
+/**
+ * .git 内部变化中，只有分支/引用变化（如在终端提交、切换分支）需要刷新 Git 状态；
+ * index 等文件会被 git status 自身改写，若不过滤会形成刷新循环。
+ */
+function isGitRefChange(path: string): boolean {
+  return /[\\/]\.git[\\/](HEAD|MERGE_HEAD|refs[\\/])/.test(path);
 }
 
 /**
@@ -80,6 +94,16 @@ export function useFileWatcher() {
           (event: WatchEvent) => {
             if (cancelled) return;
             if (!isRelevantChange(event)) return;
+
+            // .git 内部变化：仅在引用变化时刷新 Git 状态，不刷新文件树
+            const eventPaths = event.paths ?? [];
+            if (eventPaths.length > 0 && eventPaths.every(isInsideGitDir)) {
+              if (eventPaths.some(isGitRefChange)) {
+                useGitStore.getState().scheduleRefresh();
+              }
+              return;
+            }
+            useGitStore.getState().scheduleRefresh();
 
             // --- 1. Debounced tree refresh (skip if within suppress window) ---
             if (

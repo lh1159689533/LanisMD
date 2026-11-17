@@ -146,10 +146,22 @@ export interface AppConfig {
     /** 预览方式：system=系统默认软件打开，builtin=内置预览组件 */
     previewMode: 'system' | 'builtin';
   };
-  /** 远程同步配置 */
-  sync: {
-    /** 是否启用远程同步功能 */
-    enabled: boolean;
+  /** Git 配置 */
+  git: {
+    /** 克隆远程仓库的默认父目录，为空时使用 ~/LanisMD */
+    cloneDir: string;
+    /** 自动同步：定时将远程拉取到本地 */
+    autoSync: {
+      enabled: boolean;
+      /** 间隔（分钟） */
+      intervalMinutes: number;
+    };
+    /** 自动提交：停止编辑一段时间后自动 Commit & Push */
+    autoCommit: {
+      enabled: boolean;
+      /** 停止编辑后多久提交（分钟） */
+      idleMinutes: number;
+    };
   };
   /** AI 助手配置 */
   ai: {

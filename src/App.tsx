@@ -13,7 +13,7 @@ import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
 import { useAiStore } from './stores/ai-store';
-import { useSyncStore } from './stores/sync-store';
+import { useGitAutomation } from './hooks/useGitAutomation';
 import { useSettingsStore } from './stores/settings-store';
 import { useSessionStore } from './stores/session-store';
 import { useFileStore } from './stores/file-store';
@@ -99,17 +99,8 @@ function TauriApp() {
     void refreshConfig();
   }, [refreshConfig]);
 
-  // 启动时初始化同步进度事件监听
-  const listenProgress = useSyncStore((s) => s.listenProgress);
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    listenProgress().then((fn) => {
-      unlisten = fn;
-    });
-    return () => {
-      unlisten?.();
-    };
-  }, [listenProgress]);
+  // Git：挂载仓库、自动同步、空闲自动提交
+  useGitAutomation();
 
   // 启动时恢复上次会话（仅当 settings.restoreSession 为 true）
   // 使用 ref 守卫，确保 StrictMode/HMR 下也只执行一次
