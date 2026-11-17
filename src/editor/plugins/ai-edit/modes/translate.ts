@@ -1,38 +1,38 @@
 /**
- * 翻译模式：就地弹窗，支持切换目标语言后重新翻译
+ * 翻译模式：就地弹窗，支持切换目标语言、继续调整译文
  *
  * @changelog
- * | 版本   | 变更说明                              | 关联               |
- * | v1.0.0 | 从 generator.ts 拆出，改用 AiSession | REQ: AI 架构改造#3 |
- * | v1.1.0 | 自动识别原文语言：中文译英文，其他译中文 | REQ: AI 弹窗体验优化 |
+ * | 版本   | 变更说明                                       | 关联                      |
+ * | v1.0.0 | 从 generator.ts 拆出，改用 AiSession           | REQ: AI 架构改造#3        |
+ * | v1.1.0 | 自动识别原文语言：中文译英文，其他译中文       | REQ: AI 弹窗体验优化     |
+ * | v2.0.0 | 记住上次选择的语言；支持多轮继续调整译文       | REQ: AI 体验短板-翻译/追问 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
+import { REWRITE_FOLLOW_UPS } from '@/services/ai/follow-ups';
 import { recordAiHistory } from '@/services/ai/history';
 import { startCommand } from '@/services/ai/generation';
 import { createAiSession } from '@/services/ai/session';
 
 import { cleanOutput } from '../commit/clean-output';
-import { detectTargetLanguage } from '../context/language';
 import { insertMarkdownAfterBlock, replaceRangeWithMarkdown } from '../commit/markdown-bridge';
+import { getLanguageLabel, rememberLanguage, resolveTargetLanguage } from '../context/language';
 import type { AiModeInput } from '../types';
-import { createAiPopup, TRANSLATE_LANGUAGES, type TranslateLanguageId } from '../ui/ai-popup';
-
-/** 语言 id -> prompt 中使用的语言名称 */
-function getLanguageLabel(langId: TranslateLanguageId): string {
-  return TRANSLATE_LANGUAGES.find((l) => l.id === langId)?.label ?? '英语';
-}
+import { createAiPopup, type TranslateLanguageId } from '../ui/ai-popup';
 
 export function runTranslateMode({ ctx, runtime, prompt }: AiModeInput): void {
   const { view, command } = ctx;
-  // 首次翻译的目标语言由原文决定，用户仍可在弹窗中手动切换
-  const initialLang = detectTargetLanguage(ctx.selection);
-  const initialPrompt = {
+  // 调用方显式指定了目标语言时优先使用，否则按「记忆 > 自动识别」解析
+  const initialLang =
+    (prompt.options?.targetLangId as TranslateLanguageId | undefined) ??
+    resolveTargetLanguage(ctx.selection);
+
+  const promptFor = (langId: TranslateLanguageId) => ({
     ...prompt,
-    options: { ...prompt.options, targetLang: getLanguageLabel(initialLang) },
-  };
+    options: { ...prompt.options, targetLang: getLanguageLabel(langId) },
+  });
 
   const session = createAiSession(runtime, {
     onDelta: (delta) => popup.appendContent(delta),
@@ -50,6 +50,7 @@ export function runTranslateMode({ ctx, runtime, prompt }: AiModeInput): void {
     to: ctx.to,
     mode: 'translate',
     initialLang,
+    quickFollowUps: REWRITE_FOLLOW_UPS,
     onReplace: (text) => {
       replaceRangeWithMarkdown(view, ctx.from, ctx.to, cleanOutput('replace-selection', text));
       recordAiHistory(command, text, ctx.selection);
@@ -60,15 +61,13 @@ export function runTranslateMode({ ctx, runtime, prompt }: AiModeInput): void {
     },
     onClose: () => session.dispose(),
     onLanguageChange: (langId) => {
-      const targetLang = getLanguageLabel(langId);
-      popup.resetContent();
-      // start 会静默丢弃仍在进行的旧语言请求
-      void startCommand(session, command, {
-        ...prompt,
-        options: { ...prompt.options, targetLang },
-      });
+      // 手动选择的语言记下来，下次翻译默认使用
+      rememberLanguage(langId);
+      // start 会静默丢弃仍在进行的旧语言请求，并开启新的对话
+      void startCommand(session, command, promptFor(langId));
     },
+    onFollowUp: (instruction) => void session.followUp(instruction),
   });
 
-  void startCommand(session, command, initialPrompt);
+  void startCommand(session, command, promptFor(initialLang));
 }

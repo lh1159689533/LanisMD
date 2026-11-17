@@ -93,11 +93,16 @@ export interface AiPromptInput {
   selection?: string;
   /** 斜杠命令后的参数，例如 `/mermaid 登录流程` */
   arg?: string;
-  /** 光标前 N 段上下文 */
+  /**
+   * 写作背景：front-matter 的标题/标签 + 当前位置的标题路径 + 当前章节内容，
+   * 已按 token 预算裁剪（见 ai-edit/context/writing-context.ts）
+   */
   context?: string;
-  /** 完整文档文本（润色"完整文档上下文"模式使用） */
+  /** 文档标题：front-matter title > 首个一级标题 > 文件名 */
+  title?: string;
+  /** 完整文档文本（润色"完整文档上下文"模式、自定义指令 {{document}} 使用） */
   fullDocument?: string;
-  /** 额外参数（如翻译目标语言） */
+  /** 额外参数（如翻译目标语言、润色风格） */
   options?: Record<string, string>;
 }
 
@@ -117,6 +122,8 @@ export interface AiCommand {
   buildPrompt: (input: AiPromptInput) => AiChatMessage[];
   /** 生成参数；不提供时使用默认值（见 services/ai/generation.ts） */
   generation?: (input: AiPromptInput) => AiGeneration;
+  /** 执行前需要构造（按预算裁剪的）完整文档上下文，例如模板中使用了 {{document}} */
+  needsDocument?: boolean;
 }
 
 /**
@@ -143,14 +150,41 @@ export interface AiConfig {
   showInSlash: boolean;
   /** 用户自定义 Prompt 模板 */
   customPrompts?: CustomPrompt[];
+  /** 上次在翻译弹窗中选择的目标语言 id；未记录时按原文自动判断 */
+  translateLang?: string;
 }
 
-/** 自定义 Prompt 模板 */
+/** 润色风格 */
+export type PolishStyle =
+  'general' | 'proofread' | 'concise' | 'expand' | 'formal' | 'casual' | 'academic';
+
+/** 自定义指令结果的写入方式 */
+export type CustomPromptInsertMode = 'insert-after' | 'replace-selection';
+
+/** 自定义指令的出现位置 */
+export type CustomPromptPlacement = 'slash' | 'tooltip' | 'context-menu';
+
+/**
+ * 自定义 Prompt 模板
+ *
+ * 新增字段均为可选：旧配置缺省时等同于「斜杠菜单 + 插入到下方 + 默认生成参数」，行为不变。
+ */
 export interface CustomPrompt {
   /** 唯一标识 */
   id: string;
-  /** 显示名称（在 slash-menu 中展示） */
+  /** 显示名称 */
   label: string;
-  /** system prompt 内容 */
+  /**
+   * system prompt 内容；可使用 {{selection}} {{context}} {{document}} {{title}} {{input}} 变量，
+   * 未使用任何变量时沿用旧行为（选区 / 输入作为 user 消息发送）
+   */
   prompt: string;
+  /** 写入方式，默认插入到下方 */
+  insertMode?: CustomPromptInsertMode;
+  /** 出现位置，默认仅斜杠菜单 */
+  placements?: CustomPromptPlacement[];
+  /** 温度；不填使用默认值 */
+  temperature?: number;
+  /** 输出 token 上限；不填使用默认值 */
+  maxTokens?: number;
 }

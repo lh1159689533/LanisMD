@@ -118,6 +118,8 @@ export const SHORTCUTS = {
     default: { mod: true, shift: true, key: 'I' },
   },
   clearFormat: { mod: true, key: '\\' },
+  // AI 助手（与 ai-edit/keymap.ts 对应）：有选区时润色，无选区时打开 AI 助手
+  aiAssistant: { mod: true, key: 'J' },
 } as const satisfies Record<string, ShortcutLike>;
 
 export type ShortcutName = keyof typeof SHORTCUTS;

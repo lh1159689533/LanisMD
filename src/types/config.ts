@@ -1,3 +1,5 @@
+import type { CustomPrompt } from './ai';
+
 // 内置主题类型
 export type BuiltinTheme = 
   | 'light' 
@@ -171,11 +173,9 @@ export interface AppConfig {
     /** 斜杠菜单是否显示 AI 指令 */
     showInSlash: boolean;
     /** 用户自定义 Prompt 模板 */
-    customPrompts?: Array<{
-      id: string;
-      label: string;
-      prompt: string;
-    }>;
+    customPrompts?: CustomPrompt[];
+    /** 上次在翻译弹窗中选择的目标语言 id；未记录时按原文自动判断 */
+    translateLang?: string;
     /** AI 历史记录最大条数 */
     maxHistoryCount: number;
   };

@@ -9,6 +9,7 @@
  * @changelog
  * | 版本   | 变更说明                        | 关联                               |
  * | v1.0.0 | 初始实现：token 估算与上下文裁剪 | REQ: AI 功能修复#5 TECH: 本文件头 |
+ * | v1.1.0 | 预算支持自定义上限（写作背景）   | REQ: AI 体验短板-上下文             |
  * /@changelog
  *
  * @author hhhuilli
@@ -43,13 +44,16 @@ export function estimateTokens(text: string): number {
 /**
  * 计算可分配给「文档上下文」的 token 预算。
  *
- * 预算 = min(模型窗口 - 输出预留 - 固定开销 - 选区占用, DOC_CONTEXT_TOKEN_CAP)
+ * 预算 = min(模型窗口 - 输出预留 - 固定开销 - 选区占用, cap)
  * 返回 0 表示空间不足，不应附带文档上下文。
+ *
+ * @param params.cap - 预算上限，默认 DOC_CONTEXT_TOKEN_CAP；常驻的写作背景使用更小的上限
  */
 export function computeContextBudget(params: {
   contextLength?: number;
   maxOutputTokens?: number;
   reservedText?: string;
+  cap?: number;
 }): number {
   const windowSize =
     params.contextLength && params.contextLength > 0
@@ -59,7 +63,7 @@ export function computeContextBudget(params: {
   const reserved = params.reservedText ? estimateTokens(params.reservedText) : 0;
   const budget = Math.min(
     windowSize - output - PROMPT_OVERHEAD_TOKENS - reserved,
-    DOC_CONTEXT_TOKEN_CAP,
+    params.cap ?? DOC_CONTEXT_TOKEN_CAP,
   );
   return budget >= MIN_USEFUL_CONTEXT_TOKENS ? budget : 0;
 }

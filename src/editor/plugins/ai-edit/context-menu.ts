@@ -6,8 +6,16 @@
  * - AI 操作（需有选中文本且 AI 功能启用）：
  *   - AI 润色（仅选中）
  *   - AI 润色（完整上下文）
- *   - AI 翻译
+ *   - AI 翻译为 X（X 为记住的语言或按原文自动判断的语言）
  *   - AI 解释
+ *   - 出现在右键菜单的自定义指令
+ *
+ * @changelog
+ * | 版本   | 变更说明                                      | 关联                      |
+ * | v1.1.0 | 翻译项显示实际目标语言；接入自定义指令         | REQ: AI 体验短板-翻译方向 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import type { EditorView } from '@milkdown/kit/prose/view';
@@ -15,9 +23,11 @@ import { TextSelection } from '@milkdown/kit/prose/state';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
 import { AI_COMMANDS } from '@/services/ai/commands';
+import { buildCustomCommand, customPromptsFor } from '@/services/ai/custom-commands';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { toggleImmersiveReading } from '@/utils/immersive-reading';
+import { getLanguageLabel, resolveTargetLanguage } from './context/language';
 import { runAiCommand } from './generator';
 import { showContextMenu, closeActiveMenu, type ContextMenuItem } from '../context-menu/renderer';
 
@@ -214,12 +224,13 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
       },
     });
 
+    // 目标语言：记住的语言优先，否则按原文中文占比判断；菜单与实际执行保持一致
+    const targetLangId = resolveTargetLanguage(state.doc.textBetween(from, to, '\n', '\n'));
     items.push({
-      label: 'AI 翻译',
+      label: `AI 翻译为${getLanguageLabel(targetLangId)}`,
       icon: ICON_AI,
       action: () => {
-        // 目标语言由翻译模式根据原文自动识别
-        void runAiCommand(view, AI_COMMANDS.translate);
+        void runAiCommand(view, AI_COMMANDS.translate, { options: { targetLangId } });
       },
     });
 
@@ -230,6 +241,17 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
         void runAiCommand(view, AI_COMMANDS.explain);
       },
     });
+
+    for (const prompt of customPromptsFor('context-menu')) {
+      const command = buildCustomCommand(prompt);
+      items.push({
+        label: prompt.label,
+        icon: ICON_AI,
+        action: () => {
+          void runAiCommand(view, command);
+        },
+      });
+    }
   }
 
   return items;

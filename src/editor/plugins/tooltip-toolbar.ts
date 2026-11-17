@@ -21,8 +21,9 @@ import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
-import { AI_COMMANDS } from '@/services/ai/commands';
-import type { AiCommand } from '@/types/ai';
+import { AI_COMMANDS, POLISH_STYLES } from '@/services/ai/commands';
+import { buildCustomCommand, customPromptsFor } from '@/services/ai/custom-commands';
+import type { AiCommand, AiPromptInput } from '@/types/ai';
 import { withShortcut } from '@/utils/shortcut';
 
 import {
@@ -431,13 +432,20 @@ interface ToolbarButton {
   extraClass?: string;
   /** 动态显隐：返回 false 时按钮会被隐藏 */
   isVisible?: () => boolean;
-  /** 子菜单项（AI 按钮使用） */
-  submenuItems?: Array<{
-    id: string;
-    icon: string;
-    label: string;
-    action: (view: EditorView) => void;
-  }>;
+  /** 子菜单项（AI 按钮使用）；为函数时在每次展开时计算（自定义指令可能随设置变化） */
+  submenuItems?: () => SubmenuItem[];
+}
+
+/** AI 子菜单项 */
+interface SubmenuItem {
+  id: string;
+  icon: string;
+  label: string;
+  action: (view: EditorView) => void;
+  /** 在该项下方展开的选项（润色风格） */
+  options?: Array<{ id: string; label: string; action: (view: EditorView) => void }>;
+  /** 在该项之前插入分隔线 */
+  separatorBefore?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -539,36 +547,60 @@ class TooltipToolbarView {
     {
       id: 'ai-menu',
       icon: icons.aiPolish,
-      title: 'AI 助手',
+      title: withShortcut('AI 助手', 'aiAssistant'),
       markName: null,
       extraClass: 'milkdown-tooltip-btn-ai',
       isVisible: () => isAiToolbarEnabled(),
       action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
-      submenuItems: [
-        {
-          id: 'ai-polish',
-          icon: AI_COMMANDS.polish.icon,
-          label: '润色',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
-        },
-        {
-          id: 'ai-translate',
-          icon: AI_COMMANDS.translate.icon,
-          label: '翻译',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.translate),
-        },
-        {
-          id: 'ai-explain',
-          icon: AI_COMMANDS.explain.icon,
-          label: '解释',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.explain),
-        },
-      ],
+      submenuItems: () => this.buildAiSubmenuItems(),
     },
   ];
 
   /** 当前显示的 AI 子菜单元素 */
   private aiSubmenu: HTMLElement | null = null;
+
+  /** AI 子菜单：润色（含风格选项）/ 翻译 / 解释 + 出现在浮层的自定义指令 */
+  private buildAiSubmenuItems(): SubmenuItem[] {
+    const items: SubmenuItem[] = [
+      {
+        id: 'ai-polish',
+        icon: AI_COMMANDS.polish.icon,
+        label: '润色',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
+        // 通用润色由主项触发，下方列出其余风格
+        options: POLISH_STYLES.filter((style) => style.id !== 'general').map((style) => ({
+          id: `ai-polish-${style.id}`,
+          label: style.label,
+          action: (view: EditorView) =>
+            this.handleAiCommand(view, AI_COMMANDS.polish, { options: { style: style.id } }),
+        })),
+      },
+      {
+        id: 'ai-translate',
+        icon: AI_COMMANDS.translate.icon,
+        label: '翻译',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.translate),
+      },
+      {
+        id: 'ai-explain',
+        icon: AI_COMMANDS.explain.icon,
+        label: '解释',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.explain),
+      },
+    ];
+
+    customPromptsFor('tooltip').forEach((prompt, index) => {
+      const command = buildCustomCommand(prompt);
+      items.push({
+        id: `ai-custom-${prompt.id}`,
+        icon: command.icon,
+        label: prompt.label,
+        separatorBefore: index === 0,
+        action: (view) => this.handleAiCommand(view, command),
+      });
+    });
+    return items;
+  }
 
   constructor() {
     this.container = document.createElement('div');
@@ -606,7 +638,7 @@ class TooltipToolbarView {
       btn.type = 'button';
 
       // 有子菜单的按钮：添加下拉箭头，hover 展开
-      if (def.submenuItems && def.submenuItems.length > 0) {
+      if (def.submenuItems) {
         // 添加小三角指示有子菜单
         const arrow = document.createElement('span');
         arrow.className = 'milkdown-tooltip-btn-arrow';
@@ -675,7 +707,13 @@ class TooltipToolbarView {
     const submenu = document.createElement('div');
     submenu.className = 'milkdown-tooltip-ai-submenu';
 
-    def.submenuItems.forEach((item) => {
+    def.submenuItems().forEach((item) => {
+      if (item.separatorBefore) {
+        const sep = document.createElement('div');
+        sep.className = 'milkdown-tooltip-ai-submenu-separator';
+        submenu.appendChild(sep);
+      }
+
       const menuItem = document.createElement('button');
       menuItem.className = 'milkdown-tooltip-ai-submenu-item';
       menuItem.type = 'button';
@@ -690,6 +728,28 @@ class TooltipToolbarView {
       });
 
       submenu.appendChild(menuItem);
+
+      // 选项（润色风格）：以紧凑的标签形式排在该项下方
+      if (item.options && item.options.length > 0) {
+        const optionsRow = document.createElement('div');
+        optionsRow.className = 'milkdown-tooltip-ai-submenu-options';
+        item.options.forEach((option) => {
+          const optionBtn = document.createElement('button');
+          optionBtn.type = 'button';
+          optionBtn.className = 'milkdown-tooltip-ai-submenu-option';
+          optionBtn.textContent = option.label;
+          optionBtn.title = `${item.label}：${option.label}`;
+          optionBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!this.view) return;
+            option.action(this.view);
+            this.hideAiSubmenu();
+          });
+          optionsRow.appendChild(optionBtn);
+        });
+        submenu.appendChild(optionsRow);
+      }
     });
 
     submenu.addEventListener('mouseleave', () => {
@@ -776,11 +836,11 @@ class TooltipToolbarView {
    * 先隐藏 tooltip，让 AI 交互组件在原选区处显示；
    * 然后把当前选区交给 ai-edit 插件处理。
    */
-  private handleAiCommand(view: EditorView, command: AiCommand) {
+  private handleAiCommand(view: EditorView, command: AiCommand, extra?: Partial<AiPromptInput>) {
     this.provider?.hide();
     // 让 tooltip 隐藏后再异步启动，避免 DOM 遮挡
     requestAnimationFrame(() => {
-      void runAiCommand(view, command);
+      void runAiCommand(view, command, extra);
     });
   }
 

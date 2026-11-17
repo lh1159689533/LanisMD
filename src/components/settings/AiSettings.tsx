@@ -1,12 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
-import { RiAddLine, RiFolderOpenLine, RiRefreshLine } from 'react-icons/ri';
+import { useEffect, useState } from 'react';
+import { RiFolderOpenLine, RiRefreshLine } from 'react-icons/ri';
 
 import { useSettingsStore } from '@/stores/settings-store';
 import { useAiStore } from '@/stores/ai-store';
+import { useUIStore } from '@/stores/ui-store';
 import { aiService } from '@/services';
-import type { CustomPrompt } from '@/types/ai';
 import { cn } from '@/utils/cn';
 
+import { AiCustomPromptSettings } from './AiCustomPromptSettings';
 import { AiModelSettings } from './AiModelSettings';
 import { SettingsNumberInput } from './SettingsControls';
 
@@ -20,6 +21,7 @@ import { SettingsNumberInput } from './SettingsControls';
  * @changelog
  * | 版本   | 变更说明                                       | 关联                 |
  * | v2.0.0 | 模型配置改为分类型的模型列表；移除生成参数设置 | REQ: AI 模型配置重做 |
+ * | v2.1.0 | 自定义指令拆为独立组件；错误提示改为应用内提示 | REQ: AI 体验短板     |
  * /@changelog
  *
  * @author hhhuilli
@@ -28,35 +30,6 @@ export function AiSettings() {
   const { config, setNestedConfig } = useSettingsStore();
   const refreshConfig = useAiStore((s) => s.refreshConfig);
   const [refreshing, setRefreshing] = useState(false);
-
-  // 自定义 Prompt 编辑状态
-  const [editingPrompt, setEditingPrompt] = useState<{
-    label: string;
-    prompt: string;
-  } | null>(null);
-
-  const customPrompts: CustomPrompt[] = config.ai?.customPrompts ?? [];
-
-  const addCustomPrompt = useCallback(() => {
-    if (!editingPrompt || !editingPrompt.label.trim() || !editingPrompt.prompt.trim()) return;
-    const newPrompt: CustomPrompt = {
-      id: `custom-${Date.now()}`,
-      label: editingPrompt.label.trim(),
-      prompt: editingPrompt.prompt.trim(),
-    };
-    setNestedConfig('ai.customPrompts', [...customPrompts, newPrompt]);
-    setEditingPrompt(null);
-  }, [editingPrompt, customPrompts, setNestedConfig]);
-
-  const removeCustomPrompt = useCallback(
-    (id: string) => {
-      setNestedConfig(
-        'ai.customPrompts',
-        customPrompts.filter((p) => p.id !== id),
-      );
-    },
-    [customPrompts, setNestedConfig],
-  );
 
   // 进入设置页时刷新配置（环境变量、配置文件可能已在外部修改）
   useEffect(() => {
@@ -68,7 +41,7 @@ export function AiSettings() {
       await aiService.openAiConfig();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      window.alert(`打开配置目录失败：${msg}`);
+      useUIStore.getState().addToast({ type: 'error', message: `打开配置目录失败：${msg}` });
     }
   };
 
@@ -143,97 +116,9 @@ export function AiSettings() {
             </button>
           </div>
 
-          {/* 自定义 Prompt 模板 */}
+          {/* 自定义指令 */}
           <div className="settings-section-title">自定义指令</div>
-          <div className="settings-item-hint">
-            <p>添加自定义指令后，它们会出现在斜杠菜单的 AI 子菜单中。</p>
-          </div>
-
-          {/* 已有模板列表 */}
-          {customPrompts.map((p) => (
-            <div key={p.id} className="settings-item">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="settings-item-label">{p.label}</div>
-                <div className="settings-item-hint" style={{ marginTop: 2 }}>
-                  <p
-                    style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: '300px',
-                    }}
-                  >
-                    {p.prompt}
-                  </p>
-                </div>
-              </div>
-              <button
-                className="settings-button"
-                onClick={() => removeCustomPrompt(p.id)}
-                title="删除此指令"
-              >
-                <span>删除</span>
-              </button>
-            </div>
-          ))}
-
-          {/* 添加新模板 */}
-          {editingPrompt ? (
-            <div className="lanismd-ai-custom-prompt-form">
-              <div className="settings-item" style={{ gap: '8px' }}>
-                <input
-                  type="text"
-                  className="settings-text-input"
-                  placeholder="指令名称"
-                  value={editingPrompt.label}
-                  onChange={(e) => setEditingPrompt({ ...editingPrompt, label: e.target.value })}
-                  style={{ minWidth: '100px', maxWidth: '140px' }}
-                />
-                <textarea
-                  className="settings-text-input"
-                  placeholder="输入 System Prompt..."
-                  value={editingPrompt.prompt}
-                  onChange={(e) => setEditingPrompt({ ...editingPrompt, prompt: e.target.value })}
-                  rows={3}
-                  style={{
-                    flex: 1,
-                    minWidth: '200px',
-                    maxWidth: 'none',
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  justifyContent: 'flex-end',
-                  marginTop: '8px',
-                }}
-              >
-                <button className="settings-button" onClick={() => setEditingPrompt(null)}>
-                  取消
-                </button>
-                <button
-                  className="settings-button settings-button-primary"
-                  onClick={addCustomPrompt}
-                  disabled={!editingPrompt.label.trim() || !editingPrompt.prompt.trim()}
-                >
-                  添加
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <button
-                className="settings-button"
-                onClick={() => setEditingPrompt({ label: '', prompt: '' })}
-              >
-                <RiAddLine size={14} />
-                <span>添加自定义指令</span>
-              </button>
-            </div>
-          )}
+          <AiCustomPromptSettings />
 
           <div className="settings-section-title">历史记录</div>
           <div className="settings-item">

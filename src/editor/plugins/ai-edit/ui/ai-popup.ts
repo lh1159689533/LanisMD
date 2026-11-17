@@ -1,9 +1,10 @@
 /**
  * AI 就地弹窗（翻译/解释共用）
  *
- * 定位在选区附近，展示 AI 生成结果。
- * 翻译模式：替换原文 / 插入原文之后 / 关闭 + 语言切换
- * 解释模式：仅关闭
+ * 定位在选区附近，展示 AI 生成结果，并保留本次弹窗内的多轮对话记录。
+ * 翻译模式：替换原文 / 插入原文之后 / 关闭 + 语言切换 + 继续调整
+ * 解释模式：插入到下方 / 关闭 + 追问
+ * 写入文档时使用最新一轮的回答。
  *
  * 点击弹窗外部区域不会关闭（避免误操作丢失结果），仅播放抖动提示；
  * 需通过按钮或 Esc 显式关闭。
@@ -12,6 +13,7 @@
  * | 版本   | 变更说明                                                  | 关联                  |
  * | v1.1.0 | 点击外部不再关闭改为抖动；标题前显示 AI icon；支持初始语言 | REQ: AI 弹窗体验优化 |
  * | v1.2.0 | 按可视区剩余空间限定最大高度，流式内容增高不再超出窗口 | REQ: AI 弹窗体验优化 |
+ * | v2.0.0 | 多轮对话记录与追问输入；解释支持插入到下方               | REQ: AI 体验短板-追问 |
  * /@changelog
  *
  * @author hhhuilli
@@ -19,9 +21,11 @@
 
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import type { QuickFollowUp } from '@/services/ai/follow-ups';
 import type { AiTokenUsage } from '@/services/ai/usage';
 
 import { createAiIcon, playShake } from './ai-visual';
+import { createFollowUpBar } from './follow-up-bar';
 import { positionAnchoredPopup } from './popup-position';
 import { createUsageLabel } from './usage-label';
 
@@ -49,11 +53,11 @@ export interface AiPopupOptions {
   to: number;
   /** 弹窗模式 */
   mode: PopupMode;
-  /** 初始内容 */
-  initialContent?: string;
-  /** 翻译模式下初始选中的目标语言（默认英语） */
+  /** 翻译模式下初始选中的目标语言 */
   initialLang?: TranslateLanguageId;
-  /** 替换原文回调 */
+  /** 快捷追问按钮 */
+  quickFollowUps?: QuickFollowUp[];
+  /** 替换原文回调（仅翻译） */
   onReplace?: (text: string) => void;
   /** 插入原文之后回调 */
   onInsertAfter?: (text: string) => void;
@@ -61,10 +65,12 @@ export interface AiPopupOptions {
   onClose?: () => void;
   /** 切换语言重新翻译回调 */
   onLanguageChange?: (langId: TranslateLanguageId) => void;
+  /** 追问回调；不提供时不显示追问输入 */
+  onFollowUp?: (instruction: string) => void;
 }
 
 export interface AiPopupHandle {
-  /** 追加流式内容 */
+  /** 追加流式内容（写入当前轮回答） */
   appendContent: (delta: string) => void;
   /** 推理模型思考阶段（尚未输出正文）时更新状态提示 */
   setThinking: () => void;
@@ -72,7 +78,7 @@ export interface AiPopupHandle {
   setDone: () => void;
   /** 设为错误状态 */
   setError: (message: string) => void;
-  /** 清空内容（切换语言后重新翻译时使用） */
+  /** 清空全部对话（切换语言后重新翻译时使用） */
   resetContent: () => void;
   /** 显示本次 token 用量（完成后调用） */
   setUsage: (usage: AiTokenUsage) => void;
@@ -80,13 +86,40 @@ export interface AiPopupHandle {
   destroy: () => void;
 }
 
+const LOADING_TEXT: Record<PopupMode, string> = {
+  translate: '翻译中...',
+  explain: '分析中...',
+};
+
+const FOLLOW_UP_PLACEHOLDER: Record<PopupMode, string> = {
+  translate: '继续调整译文，例如：用词更口语一些',
+  explain: '继续追问，例如：和 XX 有什么区别？',
+};
+
+/** 创建一个按钮（mousedown 触发，避免抢占编辑器焦点） */
+function createButton(label: string, primary: boolean, onClick: () => void): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.className = primary
+    ? 'lanismd-ai-popup-btn lanismd-ai-popup-btn-primary'
+    : 'lanismd-ai-popup-btn';
+  btn.textContent = label;
+  btn.type = 'button';
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!btn.disabled) onClick();
+  });
+  return btn;
+}
+
 /**
  * 创建并显示就地弹窗。
  */
 export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
-  const { view, mode, onReplace, onInsertAfter, onClose, onLanguageChange } = options;
+  const { view, mode, onReplace, onInsertAfter, onClose, onLanguageChange, onFollowUp } = options;
 
-  let currentContent = options.initialContent ?? '';
+  /** 当前（最新一轮）回答 */
+  let currentAnswer = '';
   let isLoading = true;
   let currentLang: TranslateLanguageId = options.initialLang ?? 'en';
 
@@ -103,7 +136,6 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   const header = document.createElement('div');
   header.className = 'lanismd-ai-popup-header';
 
-  // 左侧：AI icon + 标题
   const titleGroup = document.createElement('div');
   titleGroup.className = 'lanismd-ai-popup-title-group';
   titleGroup.appendChild(createAiIcon());
@@ -114,10 +146,8 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   titleGroup.appendChild(titleSpan);
   header.appendChild(titleGroup);
 
-  // 语言选择器（仅翻译模式）
-  let langSelect: HTMLSelectElement | null = null;
   if (mode === 'translate') {
-    langSelect = document.createElement('select');
+    const langSelect = document.createElement('select');
     langSelect.className = 'lanismd-ai-popup-lang-select';
     for (const lang of TRANSLATE_LANGUAGES) {
       const opt = document.createElement('option');
@@ -127,18 +157,10 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
       langSelect.appendChild(opt);
     }
     langSelect.addEventListener('change', () => {
-      if (!langSelect) return;
       const newLang = langSelect.value as TranslateLanguageId;
       if (newLang === currentLang) return;
       currentLang = newLang;
-      // 重置状态
-      isLoading = true;
-      currentContent = '';
-      contentEl.textContent = '';
-      usageLabel.clear();
-      statusEl.textContent = '翻译中...';
-      statusEl.style.display = '';
-      // 通知外部重新翻译
+      handle.resetContent();
       onLanguageChange?.(newLang);
     });
     header.appendChild(langSelect);
@@ -149,74 +171,73 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   // 状态指示
   const statusEl = document.createElement('div');
   statusEl.className = 'lanismd-ai-popup-status';
-  statusEl.textContent = mode === 'translate' ? '翻译中...' : '分析中...';
+  statusEl.textContent = LOADING_TEXT[mode];
   popup.appendChild(statusEl);
 
-  // 内容区域
+  // 对话记录区：每轮为「追问（首轮无）+ 回答」
   const contentEl = document.createElement('div');
   contentEl.className = 'lanismd-ai-popup-content';
-  if (currentContent) {
-    contentEl.textContent = currentContent;
-  }
   popup.appendChild(contentEl);
+
+  let answerEl = document.createElement('div');
+  answerEl.className = 'lanismd-ai-popup-answer';
+  contentEl.appendChild(answerEl);
+
+  /** 开始新一轮：记录追问并新建回答区 */
+  function beginTurn(question: string) {
+    // 上一轮回答变为历史，视觉上弱化
+    answerEl.classList.add('lanismd-ai-popup-answer-past');
+    const q = document.createElement('div');
+    q.className = 'lanismd-ai-popup-question';
+    q.textContent = question;
+    contentEl.appendChild(q);
+    answerEl = document.createElement('div');
+    answerEl.className = 'lanismd-ai-popup-answer';
+    contentEl.appendChild(answerEl);
+    contentEl.scrollTop = contentEl.scrollHeight;
+
+    currentAnswer = '';
+    usageLabel.clear();
+    setLoading(true, '思考中...');
+  }
+
+  // 追问输入
+  const followUpBar = onFollowUp
+    ? createFollowUpBar({
+        placeholder: FOLLOW_UP_PLACEHOLDER[mode],
+        quickFollowUps: options.quickFollowUps,
+        onSubmit: (instruction, display) => {
+          beginTurn(display);
+          onFollowUp(instruction);
+        },
+      })
+    : null;
+  if (followUpBar) popup.appendChild(followUpBar.el);
 
   // 按钮区域
   const actionsEl = document.createElement('div');
   actionsEl.className = 'lanismd-ai-popup-actions';
 
+  const closeAndRun = (fn?: (text: string) => void) => () => {
+    const text = currentAnswer;
+    destroy();
+    fn?.(text);
+  };
+
+  const resultButtons: HTMLButtonElement[] = [];
   if (mode === 'translate') {
-    const replaceBtn = document.createElement('button');
-    replaceBtn.className = 'lanismd-ai-popup-btn lanismd-ai-popup-btn-primary';
-    replaceBtn.textContent = '替换原文';
-    replaceBtn.type = 'button';
-    replaceBtn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const text = contentEl.textContent ?? '';
-      destroy();
-      onReplace?.(text);
-    });
-
-    const insertBtn = document.createElement('button');
-    insertBtn.className = 'lanismd-ai-popup-btn';
-    insertBtn.textContent = '插入原文之后';
-    insertBtn.type = 'button';
-    insertBtn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const text = contentEl.textContent ?? '';
-      destroy();
-      onInsertAfter?.(text);
-    });
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'lanismd-ai-popup-btn';
-    closeBtn.textContent = '关闭';
-    closeBtn.type = 'button';
-    closeBtn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      destroy();
-      onClose?.();
-    });
-
-    actionsEl.appendChild(replaceBtn);
-    actionsEl.appendChild(insertBtn);
-    actionsEl.appendChild(closeBtn);
+    resultButtons.push(createButton('替换原文', true, closeAndRun(onReplace)));
+    resultButtons.push(createButton('插入原文之后', false, closeAndRun(onInsertAfter)));
   } else {
-    // 解释模式：仅关闭按钮
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'lanismd-ai-popup-btn';
-    closeBtn.textContent = '关闭';
-    closeBtn.type = 'button';
-    closeBtn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    resultButtons.push(createButton('插入到下方', true, closeAndRun(onInsertAfter)));
+  }
+  resultButtons.forEach((b) => actionsEl.appendChild(b));
+  actionsEl.appendChild(
+    createButton('关闭', false, () => {
       destroy();
       onClose?.();
-    });
-    actionsEl.appendChild(closeBtn);
-  }
+    }),
+  );
 
   // 用量标签（位于按钮行右侧）
   const usageLabel = createUsageLabel();
@@ -224,6 +245,21 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
 
   popup.appendChild(actionsEl);
   overlay.appendChild(popup);
+
+  /** 切换加载态：生成中禁用写入按钮与追问 */
+  function setLoading(loading: boolean, text?: string) {
+    isLoading = loading;
+    resultButtons.forEach((b) => (b.disabled = loading || !currentAnswer));
+    followUpBar?.setEnabled(!loading);
+    statusEl.classList.remove('lanismd-ai-popup-status-error');
+    if (loading) {
+      statusEl.textContent = text ?? LOADING_TEXT[mode];
+      statusEl.style.display = '';
+    } else {
+      statusEl.style.display = 'none';
+    }
+  }
+  setLoading(true);
 
   // 点击外部区域不关闭，播放抖动动画提示用户
   overlay.addEventListener('mousedown', (e) => {
@@ -243,7 +279,6 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   }
   document.addEventListener('keydown', handleKeydown, true);
 
-  // 挂载到 body
   document.body.appendChild(overlay);
 
   // 定位弹窗到选区附近；窗口尺寸变化时重新计算可用空间
@@ -251,7 +286,6 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   reposition();
   window.addEventListener('resize', reposition);
 
-  // handle 实现
   function destroy() {
     document.removeEventListener('keydown', handleKeydown, true);
     window.removeEventListener('resize', reposition);
@@ -262,27 +296,25 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
 
   const handle: AiPopupHandle = {
     appendContent: (delta: string) => {
-      currentContent += delta;
+      currentAnswer += delta;
       // 用户停留在底部时跟随滚动；若已上翻阅读则不打断
       const nearBottom =
         contentEl.scrollHeight - contentEl.scrollTop - contentEl.clientHeight < STICK_THRESHOLD;
-      contentEl.appendChild(document.createTextNode(delta));
+      answerEl.appendChild(document.createTextNode(delta));
       if (nearBottom) contentEl.scrollTop = contentEl.scrollHeight;
-      if (isLoading) {
-        statusEl.style.display = 'none';
-      }
+      if (isLoading) statusEl.style.display = 'none';
     },
     setThinking: () => {
-      if (!isLoading || currentContent) return;
+      if (!isLoading || currentAnswer) return;
       statusEl.textContent = '深度思考中...';
       statusEl.style.display = '';
     },
     setDone: () => {
-      isLoading = false;
-      statusEl.style.display = 'none';
+      setLoading(false);
+      followUpBar?.focus();
     },
     setError: (message: string) => {
-      isLoading = false;
+      setLoading(false);
       statusEl.textContent = message;
       statusEl.style.display = '';
       statusEl.classList.add('lanismd-ai-popup-status-error');
@@ -290,12 +322,12 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
     setUsage: (usage) => usageLabel.set(usage),
     resetContent: () => {
       usageLabel.clear();
-      currentContent = '';
+      currentAnswer = '';
       contentEl.textContent = '';
-      isLoading = true;
-      statusEl.textContent = '翻译中...';
-      statusEl.style.display = '';
-      statusEl.classList.remove('lanismd-ai-popup-status-error');
+      answerEl = document.createElement('div');
+      answerEl.className = 'lanismd-ai-popup-answer';
+      contentEl.appendChild(answerEl);
+      setLoading(true);
     },
     destroy,
   };
@@ -307,10 +339,10 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
 // 定位工具
 // ---------------------------------------------------------------------------
 
-/** 弹窗最大高度 */
-const POPUP_MAX_HEIGHT = 400;
+/** 弹窗最大高度（含追问输入） */
+const POPUP_MAX_HEIGHT = 460;
 /** 单侧空间低于该值时不在该侧展示 */
-const POPUP_MIN_HEIGHT = 160;
+const POPUP_MIN_HEIGHT = 200;
 /** 流式输出时判定"位于底部"的阈值 */
 const STICK_THRESHOLD = 24;
 

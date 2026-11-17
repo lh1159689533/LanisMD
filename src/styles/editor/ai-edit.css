@@ -274,6 +274,38 @@
   color: var(--lanismd-ai-accent);
 }
 
+.milkdown-tooltip-ai-submenu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--lanismd-editor-border);
+}
+
+/* 润色风格选项：排在「润色」项下方的紧凑标签 */
+.milkdown-tooltip-ai-submenu-options {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 2px;
+  padding: 0 6px 4px 28px;
+}
+
+.milkdown-tooltip-ai-submenu-option {
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--lanismd-radius-md, 4px);
+  background: transparent;
+  color: var(--lanismd-text-muted, var(--lanismd-editor-text));
+  font-size: var(--lanismd-font-size-sm);
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--lanismd-transition-normal);
+}
+
+.milkdown-tooltip-ai-submenu-option:hover {
+  background-color: var(--lanismd-ai-accent-bg);
+  color: var(--lanismd-ai-accent);
+}
+
 .milkdown-tooltip-ai-submenu-icon {
   display: flex;
   align-items: center;
@@ -300,16 +332,19 @@
  * ---------------------------------------------------------------------- */
 
 .lanismd-ai-diff-container {
-  position: absolute;
+  position: fixed;
   pointer-events: auto;
-  z-index: 15;
-  padding: 2px 0;
+  z-index: 1;
+  padding: 2px 4px;
+  margin-left: -4px;
   background: var(--lanismd-editor-bg);
-  border-radius: 3px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--lanismd-editor-border);
+  overflow-y: auto;
 }
 
 .lanismd-ai-diff-content {
-  line-height: 1.6;
+  line-height: inherit;
   font-size: inherit;
   white-space: pre-wrap;
   word-break: break-word;
@@ -334,6 +369,70 @@
 
 .lanismd-ai-diff-inserted:focus {
   box-shadow: var(--lanismd-ai-diff-inserted-focus-shadow);
+}
+
+/* 单处改动：已接受时隐藏删除文本，已拒绝时隐藏新增文本并恢复原文样式 */
+.lanismd-ai-diff-hunk[data-decision='accepted'] .lanismd-ai-diff-deleted,
+.lanismd-ai-diff-hunk[data-decision='rejected'] .lanismd-ai-diff-inserted {
+  display: none;
+}
+
+.lanismd-ai-diff-hunk[data-decision='accepted'] .lanismd-ai-diff-inserted {
+  color: inherit;
+  background-color: transparent;
+  box-shadow: inset 0 -2px 0 var(--lanismd-ai-success-color);
+}
+
+.lanismd-ai-diff-hunk[data-decision='rejected'] .lanismd-ai-diff-deleted {
+  text-decoration: none;
+  color: inherit;
+  background-color: transparent;
+  box-shadow: inset 0 -2px 0 var(--lanismd-editor-border);
+}
+
+/* 每处改动后的接受 / 拒绝按钮 */
+.lanismd-ai-diff-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 3px;
+  vertical-align: middle;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.lanismd-ai-diff-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 4px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-text-muted);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all var(--lanismd-transition-normal);
+}
+
+.lanismd-ai-diff-control:hover {
+  opacity: 1;
+}
+
+.lanismd-ai-diff-control-accept:hover,
+.lanismd-ai-diff-hunk[data-decision='accepted'] .lanismd-ai-diff-control-accept {
+  opacity: 1;
+  border-color: var(--lanismd-ai-success-color);
+  color: var(--lanismd-ai-success-color);
+}
+
+.lanismd-ai-diff-control-reject:hover,
+.lanismd-ai-diff-hunk[data-decision='rejected'] .lanismd-ai-diff-control-reject {
+  opacity: 1;
+  border-color: var(--lanismd-ai-error-color);
+  color: var(--lanismd-ai-error-color);
 }
 
 /* ---------------------------------------------------------------------- 
@@ -487,7 +586,7 @@
 .lanismd-ai-popup {
   display: flex;
   flex-direction: column;
-  max-height: 400px;
+  max-height: 460px;
   border-radius: 8px;
   background: var(--lanismd-editor-bg);
   border: 1px solid var(--lanismd-editor-border);
@@ -611,6 +710,128 @@
   background: var(--lanismd-ai-accent-hover);
   border-color: var(--lanismd-ai-accent-hover);
   color: var(--lanismd-accent-contrast, #fff);
+}
+
+.lanismd-ai-popup-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 对话记录：追问气泡 + 回答；历史回答弱化显示 */
+.lanismd-ai-popup-answer {
+  white-space: pre-wrap;
+}
+
+.lanismd-ai-popup-answer:empty {
+  display: none;
+}
+
+.lanismd-ai-popup-answer-past {
+  opacity: 0.6;
+}
+
+.lanismd-ai-popup-question {
+  width: fit-content;
+  max-width: 80%;
+  margin: 10px 0 8px auto;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--lanismd-ai-accent-bg);
+  color: var(--lanismd-ai-accent);
+  font-size: var(--lanismd-font-size-sm);
+  white-space: pre-wrap;
+}
+
+/* ---------------------------------------------------------------------- 
+ * 追问输入条与快捷追问按钮（翻译 / 解释弹窗、生成弹窗共用）
+ * ---------------------------------------------------------------------- */
+
+.lanismd-ai-followup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--lanismd-editor-border);
+  flex-shrink: 0;
+}
+
+.lanismd-ai-followup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lanismd-ai-followup-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: var(--lanismd-font-size-sm);
+  line-height: 20px;
+  outline: none;
+}
+
+.lanismd-ai-followup-input:focus {
+  border-color: var(--lanismd-ai-accent);
+}
+
+.lanismd-ai-followup-input:disabled {
+  opacity: 0.6;
+}
+
+.lanismd-ai-followup-send {
+  padding: 3px 10px;
+  border: 1px solid var(--lanismd-ai-accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lanismd-ai-accent);
+  font-size: var(--lanismd-font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lanismd-ai-followup-send:hover:not(:disabled) {
+  background: var(--lanismd-ai-accent-bg);
+}
+
+.lanismd-ai-followup-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lanismd-ai-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lanismd-ai-chip {
+  padding: 1px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lanismd-text-secondary, var(--lanismd-sidebar-text));
+  font-size: var(--lanismd-font-size-sm);
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--lanismd-transition-normal);
+}
+
+.lanismd-ai-chip:hover:not(:disabled) {
+  border-color: var(--lanismd-ai-accent);
+  color: var(--lanismd-ai-accent);
+  background: var(--lanismd-ai-accent-bg);
+}
+
+.lanismd-ai-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ---------------------------------------------------------------------- 
@@ -1041,9 +1262,27 @@
   color: var(--lanismd-ai-error-color);
 }
 
+/* 结果提示（自动修复结果、校验未通过） */
+.lanismd-gen-result-notice {
+  margin: 0 16px 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: var(--lanismd-font-size-sm);
+  line-height: 1.5;
+  background: var(--lanismd-ai-accent-bg);
+  color: var(--lanismd-ai-accent);
+  flex-shrink: 0;
+}
+
+.lanismd-gen-result-notice[data-tone='warning'] {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--lanismd-warning, #b45309);
+}
+
 /* 结果区操作按钮 */
 .lanismd-gen-result-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;

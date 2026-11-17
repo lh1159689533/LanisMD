@@ -8,7 +8,10 @@
  * 2. 输入中：显示回车+发送按钮
  * 3. 多行输入：最大高度 300px，超出滚动
  * 4. 生成中：显示"正在生成 .."，ESC停止按钮
- * 5. 生成完成：结果展示区（自适应方向），输入框保留原问题可编辑
+ * 5. 生成完成：结果展示区（自适应方向），输入框变为「继续调整」，下一轮带上上次结果与新要求；
+ *    结果卡片提供重新生成与快捷调整（更短 / 更正式 / 换种说法）
+ *
+ * 切换下拉中的指令后再发送，视为开始新的对话。
  *
  * 遮罩覆盖整个窗口：弹窗打开期间不允许操作其他区域，点击外部仅播放抖动提示。
  * 弹窗高度按可视区剩余空间锁定，结果卡片出现或输入多行时由结果区内部滚动。
@@ -16,6 +19,7 @@
  * @changelog
  * | 版本   | 变更说明                                                 | 关联                  |
  * | v1.1.0 | 遮罩覆盖全窗口禁止点击其他区域；高度随可视区限定不再被遮挡 | REQ: AI 弹窗体验优化 |
+ * | v2.0.0 | 多轮继续调整、快捷调整按钮、重新生成、自动修复状态与提示   | REQ: AI 体验短板-追问 |
  * /@changelog
  *
  * @author hhhuilli
@@ -23,9 +27,11 @@
 
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import { REWRITE_FOLLOW_UPS } from '@/services/ai/follow-ups';
 import type { AiTokenUsage } from '@/services/ai/usage';
 
 import { AI_ICON_SVG, playShake } from './ai-visual';
+import { createQuickChips } from './follow-up-bar';
 import { positionAnchoredPopup } from './popup-position';
 import { createUsageLabel } from './usage-label';
 
@@ -40,7 +46,14 @@ export interface GeneratorCommandOption {
   label: string;
   /** 输入框占位文本 */
   placeholder: string;
+  /** 结果是否适用「更短 / 更正式 / 换种说法」快捷调整（代码类输出不适用） */
+  rewriteFollowUps?: boolean;
 }
+
+/** 继续调整时输入框的占位文本 */
+const FOLLOW_UP_PLACEHOLDER = '继续调整，例如：再简洁一些（切换指令可重新开始）';
+/** 默认的生成中提示 */
+const GENERATING_TEXT = '正在生成';
 
 /** 占位提示映射 */
 const PLACEHOLDER_MAP: Record<GeneratorPopupType, string> = {
@@ -70,6 +83,8 @@ export interface GeneratorPopupOptions {
   onRetry: (arg: string) => void;
   /** 关闭回调（Esc / 点击遮罩） */
   onClose: () => void;
+  /** 基于上一轮结果继续调整 */
+  onFollowUp?: (instruction: string) => void;
 }
 
 /** 统一弹窗选项（多指令模式） */
@@ -87,10 +102,12 @@ export interface UnifiedGeneratorPopupOptions {
   onAccept: (commandId: string, result: string) => void;
   /** 点击"拒绝"后回调 */
   onReject: () => void;
-  /** 点击"重新生成"后回调，返回选中的指令 id 和当前输入 */
+  /** 停止生成后回调，返回选中的指令 id 和当前输入 */
   onRetry: (commandId: string, arg: string) => void;
   /** 关闭回调（Esc / 点击遮罩） */
   onClose: () => void;
+  /** 基于上一轮结果继续调整；不提供时每次发送都重新开始 */
+  onFollowUp?: (commandId: string, instruction: string) => void;
 }
 
 export interface GeneratorPopupHandle {
@@ -108,6 +125,12 @@ export interface GeneratorPopupHandle {
   setUsage: (usage: AiTokenUsage) => void;
   /** 切换到生成中状态 */
   switchToResult: () => void;
+  /** 校验失败后自动修复中（清空结果并显示「自动修复中 n/max」） */
+  setRepairing: (attempt: number, max: number) => void;
+  /** 在结果卡片中显示提示（如校验仍未通过）；传空串清除 */
+  setNotice: (message: string, tone?: 'info' | 'warning') => void;
+  /** 以给定描述直接开始（调用方已带参数时跳过输入阶段） */
+  startWithArg: (arg: string) => void;
   /** 销毁弹窗 */
   destroy: () => void;
 }
@@ -116,7 +139,7 @@ export interface GeneratorPopupHandle {
  * 创建向后兼容的单类型弹窗
  */
 export function createGeneratorPopup(options: GeneratorPopupOptions): GeneratorPopupHandle {
-  const { view, pos, type, onStart, onAccept, onReject, onRetry, onClose } = options;
+  const { view, pos, type, onStart, onAccept, onReject, onRetry, onClose, onFollowUp } = options;
 
   return createUnifiedGeneratorPopup({
     view,
@@ -128,6 +151,7 @@ export function createGeneratorPopup(options: GeneratorPopupOptions): GeneratorP
     onReject,
     onRetry: (_cmdId, arg) => onRetry(arg),
     onClose,
+    onFollowUp: onFollowUp ? (_cmdId, instruction) => onFollowUp(instruction) : undefined,
   });
 }
 
@@ -143,6 +167,7 @@ export function createUnifiedGeneratorPopup(
 ): GeneratorPopupHandle {
   const { view, pos, commands, defaultCommandId, onStart, onAccept, onReject, onRetry, onClose } =
     options;
+  const { onFollowUp } = options;
 
   /** 当前选中的指令 id */
   let activeCommandId = defaultCommandId ?? commands[0]?.id ?? '';
@@ -150,6 +175,12 @@ export function createUnifiedGeneratorPopup(
   let state: 'idle' | 'input' | 'generating' | 'done' | 'error' = 'idle';
   /** 累积的生成结果 */
   let resultText = '';
+  /** 已有可继续调整结果的指令 id（null 表示尚无对话） */
+  let conversationCommandId: string | null = null;
+  /** 本次对话的首轮描述（重新生成时使用） */
+  let originalArg = '';
+  /** 生成中状态栏的提示文本 */
+  let statusLabel = GENERATING_TEXT;
 
   // -----------------------------------------------------------------------
   // DOM 结构 - 双卡片布局
@@ -190,8 +221,25 @@ export function createUnifiedGeneratorPopup(
   rejectBtn.type = 'button';
   rejectBtn.textContent = '拒绝';
 
+  const regenerateBtn = document.createElement('button');
+  regenerateBtn.className = 'lanismd-gen-result-btn lanismd-gen-result-btn-reject';
+  regenerateBtn.type = 'button';
+  regenerateBtn.textContent = '重新生成';
+
   resultActions.appendChild(acceptBtn);
   resultActions.appendChild(rejectBtn);
+  resultActions.appendChild(regenerateBtn);
+
+  // 快捷调整按钮（仅改写类指令显示）
+  const chipsEl = createQuickChips(REWRITE_FOLLOW_UPS, (instruction) => sendFollowUp(instruction));
+  chipsEl.style.display = 'none';
+  resultActions.appendChild(chipsEl);
+
+  // 结果提示（如校验未通过）
+  const noticeEl = document.createElement('div');
+  noticeEl.className = 'lanismd-gen-result-notice';
+  noticeEl.style.display = 'none';
+  resultCard.appendChild(noticeEl);
 
   // 用量标签（位于按钮行右侧）
   const usageLabel = createUsageLabel();
@@ -393,15 +441,40 @@ export function createUnifiedGeneratorPopup(
     }
   }
 
+  /** 是否可以在上一轮结果基础上继续调整 */
+  function canFollowUp(): boolean {
+    return Boolean(onFollowUp) && conversationCommandId === activeCommandId;
+  }
+
+  /** 继续调整：带上上一轮结果与新要求 */
+  function sendFollowUp(instruction: string) {
+    if (!onFollowUp || state === 'generating') return;
+    handle.resetContent();
+    handle.switchToResult();
+    onFollowUp(activeCommandId, instruction);
+  }
+
+  /** 开始新的对话 */
+  function startFresh(value: string) {
+    handle.resetContent();
+    conversationCommandId = null;
+    originalArg = value;
+    onStart(activeCommandId, value);
+  }
+
   /** 触发发送 */
   function doSend() {
     const value = inputEl.value.trim();
     if (!value) return;
-    // 如果在 done/error 状态再次发送，先重置结果区
-    if (state === 'done' || state === 'error') {
-      handle.resetContent();
-    }
-    onStart(activeCommandId, value);
+    inputEl.value = '';
+    autoResize();
+    if (canFollowUp()) sendFollowUp(value);
+    else startFresh(value);
+  }
+
+  /** 输入框占位文本：有可继续的对话时提示继续调整 */
+  function refreshPlaceholder() {
+    inputEl.placeholder = canFollowUp() ? FOLLOW_UP_PLACEHOLDER : getPlaceholder(activeCommandId);
   }
 
   // -----------------------------------------------------------------------
@@ -412,7 +485,7 @@ export function createUnifiedGeneratorPopup(
   selectEl.addEventListener('change', () => {
     if (state === 'generating') return;
     activeCommandId = selectEl.value;
-    inputEl.placeholder = getPlaceholder(activeCommandId);
+    refreshPlaceholder();
     inputEl.focus();
   });
 
@@ -454,9 +527,14 @@ export function createUnifiedGeneratorPopup(
   inputStopBtn.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    onRetry(activeCommandId, inputEl.value.trim());
-    setState('input');
-    inputEl.focus();
+    stopGenerating();
+  });
+
+  // 重新生成：以首轮描述开始新的对话
+  regenerateBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (originalArg) startFresh(originalArg);
   });
 
   // 接受按钮
@@ -489,9 +567,7 @@ export function createUnifiedGeneratorPopup(
       e.preventDefault();
       if (state === 'generating') {
         // 生成中按 ESC -> 停止生成，回到输入状态
-        onRetry(activeCommandId, inputEl.value.trim());
-        setState('input');
-        inputEl.focus();
+        stopGenerating();
       } else {
         destroy();
         onClose();
@@ -499,6 +575,16 @@ export function createUnifiedGeneratorPopup(
     }
   }
   document.addEventListener('keydown', handleKeydown, true);
+
+  /** 停止生成：首轮被停止时把描述放回输入框，便于修改后重发 */
+  function stopGenerating() {
+    onRetry(activeCommandId, originalArg);
+    if (!conversationCommandId && !inputEl.value) inputEl.value = originalArg;
+    setState('input');
+    refreshPlaceholder();
+    autoResize();
+    inputEl.focus();
+  }
 
   // -----------------------------------------------------------------------
   // 挂载 & 定位
@@ -530,7 +616,7 @@ export function createUnifiedGeneratorPopup(
 
   const handle: GeneratorPopupHandle = {
     appendContent: (delta: string) => {
-      inputGenText.textContent = '正在生成';
+      inputGenText.textContent = statusLabel;
       resultText += delta;
       resultContent.textContent = resultText;
       // 自动滚动到底
@@ -538,11 +624,17 @@ export function createUnifiedGeneratorPopup(
     },
 
     setThinking: () => {
-      if (!resultText) inputGenText.textContent = '深度思考中';
+      if (!resultText && statusLabel === GENERATING_TEXT) inputGenText.textContent = '深度思考中';
     },
 
     setDone: () => {
+      conversationCommandId = activeCommandId;
+      const option = commands.find((c) => c.id === activeCommandId);
+      chipsEl.style.display = option?.rewriteFollowUps && onFollowUp ? '' : 'none';
+      regenerateBtn.style.display = originalArg ? '' : 'none';
       setState('done');
+      refreshPlaceholder();
+      inputEl.focus();
     },
 
     setError: (message: string) => {
@@ -559,15 +651,33 @@ export function createUnifiedGeneratorPopup(
       resultText = '';
       resultContent.textContent = '';
       resultContent.classList.remove('lanismd-gen-result-error');
+      noticeEl.textContent = '';
+      noticeEl.style.display = 'none';
       resultCard.style.display = 'none';
       resultContent.style.display = 'none';
       resultActions.style.display = 'none';
     },
 
     switchToResult: () => {
-      inputGenText.textContent = '正在生成';
+      statusLabel = GENERATING_TEXT;
+      inputGenText.textContent = statusLabel;
       setState('generating');
     },
+
+    setRepairing: (attempt, max) => {
+      handle.resetContent();
+      statusLabel = `自动修复中 ${attempt}/${max}`;
+      inputGenText.textContent = statusLabel;
+      setState('generating');
+    },
+
+    setNotice: (message, tone = 'info') => {
+      noticeEl.textContent = message;
+      noticeEl.dataset.tone = tone;
+      noticeEl.style.display = message ? '' : 'none';
+    },
+
+    startWithArg: (arg) => startFresh(arg),
 
     destroy,
   };

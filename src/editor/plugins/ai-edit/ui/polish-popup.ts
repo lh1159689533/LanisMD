@@ -8,6 +8,7 @@
  * @changelog
  * | 版本   | 变更说明                                  | 关联                  |
  * | v1.1.0 | 状态行前显示 AI icon；点击外部区域播放抖动 | REQ: AI 弹窗体验优化 |
+ * | v2.0.0 | 显示润色风格与逐处取舍统计；遮罩承载 diff   | REQ: AI 体验短板-润色 |
  * /@changelog
  *
  * @author hhhuilli
@@ -18,6 +19,7 @@ import type { EditorView } from '@milkdown/kit/prose/view';
 import type { AiTokenUsage } from '@/services/ai/usage';
 
 import { createAiIcon, playShake } from './ai-visual';
+import type { DiffSummary } from './inline-diff';
 import { createUsageLabel } from './usage-label';
 
 export interface PolishPopupOptions {
@@ -26,6 +28,8 @@ export interface PolishPopupOptions {
   from: number;
   /** 选区结束位置 */
   to: number;
+  /** 风格名称（如 润色 / 精简 / 纠错），用于状态文案 */
+  styleLabel?: string;
   /** 接受回调 */
   onAccept: () => void;
   /** 拒绝回调 */
@@ -37,8 +41,14 @@ export interface PolishPopupHandle {
   setStreaming: () => void;
   /** 推理模型思考阶段（尚未输出正文） */
   setThinking: () => void;
-  /** 设为完成状态（显示接受/拒绝按钮） */
-  setDone: () => void;
+  /** 设为完成状态（显示接受/拒绝按钮）；传入改动处统计时显示在状态行 */
+  setDone: (summary?: DiffSummary) => void;
+  /** 逐处取舍变化时更新统计 */
+  setSummary: (summary: DiffSummary) => void;
+  /** 全屏遮罩层（行内 diff 挂载于此，才能在遮罩期间交互） */
+  overlay: HTMLElement;
+  /** 把弹窗移到指定元素下方（diff 比原文高时避免遮挡） */
+  placeBelow: (el: HTMLElement) => void;
   /** 设为错误状态 */
   setError: (message: string) => void;
   /** 显示本次 token 用量（完成后调用） */
@@ -52,6 +62,7 @@ export interface PolishPopupHandle {
  */
 export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandle {
   const { view, onAccept, onReject } = options;
+  const styleLabel = options.styleLabel ?? '润色';
 
   // 全屏透明遮罩（阻止编辑器交互）
   const overlay = document.createElement('div');
@@ -68,7 +79,7 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
 
   const statusText = document.createElement('span');
   statusText.className = 'lanismd-polish-popup-status-text';
-  statusText.textContent = '润色中...';
+  statusText.textContent = `${styleLabel}中...`;
 
   // 加载动画指示器
   const spinner = document.createElement('span');
@@ -118,11 +129,14 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
     onReject();
   });
 
-  // 点击遮罩不关闭（润色进行中不允许随意关闭），播放抖动动画提示用户
+  // 点击遮罩不关闭（润色进行中不允许随意关闭），播放抖动动画提示用户；
+  // 遮罩内的 diff 需要正常响应点击与编辑，因此只拦截直接落在遮罩上的事件
   overlay.addEventListener('mousedown', (e) => {
-    e.preventDefault();
     e.stopPropagation();
-    if (e.target === overlay) playShake(popup);
+    if (e.target === overlay) {
+      e.preventDefault();
+      playShake(popup);
+    }
   });
 
   // Esc 键拒绝
@@ -141,6 +155,19 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
   // 定位弹窗：和编辑区等宽，在选区下方
   positionPopup(view, popup, options.from, options.to);
 
+  /** 状态行显示改动处统计；有拒绝项时主按钮改为「应用所选」 */
+  function applySummary({ total, accepted, rejected }: DiffSummary) {
+    if (total === 0) {
+      statusText.textContent = `${styleLabel}完成，没有需要修改的地方`;
+      acceptBtn.textContent = '接受';
+      return;
+    }
+    const decided =
+      accepted + rejected > 0 ? `，已接受 ${accepted} 处、拒绝 ${rejected} 处` : '，可逐处取舍';
+    statusText.textContent = `${styleLabel}完成：共 ${total} 处修改${decided}`;
+    acceptBtn.textContent = rejected > 0 ? '应用所选' : '接受';
+  }
+
   // 销毁函数
   function destroy() {
     document.removeEventListener('keydown', handleKeydown, true);
@@ -152,17 +179,21 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
   const handle: PolishPopupHandle = {
     setStreaming: () => {
       popup.dataset.status = 'streaming';
-      statusText.textContent = '润色中...';
+      statusText.textContent = `${styleLabel}中...`;
     },
     setUsage: (usage) => usageLabel.set(usage),
     setThinking: () => {
       popup.dataset.status = 'streaming';
       statusText.textContent = '深度思考中...';
     },
-    setDone: () => {
+    setDone: (summary) => {
       popup.dataset.status = 'done';
-      statusText.textContent = '润色完成';
+      if (summary) applySummary(summary);
+      else statusText.textContent = `${styleLabel}完成`;
     },
+    setSummary: (summary) => applySummary(summary),
+    overlay,
+    placeBelow: (el) => placePopupBelow(view, popup, el, options.from),
     setError: (message: string) => {
       popup.dataset.status = 'error';
       statusText.textContent = message;
@@ -213,4 +244,26 @@ function positionPopup(view: EditorView, popup: HTMLElement, from: number, to: n
     popup.style.width = `${editorRect.width}px`;
     popup.style.bottom = '16px';
   }
+}
+
+/**
+ * 把弹窗移到元素下方；下方空间不足时放到选区上方。
+ */
+function placePopupBelow(view: EditorView, popup: HTMLElement, anchor: HTMLElement, from: number) {
+  requestAnimationFrame(() => {
+    const anchorRect = anchor.getBoundingClientRect();
+    const rect = popup.getBoundingClientRect();
+    const below = anchorRect.bottom + 8;
+    if (below + rect.height <= window.innerHeight - 16) {
+      popup.style.bottom = '';
+      popup.style.top = `${below}px`;
+      return;
+    }
+    try {
+      const startTop = view.coordsAtPos(from).top;
+      popup.style.top = `${Math.max(16, startTop - rect.height - 8)}px`;
+    } catch {
+      // 定位失败时保持原位置
+    }
+  });
 }

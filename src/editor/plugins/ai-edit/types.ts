@@ -19,7 +19,7 @@ export interface AiRunContext {
   to: number;
   /** 选中内容（Markdown 形式，用于 buildPrompt） */
   selection: string;
-  /** 光标所在段落之前的上下文（留作续写等指令使用） */
+  /** 写作背景：标题/标签 + 标题路径 + 当前章节（已按预算裁剪） */
   context: string;
 }
 
