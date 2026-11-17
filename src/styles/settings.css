@@ -627,6 +627,257 @@
   border: 1px solid var(--lanismd-danger-border);
 }
 
+/* ---- 模型列表：工具栏（搜索 + 添加） ---- */
+.settings-ai-model-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-model-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  color: var(--lanismd-text-muted);
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.settings-ai-model-search:focus-within {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px var(--lanismd-accent-light);
+}
+
+.settings-ai-model-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  background: transparent;
+}
+
+.settings-ai-model-search input::placeholder {
+  color: var(--lanismd-text-muted);
+}
+
+/* 列表限高，超出滚动 */
+.settings-ai-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  max-height: 260px;
+  overflow-y: auto;
+  /* 给滚动条留出空间，避免遮住行内按钮 */
+  padding-right: 2px;
+}
+
+.settings-ai-model-empty {
+  padding: var(--lanismd-spacing-lg) 0;
+  font-size: var(--lanismd-font-size-xs);
+  text-align: center;
+  color: var(--lanismd-text-muted);
+}
+
+/* ---- 模型列表：单行 ---- */
+.settings-ai-model-row {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.settings-ai-model-row.is-current {
+  border-color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent-light);
+}
+
+.settings-ai-model-main {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-md);
+}
+
+/* 单选圆点：标记当前使用的模型 */
+.settings-ai-model-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--lanismd-text-muted);
+  border-radius: 9999px;
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.settings-ai-model-row.is-current .settings-ai-model-radio {
+  border-color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent);
+}
+
+.settings-ai-model-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.settings-ai-model-title {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  color: var(--lanismd-editor-text);
+}
+
+.settings-ai-model-kind {
+  padding: 1px 6px;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 10px;
+  color: var(--lanismd-sidebar-text);
+  background-color: var(--lanismd-hover-bg);
+}
+
+.settings-ai-model-meta {
+  display: flex;
+  gap: var(--lanismd-spacing-md);
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.settings-ai-model-meta .is-warning {
+  color: var(--lanismd-danger);
+}
+
+.settings-ai-model-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.settings-ai-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-ai-icon-button:hover:not(:disabled) {
+  color: var(--lanismd-accent);
+  background-color: var(--lanismd-hover-bg);
+}
+
+.settings-ai-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- 添加 / 编辑模型弹窗 ---- */
+/*
+ * 固定高度：本地模型默认无密钥、API 模型多出密钥输入与提示，
+ * 若随内容自适应，切换类型时弹窗会上下跳动。高度按内容最多的情况取值，
+ * 超出（如出现错误提示）时由 .lanismd-dialog-body 内部滚动。
+ */
+.lanismd-dialog.settings-ai-model-dialog {
+  height: min(410px, 65vh);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.settings-ai-model-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-md);
+}
+
+.settings-ai-form-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lanismd-spacing-lg);
+}
+
+.settings-ai-form-field > .settings-item-label {
+  width: 80px;
+  flex-shrink: 0;
+  padding-top: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-form-control {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-xs);
+  min-width: 0;
+}
+
+.settings-ai-form-control .settings-text-input {
+  width: 100%;
+  max-width: none;
+}
+
+.settings-ai-form-control .settings-segmented {
+  align-self: flex-start;
+}
+
+.settings-ai-form-hint {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+/* ---- 模型类型选择 ---- */
+.settings-ai-kind-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+}
+
+/* 一级分组与二级类型共用的胶囊按钮行 */
+.settings-ai-kind-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lanismd-spacing-xs);
+}
+
+.settings-ai-kind-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 9999px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-ai-kind-chip:hover {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+.settings-ai-kind-chip.active {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: var(--lanismd-accent);
+}
+
 /* loading 旋转 */
 .settings-ai-spin {
   animation: lanismd-ai-spin 0.9s linear infinite;

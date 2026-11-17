@@ -9,9 +9,25 @@
  * 3. 多行输入：最大高度 300px，超出滚动
  * 4. 生成中：显示"正在生成 .."，ESC停止按钮
  * 5. 生成完成：结果展示区（自适应方向），输入框保留原问题可编辑
+ *
+ * 遮罩覆盖整个窗口：弹窗打开期间不允许操作其他区域，点击外部仅播放抖动提示。
+ * 弹窗高度按可视区剩余空间锁定，结果卡片出现或输入多行时由结果区内部滚动。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                                 | 关联                  |
+ * | v1.1.0 | 遮罩覆盖全窗口禁止点击其他区域；高度随可视区限定不再被遮挡 | REQ: AI 弹窗体验优化 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import type { EditorView } from '@milkdown/kit/prose/view';
+
+import type { AiTokenUsage } from '@/services/ai/usage';
+
+import { AI_ICON_SVG, playShake } from './ai-visual';
+import { positionAnchoredPopup } from './popup-position';
+import { createUsageLabel } from './usage-label';
 
 /** 弹窗类型（保留兼容旧接口） */
 export type GeneratorPopupType = 'mermaid' | 'latex';
@@ -80,12 +96,16 @@ export interface UnifiedGeneratorPopupOptions {
 export interface GeneratorPopupHandle {
   /** 追加流式内容到结果区域 */
   appendContent: (delta: string) => void;
+  /** 推理模型思考阶段（尚未输出正文）时更新状态提示 */
+  setThinking: () => void;
   /** 设为完成状态 */
   setDone: () => void;
   /** 设为错误状态 */
   setError: (message: string) => void;
   /** 重置结果区 */
   resetContent: () => void;
+  /** 显示本次 token 用量（完成后调用） */
+  setUsage: (usage: AiTokenUsage) => void;
   /** 切换到生成中状态 */
   switchToResult: () => void;
   /** 销毁弹窗 */
@@ -111,10 +131,6 @@ export function createGeneratorPopup(options: GeneratorPopupOptions): GeneratorP
   });
 }
 
-// AI icon（用于弹窗左侧装饰）
-const AI_ICON_SVG =
-  '<svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M2.623 20.781a.568.568 0 0 1 .42-.685c2.353-.565 4.324-1.619 5.922-3.164 1.189-1.15 2.077-2.355 2.668-3.617a.568.568 0 1 1 1.029.481c-.652 1.393-1.622 2.71-2.907 3.953-1.748 1.69-3.9 2.84-6.447 3.452a.568.568 0 0 1-.685-.42Z" fill="currentColor" fill-rule="nonzero"/><path d="m12.035 13.96-4.359-.64a.44.44 0 0 1-.265-.728L10.339 9.3a.44.44 0 0 0 .105-.367L9.706 4.59a.44.44 0 0 1 .61-.478l4.036 1.767a.44.44 0 0 0 .381-.013l3.903-2.044a.44.44 0 0 1 .643.433l-.434 4.385a.44.44 0 0 0 .13.358l3.15 3.08a.44.44 0 0 1-.213.745l-4.303.943a.44.44 0 0 0-.301.234l-1.956 3.948a.44.44 0 0 1-.775.027l-2.226-3.802a.44.44 0 0 0-.316-.213Z" fill="#C7F0DF"/><path d="M19.23 4.008a.44.44 0 0 1 .049.247l-.434 4.385a.44.44 0 0 0 .13.358l3.15 3.08a.44.44 0 0 1-.213.745l-4.303.943a.44.44 0 0 0-.301.234l-1.956 3.948a.44.44 0 0 1-.775.027l-2.226-3.802a.44.44 0 0 0-.316-.213l-4.359-.64a.44.44 0 0 1-.265-.728L10.339 9.3a.44.44 0 0 0 .105-.367L9.706 4.59a.44.44 0 0 1 .61-.478l4.036 1.767a.44.44 0 0 0 .381-.013l3.903-2.044a.44.44 0 0 1 .595.186Zm-1.209 1.418-2.76 1.447c-.424.222-.926.24-1.365.047l-2.854-1.25.522 3.073c.071.419-.03.847-.277 1.188l-.1.124-2.07 2.328 3.083.453c.421.062.797.29 1.045.63l.087.133 1.574 2.689 1.384-2.792c.189-.381.522-.668.922-.799l.153-.041 3.044-.668-2.228-2.177a1.577 1.577 0 0 1-.474-1.125l.007-.158.307-3.102Z" fill="#00B96B" fill-rule="nonzero"/><path d="m1.606 6.646-.757-.225a.173.173 0 0 1 0-.33l.757-.226A2.53 2.53 0 0 0 3.311 4.16l.225-.757a.173.173 0 0 1 .33 0l.226.757a2.53 2.53 0 0 0 1.704 1.705l.758.225a.173.173 0 0 1 0 .331l-.758.225a2.53 2.53 0 0 0-1.704 1.705l-.225.757a.173.173 0 0 1-.331 0l-.225-.757a2.53 2.53 0 0 0-1.705-1.705ZM17.545 19.729l-.977-.29a.173.173 0 0 1 0-.331l.977-.29a2.953 2.953 0 0 0 1.988-1.99l.29-.975a.173.173 0 0 1 .332 0l.29.976a2.953 2.953 0 0 0 1.988 1.988l.977.29a.173.173 0 0 1 0 .332l-.977.29a2.953 2.953 0 0 0-1.988 1.989l-.29.976a.173.173 0 0 1-.331 0l-.29-.976a2.953 2.953 0 0 0-1.99-1.989Z" fill="#F5DA80"/></g></svg>';
-
 /**
  * 创建统一 AI 助手弹窗（双卡片模式）
  *
@@ -139,7 +155,7 @@ export function createUnifiedGeneratorPopup(
   // DOM 结构 - 双卡片布局
   // -----------------------------------------------------------------------
 
-  // 编辑器区域透明遮罩（仅覆盖编辑器，不影响侧栏和顶部栏）
+  // 全窗口透明遮罩（与润色弹窗一致，弹窗打开期间禁止操作其他区域）
   const overlay = document.createElement('div');
   overlay.className = 'lanismd-gen-overlay';
 
@@ -176,6 +192,10 @@ export function createUnifiedGeneratorPopup(
 
   resultActions.appendChild(acceptBtn);
   resultActions.appendChild(rejectBtn);
+
+  // 用量标签（位于按钮行右侧）
+  const usageLabel = createUsageLabel();
+  resultActions.appendChild(usageLabel.el);
   resultCard.appendChild(resultActions);
 
   wrapper.appendChild(resultCard);
@@ -455,16 +475,11 @@ export function createUnifiedGeneratorPopup(
     onReject();
   });
 
-  // 点击遮罩关闭
-  // 点击外部区域时不关闭，播放抖动动画提示用户
+  // 点击外部区域不关闭，播放抖动动画提示用户
   overlay.addEventListener('mousedown', (e) => {
     if (e.target === overlay) {
       e.preventDefault();
-      // 移除再添加类名以支持连续点击时重新触发动画
-      wrapper.classList.remove('lanismd-gen-shake');
-      // 强制回流以重置动画
-      void wrapper.offsetWidth;
-      wrapper.classList.add('lanismd-gen-shake');
+      playShake(wrapper);
     }
   });
 
@@ -489,14 +504,12 @@ export function createUnifiedGeneratorPopup(
   // 挂载 & 定位
   // -----------------------------------------------------------------------
 
-  // 遮罩挂载到编辑器容器（而非 document.body），只覆盖编辑器区域
-  const editorContainer = view.dom.parentElement ?? document.body;
-  // 确保编辑器容器具有定位上下文
-  if (getComputedStyle(editorContainer).position === 'static') {
-    editorContainer.style.position = 'relative';
-  }
-  editorContainer.appendChild(overlay);
-  positionPopup(view, wrapper, pos);
+  // 遮罩挂载到 body，覆盖整个窗口
+  document.body.appendChild(overlay);
+  // 窗口尺寸变化时重新计算可用空间
+  const reposition = () => positionPopup(view, wrapper, pos);
+  reposition();
+  window.addEventListener('resize', reposition);
 
   // 聚焦输入框
   requestAnimationFrame(() => {
@@ -509,6 +522,7 @@ export function createUnifiedGeneratorPopup(
 
   function destroy() {
     document.removeEventListener('keydown', handleKeydown, true);
+    window.removeEventListener('resize', reposition);
     if (overlay.parentElement) {
       overlay.parentElement.removeChild(overlay);
     }
@@ -516,10 +530,15 @@ export function createUnifiedGeneratorPopup(
 
   const handle: GeneratorPopupHandle = {
     appendContent: (delta: string) => {
+      inputGenText.textContent = '正在生成';
       resultText += delta;
       resultContent.textContent = resultText;
       // 自动滚动到底
       resultContent.scrollTop = resultContent.scrollHeight;
+    },
+
+    setThinking: () => {
+      if (!resultText) inputGenText.textContent = '深度思考中';
     },
 
     setDone: () => {
@@ -533,7 +552,10 @@ export function createUnifiedGeneratorPopup(
       setState('error');
     },
 
+    setUsage: (usage) => usageLabel.set(usage),
+
     resetContent: () => {
+      usageLabel.clear();
       resultText = '';
       resultContent.textContent = '';
       resultContent.classList.remove('lanismd-gen-result-error');
@@ -543,6 +565,7 @@ export function createUnifiedGeneratorPopup(
     },
 
     switchToResult: () => {
+      inputGenText.textContent = '正在生成';
       setState('generating');
     },
 
@@ -557,45 +580,19 @@ export function createUnifiedGeneratorPopup(
 // ---------------------------------------------------------------------------
 
 /**
- * 将弹窗定位到光标行附近，和编辑区内容区等宽。
+ * 弹窗完全展开时的最大高度：结果卡片（320）+ 卡片间距（8）+ 多行输入卡片（约 132）。
+ * 按展开后高度选择展示侧，避免结果出现后才发现空间不足。
  */
+const POPUP_MAX_HEIGHT = 460;
+/** 单侧空间低于该值时不在该侧展示 */
+const POPUP_MIN_HEIGHT = 200;
+
+/** 将弹窗定位到光标行附近，和编辑区内容区等宽 */
 function positionPopup(view: EditorView, popup: HTMLElement, pos: number) {
-  const GAP = 8;
-  const MARGIN = 16;
-
-  try {
-    const coords = view.coordsAtPos(pos);
-    const editorDom = view.dom;
-    const editorRect = editorDom.getBoundingClientRect();
-
-    popup.style.position = 'fixed';
-    popup.style.left = `${editorRect.left}px`;
-    popup.style.width = `${editorRect.width}px`;
-    popup.style.top = `${coords.bottom + GAP}px`;
-
-    // 延迟一帧做高度修正
-    requestAnimationFrame(() => {
-      const popupHeight = popup.offsetHeight;
-      const viewportHeight = window.innerHeight;
-      const bottomSpace = viewportHeight - coords.bottom - GAP - MARGIN;
-      const topSpace = coords.top - GAP - MARGIN;
-
-      if (popupHeight <= bottomSpace) {
-        popup.style.top = `${coords.bottom + GAP}px`;
-      } else if (popupHeight <= topSpace) {
-        popup.style.top = `${coords.top - popupHeight - GAP}px`;
-      } else {
-        const centeredTop = Math.max(MARGIN, (viewportHeight - popupHeight) / 2);
-        popup.style.top = `${centeredTop}px`;
-      }
-    });
-  } catch {
-    const editorDom = view.dom;
-    const editorRect = editorDom.getBoundingClientRect();
-    popup.style.position = 'fixed';
-    popup.style.left = `${editorRect.left}px`;
-    popup.style.width = `${editorRect.width}px`;
-    popup.style.top = '50%';
-    popup.style.transform = 'translateY(-50%)';
-  }
+  positionAnchoredPopup(view, popup, {
+    from: pos,
+    to: pos,
+    maxHeight: POPUP_MAX_HEIGHT,
+    minHeight: POPUP_MIN_HEIGHT,
+  });
 }

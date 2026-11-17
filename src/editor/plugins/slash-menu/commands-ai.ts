@@ -15,7 +15,7 @@ import { icons, getIcon } from './icons';
 import { removeSlashTrigger } from './commands-basic';
 import type { SlashCommand } from './types';
 import { runUnifiedAiPopup } from '../ai-edit';
-import type { GeneratorCommandOption } from '../ai-edit/generator-popup';
+import type { GeneratorCommandOption } from '../ai-edit';
 
 /**
  * 构建统一弹窗的指令选项列表（内置 + 自定义）

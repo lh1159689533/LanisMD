@@ -11,11 +11,12 @@
 import { useUIStore } from '@/stores/ui-store';
 
 /**
- * 显示 API Key 未配置的引导对话框
+ * 显示 AI 不可用（未配置 Key / 无可用模型）的引导对话框
  *
+ * @param reason - 不可用原因，决定提示文案
  * @returns 用户点击"前往设置"时 resolve(true)，关闭时 resolve(false)
  */
-export function showFirstUseGuide(): Promise<boolean> {
+export function showFirstUseGuide(reason: 'no_key' | 'no_model' = 'no_key'): Promise<boolean> {
   return new Promise((resolve) => {
     let resolved = false;
 
@@ -35,17 +36,20 @@ export function showFirstUseGuide(): Promise<boolean> {
     // 标题
     const title = document.createElement('h3');
     title.className = 'lanismd-ai-guide-title';
-    title.textContent = '配置 AI 助手';
+    title.textContent = reason === 'no_model' ? '添加 AI 模型' : '配置 API 密钥';
 
     // 描述
     const desc = document.createElement('p');
     desc.className = 'lanismd-ai-guide-desc';
-    desc.textContent = '使用 AI 功能需要先配置 API Key。请前往设置页面选择服务商并填入 Key，即可开始使用 AI 润色、翻译、续写等功能。';
+    desc.textContent =
+      reason === 'no_model'
+        ? '还没有配置模型。请前往设置页面添加一个模型，支持 Ollama、LM Studio 本地模型，以及 OpenAI、Anthropic、Gemini、OpenRouter 等 API 模型。'
+        : '当前模型的 API 密钥不可用。请前往设置页面保存密钥，或确认指定的环境变量已设置。';
 
     // 提示
     const hint = document.createElement('p');
     hint.className = 'lanismd-ai-guide-hint';
-    hint.textContent = '推荐使用智谱 GLM-4-Flash（免费）快速体验。';
+    hint.textContent = '没有 API 密钥？可以先用 Ollama 在本地运行开源模型。';
 
     // 按钮行
     const btnRow = document.createElement('div');

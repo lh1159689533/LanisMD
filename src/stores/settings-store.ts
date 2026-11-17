@@ -52,18 +52,8 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   ai: {
     enabled: false,
-    currentProvider: 'zhipu',
-    selectedModels: {
-      zhipu: '',
-      deepseek: '',
-      siliconflow: '',
-      custom: '',
-    },
-    temperature: 0.7,
-    maxTokens: 2000,
     showInTooltip: true,
     showInSlash: true,
-    customBaseUrl: '',
     customPrompts: [],
     maxHistoryCount: 200,
   },

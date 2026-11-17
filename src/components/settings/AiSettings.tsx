@@ -1,63 +1,32 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import {
-  RiExternalLinkLine,
-  RiLoader4Line,
-  RiAddLine,
-  RiFolderOpenLine,
-  RiRefreshLine,
-} from 'react-icons/ri';
+import { useEffect, useState, useCallback } from 'react';
+import { RiAddLine, RiFolderOpenLine, RiRefreshLine } from 'react-icons/ri';
 
 import { useSettingsStore } from '@/stores/settings-store';
 import { useAiStore } from '@/stores/ai-store';
-import { aiService, PROVIDER_PRESETS } from '@/services';
-import type { AiProviderId, CustomPrompt } from '@/types/ai';
+import { aiService } from '@/services';
+import type { CustomPrompt } from '@/types/ai';
 import { cn } from '@/utils/cn';
 
-import { SettingsSelect, SettingsSlider, SettingsNumberInput } from './SettingsControls';
+import { AiModelSettings } from './AiModelSettings';
+import { SettingsNumberInput } from './SettingsControls';
 
 /**
  * AI 助手设置页
  *
- * - 保留 Key 输入框（快速配置）
- * - 保存 Key 到本地 JSON 配置文件
- * - 自动检测配置文件中的 Key 状态
- * - 模型列表从配置文件读取（支持用户自定义）
- * - 新增"打开配置文件"按钮
+ * - 模型：一条配置 = 一个模型（本地模型 / API 模型），见 AiModelSettings
+ * - 不再提供 Temperature、最大 Token 等生成参数：各指令内置合适的默认值（services/ai/generation.ts）
+ * - 交互入口、自定义指令、历史记录
+ *
+ * @changelog
+ * | 版本   | 变更说明                                       | 关联                 |
+ * | v2.0.0 | 模型配置改为分类型的模型列表；移除生成参数设置 | REQ: AI 模型配置重做 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 export function AiSettings() {
   const { config, setNestedConfig } = useSettingsStore();
-  const { keyStatus, refreshConfig, configProviders } = useAiStore();
-
-  const providerId: AiProviderId = config.ai?.currentProvider ?? 'zhipu';
-  const provider = providerId === 'custom' ? null : PROVIDER_PRESETS[providerId];
-
-  // 从配置文件中获取当前 Provider 的完整信息
-  const configProvider = useMemo(
-    () => configProviders.find((p) => p.provider === providerId),
-    [configProviders, providerId],
-  );
-
-  // 模型列表优先使用配置文件中的，回退到内置预设
-  // 根据 free 字段动态拼接"(免费)"标记
-  const modelOptions = useMemo(() => {
-    const toOption = (m: { id: string; label: string; free?: boolean }) => ({
-      value: m.id,
-      label: m.free ? `${m.label}(免费)` : m.label,
-    });
-    if (configProvider && configProvider.models.length > 0) {
-      return configProvider.models.map(toOption);
-    }
-    if (provider) {
-      return provider.models.map(toOption);
-    }
-    return [];
-  }, [configProvider, provider]);
-
-  // 受控的 Key 输入值（提交后清空）
-  const [keyInput, setKeyInput] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const refreshConfig = useAiStore((s) => s.refreshConfig);
   const [refreshing, setRefreshing] = useState(false);
 
   // 自定义 Prompt 编辑状态
@@ -89,34 +58,10 @@ export function AiSettings() {
     [customPrompts, setNestedConfig],
   );
 
-  // 组件挂载时刷新配置
+  // 进入设置页时刷新配置（环境变量、配置文件可能已在外部修改）
   useEffect(() => {
     void refreshConfig();
   }, [refreshConfig]);
-
-  const currentHasKey = keyStatus[providerId] ?? false;
-  const selectedModel =
-    config.ai?.selectedModels?.[providerId] ?? configProvider?.models[0]?.id ?? '';
-
-  // ---- 操作 ----------------------------------------------------------------
-
-  const saveKey = async () => {
-    const trimmed = keyInput.trim();
-    if (!trimmed) return;
-    setSaving(true);
-    try {
-      await aiService.setApiKey(providerId, trimmed);
-      setKeyInput('');
-      setTestResult(null);
-      // 保存后立即刷新配置以更新状态
-      await refreshConfig();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      window.alert(`保存 Key 失败：${msg}`);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const openConfig = async () => {
     try {
@@ -126,29 +71,6 @@ export function AiSettings() {
       window.alert(`打开配置目录失败：${msg}`);
     }
   };
-
-  const runTest = async () => {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const res = await aiService.testConnection(
-        providerId,
-        selectedModel,
-        providerId === 'custom' ? config.ai?.customBaseUrl : undefined,
-      );
-      setTestResult({
-        ok: res.ok,
-        message: res.ok ? `连接成功：${res.reply.slice(0, 60)}` : res.reply,
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setTestResult({ ok: false, message: msg });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  // ---- 渲染 ----------------------------------------------------------------
 
   return (
     <div className="settings-section">
@@ -169,117 +91,9 @@ export function AiSettings() {
       {/* 未启用时隐藏所有配置项 */}
       {!config.ai?.enabled ? null : (
         <>
-          {/* 服务商 */}
-          <div className="settings-section-title">模型配置</div>
-          <div className="settings-item">
-            <label className="settings-item-label">服务商</label>
-            <SettingsSelect
-              value={providerId}
-              options={[
-                { value: 'zhipu', label: '智谱 GLM' },
-                { value: 'deepseek', label: 'DeepSeek' },
-                { value: 'siliconflow', label: '硅基流动' },
-              ]}
-              onChange={(v) => {
-                setNestedConfig('ai.currentProvider', v as AiProviderId);
-                // 同步写入配置文件
-                void aiService.setDefaultProvider(v);
-              }}
-            />
-          </div>
+          <div className="settings-section-title">模型</div>
+          <AiModelSettings />
 
-          {provider && (
-            <>
-              {/* API Key */}
-              <div className="settings-item">
-                <label className="settings-item-label">
-                  API Key
-                  <span
-                    className={cn(
-                      'settings-ai-key-badge',
-                      currentHasKey ? 'is-configured' : 'is-not-configured',
-                    )}
-                  >
-                    {currentHasKey ? '已配置' : '未配置'}
-                  </span>
-                </label>
-
-                <div className="settings-ai-key-row">
-                  <input
-                    type="password"
-                    className="settings-text-input"
-                    value={keyInput}
-                    placeholder={currentHasKey ? '已保存（输入新 Key 将覆盖）' : '粘贴你的 API Key'}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                  />
-                  <button
-                    className="settings-button settings-button-primary"
-                    onClick={() => void saveKey()}
-                    disabled={saving || keyInput.trim().length === 0}
-                  >
-                    {saving ? '保存中...' : '保存'}
-                  </button>
-                </div>
-              </div>
-              {/* 申请 Key 链接 */}
-              <div className="settings-item-hint">
-                <p>
-                  没有 Key？{' '}
-                  <a
-                    href={provider.apiKeyUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="settings-link"
-                  >
-                    前往 {provider.name} 控制台申请 <RiExternalLinkLine size={12} />
-                  </a>
-                </p>
-              </div>
-
-              {/* 模型选择 */}
-              <div className="settings-item">
-                <label className="settings-item-label">模型</label>
-                <SettingsSelect
-                  value={selectedModel}
-                  options={modelOptions}
-                  onChange={(v) => {
-                    setNestedConfig(`ai.selectedModels.${providerId}`, v);
-                    // 同步写入配置文件
-                    void aiService.setDefaultModel(providerId, v);
-                  }}
-                />
-              </div>
-
-              {/* 测试连接 */}
-              <div className="settings-item">
-                <label className="settings-item-label">测试连接</label>
-                <button
-                  className="settings-button"
-                  onClick={() => void runTest()}
-                  disabled={testing || !currentHasKey}
-                >
-                  {testing ? (
-                    <>
-                      <RiLoader4Line size={14} className="settings-ai-spin" />
-                      <span>测试中...</span>
-                    </>
-                  ) : (
-                    <span>发送一条测试消息</span>
-                  )}
-                </button>
-              </div>
-              {testResult && (
-                <div
-                  className={cn('settings-ai-test-result', testResult.ok ? 'is-ok' : 'is-error')}
-                >
-                  {testResult.message}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* 配置文件 */}
-          {/* <div className="settings-section-title">配置文件</div> */}
           <div className="settings-item" style={{ gap: '8px' }}>
             <label className="settings-item-label">配置文件</label>
             <div className="settings-ai-key-row">
@@ -296,42 +110,15 @@ export function AiSettings() {
                 disabled={refreshing}
               >
                 <RiRefreshLine size={14} className={refreshing ? 'settings-ai-spin' : ''} />
-                <span>{refreshing ? '刷新中...' : '刷新配置'}</span>
+                <span>{refreshing ? '刷新中...' : '刷新'}</span>
               </button>
             </div>
           </div>
           <div className="settings-item-hint">
             <p>
-              配置文件包含所有服务商的 API Key、模型列表等信息，修改配置文件后点击刷新按钮生效。
+              模型配置保存在 ai-providers.json 中；手动编辑或修改环境变量后点击刷新生效。
+              长文档场景可在文件中为模型填写 contextLength（上下文窗口）。
             </p>
-          </div>
-
-          {/* 生成参数 */}
-          <div className="settings-section-title">生成参数</div>
-          <div className="settings-item">
-            <label className="settings-item-label">Temperature</label>
-            <SettingsSlider
-              value={config.ai?.temperature ?? 0.7}
-              min={0}
-              max={2}
-              step={0.1}
-              formatValue={(v) => v.toFixed(1)}
-              onChange={(v) => setNestedConfig('ai.temperature', v)}
-            />
-          </div>
-          <div className="settings-item-hint">
-            <p>越高越发散，越低越稳定。常规写作建议 0.5-0.8。</p>
-          </div>
-
-          <div className="settings-item">
-            <label className="settings-item-label">最大生成 Token 数</label>
-            <SettingsNumberInput
-              value={config.ai?.maxTokens ?? 2000}
-              min={256}
-              max={8192}
-              step={256}
-              onChange={(v) => setNestedConfig('ai.maxTokens', v)}
-            />
           </div>
 
           {/* 交互入口 */}

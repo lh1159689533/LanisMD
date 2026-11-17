@@ -337,6 +337,21 @@
 }
 
 /* ---------------------------------------------------------------------- 
+ * AI 品牌 icon（翻译 / 解释 / 润色弹窗共用，与斜杠指令弹窗一致）
+ * ---------------------------------------------------------------------- */
+
+.lanismd-ai-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--lanismd-ai-accent);
+  font-size: 18px;
+}
+
+/* ---------------------------------------------------------------------- 
  * 润色弹窗（和编辑区等宽，浮在选区下方）
  * ---------------------------------------------------------------------- */
 
@@ -465,7 +480,7 @@
 .lanismd-ai-popup-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 9000;
   background: transparent;
 }
 
@@ -499,6 +514,13 @@
   padding: 8px 16px;
   border-bottom: 1px solid var(--lanismd-editor-border);
   flex-shrink: 0;
+}
+
+.lanismd-ai-popup-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .lanismd-ai-popup-title {
@@ -711,10 +733,11 @@
  * AI 助手双卡片弹窗
  * ---------------------------------------------------------------------- */
 
+/* 全窗口遮罩：弹窗打开期间禁止操作其他区域（与润色弹窗一致） */
 .lanismd-gen-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 9000;
   background: transparent;
 }
 
@@ -737,8 +760,8 @@
   }
 }
 
-/* 点击外部区域时的抖动提示动画 */
-@keyframes lanismd-gen-shake {
+/* 点击外部区域时的抖动提示动画（AI 助手 / 翻译 / 解释 / 润色弹窗共用） */
+@keyframes lanismd-ai-shake {
   0%,
   100% {
     transform: translateX(0);
@@ -763,8 +786,10 @@
   }
 }
 
-.lanismd-gen-wrapper.lanismd-gen-shake {
-  animation: lanismd-gen-shake 0.4s ease-in-out;
+.lanismd-gen-wrapper.lanismd-ai-shake,
+.lanismd-ai-popup.lanismd-ai-shake,
+.lanismd-polish-popup.lanismd-ai-shake {
+  animation: lanismd-ai-shake 0.4s ease-in-out;
 }
 
 /* 独立卡片基础样式 */
@@ -780,6 +805,8 @@
 .lanismd-gen-result-card {
   display: flex;
   flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
   max-height: 320px;
 }
 
@@ -787,6 +814,7 @@
 .lanismd-gen-input-card {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 /* --- 输入栏 --- */
@@ -1005,7 +1033,7 @@
   color: var(--lanismd-editor-text);
   white-space: pre-wrap;
   word-break: break-word;
-  min-height: 40px;
+  min-height: 0;
   max-height: 240px;
 }
 
@@ -1054,4 +1082,27 @@
 .lanismd-gen-result-btn-reject:hover {
   border-color: var(--lanismd-ai-accent);
   color: var(--lanismd-ai-accent);
+}
+
+/* ===== token 用量标签（各 AI 弹窗共用） ===== */
+.lanismd-ai-usage {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--lanismd-text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.lanismd-ai-usage[hidden] {
+  display: none;
+}
+
+/* 推到按钮行最右侧 */
+.lanismd-ai-usage--end {
+  margin-left: auto;
+}
+
+/* 紧跟前一个元素 */
+.lanismd-ai-usage--inline {
+  margin-left: 8px;
 }

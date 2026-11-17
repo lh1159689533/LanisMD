@@ -12,6 +12,10 @@
 
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import type { AiTokenUsage } from '@/services/ai/usage';
+
+import { createUsageLabel } from './usage-label';
+
 export interface PlaceholderHandle {
   /** 占位浮层根节点（挂载在 contenteditable 外部） */
   root: HTMLElement;
@@ -19,6 +23,8 @@ export interface PlaceholderHandle {
   textEl: HTMLElement;
   /** 设置显示状态 */
   setStatus: (status: 'pending' | 'streaming' | 'done' | 'error') => void;
+  /** 显示本次 token 用量（完成后调用） */
+  setUsage: (usage: AiTokenUsage) => void;
   /** 绑定取消按钮的回调 */
   setCancelHandler: (handler: () => void) => void;
   /** 绑定重试按钮的回调 */
@@ -82,6 +88,10 @@ export function createPlaceholder(view: EditorView, pos: number): PlaceholderHan
   actionBar.appendChild(commitBtn);
   actionBar.appendChild(discardBtn);
 
+  // 用量标签（紧跟在操作按钮之后）
+  const usageLabel = createUsageLabel('inline');
+  actionBar.appendChild(usageLabel.el);
+
   root.appendChild(textEl);
   root.appendChild(caret);
   root.appendChild(cancelBtn);
@@ -101,6 +111,7 @@ export function createPlaceholder(view: EditorView, pos: number): PlaceholderHan
     setStatus: (status) => {
       root.dataset.status = status;
     },
+    setUsage: (usage) => usageLabel.set(usage),
     setCancelHandler: (handler) => {
       cancelBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();

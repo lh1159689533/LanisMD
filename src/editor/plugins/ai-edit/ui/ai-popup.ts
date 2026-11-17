@@ -4,9 +4,26 @@
  * 定位在选区附近，展示 AI 生成结果。
  * 翻译模式：替换原文 / 插入原文之后 / 关闭 + 语言切换
  * 解释模式：仅关闭
+ *
+ * 点击弹窗外部区域不会关闭（避免误操作丢失结果），仅播放抖动提示；
+ * 需通过按钮或 Esc 显式关闭。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                                  | 关联                  |
+ * | v1.1.0 | 点击外部不再关闭改为抖动；标题前显示 AI icon；支持初始语言 | REQ: AI 弹窗体验优化 |
+ * | v1.2.0 | 按可视区剩余空间限定最大高度，流式内容增高不再超出窗口 | REQ: AI 弹窗体验优化 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import type { EditorView } from '@milkdown/kit/prose/view';
+
+import type { AiTokenUsage } from '@/services/ai/usage';
+
+import { createAiIcon, playShake } from './ai-visual';
+import { positionAnchoredPopup } from './popup-position';
+import { createUsageLabel } from './usage-label';
 
 /** 弹窗模式 */
 export type PopupMode = 'translate' | 'explain';
@@ -34,6 +51,8 @@ export interface AiPopupOptions {
   mode: PopupMode;
   /** 初始内容 */
   initialContent?: string;
+  /** 翻译模式下初始选中的目标语言（默认英语） */
+  initialLang?: TranslateLanguageId;
   /** 替换原文回调 */
   onReplace?: (text: string) => void;
   /** 插入原文之后回调 */
@@ -47,12 +66,16 @@ export interface AiPopupOptions {
 export interface AiPopupHandle {
   /** 追加流式内容 */
   appendContent: (delta: string) => void;
+  /** 推理模型思考阶段（尚未输出正文）时更新状态提示 */
+  setThinking: () => void;
   /** 设为完成状态 */
   setDone: () => void;
   /** 设为错误状态 */
   setError: (message: string) => void;
   /** 清空内容（切换语言后重新翻译时使用） */
   resetContent: () => void;
+  /** 显示本次 token 用量（完成后调用） */
+  setUsage: (usage: AiTokenUsage) => void;
   /** 销毁弹窗 */
   destroy: () => void;
 }
@@ -65,7 +88,7 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
 
   let currentContent = options.initialContent ?? '';
   let isLoading = true;
-  let currentLang: TranslateLanguageId = 'en';
+  let currentLang: TranslateLanguageId = options.initialLang ?? 'en';
 
   // 全屏透明遮罩
   const overlay = document.createElement('div');
@@ -80,10 +103,16 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   const header = document.createElement('div');
   header.className = 'lanismd-ai-popup-header';
 
+  // 左侧：AI icon + 标题
+  const titleGroup = document.createElement('div');
+  titleGroup.className = 'lanismd-ai-popup-title-group';
+  titleGroup.appendChild(createAiIcon());
+
   const titleSpan = document.createElement('span');
   titleSpan.className = 'lanismd-ai-popup-title';
   titleSpan.textContent = mode === 'translate' ? '翻译' : '解释';
-  header.appendChild(titleSpan);
+  titleGroup.appendChild(titleSpan);
+  header.appendChild(titleGroup);
 
   // 语言选择器（仅翻译模式）
   let langSelect: HTMLSelectElement | null = null;
@@ -106,6 +135,7 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
       isLoading = true;
       currentContent = '';
       contentEl.textContent = '';
+      usageLabel.clear();
       statusEl.textContent = '翻译中...';
       statusEl.style.display = '';
       // 通知外部重新翻译
@@ -188,15 +218,18 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
     actionsEl.appendChild(closeBtn);
   }
 
+  // 用量标签（位于按钮行右侧）
+  const usageLabel = createUsageLabel();
+  actionsEl.appendChild(usageLabel.el);
+
   popup.appendChild(actionsEl);
   overlay.appendChild(popup);
 
-  // 点击遮罩关闭
+  // 点击外部区域不关闭，播放抖动动画提示用户
   overlay.addEventListener('mousedown', (e) => {
     if (e.target === overlay) {
       e.preventDefault();
-      destroy();
-      onClose?.();
+      playShake(popup);
     }
   });
 
@@ -213,12 +246,15 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   // 挂载到 body
   document.body.appendChild(overlay);
 
-  // 定位弹窗到选区附近
-  positionPopup(view, popup, options.from, options.to);
+  // 定位弹窗到选区附近；窗口尺寸变化时重新计算可用空间
+  const reposition = () => positionPopup(view, popup, options.from, options.to);
+  reposition();
+  window.addEventListener('resize', reposition);
 
   // handle 实现
   function destroy() {
     document.removeEventListener('keydown', handleKeydown, true);
+    window.removeEventListener('resize', reposition);
     if (overlay.parentElement) {
       overlay.parentElement.removeChild(overlay);
     }
@@ -227,10 +263,19 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
   const handle: AiPopupHandle = {
     appendContent: (delta: string) => {
       currentContent += delta;
+      // 用户停留在底部时跟随滚动；若已上翻阅读则不打断
+      const nearBottom =
+        contentEl.scrollHeight - contentEl.scrollTop - contentEl.clientHeight < STICK_THRESHOLD;
       contentEl.appendChild(document.createTextNode(delta));
+      if (nearBottom) contentEl.scrollTop = contentEl.scrollHeight;
       if (isLoading) {
         statusEl.style.display = 'none';
       }
+    },
+    setThinking: () => {
+      if (!isLoading || currentContent) return;
+      statusEl.textContent = '深度思考中...';
+      statusEl.style.display = '';
     },
     setDone: () => {
       isLoading = false;
@@ -242,7 +287,9 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
       statusEl.style.display = '';
       statusEl.classList.add('lanismd-ai-popup-status-error');
     },
+    setUsage: (usage) => usageLabel.set(usage),
     resetContent: () => {
+      usageLabel.clear();
       currentContent = '';
       contentEl.textContent = '';
       isLoading = true;
@@ -260,43 +307,18 @@ export function createAiPopup(options: AiPopupOptions): AiPopupHandle {
 // 定位工具
 // ---------------------------------------------------------------------------
 
-/** 将弹窗定位到选区下方，和编辑区内容区等宽 */
-function positionPopup(
-  view: EditorView,
-  popup: HTMLElement,
-  from: number,
-  to: number,
-) {
-  try {
-    const endCoords = view.coordsAtPos(to);
-    const editorDom = view.dom;
-    const editorRect = editorDom.getBoundingClientRect();
+/** 弹窗最大高度 */
+const POPUP_MAX_HEIGHT = 400;
+/** 单侧空间低于该值时不在该侧展示 */
+const POPUP_MIN_HEIGHT = 160;
+/** 流式输出时判定"位于底部"的阈值 */
+const STICK_THRESHOLD = 24;
 
-    // 弹窗和编辑区内容区等宽
-    popup.style.position = 'fixed';
-    popup.style.left = `${editorRect.left}px`;
-    popup.style.width = `${editorRect.width}px`;
-    popup.style.top = `${endCoords.bottom + 8}px`;
-
-    // 延迟调整确保弹窗在视口内
-    requestAnimationFrame(() => {
-      const rect = popup.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-
-      // 下方超出：改为在选区上方显示
-      if (rect.bottom > viewportHeight - 16) {
-        const startCoords = view.coordsAtPos(from);
-        const aboveY = startCoords.top - rect.height - 8;
-        popup.style.top = `${Math.max(16, aboveY)}px`;
-      }
-    });
-  } catch {
-    // 定位失败时使用编辑器底部
-    const editorDom = view.dom;
-    const editorRect = editorDom.getBoundingClientRect();
-    popup.style.position = 'fixed';
-    popup.style.left = `${editorRect.left}px`;
-    popup.style.width = `${editorRect.width}px`;
-    popup.style.bottom = '16px';
-  }
+function positionPopup(view: EditorView, popup: HTMLElement, from: number, to: number) {
+  positionAnchoredPopup(view, popup, {
+    from,
+    to,
+    maxHeight: POPUP_MAX_HEIGHT,
+    minHeight: POPUP_MIN_HEIGHT,
+  });
 }

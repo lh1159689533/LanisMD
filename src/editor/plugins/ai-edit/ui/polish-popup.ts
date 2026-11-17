@@ -4,9 +4,21 @@
  * 定位在选区下方，和编辑区等宽。
  * 显示润色状态（润色中... / 已完成 / 出错），完成后显示接受/拒绝按钮。
  * 与 inline-diff 配合使用：diff 在编辑器内展示，弹窗控制操作。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                  | 关联                  |
+ * | v1.1.0 | 状态行前显示 AI icon；点击外部区域播放抖动 | REQ: AI 弹窗体验优化 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import type { EditorView } from '@milkdown/kit/prose/view';
+
+import type { AiTokenUsage } from '@/services/ai/usage';
+
+import { createAiIcon, playShake } from './ai-visual';
+import { createUsageLabel } from './usage-label';
 
 export interface PolishPopupOptions {
   view: EditorView;
@@ -23,10 +35,14 @@ export interface PolishPopupOptions {
 export interface PolishPopupHandle {
   /** 设为流式生成中状态 */
   setStreaming: () => void;
+  /** 推理模型思考阶段（尚未输出正文） */
+  setThinking: () => void;
   /** 设为完成状态（显示接受/拒绝按钮） */
   setDone: () => void;
   /** 设为错误状态 */
   setError: (message: string) => void;
+  /** 显示本次 token 用量（完成后调用） */
+  setUsage: (usage: AiTokenUsage) => void;
   /** 销毁弹窗 */
   destroy: () => void;
 }
@@ -58,6 +74,7 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
   const spinner = document.createElement('span');
   spinner.className = 'lanismd-polish-popup-spinner';
 
+  statusRow.appendChild(createAiIcon());
   statusRow.appendChild(spinner);
   statusRow.appendChild(statusText);
 
@@ -78,6 +95,10 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
   actionsEl.appendChild(acceptBtn);
   actionsEl.appendChild(rejectBtn);
 
+  // 用量标签：紧跟「润色完成」状态文字（右侧为接受 / 拒绝按钮）
+  const usageLabel = createUsageLabel('inline');
+  statusRow.appendChild(usageLabel.el);
+
   popup.appendChild(statusRow);
   popup.appendChild(actionsEl);
   overlay.appendChild(popup);
@@ -97,10 +118,11 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
     onReject();
   });
 
-  // 点击遮罩不关闭（润色进行中不允许随意关闭）
+  // 点击遮罩不关闭（润色进行中不允许随意关闭），播放抖动动画提示用户
   overlay.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (e.target === overlay) playShake(popup);
   });
 
   // Esc 键拒绝
@@ -132,6 +154,11 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
       popup.dataset.status = 'streaming';
       statusText.textContent = '润色中...';
     },
+    setUsage: (usage) => usageLabel.set(usage),
+    setThinking: () => {
+      popup.dataset.status = 'streaming';
+      statusText.textContent = '深度思考中...';
+    },
     setDone: () => {
       popup.dataset.status = 'done';
       statusText.textContent = '润色完成';
@@ -153,12 +180,7 @@ export function createPolishPopup(options: PolishPopupOptions): PolishPopupHandl
 /**
  * 将弹窗定位到选区下方，和编辑区内容区等宽
  */
-function positionPopup(
-  view: EditorView,
-  popup: HTMLElement,
-  from: number,
-  to: number,
-) {
+function positionPopup(view: EditorView, popup: HTMLElement, from: number, to: number) {
   try {
     const endCoords = view.coordsAtPos(to);
     const editorDom = view.dom;

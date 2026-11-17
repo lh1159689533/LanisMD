@@ -11,6 +11,8 @@
 
 import type { AiCommand, AiCommandId } from '@/types/ai';
 
+import { proportionalOutput } from './generation';
+
 // ---------------------------------------------------------------------------
 // 图标（统一 16x16 lucide 风格）
 // ---------------------------------------------------------------------------
@@ -32,6 +34,17 @@ const ICON_LATEX =
   '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="26" font-weight="400" fill="currentColor">Σ</text></svg>';
 
 // ---------------------------------------------------------------------------
+// Prompt 公共片段
+// ---------------------------------------------------------------------------
+
+/** 完整上下文模式下，在文档中标记选区所在位置的占位符 */
+export const FRAGMENT_MARKER = '[[待处理片段所在位置]]';
+
+/** 要求模型保留 Markdown 格式（选区以 Markdown 形式传入，结果按 Markdown 解析写回） */
+const KEEP_MARKDOWN_RULE =
+  '输入是 Markdown 文本，请原样保留其中的 Markdown 标记与结构（加粗、斜体、链接、行内代码、列表、标题、公式等），不要额外包裹代码块。';
+
+// ---------------------------------------------------------------------------
 // 指令定义
 // ---------------------------------------------------------------------------
 
@@ -43,11 +56,18 @@ export const AI_COMMANDS: Record<AiCommandId, AiCommand> = {
     keywords: ['polish', 'rewrite', '润色', '改写', 'rs'],
     insertMode: 'inline-diff',
     requireSelection: true,
+    // 润色输出约等于原文长度
+    generation: ({ selection }) => ({
+      temperature: 0.5,
+      maxTokens: proportionalOutput(selection, 1.5),
+    }),
     buildPrompt: ({ selection, fullDocument }) => {
       // 根据是否传入 fullDocument 区分"仅选中"和"完整上下文"模式
+      const base = `你是一位专业的写作编辑。请对"待润色片段"进行润色，保持原意，让表达更通顺自然。${KEEP_MARKDOWN_RULE}只输出润色后的片段本身，不要任何解释。`;
+      // 完整上下文模式：附带（已按 token 预算裁剪的）文档，帮助模型保持术语与语气一致
       const systemPrompt = fullDocument
-        ? `你是一位专业的写作编辑。以下是完整文档内容，请仅对"待润色片段"进行润色，保持原意，让表达更通顺自然。只输出润色后的文本，不要任何解释。\n\n---完整文档---\n${fullDocument}\n---文档结束---`
-        : '你是一位专业的写作编辑。请对下面这段文字进行润色，保持原意，让表达更通顺自然。只输出润色后的文本，不要任何解释。';
+        ? `${base}\n\n以下是片段所在文档的内容，仅供参考，${FRAGMENT_MARKER} 标记了片段的位置，不要输出文档其余部分。\n\n---文档---\n${fullDocument}\n---文档结束---`
+        : base;
       return [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `待润色片段：\n${selection ?? ''}` },
@@ -61,12 +81,17 @@ export const AI_COMMANDS: Record<AiCommandId, AiCommand> = {
     keywords: ['translate', 'translation', '翻译', 'fy'],
     insertMode: 'popup-translate',
     requireSelection: true,
+    // 中译英等场景 token 数可能膨胀数倍
+    generation: ({ selection }) => ({
+      temperature: 0.3,
+      maxTokens: proportionalOutput(selection, 3),
+    }),
     buildPrompt: ({ selection, options }) => {
       const targetLang = options?.targetLang ?? '英语';
       return [
         {
           role: 'system',
-          content: `你是一位专业翻译。请将以下文本翻译为${targetLang}。只输出译文，不要任何解释或注释。`,
+          content: `你是一位专业翻译。请将以下文本翻译为${targetLang}。${KEEP_MARKDOWN_RULE}代码、链接地址与公式内容保持原样不翻译。只输出译文，不要任何解释或注释。`,
         },
         { role: 'user', content: selection ?? '' },
       ];
@@ -79,6 +104,10 @@ export const AI_COMMANDS: Record<AiCommandId, AiCommand> = {
     keywords: ['explain', '解释', 'js'],
     insertMode: 'popup-explain',
     requireSelection: true,
+    generation: ({ selection }) => ({
+      temperature: 0.5,
+      maxTokens: proportionalOutput(selection, 1),
+    }),
     buildPrompt: ({ selection }) => [
       {
         role: 'system',
@@ -95,6 +124,8 @@ export const AI_COMMANDS: Record<AiCommandId, AiCommand> = {
     keywords: ['mermaid', 'diagram', '图表', '流程图', 'tb'],
     insertMode: 'insert-as-mermaid',
     requireArg: true,
+    // 代码类输出需要稳定
+    generation: () => ({ temperature: 0.2, maxTokens: proportionalOutput('', 0) }),
     buildPrompt: ({ arg, selection }) => [
       {
         role: 'system',
@@ -111,6 +142,7 @@ export const AI_COMMANDS: Record<AiCommandId, AiCommand> = {
     keywords: ['latex', 'formula', '公式', 'gs'],
     insertMode: 'insert-as-latex',
     requireArg: true,
+    generation: () => ({ temperature: 0.2, maxTokens: proportionalOutput('', 0) }),
     buildPrompt: ({ arg, selection }) => [
       {
         role: 'system',

@@ -1,19 +1,16 @@
 /**
  * AI 运行时状态
  *
- * - 记录各 Provider 的 Key 配置状态（hasKey，布尔值，不持有 Key 原文）
- * - 记录正在进行的请求（requestId -> cancel 函数），用于全局取消
- * - Key 状态的加载/刷新动作
+ * - 模型配置快照（来自 AI 配置文件，不持有 Key 原文）
+ * - 正在进行的请求（requestId -> cancel 函数），用于全局取消
  * - AI 生成结果历史（localStorage 持久化）
- * - 手动刷新配置文件，缓存到 sessionStorage
  */
 
 import { create } from 'zustand';
 
 import { aiService } from '@/services';
 import { useSettingsStore } from '@/stores/settings-store';
-import type { AiProviderId, AiCommandId } from '@/types/ai';
-import type { ConfigFileProvider } from '@/services/ai-service';
+import type { AiCommandId, AiModelProfile } from '@/types/ai';
 
 export interface AiRunningRequest {
   requestId: string;
@@ -43,24 +40,19 @@ function getMaxHistory(): number {
   }
 }
 
-/** sessionStorage 缓存键 */
-const CONFIG_CACHE_KEY = 'lanismd-ai-config-cache';
-
 interface AiState {
-  /** 各 Provider 是否已配置 Key（由配置文件同步） */
-  keyStatus: Record<AiProviderId, boolean>;
-  /** 是否已初始化过 keyStatus */
-  keyStatusLoaded: boolean;
+  /** 已配置的模型列表 */
+  models: AiModelProfile[];
+  /** 当前使用的模型配置 id */
+  currentModelId: string;
+  /** 是否已从配置文件加载过 */
+  configLoaded: boolean;
   /** 当前进行中的所有请求 */
   runningRequests: Record<string, AiRunningRequest>;
   /** AI 生成结果历史（localStorage 持久化） */
   history: AiHistoryEntry[];
-  /** 配置文件中的 Provider 列表 */
-  configProviders: ConfigFileProvider[];
 
-  /** 从后端刷新 keyStatus */
-  refreshKeyStatus: () => Promise<void>;
-  /** 从配置文件刷新完整 Provider 配置（同时同步默认服务商/模型到 settings） */
+  /** 从配置文件刷新模型列表（失败时保留旧值） */
   refreshConfig: () => Promise<void>;
   /** 记录一个新启动的请求 */
   trackRequest: (req: AiRunningRequest) => void;
@@ -73,13 +65,6 @@ interface AiState {
   /** 清除所有历史记录 */
   clearHistory: () => void;
 }
-
-const initialKeyStatus: Record<AiProviderId, boolean> = {
-  zhipu: false,
-  deepseek: false,
-  siliconflow: false,
-  custom: false,
-};
 
 /** 从 localStorage 恢复历史记录 */
 function loadHistory(): AiHistoryEntry[] {
@@ -100,91 +85,20 @@ function saveHistory(history: AiHistoryEntry[]): void {
   }
 }
 
-/** 从 sessionStorage 恢复配置缓存 */
-function loadConfigCache(): ConfigFileProvider[] {
-  try {
-    const raw = sessionStorage.getItem(CONFIG_CACHE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-/** 保存配置到 sessionStorage */
-function saveConfigCache(providers: ConfigFileProvider[]): void {
-  try {
-    sessionStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(providers));
-  } catch {
-    // sessionStorage 满或不可用时静默失败
-  }
-}
-
-/** 从 Provider 配置列表中提取 keyStatus */
-function extractKeyStatus(providers: ConfigFileProvider[]): Record<AiProviderId, boolean> {
-  const status = { ...initialKeyStatus };
-  for (const p of providers) {
-    const id = p.provider as AiProviderId;
-    if (id in status) {
-      status[id] = !!p.apiKey && p.apiKey.trim().length > 0;
-    }
-  }
-  return status;
-}
-
 export const useAiStore = create<AiState>((set, get) => ({
-  keyStatus: initialKeyStatus,
-  keyStatusLoaded: false,
+  models: [],
+  currentModelId: '',
+  configLoaded: false,
   runningRequests: {},
   history: loadHistory(),
-  configProviders: loadConfigCache(),
-
-  refreshKeyStatus: async () => {
-    try {
-      const status = await aiService.getKeyStatus();
-      set({ keyStatus: status, keyStatusLoaded: true });
-    } catch (err) {
-      // 加载失败时给出空值，避免阻断后续交互
-      console.error('[ai-store] refreshKeyStatus failed', err);
-      set({ keyStatusLoaded: true });
-    }
-  },
 
   refreshConfig: async () => {
     try {
-      const providers = await aiService.readAiConfig();
-      const keyStatus = extractKeyStatus(providers);
-      saveConfigCache(providers);
-      set({ configProviders: providers, keyStatus, keyStatusLoaded: true });
-
-      // 从配置文件同步默认服务商和默认模型到 settings store
-      const defaultProvider = providers.find((p) => p.isDefault);
-      if (defaultProvider) {
-        const settingsStore = useSettingsStore.getState();
-        const currentProvider = settingsStore.config.ai?.currentProvider;
-        // 如果 settings 中尚未设置服务商，或与配置文件中的默认服务商不同，则同步
-        if (!currentProvider || currentProvider !== defaultProvider.provider) {
-          settingsStore.setNestedConfig(
-            'ai.currentProvider',
-            defaultProvider.provider as AiProviderId,
-          );
-        }
-      }
-
-      // 校验每个 provider 已选中的模型是否仍存在于配置文件的模型列表中
-      // 如果不存在，回退到配置文件的 defaultModel 或第一个模型
-      const settingsStore = useSettingsStore.getState();
-      for (const p of providers) {
-        const pid = p.provider as AiProviderId;
-        const currentModel = settingsStore.config.ai?.selectedModels?.[pid] ?? '';
-        const modelIds = p.models.map((m) => m.id);
-        // 当前选中的模型不在最新模型列表中时，需要重新设置
-        if (!currentModel || !modelIds.includes(currentModel)) {
-          const fallback = p.defaultModel || modelIds[0] || '';
-          settingsStore.setNestedConfig(`ai.selectedModels.${pid}`, fallback);
-        }
-      }
+      const { current, models } = await aiService.readAiConfig();
+      set({ models, currentModelId: current, configLoaded: true });
     } catch (err) {
       console.error('[ai-store] refreshConfig failed', err);
+      set({ configLoaded: true });
     }
   },
 

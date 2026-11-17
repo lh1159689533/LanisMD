@@ -197,9 +197,6 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
   if (aiEnabled && hasSelection) {
     items.push({ label: '', separator: true });
 
-    const selectedText = state.doc.textBetween(from, to, '\n', '\n');
-    const fullDocument = state.doc.textBetween(0, state.doc.content.size, '\n', '\n');
-
     items.push({
       label: 'AI 润色（仅选中）',
       icon: ICON_AI,
@@ -212,10 +209,8 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
       label: 'AI 润色（完整上下文）',
       icon: ICON_AI,
       action: () => {
-        void runAiCommand(view, AI_COMMANDS.polish, {
-          selection: selectedText,
-          fullDocument,
-        });
+        // 文档上下文在执行时按模型上下文长度裁剪生成，而非菜单弹出时整篇拼接
+        void runAiCommand(view, AI_COMMANDS.polish, undefined, { withDocumentContext: true });
       },
     });
 
@@ -223,9 +218,8 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
       label: 'AI 翻译',
       icon: ICON_AI,
       action: () => {
-        void runAiCommand(view, AI_COMMANDS.translate, {
-          options: { targetLang: '英语' },
-        });
+        // 目标语言由翻译模式根据原文自动识别
+        void runAiCommand(view, AI_COMMANDS.translate);
       },
     });
 

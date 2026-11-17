@@ -4,33 +4,55 @@
  * 与 `src-tauri/src/models/ai.rs` 保持字段对齐。
  */
 
-/** 支持的 AI 服务商 */
-export type AiProviderId = 'zhipu' | 'deepseek' | 'siliconflow' | 'custom';
+/**
+ * 模型类型
+ * - 本地模型：ollama / lmstudio
+ * - API 模型：openai / anthropic / gemini / openrouter / openai-compatible
+ */
+export type AiModelKind =
+  'ollama' | 'lmstudio' | 'openai' | 'anthropic' | 'gemini' | 'openrouter' | 'openai-compatible';
 
-/** 单个 Provider 的可选模型 */
-export interface AiModel {
-  /** API 侧模型 id */
+/** API 密钥来源：本地保存 / 环境变量 / 无密钥 */
+export type AiKeySource = 'local' | 'env' | 'none';
+
+/** 一条模型配置（来自配置文件，不含 Key 原文） */
+export interface AiModelProfile {
   id: string;
-  /** 显示名称 */
-  label: string;
-  /** 是否免费 */
-  free: boolean;
-  /** 上下文长度（tokens） */
+  kind: AiModelKind;
+  name: string;
+  baseUrl: string;
+  /** 模型 ID（API 侧） */
+  model: string;
+  keySource: AiKeySource;
+  /** 环境变量名（keySource = env 时有效） */
+  envVar: string;
+  /** 本地是否已保存密钥 */
+  hasLocalKey: boolean;
+  /** 密钥是否可用（按当前来源实际解析，环境变量未设置时为 false） */
+  keyReady: boolean;
+  /** 上下文窗口（tokens），0 表示未声明 */
   contextLength: number;
 }
 
-/** Provider 的静态元数据（base URL / 模型清单 / 申请链接） */
-export interface AiProviderMeta {
-  id: AiProviderId;
-  name: string;
-  baseUrl: string;
-  apiKeyUrl: string;
-  models: AiModel[];
+/** 配置快照 */
+export interface AiConfigSnapshot {
+  /** 当前使用的模型配置 id */
+  current: string;
+  models: AiModelProfile[];
 }
 
-/** Provider 运行时状态：静态元数据 + 是否已配置 Key */
-export interface AiProviderConfig extends AiProviderMeta {
-  hasKey: boolean;
+/** 新增 / 编辑模型时提交的数据 */
+export interface AiModelDraft {
+  /** 为空表示新增 */
+  id?: string;
+  kind: AiModelKind;
+  name: string;
+  baseUrl: string;
+  model: string;
+  keySource: AiKeySource;
+  /** 新密钥；不传或为空表示保持原值 */
+  apiKey?: string;
+  envVar: string;
 }
 
 /** 聊天消息 */
@@ -39,15 +61,17 @@ export interface AiChatMessage {
   content: string;
 }
 
+/** 单次请求的生成参数（由指令内置，不再提供全局设置） */
+export interface AiGeneration {
+  temperature: number;
+  maxTokens: number;
+}
+
 /** 运行 AI 请求的参数 */
-export interface AiChatParams {
-  providerId: AiProviderId;
-  model: string;
+export interface AiChatParams extends AiGeneration {
+  /** 模型配置 id */
+  profileId: string;
   messages: AiChatMessage[];
-  temperature?: number;
-  maxTokens?: number;
-  /** 自定义 base URL（仅 Provider = custom 时有效） */
-  customBaseUrl?: string;
 }
 
 /** 内置指令类型 */
@@ -91,42 +115,32 @@ export interface AiCommand {
   /** 参数输入提示文本 */
   argPlaceholder?: string;
   buildPrompt: (input: AiPromptInput) => AiChatMessage[];
+  /** 生成参数；不提供时使用默认值（见 services/ai/generation.ts） */
+  generation?: (input: AiPromptInput) => AiGeneration;
 }
 
-/** 前端监听到的流式数据块 */
-export interface AiStreamChunk {
-  requestId: string;
-  delta: string;
-}
+/**
+ * 流式事件：后端统一推送到 `ai:event:{requestId}`，按 `kind` 区分
+ */
+export type AiStreamEvent =
+  | { kind: 'delta'; delta: string }
+  | { kind: 'reasoning'; delta: string }
+  | {
+      kind: 'done';
+      promptTokens?: number;
+      completionTokens?: number;
+      /** 结束原因：stop（正常）| length（触达 maxTokens 被截断）| 其他 */
+      finishReason?: string;
+    }
+  | { kind: 'error'; code: string; message: string };
 
-/** 流式完成事件 */
-export interface AiStreamDone {
-  requestId: string;
-  promptTokens?: number;
-  completionTokens?: number;
-}
-
-/** 流式错误事件 */
-export interface AiStreamError {
-  requestId: string;
-  code: string;
-  message: string;
-}
-
-/** AppConfig 内的 AI 配置 */
+/** AppConfig 内的 AI 配置（模型相关配置统一存放在 AI 配置文件中） */
 export interface AiConfig {
   enabled: boolean;
-  currentProvider: AiProviderId;
-  /** 各 Provider 选中的模型 */
-  selectedModels: Record<AiProviderId, string>;
-  temperature: number;
-  maxTokens: number;
   /** 划词浮层是否显示 AI 按钮 */
   showInTooltip: boolean;
   /** 斜杠菜单是否显示 AI 指令 */
   showInSlash: boolean;
-  /** Custom Provider 的 base URL */
-  customBaseUrl: string;
   /** 用户自定义 Prompt 模板 */
   customPrompts?: CustomPrompt[];
 }

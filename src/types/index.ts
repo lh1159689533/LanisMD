@@ -24,19 +24,19 @@ export {
   getCustomThemeId,
 } from './config';
 export {
-  type AiProviderId,
-  type AiModel,
-  type AiProviderMeta,
-  type AiProviderConfig,
+  type AiModelKind,
+  type AiKeySource,
+  type AiModelProfile,
+  type AiConfigSnapshot,
+  type AiModelDraft,
+  type AiGeneration,
   type AiChatMessage,
   type AiChatParams,
   type AiCommandId,
   type AiInsertMode,
   type AiPromptInput,
   type AiCommand,
-  type AiStreamChunk,
-  type AiStreamDone,
-  type AiStreamError,
+  type AiStreamEvent,
   type AiConfig,
 } from './ai';
 export {

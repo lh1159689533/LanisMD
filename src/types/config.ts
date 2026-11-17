@@ -163,25 +163,13 @@ export interface AppConfig {
       idleMinutes: number;
     };
   };
-  /** AI 助手配置 */
+  /** AI 助手配置（模型、密钥等统一存放在 AI 配置文件中，不在此处） */
   ai: {
     enabled: boolean;
-    currentProvider: 'zhipu' | 'deepseek' | 'siliconflow' | 'custom';
-    /** 各 Provider 选中的模型 */
-    selectedModels: {
-      zhipu: string;
-      deepseek: string;
-      siliconflow: string;
-      custom: string;
-    };
-    temperature: number;
-    maxTokens: number;
     /** 划词浮层是否显示 AI 按钮 */
     showInTooltip: boolean;
     /** 斜杠菜单是否显示 AI 指令 */
     showInSlash: boolean;
-    /** Custom Provider 的 base URL */
-    customBaseUrl: string;
     /** 用户自定义 Prompt 模板 */
     customPrompts?: Array<{
       id: string;

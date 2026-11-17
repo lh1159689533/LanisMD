@@ -93,7 +93,7 @@ function TauriApp() {
     onToggleTypewriterMode: toggleTypewriterMode,
   });
 
-  // 启动时读取一次 AI 配置文件（同步默认服务商/模型到 settings）
+  // 启动时读取一次 AI 配置文件（旧版配置在此时自动迁移）
   const refreshConfig = useAiStore((s) => s.refreshConfig);
   useEffect(() => {
     void refreshConfig();
