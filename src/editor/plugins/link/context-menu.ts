@@ -83,6 +83,9 @@ function restoreDomSelection(): void {
     sel.focusOffset === saved.focusOffset;
   if (unchanged) return;
 
+  // 选区为空（无范围）时 anchorNode/focusNode 可能为 null，无法恢复，直接跳过
+  if (!saved.anchorNode || !saved.focusNode) return;
+
   sel.setBaseAndExtent(
     saved.anchorNode,
     saved.anchorOffset,
