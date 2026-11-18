@@ -2,6 +2,7 @@ mod commands;
 mod error;
 mod models;
 mod services;
+pub mod mcp;
 
 use commands::file_commands;
 use commands::file_block_commands;
@@ -9,6 +10,7 @@ use commands::config_commands;
 use commands::search_commands;
 use commands::ai_commands;
 use commands::git_commands;
+use commands::mcp_commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -21,6 +23,9 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
+            // 本地桥接：供 `lanismd mcp` 查询当前文件夹、通知界面刷新
+            services::app_bridge::server::start(app.handle().clone());
+
             // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式
             #[cfg(target_os = "macos")]
             {
@@ -130,7 +135,14 @@ pub fn run() {
             file_block_commands::delete_file_permanent,
             file_block_commands::open_file_with_system,
             file_block_commands::check_file_exists,
+            mcp_commands::mcp_sync_state,
+            mcp_commands::mcp_server_info,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, event| {
+            if let tauri::RunEvent::Exit = event {
+                services::app_bridge::server::shutdown();
+            }
+        });
 }

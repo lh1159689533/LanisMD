@@ -5,6 +5,27 @@ function generateToastId(): string {
   return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// AI 对话输入框高度：本地持久化键（0 表示随内容自适应）
+const AI_CHAT_INPUT_HEIGHT_KEY = 'lanismd:ai-chat-input-height';
+
+function readInputHeight(): number {
+  try {
+    const value = Number(localStorage.getItem(AI_CHAT_INPUT_HEIGHT_KEY));
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeInputHeight(value: number): void {
+  try {
+    if (value > 0) localStorage.setItem(AI_CHAT_INPUT_HEIGHT_KEY, String(Math.round(value)));
+    else localStorage.removeItem(AI_CHAT_INPUT_HEIGHT_KEY);
+  } catch {
+    // 忽略 localStorage 不可用场景
+  }
+}
+
 // 沉浸式阅读：本地持久化键（仅持久化该字段，避免改动整个 UI store 的存储行为）
 const IMMERSIVE_READING_STORAGE_KEY = 'lanismd:immersive-reading';
 
@@ -38,10 +59,12 @@ interface UIState {
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
   settingsActiveSection: string;
-  /** AI 历史面板是否打开 */
-  aiHistoryOpen: boolean;
-  /** AI 历史面板宽度 */
-  aiHistoryWidth: number;
+  /** AI 对话面板是否打开 */
+  aiChatOpen: boolean;
+  /** AI 对话面板宽度 */
+  aiChatWidth: number;
+  /** AI 对话输入框高度（px）；0 表示随内容自适应 */
+  aiChatInputHeight: number;
   /** 「最近打开文件夹」浮层是否展开（由 Sidebar 入口触发，浮层在 FileTree 内渲染） */
   recentFoldersOpen: boolean;
   /** 触发「最近打开」浮层的所有按钮 DOM 元素，供浮层 outside-click 排除使用 */
@@ -89,9 +112,12 @@ interface UIState {
   closeCommandPalette: () => void;
   openSettings: (section?: string) => void;
   closeSettings: () => void;
-  toggleAiHistory: () => void;
-  closeAiHistory: () => void;
-  setAiHistoryWidth: (width: number) => void;
+  toggleAiChat: () => void;
+  openAiChat: () => void;
+  closeAiChat: () => void;
+  setAiChatWidth: (width: number) => void;
+  /** 设置输入框高度并持久化；传 0 恢复自适应 */
+  setAiChatInputHeight: (height: number) => void;
   toggleRecentFolders: () => void;
   setRecentFoldersOpen: (open: boolean) => void;
   registerRecentFoldersTriggerEl: (el: HTMLElement) => void;
@@ -129,8 +155,9 @@ export const useUIStore = create<UIState>()((set) => ({
   commandPaletteOpen: false,
   settingsOpen: false,
   settingsActiveSection: 'general',
-  aiHistoryOpen: false,
-  aiHistoryWidth: 320,
+  aiChatOpen: false,
+  aiChatWidth: 400,
+  aiChatInputHeight: readInputHeight(),
   recentFoldersOpen: false,
   recentFoldersTriggerEls: new Set<HTMLElement>(),
   toasts: [],
@@ -151,9 +178,14 @@ export const useUIStore = create<UIState>()((set) => ({
       settingsActiveSection: section ?? 'general',
     }),
   closeSettings: () => set({ settingsOpen: false }),
-  toggleAiHistory: () => set((s) => ({ aiHistoryOpen: !s.aiHistoryOpen })),
-  closeAiHistory: () => set({ aiHistoryOpen: false }),
-  setAiHistoryWidth: (width) => set({ aiHistoryWidth: width }),
+  toggleAiChat: () => set((s) => ({ aiChatOpen: !s.aiChatOpen })),
+  openAiChat: () => set({ aiChatOpen: true }),
+  closeAiChat: () => set({ aiChatOpen: false }),
+  setAiChatWidth: (width) => set({ aiChatWidth: width }),
+  setAiChatInputHeight: (height) => {
+    writeInputHeight(height);
+    set({ aiChatInputHeight: height });
+  },
   toggleRecentFolders: () => set((s) => ({ recentFoldersOpen: !s.recentFoldersOpen })),
   setRecentFoldersOpen: (open) => set({ recentFoldersOpen: open }),
   registerRecentFoldersTriggerEl: (el) =>

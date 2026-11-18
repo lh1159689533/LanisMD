@@ -6,5 +6,6 @@ export { useFileTreeStore } from './file-tree-store';
 export { useSearchStore } from './search-store';
 export { useGlobalSearchStore } from './global-search-store';
 export { useAiStore } from './ai-store';
+export { useAiChatStore } from './ai-chat-store';
 export { useSessionStore } from './session-store';
 export { useGitStore } from './git-store';

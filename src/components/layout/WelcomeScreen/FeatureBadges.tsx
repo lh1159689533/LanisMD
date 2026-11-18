@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { RiNodeTree, RiPaletteLine, RiGitBranchLine, RiAttachmentLine } from 'react-icons/ri';
 import { HiMiniSlash } from 'react-icons/hi2';
 import { PiSigmaThin } from 'react-icons/pi';
-import { AiGradientIcon } from '@/components/common/AiGradientIcon';
+import { AiIcon } from '@/components/common/AiIcon';
 
 interface FeatureItem {
   icon: ReactNode;
@@ -13,7 +13,7 @@ interface FeatureItem {
 
 const FEATURES: FeatureItem[] = [
   {
-    icon: <AiGradientIcon size={14} />,
+    icon: <AiIcon size={14} />,
     label: 'AI 编辑',
     desc: '通过自然语言生成图表、数学公式，选中文字即可续写、润色与翻译',
   },

@@ -10,11 +10,13 @@
  * @changelog
  * | 版本   | 变更说明                                                  | 关联                         |
  * | v1.0.0 | 从 slash-menu 抽出；支持模板变量、插入方式、位置与生成参数 | REQ: AI 体验短板-自定义指令 |
+ * | v1.1.0 | 图标统一为 AI 助手指令弹窗图标                             | REQ: AI 图标统一            |
  * /@changelog
  *
  * @author hhhuilli
  */
 
+import { aiIconSvg } from '@/constants/ai-icon';
 import { useSettingsStore } from '@/stores/settings-store';
 import type {
   AiChatMessage,
@@ -37,8 +39,8 @@ const DEFAULT_PLACEMENTS: CustomPromptPlacement[] = ['slash'];
 /** 温度取值范围 */
 export const TEMPERATURE_RANGE = { min: 0, max: 2 } as const;
 
-const ICON_CUSTOM =
-  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.9 8.1 19 10 13.9 11.9 12 17 10.1 11.9 5 10 10.1 8.1 12 3z"/><path d="M18 16l.75 2L21 19l-2.25 1L18 22l-.75-2L15 19l2.25-1L18 16z"/></svg>';
+/** AI 图标（全局统一，见 constants/ai-icon.ts） */
+const ICON_CUSTOM = aiIconSvg(16);
 
 /** 读取设置中的全部自定义指令 */
 export function getCustomPrompts(): CustomPrompt[] {

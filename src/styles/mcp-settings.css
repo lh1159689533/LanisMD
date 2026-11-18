@@ -1,0 +1,84 @@
+/**
+ * 设置 > MCP 服务面板样式
+ */
+
+.mcp-settings-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+.mcp-settings-config {
+  overflow: hidden;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+}
+
+.mcp-settings-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--lanismd-editor-border);
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+.mcp-settings-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--lanismd-accent);
+  border-radius: var(--lanismd-radius-md);
+  font-size: var(--lanismd-font-size-xs);
+  font-weight: 500;
+  color: var(--lanismd-accent);
+  background-color: transparent;
+  transition: all var(--lanismd-transition-fast);
+  cursor: pointer;
+}
+
+.mcp-settings-copy-btn:hover {
+  color: #fff;
+  background-color: var(--lanismd-accent);
+}
+
+.mcp-settings-copy-btn.copied {
+  border-color: var(--lanismd-success);
+  color: var(--lanismd-success);
+  background-color: var(--lanismd-success-bg);
+}
+
+.mcp-settings-code {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--lanismd-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  user-select: text;
+  color: var(--lanismd-editor-text);
+  background-color: var(--lanismd-code-bg, rgba(0, 0, 0, 0.04));
+}
+
+.mcp-settings-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lanismd-spacing-sm);
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+  color: var(--lanismd-warning, #f59e0b);
+}
+
+.mcp-settings-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mcp-settings-notes p + p {
+  margin-top: 4px;
+}

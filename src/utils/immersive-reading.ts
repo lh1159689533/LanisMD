@@ -21,6 +21,7 @@ let previousEditorMode: 'wysiwyg' | 'source' | null = null;
 /**
  * 切换沉浸式阅读模式（带副作用）：
  * - 开启时：记忆当前编辑模式 → 强制切到 wysiwyg → 自动收起侧边栏一次
+ *   （AI 对话面板保持不变：阅读时仍可针对内容提问）
  * - 关闭时：恢复之前的编辑模式（若曾记录）
  *
  * 注意：侧边栏只在「开启时」自动收起，关闭时不主动展开（尊重用户后续手动调整）。
@@ -39,10 +40,6 @@ export function toggleImmersiveReading(): void {
     if (ui.sidebarOpen) {
       // 收起侧边栏，但保留宽度，方便用户手动展开
       ui.collapseSidebar(ui.sidebarWidth);
-    }
-    if (ui.aiHistoryOpen) {
-      // 关闭 AI 历史面板
-      ui.closeAiHistory();
     }
   } else {
     // 退出沉浸式阅读：恢复之前的模式

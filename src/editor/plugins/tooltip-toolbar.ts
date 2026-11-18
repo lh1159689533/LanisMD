@@ -17,6 +17,7 @@ import { toggleMark } from '@milkdown/kit/prose/commands';
 import type { MarkType } from '@milkdown/kit/prose/model';
 
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
+import { aiIconSvg } from '@/constants/ai-icon';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -69,9 +70,8 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   clearFormat:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-3.2-3.2a2 2 0 0 1 0-2.83L14.17 5.1a2 2 0 0 1 2.83 0l4.89 4.89a2 2 0 0 1 0 2.83L15.12 19.6"/><path d="m9.69 12.31 4.24 4.24"/></svg>',
-  // AI 入口图标：渐变文字 "AI"，与 slash-menu 中的 ai 图标保持一致
-  aiPolish:
-    '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lanismd-ai-grad-tooltip" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="url(#lanismd-ai-grad-tooltip)" letter-spacing="-0.5">AI</text></svg>',
+  // AI 入口图标：全局统一的 AI 图标（见 constants/ai-icon.ts）
+  aiPolish: aiIconSvg(16),
 };
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import type { CustomPrompt } from './ai';
+import type { AiSkill, CustomPrompt } from './ai';
 
 // 内置主题类型
 export type BuiltinTheme = 
@@ -174,10 +174,12 @@ export interface AppConfig {
     showInSlash: boolean;
     /** 用户自定义 Prompt 模板 */
     customPrompts?: CustomPrompt[];
+    /** AI 对话中可选用的自定义技能 */
+    skills?: AiSkill[];
     /** 上次在翻译弹窗中选择的目标语言 id；未记录时按原文自动判断 */
     translateLang?: string;
-    /** AI 历史记录最大条数 */
-    maxHistoryCount: number;
+    /** AI 历史记录（指令与对话）保存天数，范围 1 ~ 90，默认 30 */
+    historyRetentionDays: number;
   };
 }
 

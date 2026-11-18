@@ -1,7 +1,7 @@
 /**
  * 通用水平 resize 手柄样式
  *
- * 适用于 Sidebar、AiHistoryPanel 等需要拖拽调整宽度的面板。
+ * 适用于 Sidebar、AiChatPanel 等需要拖拽调整宽度的面板。
  * 类名前缀: `.lanismd-resize-handle`
  */
 

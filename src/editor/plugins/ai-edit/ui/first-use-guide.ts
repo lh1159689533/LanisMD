@@ -8,6 +8,7 @@
  * 不依赖 React 渲染上下文。
  */
 
+import { aiIconSvg } from '@/constants/ai-icon';
 import { useUIStore } from '@/stores/ui-store';
 
 /**
@@ -31,7 +32,7 @@ export function showFirstUseGuide(reason: 'no_key' | 'no_model' = 'no_key'): Pro
     // 图标区域
     const iconArea = document.createElement('div');
     iconArea.className = 'lanismd-ai-guide-icon';
-    iconArea.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`;
+    iconArea.innerHTML = aiIconSvg(32);
 
     // 标题
     const title = document.createElement('h3');

@@ -9,6 +9,7 @@
  * - `registerContextMenu`：供编辑器注册右键菜单
  * - `aiMarkdownBridgePlugin`：需在 editor-setup 中注册，为写回提供 parser/serializer
  * - `aiKeymapPlugin`：Mod-J 唤起 AI
+ * - `chat-bridge`：右键「添加到 AI 对话」、对话回复写回文档
  */
 
 export { runAiCommand, runUnifiedAiPopup } from './generator';
@@ -19,6 +20,12 @@ export {
   resolveAssistantCommand,
 } from './command-registry';
 export { registerContextMenu } from './context-menu';
+export {
+  buildSourceChatMenuItems,
+  getChatWriteBlocker,
+  writeChatResultToEditor,
+} from './chat-bridge';
+export type { ChatWriteMode } from './chat-bridge';
 export { aiMarkdownBridgePlugin } from './commit/markdown-bridge';
 export { aiKeymapPlugin } from './keymap';
 export type { GeneratorCommandOption } from './ui/generator-popup';

@@ -23,6 +23,7 @@ import {
 } from './SettingsControls';
 import { AiSettings } from './AiSettings';
 import { GitSettings } from './GitSettings';
+import { McpSettings } from './McpSettings';
 
 import '../../styles/settings.css';
 
@@ -129,6 +130,7 @@ const SECTIONS = [
   { id: 'attachment', label: '附件' },
   { id: 'ai', label: 'AI 助手' },
   { id: 'git', label: 'Git' },
+  { id: 'mcp', label: 'MCP 服务' },
   { id: 'shortcuts', label: '快捷键' },
 ];
 
@@ -701,6 +703,8 @@ export function SettingsDialog() {
             {settingsActiveSection === 'ai' && <AiSettings />}
 
             {settingsActiveSection === 'git' && <GitSettings />}
+
+            {settingsActiveSection === 'mcp' && <McpSettings />}
 
             {settingsActiveSection === 'shortcuts' && (
               <div className="settings-section settings-shortcuts">

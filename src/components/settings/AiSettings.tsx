@@ -5,10 +5,16 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { useAiStore } from '@/stores/ai-store';
 import { useUIStore } from '@/stores/ui-store';
 import { aiService } from '@/services';
+import {
+  MAX_HISTORY_RETENTION_DAYS,
+  MIN_HISTORY_RETENTION_DAYS,
+  normalizeRetentionDays,
+} from '@/services/ai/history-retention';
 import { cn } from '@/utils/cn';
 
 import { AiCustomPromptSettings } from './AiCustomPromptSettings';
 import { AiModelSettings } from './AiModelSettings';
+import { AiSkillSettings } from './AiSkillSettings';
 import { SettingsNumberInput } from './SettingsControls';
 
 /**
@@ -22,6 +28,8 @@ import { SettingsNumberInput } from './SettingsControls';
  * | 版本   | 变更说明                                       | 关联                 |
  * | v2.0.0 | 模型配置改为分类型的模型列表；移除生成参数设置 | REQ: AI 模型配置重做 |
  * | v2.1.0 | 自定义指令拆为独立组件；错误提示改为应用内提示 | REQ: AI 体验短板     |
+ * | v2.2.0 | 新增对话技能管理                               | REQ: AI 技能         |
+ * | v2.3.0 | 历史记录由条数上限改为保存天数（1 ~ 90 天）    | REQ: AI 历史按时间保存 |
  * /@changelog
  *
  * @author hhhuilli
@@ -120,20 +128,29 @@ export function AiSettings() {
           <div className="settings-section-title">自定义指令</div>
           <AiCustomPromptSettings />
 
+          {/* 对话技能（对话面板「管理技能」会滚动定位到此处） */}
+          <div id="lanismd-settings-ai-skills" className="settings-section-title">
+            对话技能
+          </div>
+          <AiSkillSettings />
+
           <div className="settings-section-title">历史记录</div>
           <div className="settings-item">
-            <label className="settings-item-label">历史记录上限</label>
+            <label className="settings-item-label">历史记录保存时间</label>
             <SettingsNumberInput
-              value={config.ai?.maxHistoryCount ?? 200}
-              min={10}
-              max={1000}
-              step={10}
-              suffix="条"
-              onChange={(v) => setNestedConfig('ai.maxHistoryCount', v)}
+              value={normalizeRetentionDays(config.ai?.historyRetentionDays)}
+              min={MIN_HISTORY_RETENTION_DAYS}
+              max={MAX_HISTORY_RETENTION_DAYS}
+              step={1}
+              suffix="天"
+              onChange={(v) => setNestedConfig('ai.historyRetentionDays', Math.round(v))}
             />
           </div>
           <div className="settings-item-hint">
-            <p>AI 生成结果的最大缓存条数，超出后自动丢弃最早的记录。</p>
+            <p>
+              AI 指令结果与对话的保存天数（{MIN_HISTORY_RETENTION_DAYS} ~{' '}
+              {MAX_HISTORY_RETENTION_DAYS} 天），超过后自动清理；当前打开的对话不受影响。
+            </p>
           </div>
         </>
       )}

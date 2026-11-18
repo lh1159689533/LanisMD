@@ -9,14 +9,14 @@ import {
   RiPaletteLine,
   RiArrowRightSLine,
 } from 'react-icons/ri';
-import { AiGradientIcon } from '@/components/common/AiGradientIcon';
+import { AiIcon } from '@/components/common/AiIcon';
 import { GitStatusItems } from '@/components/git/GitStatusItems';
 import { TbLeaf, TbSnowflake, TbFlower, TbBookOff, TbBook } from 'react-icons/tb';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
 import { useUIStore } from '@/stores/ui-store';
-import { useAiStore } from '@/stores/ai-store';
+import { useAiChatStore } from '@/stores/ai-chat-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
 import {
   BUILTIN_THEME_LIST,
@@ -230,10 +230,11 @@ export function StatusBar() {
     useEditorStore();
   const { config, setConfig } = useSettingsStore();
   const currentFile = useFileStore((s) => s.currentFile);
-  const toggleAiHistory = useUIStore((s) => s.toggleAiHistory);
-  const aiHistoryOpen = useUIStore((s) => s.aiHistoryOpen);
+  const toggleAiChat = useUIStore((s) => s.toggleAiChat);
+  const aiChatOpen = useUIStore((s) => s.aiChatOpen);
   const immersiveReading = useUIStore((s) => s.immersiveReading);
-  const historyCount = useAiStore((s) => s.history.length);
+  // 有对话正在生成时，入口高亮提示（面板关闭时也能感知）
+  const chatRunning = useAiChatStore((s) => Object.keys(s.runningIds).length > 0);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showBloomSubmenu, setShowBloomSubmenu] = useState(false);
   const [showCustomSubmenu, setShowCustomSubmenu] = useState(false);
@@ -414,15 +415,18 @@ export function StatusBar() {
         {aiOn && (
           <div className="relative">
             <button
-              onClick={toggleAiHistory}
+              onClick={toggleAiChat}
               className={cn(
                 'flex items-center gap-1 transition-colors hover:text-[var(--lanismd-accent)]',
-                aiHistoryOpen && 'text-[var(--lanismd-accent)]',
+                aiChatOpen && 'text-[var(--lanismd-accent)]',
               )}
-              title="AI 历史记录"
+              title={aiChatOpen ? '关闭 AI 对话' : '打开 AI 对话'}
             >
-              <AiGradientIcon size={13} />
-              {historyCount > 0 && <span className="text-[10px] opacity-70">{historyCount}</span>}
+              <AiIcon size={13} />
+              <span>对话</span>
+              {chatRunning && !aiChatOpen && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--lanismd-ai-accent)]" />
+              )}
             </button>
           </div>
         )}

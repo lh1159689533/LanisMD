@@ -3,13 +3,20 @@
  *
  * - 模型配置快照（来自 AI 配置文件，不持有 Key 原文）
  * - 正在进行的请求（requestId -> cancel 函数），用于全局取消
- * - AI 生成结果历史（localStorage 持久化）
+ * - AI 生成结果历史（localStorage 持久化，按保存天数过期清理）
+ *
+ * @changelog
+ * | 版本   | 变更说明                           | 关联                  |
+ * | v1.1.0 | 历史记录由条数上限改为按保存天数清理 | REQ: AI 历史按时间保存 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import { create } from 'zustand';
 
 import { aiService } from '@/services';
-import { useSettingsStore } from '@/stores/settings-store';
+import { getHistoryCutoff, onRetentionDaysChange } from '@/services/ai/history-retention';
 import type { AiCommandId, AiModelProfile } from '@/types/ai';
 
 export interface AiRunningRequest {
@@ -31,13 +38,10 @@ export interface AiHistoryEntry {
 /** addHistory 的输入参数（不含 id） */
 export type AiHistoryInput = Omit<AiHistoryEntry, 'id'>;
 
-/** 获取历史记录最大条数（从配置读取，默认 200） */
-function getMaxHistory(): number {
-  try {
-    return useSettingsStore.getState().config.ai?.maxHistoryCount ?? 200;
-  } catch {
-    return 200;
-  }
+/** 剔除超过保存天数的记录 */
+function dropExpired(history: AiHistoryEntry[]): AiHistoryEntry[] {
+  const cutoff = getHistoryCutoff();
+  return history.filter((h) => h.timestamp >= cutoff);
 }
 
 interface AiState {
@@ -62,15 +66,24 @@ interface AiState {
   cancelAll: () => Promise<void>;
   /** 添加一条历史记录 */
   addHistory: (entry: AiHistoryInput) => void;
+  /** 删除一条历史记录 */
+  removeHistory: (id: string) => void;
   /** 清除所有历史记录 */
   clearHistory: () => void;
+  /** 清理超过保存天数的历史记录 */
+  pruneHistory: () => void;
 }
 
-/** 从 localStorage 恢复历史记录 */
+/** 从 localStorage 恢复历史记录（同时剔除已过期的记录） */
 function loadHistory(): AiHistoryEntry[] {
   try {
     const raw = localStorage.getItem('lanismd-ai-history');
-    return raw ? JSON.parse(raw) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    const history = parsed as AiHistoryEntry[];
+    const valid = dropExpired(history);
+    if (valid.length !== history.length) saveHistory(valid);
+    return valid;
   } catch {
     return [];
   }
@@ -128,8 +141,14 @@ export const useAiStore = create<AiState>((set, get) => ({
         ...input,
         id: crypto.randomUUID(),
       };
-      const maxHistory = getMaxHistory();
-      const updated = [entry, ...state.history].slice(0, maxHistory);
+      const updated = dropExpired([entry, ...state.history]);
+      saveHistory(updated);
+      return { history: updated };
+    }),
+
+  removeHistory: (id) =>
+    set((state) => {
+      const updated = state.history.filter((h) => h.id !== id);
       saveHistory(updated);
       return { history: updated };
     }),
@@ -138,4 +157,15 @@ export const useAiStore = create<AiState>((set, get) => ({
     saveHistory([]);
     set({ history: [] });
   },
+
+  pruneHistory: () =>
+    set((state) => {
+      const updated = dropExpired(state.history);
+      if (updated.length === state.history.length) return state;
+      saveHistory(updated);
+      return { history: updated };
+    }),
 }));
+
+// 设置页调整保存天数后立即清理
+onRetentionDaysChange(() => useAiStore.getState().pruneHistory());

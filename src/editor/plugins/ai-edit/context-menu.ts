@@ -9,10 +9,15 @@
  *   - AI 翻译为 X（X 为记住的语言或按原文自动判断的语言）
  *   - AI 解释
  *   - 出现在右键菜单的自定义指令
+ * - 添加到 AI 对话（AI 功能启用即显示，沉浸式阅读下同样可用）：
+ *   - 有选中：添加选中片段
+ *   - 无选中：添加当前文档
  *
  * @changelog
  * | 版本   | 变更说明                                      | 关联                      |
  * | v1.1.0 | 翻译项显示实际目标语言；接入自定义指令         | REQ: AI 体验短板-翻译方向 |
+ * | v1.2.0 | 新增「添加到 AI 对话」（选中片段 / 当前文档）   | REQ: AI 对话框            |
+ * | v1.3.0 | AI 菜单项图标统一为 AI 助手指令弹窗图标        | REQ: AI 图标统一          |
  * /@changelog
  *
  * @author hhhuilli
@@ -22,11 +27,13 @@ import type { EditorView } from '@milkdown/kit/prose/view';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 
+import { aiIconSvg } from '@/constants/ai-icon';
 import { AI_COMMANDS } from '@/services/ai/commands';
 import { buildCustomCommand, customPromptsFor } from '@/services/ai/custom-commands';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
 import { toggleImmersiveReading } from '@/utils/immersive-reading';
+import { buildWysiwygChatMenuItems } from './chat-bridge';
 import { getLanguageLabel, resolveTargetLanguage } from './context/language';
 import { runAiCommand } from './generator';
 import { showContextMenu, closeActiveMenu, type ContextMenuItem } from '../context-menu/renderer';
@@ -83,9 +90,8 @@ const ICON_PASTE =
 const ICON_SELECT_ALL =
   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>';
 
-/** AI 魔法棒图标 */
-const ICON_AI =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.9 8.1 19 10 13.9 11.9 12 17 10.1 11.9 5 10 10.1 8.1 12 3z"/><path d="M18 16l.75 2L21 19l-2.25 1L18 22l-.75-2L15 19l2.25-1L18 16z"/></svg>';
+/** AI 图标（全局统一，见 constants/ai-icon.ts） */
+const ICON_AI = aiIconSvg(14);
 
 /** 沉浸式阅读图标（书本） */
 const ICON_BOOK =
@@ -131,6 +137,7 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
         view.focus();
       },
     });
+    appendChatItems(items, view);
     return items;
   }
 
@@ -254,7 +261,15 @@ function buildMenuItems(view: EditorView): ContextMenuItem[] {
     }
   }
 
+  appendChatItems(items, view);
   return items;
+}
+
+/** 追加「添加到 AI 对话」分区（AI 未启用时不追加） */
+function appendChatItems(items: ContextMenuItem[], view: EditorView): void {
+  const chatItems = buildWysiwygChatMenuItems(view);
+  if (chatItems.length === 0) return;
+  items.push({ label: '', separator: true }, ...chatItems);
 }
 
 /** 检查 AI 功能是否启用 */

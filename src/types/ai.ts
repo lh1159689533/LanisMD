@@ -141,6 +141,92 @@ export type AiStreamEvent =
     }
   | { kind: 'error'; code: string; message: string };
 
+// ---------------------------------------------------------------------------
+// AI 对话
+// ---------------------------------------------------------------------------
+
+/** 对话附件类型：选中片段 / 整篇文档 */
+export type AiChatAttachmentKind = 'selection' | 'document';
+
+/** 从编辑器添加到对话中的参考内容 */
+export interface AiChatAttachment {
+  id: string;
+  kind: AiChatAttachmentKind;
+  /** 来源文件名（未保存文件为「未命名」） */
+  fileName: string;
+  /** 来源文件路径，未保存文件为 null */
+  filePath: string | null;
+  /** 内容（Markdown） */
+  content: string;
+  /** 添加时内容过长被截断 */
+  truncated?: boolean;
+}
+
+/** 对话快捷操作（翻译、解释、润色等） */
+export type AiChatActionId = 'translate' | 'explain' | 'polish' | 'summarize' | 'mermaid' | 'latex';
+
+/** 助手消息状态 */
+export type AiChatTurnStatus = 'streaming' | 'done' | 'error' | 'canceled';
+
+/** 对话中的一条消息 */
+export interface AiChatTurn {
+  id: string;
+  role: 'user' | 'assistant';
+  /** 正文：用户为输入内容，助手为回复（Markdown） */
+  content: string;
+  /** 用户消息携带的参考内容 */
+  attachments?: AiChatAttachment[];
+  /** 用户消息使用的快捷操作 */
+  actionId?: AiChatActionId;
+  /** 助手消息状态（用户消息无此字段） */
+  status?: AiChatTurnStatus;
+  /** 失败原因（已转换为可读文案） */
+  error?: string;
+  /** 推理模型的思考过程 */
+  reasoning?: string;
+  /** 思考耗时（毫秒）：从开始生成到输出第一段正文 */
+  reasoningMs?: number;
+  /** 生成该回复的模型名称 */
+  modelName?: string;
+  /** 用户消息启用的技能 id（技能只对本条消息生效，重新生成时沿用） */
+  skillIds?: string[];
+  /** 发送该消息 / 生成该回复时实际启用的技能名称（用于界面确认技能已生效） */
+  skillNames?: string[];
+  /** token 用量 */
+  usage?: { promptTokens: number; completionTokens: number; estimated: boolean };
+  createdAt: number;
+}
+
+/**
+ * 自定义技能：为 AI 对话注入一段专业指令（角色、工作流程、输出规范等）
+ *
+ * 可在设置中手动编写，或从 SKILL.md（front-matter 含 name / description，正文为指令）导入。
+ */
+export interface AiSkill {
+  id: string;
+  name: string;
+  /** 一句话说明用途（显示在选择列表中，同时发送给模型帮助其理解技能） */
+  description: string;
+  /** 技能指令（Markdown），作为 system prompt 的一部分发送 */
+  instructions: string;
+  /** 默认启用：每次发送后输入区恢复为默认技能时自动带上 */
+  defaultEnabled?: boolean;
+}
+
+/** 一次对话 */
+export interface AiConversation {
+  id: string;
+  /** 标题：由首条消息自动生成 */
+  title: string;
+  /** 使用的模型配置 id；为空时使用当前模型 */
+  modelId: string;
+  /** @deprecated 旧版按对话启用技能，现改为按消息启用（见 AiChatTurn.skillIds），保留字段仅为兼容旧数据 */
+  skillIds?: string[];
+  turns: AiChatTurn[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** AppConfig 内的 AI 配置（模型相关配置统一存放在 AI 配置文件中） */
 export interface AiConfig {
   enabled: boolean;

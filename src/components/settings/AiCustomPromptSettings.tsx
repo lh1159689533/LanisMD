@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { RiAddLine } from 'react-icons/ri';
 
 import { TEMPERATURE_RANGE, placementsOf } from '@/services/ai/custom-commands';
@@ -12,10 +13,12 @@ import { useSettingsStore } from '@/stores/settings-store';
 import type { CustomPrompt, CustomPromptInsertMode, CustomPromptPlacement } from '@/types/ai';
 import { cn } from '@/utils/cn';
 
+import { Dialog } from '@/components/common/Dialog';
+
 import { SettingsSegmentedControl } from './SettingsControls';
 
 /**
- * 自定义指令设置：新增 / 编辑 / 删除
+ * 自定义指令设置：新增 / 编辑 / 删除（新增与编辑在弹窗中进行）
  *
  * 每条指令可设置插入方式、出现位置（斜杠菜单 / 划词浮层 / 右键菜单）、温度与输出上限；
  * prompt 支持 {{selection}} 等模板变量。旧指令缺省字段按默认值处理，行为不变。
@@ -23,6 +26,7 @@ import { SettingsSegmentedControl } from './SettingsControls';
  * @changelog
  * | 版本   | 变更说明                                             | 关联                         |
  * | v1.0.0 | 从 AiSettings 拆出；支持编辑、插入方式、位置与生成参数 | REQ: AI 体验短板-自定义指令 |
+ * | v1.1.0 | 新增 / 编辑改为弹窗                                     | REQ: AI 技能                |
  * /@changelog
  *
  * @author hhhuilli
@@ -128,7 +132,7 @@ function describePrompt(p: CustomPrompt): string {
   return [places, mode, ...params].join(' · ');
 }
 
-function PromptForm({
+function PromptDialog({
   draft,
   onChange,
   onCancel,
@@ -163,112 +167,125 @@ function PromptForm({
     });
   };
 
-  return (
-    <div className="settings-ai-prompt-form">
-      <input
-        type="text"
-        className="settings-text-input settings-ai-prompt-name"
-        placeholder="指令名称"
-        value={draft.label}
-        onChange={(e) => onChange({ ...draft, label: e.target.value })}
-      />
-      <textarea
-        ref={textareaRef}
-        className="settings-text-input settings-ai-prompt-textarea"
-        placeholder="输入 System Prompt，例如：把 {{selection}} 改写为适合发布在公众号的风格"
-        value={draft.prompt}
-        onChange={(e) => onChange({ ...draft, prompt: e.target.value })}
-        rows={4}
-      />
-      <div className="settings-ai-prompt-vars">
-        <span>插入变量：</span>
-        {TEMPLATE_VARIABLES.map((name) => (
-          <button
-            key={name}
-            type="button"
-            className="settings-ai-prompt-var"
-            title={TEMPLATE_VARIABLE_HINTS[name]}
-            onClick={() => insertVariable(name)}
-          >
-            {`{{${name}}}`}
-          </button>
-        ))}
-      </div>
-      <div className="settings-item-hint">
-        <p>不使用变量时，选中内容或输入的描述会作为用户消息发送（与旧版指令一致）。</p>
-      </div>
+  const footer = (
+    <>
+      {error && <span className="settings-ai-prompt-error">{error}</span>}
+      <button className="settings-button" onClick={onCancel}>
+        取消
+      </button>
+      <button
+        className="settings-button settings-button-primary"
+        onClick={onSave}
+        disabled={Boolean(error)}
+      >
+        {draft.id ? '保存' : '添加'}
+      </button>
+    </>
+  );
 
-      <div className="settings-item">
-        <label className="settings-item-label">插入方式</label>
-        <SettingsSegmentedControl
-          value={draft.insertMode}
-          options={INSERT_MODE_OPTIONS}
-          onChange={(v) => onChange({ ...draft, insertMode: v as CustomPromptInsertMode })}
+  // 设置页本身是全屏遮罩弹窗，挂到 body 上保证叠在其上方
+  return createPortal(
+    <Dialog
+      open
+      onClose={onCancel}
+      title={draft.id ? '编辑自定义指令' : '添加自定义指令'}
+      size="lg"
+      footer={footer}
+      className="settings-ai-edit-dialog"
+    >
+      <div className="settings-ai-prompt-form">
+        <input
+          type="text"
+          className="settings-text-input settings-ai-prompt-name"
+          placeholder="指令名称"
+          value={draft.label}
+          onChange={(e) => onChange({ ...draft, label: e.target.value })}
         />
-      </div>
-
-      <div className="settings-item">
-        <label className="settings-item-label">出现位置</label>
-        <div className="settings-segmented">
-          {PLACEMENT_OPTIONS.map((opt) => (
+        <textarea
+          ref={textareaRef}
+          className="settings-text-input settings-ai-prompt-textarea"
+          placeholder="输入 System Prompt，例如：把 {{selection}} 改写为适合发布在公众号的风格"
+          value={draft.prompt}
+          onChange={(e) => onChange({ ...draft, prompt: e.target.value })}
+          rows={4}
+        />
+        <div className="settings-ai-prompt-vars">
+          <span>插入变量：</span>
+          {TEMPLATE_VARIABLES.map((name) => (
             <button
-              key={opt.value}
+              key={name}
               type="button"
-              className={cn(
-                'settings-segmented-item',
-                draft.placements.includes(opt.value) && 'active',
-              )}
-              onClick={() => togglePlacement(opt.value)}
+              className="settings-ai-prompt-var"
+              title={TEMPLATE_VARIABLE_HINTS[name]}
+              onClick={() => insertVariable(name)}
             >
-              {opt.label}
+              {`{{${name}}}`}
             </button>
           ))}
         </div>
-      </div>
-      <div className="settings-item-hint">
-        <p>划词浮层与右键菜单仅在选中文本时出现，直接处理选中内容。</p>
-      </div>
+        <div className="settings-item-hint">
+          <p>不使用变量时，选中内容或输入的描述会作为用户消息发送（与旧版指令一致）。</p>
+        </div>
 
-      <div className="settings-item">
-        <label className="settings-item-label">温度</label>
-        <input
-          type="text"
-          inputMode="decimal"
-          className="settings-text-input settings-ai-prompt-number"
-          placeholder={`默认 ${DEFAULT_GENERATION.temperature}`}
-          value={draft.temperature}
-          onChange={(e) => onChange({ ...draft, temperature: e.target.value })}
-        />
-      </div>
-      <div className="settings-item">
-        <label className="settings-item-label">输出上限（tokens）</label>
-        <input
-          type="text"
-          inputMode="numeric"
-          className="settings-text-input settings-ai-prompt-number"
-          placeholder={`默认 ${DEFAULT_GENERATION.maxTokens}`}
-          value={draft.maxTokens}
-          onChange={(e) => onChange({ ...draft, maxTokens: e.target.value })}
-        />
-      </div>
-      <div className="settings-item-hint">
-        <p>留空使用默认值；填写后优先于默认设置。温度越低输出越稳定。</p>
-      </div>
+        <div className="settings-item">
+          <label className="settings-item-label">插入方式</label>
+          <SettingsSegmentedControl
+            value={draft.insertMode}
+            options={INSERT_MODE_OPTIONS}
+            onChange={(v) => onChange({ ...draft, insertMode: v as CustomPromptInsertMode })}
+          />
+        </div>
 
-      <div className="settings-ai-prompt-footer">
-        {error && <span className="settings-ai-prompt-error">{error}</span>}
-        <button className="settings-button" onClick={onCancel}>
-          取消
-        </button>
-        <button
-          className="settings-button settings-button-primary"
-          onClick={onSave}
-          disabled={Boolean(error)}
-        >
-          {draft.id ? '保存' : '添加'}
-        </button>
+        <div className="settings-item">
+          <label className="settings-item-label">出现位置</label>
+          <div className="settings-segmented">
+            {PLACEMENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={cn(
+                  'settings-segmented-item',
+                  draft.placements.includes(opt.value) && 'active',
+                )}
+                onClick={() => togglePlacement(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="settings-item-hint">
+          <p>划词浮层与右键菜单仅在选中文本时出现，直接处理选中内容。</p>
+        </div>
+
+        <div className="settings-item">
+          <label className="settings-item-label">温度</label>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="settings-text-input settings-ai-prompt-number"
+            placeholder={`默认 ${DEFAULT_GENERATION.temperature}`}
+            value={draft.temperature}
+            onChange={(e) => onChange({ ...draft, temperature: e.target.value })}
+          />
+        </div>
+        <div className="settings-item">
+          <label className="settings-item-label">输出上限（tokens）</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            className="settings-text-input settings-ai-prompt-number"
+            placeholder={`默认 ${DEFAULT_GENERATION.maxTokens}`}
+            value={draft.maxTokens}
+            onChange={(e) => onChange({ ...draft, maxTokens: e.target.value })}
+          />
+        </div>
+        <div className="settings-item-hint">
+          <p>留空使用默认值；填写后优先于默认设置。温度越低输出越稳定。</p>
+        </div>
       </div>
-    </div>
+    </Dialog>,
+    document.body,
   );
 }
 
@@ -308,50 +325,38 @@ export function AiCustomPromptSettings() {
         <p>自定义指令可出现在斜杠菜单的 AI 助手、划词浮层的 AI 子菜单或右键菜单中。</p>
       </div>
 
-      {customPrompts.map((p) =>
-        draft?.id === p.id ? (
-          <PromptForm
-            key={p.id}
-            draft={draft}
-            onChange={setDraft}
-            onCancel={() => setDraft(null)}
-            onSave={save}
-          />
-        ) : (
-          <div key={p.id} className="settings-item">
-            <div className="settings-ai-prompt-summary">
-              <div className="settings-item-label">{p.label}</div>
-              <div className="settings-ai-prompt-meta">{describePrompt(p)}</div>
-              <div className="settings-ai-prompt-preview">{p.prompt}</div>
-            </div>
-            <div className="settings-ai-key-actions">
-              <button className="settings-button" onClick={() => setDraft(toDraft(p))}>
-                <span>编辑</span>
-              </button>
-              <button className="settings-button" onClick={() => remove(p.id)} title="删除此指令">
-                <span>删除</span>
-              </button>
-            </div>
+      {customPrompts.map((p) => (
+        <div key={p.id} className="settings-item">
+          <div className="settings-ai-prompt-summary">
+            <div className="settings-item-label">{p.label}</div>
+            <div className="settings-ai-prompt-meta">{describePrompt(p)}</div>
+            <div className="settings-ai-prompt-preview">{p.prompt}</div>
           </div>
-        ),
-      )}
+          <div className="settings-ai-key-actions">
+            <button className="settings-button" onClick={() => setDraft(toDraft(p))}>
+              <span>编辑</span>
+            </button>
+            <button className="settings-button" onClick={() => remove(p.id)} title="删除此指令">
+              <span>删除</span>
+            </button>
+          </div>
+        </div>
+      ))}
 
-      {draft && !draft.id ? (
-        <PromptForm
+      <div>
+        <button className="settings-button" onClick={() => setDraft({ ...EMPTY_DRAFT })}>
+          <RiAddLine size={14} />
+          <span>添加自定义指令</span>
+        </button>
+      </div>
+
+      {draft && (
+        <PromptDialog
           draft={draft}
           onChange={setDraft}
           onCancel={() => setDraft(null)}
           onSave={save}
         />
-      ) : (
-        !draft && (
-          <div>
-            <button className="settings-button" onClick={() => setDraft({ ...EMPTY_DRAFT })}>
-              <RiAddLine size={14} />
-              <span>添加自定义指令</span>
-            </button>
-          </div>
-        )
       )}
     </>
   );

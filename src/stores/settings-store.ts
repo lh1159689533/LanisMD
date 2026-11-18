@@ -55,9 +55,17 @@ const DEFAULT_CONFIG: AppConfig = {
     showInTooltip: true,
     showInSlash: true,
     customPrompts: [],
-    maxHistoryCount: 200,
+    skills: [],
+    historyRetentionDays: 30,
   },
 };
+
+/** 已废弃的配置字段：旧版本持久化数据中可能残留，加载时移除 */
+function dropDeprecatedFields(config: AppConfig): AppConfig {
+  const ai = config.ai as AppConfig['ai'] & { maxHistoryCount?: unknown };
+  if (ai && 'maxHistoryCount' in ai) delete ai.maxHistoryCount;
+  return config;
+}
 
 interface SettingsState {
   config: AppConfig;
@@ -131,7 +139,7 @@ export const useSettingsStore = create<SettingsState>()(
         if (!persisted?.config) return currentState;
         return {
           ...currentState,
-          config: deepMergeDefaults(DEFAULT_CONFIG, persisted.config),
+          config: dropDeprecatedFields(deepMergeDefaults(DEFAULT_CONFIG, persisted.config)),
         };
       },
     },
