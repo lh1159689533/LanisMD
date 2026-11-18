@@ -1,8 +1,8 @@
 import { cn } from '@/utils/cn';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
-import { AiHistoryPanel } from './AiHistoryPanel';
 import { WelcomeScreen } from './WelcomeScreen';
+import { AiChatPanel } from '@/components/ai-chat/AiChatPanel';
 import { EditorCore } from '@/editor/components/EditorCore';
 import { GitDiffPanel } from '@/components/git/GitDiffPanel';
 import { CommitDialog } from '@/components/git/CommitDialog';
@@ -17,7 +17,8 @@ export function MainLayout() {
   const currentFile = useFileStore((s) => s.currentFile);
   const sidebarPosition = useSettingsStore((s) => s.config.sidebar.position);
   const typewriterMode = useEditorStore((s) => s.typewriterMode);
-  const aiHistoryOpen = useUIStore((s) => s.aiHistoryOpen);
+  const aiChatOpen = useUIStore((s) => s.aiChatOpen);
+  const aiOn = useSettingsStore((s) => s.config.ai?.enabled !== false);
   // 查看 Git diff 时覆盖编辑区；编辑器保持挂载以保留滚动位置与撤销历史
   const showDiff = useGitStore((s) => s.diffTarget !== null);
 
@@ -36,7 +37,7 @@ export function MainLayout() {
             {currentFile ? <EditorCore /> : <WelcomeScreen />}
           </div>
           {showDiff && <GitDiffPanel />}
-          {aiHistoryOpen && <AiHistoryPanel />}
+          {aiOn && aiChatOpen && <AiChatPanel />}
         </div>
         <StatusBar />
       </div>

@@ -1,17 +1,23 @@
 //! AI 服务模块
 //!
-//! - `provider`：定义 Provider trait
-//! - `openai_compatible`：OpenAI 兼容 Provider 的统一实现（智谱/DeepSeek/SiliconFlow 共用）
-//! - `providers`：各家 Provider 的元数据（base_url）
-//! - `sse`：SSE 流解析与错误类型
-//! - `config_file`：本地 JSON 配置文件读写（替代 Keychain）
-//! - `stream_manager`：request_id → CancellationToken 映射
+//! - `config_file`：模型配置文件（v3，一条配置 = 一个模型）读写
+//! - `legacy`：v1 / v2 旧配置迁移
+//! - `key_resolver`：API 密钥解析（本地保存 / 环境变量 / 无密钥）
+//! - `provider`：`ChatProvider` 协议抽象与适配器工厂
+//! - `openai_compatible`：OpenAI Chat Completions 兼容协议
+//! - `anthropic`：Anthropic Messages 原生协议
+//! - `transport`：与协议无关的发送、超时、SSE 读取与事件推送
+//! - `retry`：响应前阶段的退避重试
+//! - `error`：统一错误类型
+//! - `stream_manager`：request_id -> CancellationToken 映射
 
-pub mod provider;
-pub mod openai_compatible;
-pub mod providers;
-pub mod sse;
+pub mod anthropic;
 pub mod config_file;
+pub mod error;
+pub mod key_resolver;
+pub mod legacy;
+pub mod openai_compatible;
+pub mod provider;
+pub mod retry;
 pub mod stream_manager;
-
-
+pub mod transport;

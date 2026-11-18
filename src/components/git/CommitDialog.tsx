@@ -19,7 +19,7 @@ import {
   RiLoader4Line,
 } from 'react-icons/ri';
 import { Dialog } from '@/components/common/Dialog';
-import { AiGradientIcon } from '@/components/common/AiGradientIcon';
+import { AiIcon } from '@/components/common/AiIcon';
 import { generateCommitMessage, isAiCommitAvailable } from '@/services/ai/commit-message';
 import { gitErrorMessage, gitService, toEntry } from '@/services/tauri/git-service';
 import { isPushRejected, useGitStore } from '@/stores/git-store';
@@ -265,7 +265,7 @@ function CommitDialogContent() {
                 {generating ? (
                   <RiLoader4Line size={12} className="lanismd-git-spin" />
                 ) : (
-                  <AiGradientIcon size={12} />
+                  <AiIcon size={12} />
                 )}
                 <span>{generating ? '生成中...' : 'AI 生成'}</span>
               </button>

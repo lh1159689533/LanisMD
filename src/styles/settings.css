@@ -627,6 +627,257 @@
   border: 1px solid var(--lanismd-danger-border);
 }
 
+/* ---- 模型列表：工具栏（搜索 + 添加） ---- */
+.settings-ai-model-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-model-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  color: var(--lanismd-text-muted);
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.settings-ai-model-search:focus-within {
+  border-color: var(--lanismd-accent);
+  box-shadow: 0 0 0 2px var(--lanismd-accent-light);
+}
+
+.settings-ai-model-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-editor-text);
+  background: transparent;
+}
+
+.settings-ai-model-search input::placeholder {
+  color: var(--lanismd-text-muted);
+}
+
+/* 列表限高，超出滚动 */
+.settings-ai-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  max-height: 260px;
+  overflow-y: auto;
+  /* 给滚动条留出空间，避免遮住行内按钮 */
+  padding-right: 2px;
+}
+
+.settings-ai-model-empty {
+  padding: var(--lanismd-spacing-lg) 0;
+  font-size: var(--lanismd-font-size-xs);
+  text-align: center;
+  color: var(--lanismd-text-muted);
+}
+
+/* ---- 模型列表：单行 ---- */
+.settings-ai-model-row {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-sm) var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.settings-ai-model-row.is-current {
+  border-color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent-light);
+}
+
+.settings-ai-model-main {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-md);
+}
+
+/* 单选圆点：标记当前使用的模型 */
+.settings-ai-model-radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--lanismd-text-muted);
+  border-radius: 9999px;
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.settings-ai-model-row.is-current .settings-ai-model-radio {
+  border-color: var(--lanismd-accent);
+  background-color: var(--lanismd-accent);
+}
+
+.settings-ai-model-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.settings-ai-model-title {
+  display: flex;
+  align-items: center;
+  gap: var(--lanismd-spacing-sm);
+  color: var(--lanismd-editor-text);
+}
+
+.settings-ai-model-kind {
+  padding: 1px 6px;
+  border-radius: var(--lanismd-radius-sm);
+  font-size: 10px;
+  color: var(--lanismd-sidebar-text);
+  background-color: var(--lanismd-hover-bg);
+}
+
+.settings-ai-model-meta {
+  display: flex;
+  gap: var(--lanismd-spacing-md);
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.settings-ai-model-meta .is-warning {
+  color: var(--lanismd-danger);
+}
+
+.settings-ai-model-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.settings-ai-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--lanismd-radius-sm);
+  color: var(--lanismd-sidebar-text);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-ai-icon-button:hover:not(:disabled) {
+  color: var(--lanismd-accent);
+  background-color: var(--lanismd-hover-bg);
+}
+
+.settings-ai-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- 添加 / 编辑模型弹窗 ---- */
+/*
+ * 固定高度：本地模型默认无密钥、API 模型多出密钥输入与提示，
+ * 若随内容自适应，切换类型时弹窗会上下跳动。高度按内容最多的情况取值，
+ * 超出（如出现错误提示）时由 .lanismd-dialog-body 内部滚动。
+ */
+.lanismd-dialog.settings-ai-model-dialog {
+  height: min(410px, 65vh);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.settings-ai-model-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-md);
+}
+
+.settings-ai-form-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lanismd-spacing-lg);
+}
+
+.settings-ai-form-field > .settings-item-label {
+  width: 80px;
+  flex-shrink: 0;
+  padding-top: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-form-control {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-xs);
+  min-width: 0;
+}
+
+.settings-ai-form-control .settings-text-input {
+  width: 100%;
+  max-width: none;
+}
+
+.settings-ai-form-control .settings-segmented {
+  align-self: flex-start;
+}
+
+.settings-ai-form-hint {
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+/* ---- 模型类型选择 ---- */
+.settings-ai-kind-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+}
+
+/* 一级分组与二级类型共用的胶囊按钮行 */
+.settings-ai-kind-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lanismd-spacing-xs);
+}
+
+.settings-ai-kind-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 9999px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-sidebar-text);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all var(--lanismd-transition-fast);
+}
+
+.settings-ai-kind-chip:hover {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+.settings-ai-kind-chip.active {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent-contrast, #ffffff);
+  background-color: var(--lanismd-accent);
+}
+
 /* loading 旋转 */
 .settings-ai-spin {
   animation: lanismd-ai-spin 0.9s linear infinite;
@@ -673,4 +924,247 @@
 .settings-button-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---- 自定义指令 ---- */
+.settings-ai-prompt-summary {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-ai-prompt-meta {
+  margin-top: 2px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-accent);
+}
+
+.settings-ai-prompt-preview {
+  margin-top: 2px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-ai-prompt-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lanismd-spacing-sm);
+  padding: var(--lanismd-spacing-md);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md);
+}
+
+.settings-ai-prompt-form .settings-ai-prompt-name {
+  max-width: 240px;
+}
+
+.settings-ai-prompt-form .settings-ai-prompt-textarea {
+  max-width: none;
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.settings-ai-prompt-form .settings-ai-prompt-number {
+  min-width: 100px;
+  max-width: 120px;
+}
+
+.settings-ai-prompt-vars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+.settings-ai-prompt-var {
+  padding: 1px 6px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-sm, 4px);
+  background: transparent;
+  color: var(--lanismd-editor-text);
+  font-family: var(--lanismd-font-mono, monospace);
+  font-size: var(--lanismd-font-size-xs);
+  cursor: pointer;
+  transition: border-color var(--lanismd-transition-fast);
+}
+
+.settings-ai-prompt-var:hover {
+  border-color: var(--lanismd-accent);
+  color: var(--lanismd-accent);
+}
+
+.settings-ai-prompt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--lanismd-spacing-sm);
+}
+
+.settings-ai-prompt-error {
+  margin-right: auto;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-danger);
+}
+
+/* ---- 对话技能 ---- */
+.settings-ai-prompt-form .settings-ai-skill-desc {
+  max-width: none;
+  width: 100%;
+}
+
+.settings-ai-skill-tokens {
+  margin-right: auto;
+  font-size: var(--lanismd-font-size-xs);
+  color: var(--lanismd-text-muted);
+}
+
+.settings-ai-skill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lanismd-spacing-sm);
+}
+
+/* ---- 自定义指令 / 技能编辑弹窗 ---- */
+.lanismd-dialog.settings-ai-edit-dialog {
+  font-size: var(--lanismd-font-size-sm);
+}
+
+/* 弹窗内表单不再需要外框 */
+.settings-ai-edit-dialog .settings-ai-prompt-form {
+  padding: 0;
+  border: none;
+}
+
+.settings-ai-edit-dialog .settings-ai-prompt-form .settings-ai-prompt-name {
+  max-width: none;
+  width: 100%;
+}
+
+/* 底部左侧的错误提示 / token 估算 */
+.settings-ai-edit-dialog .lanismd-dialog-footer .settings-ai-prompt-error,
+.settings-ai-edit-dialog .lanismd-dialog-footer .settings-ai-skill-tokens {
+  margin-right: auto;
+}
+
+/* ---- 技能卡片 ---- */
+.settings-ai-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--lanismd-spacing-sm);
+  margin-bottom: var(--lanismd-spacing-md);
+}
+
+/* 固定高度：名称一行 + 描述两行，保证卡片整齐 */
+.settings-ai-skill-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 50px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-md, 8px);
+  background-color: var(--lanismd-editor-bg);
+  transition:
+    border-color var(--lanismd-transition-fast),
+    box-shadow var(--lanismd-transition-fast);
+}
+
+.settings-ai-skill-card:hover {
+  border-color: var(--lanismd-ai-accent-light, var(--lanismd-accent));
+  box-shadow: 0 1px 4px var(--lanismd-ai-overlay-bg);
+}
+
+.settings-ai-skill-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-ai-skill-card-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--lanismd-font-size-sm);
+  font-weight: 500;
+  color: var(--lanismd-editor-text);
+}
+
+.settings-ai-skill-card-badge {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  color: var(--lanismd-ai-accent);
+  background-color: var(--lanismd-ai-accent-bg);
+}
+
+.settings-ai-skill-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.5;
+  word-break: break-word;
+  color: var(--lanismd-text-muted);
+}
+
+.settings-ai-skill-card-desc.is-empty {
+  opacity: 0.6;
+}
+
+/* 悬浮操作：绝对定位，不参与布局；带底色覆盖在名称上方 */
+.settings-ai-skill-card-ops {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background-color: var(--lanismd-editor-bg);
+  box-shadow: 0 1px 4px var(--lanismd-ai-overlay-bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--lanismd-transition-fast);
+}
+
+.settings-ai-skill-card:hover .settings-ai-skill-card-ops,
+.settings-ai-skill-card:focus-within .settings-ai-skill-card-ops {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-ai-skill-card-op {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--lanismd-sidebar-text);
+  transition:
+    background-color var(--lanismd-transition-fast),
+    color var(--lanismd-transition-fast);
+}
+
+.settings-ai-skill-card-op:hover {
+  background-color: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+}
+
+.settings-ai-skill-card-op.is-danger:hover {
+  color: var(--lanismd-danger);
 }

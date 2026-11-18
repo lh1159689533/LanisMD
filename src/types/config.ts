@@ -1,3 +1,5 @@
+import type { AiSkill, CustomPrompt } from './ai';
+
 // 内置主题类型
 export type BuiltinTheme = 
   | 'light' 
@@ -163,33 +165,21 @@ export interface AppConfig {
       idleMinutes: number;
     };
   };
-  /** AI 助手配置 */
+  /** AI 助手配置（模型、密钥等统一存放在 AI 配置文件中，不在此处） */
   ai: {
     enabled: boolean;
-    currentProvider: 'zhipu' | 'deepseek' | 'siliconflow' | 'custom';
-    /** 各 Provider 选中的模型 */
-    selectedModels: {
-      zhipu: string;
-      deepseek: string;
-      siliconflow: string;
-      custom: string;
-    };
-    temperature: number;
-    maxTokens: number;
     /** 划词浮层是否显示 AI 按钮 */
     showInTooltip: boolean;
     /** 斜杠菜单是否显示 AI 指令 */
     showInSlash: boolean;
-    /** Custom Provider 的 base URL */
-    customBaseUrl: string;
     /** 用户自定义 Prompt 模板 */
-    customPrompts?: Array<{
-      id: string;
-      label: string;
-      prompt: string;
-    }>;
-    /** AI 历史记录最大条数 */
-    maxHistoryCount: number;
+    customPrompts?: CustomPrompt[];
+    /** AI 对话中可选用的自定义技能 */
+    skills?: AiSkill[];
+    /** 上次在翻译弹窗中选择的目标语言 id；未记录时按原文自动判断 */
+    translateLang?: string;
+    /** AI 历史记录（指令与对话）保存天数，范围 1 ~ 90，默认 30 */
+    historyRetentionDays: number;
   };
 }
 

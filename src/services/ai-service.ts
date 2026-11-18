@@ -1,84 +1,52 @@
 /**
  * AI 服务前端调用层
  *
- * 对 Tauri 命令的薄封装。Key 存储在本地配置文件中。
+ * 对 Tauri 命令的薄封装。模型配置（一条配置 = 一个模型）存放在本地 AI 配置文件中，
+ * 前端只能拿到 hasLocalKey / keyReady，拿不到 Key 原文。
+ *
+ * @changelog
+ * | 版本   | 变更说明                                              | 关联                 |
+ * | v1.1.0 | 支持思考增量与结束原因                                | REQ: AI 功能修复#2/7 |
+ * | v2.0.0 | 服务商 id 字符串化；流式事件合并为单频道 ai:event:{id} | REQ: AI 架构改造#4/5 |
+ * | v3.0.0 | 改为模型配置（profile）增删改；请求只携带配置 id      | REQ: AI 模型配置重做 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 
-import type {
-  AiChatParams,
-  AiProviderId,
-  AiStreamChunk,
-  AiStreamDone,
-  AiStreamError,
-} from '@/types/ai';
+import type { AiChatParams, AiConfigSnapshot, AiModelDraft, AiStreamEvent } from '@/types/ai';
 
 // ---------------------------------------------------------------------------
-// Key 管理
+// 模型配置
 // ---------------------------------------------------------------------------
 
-/** 保存 API Key 到本地配置文件 */
-export async function setApiKey(providerId: AiProviderId, apiKey: string): Promise<void> {
-  await invoke('set_ai_api_key', { providerId, apiKey });
-}
-
-/** 查询所有 Provider 的 Key 配置状态（不返回 Key 本身） */
-export async function getKeyStatus(): Promise<Record<AiProviderId, boolean>> {
-  const raw = await invoke<Record<string, boolean>>('get_ai_key_status');
-  return {
-    zhipu: raw.zhipu ?? false,
-    deepseek: raw.deepseek ?? false,
-    siliconflow: raw.siliconflow ?? false,
-    custom: raw.custom ?? false,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// 配置文件操作
-// ---------------------------------------------------------------------------
-
-/** 配置文件中的模型配置 */
-export interface ConfigFileModel {
-  id: string;
-  label: string;
-  free: boolean;
-  contextLength: number;
-}
-
-/** 配置文件中的 Provider 配置 */
-export interface ConfigFileProvider {
-  provider: string;
-  name: string;
-  apiKey: string;
-  baseUrl: string;
-  apiKeyUrl: string;
-  defaultModel: string;
-  /** 是否为默认服务商（同一时刻只有一个为 true） */
-  isDefault: boolean;
-  models: ConfigFileModel[];
-}
-
-/** 读取完整 AI 配置文件 */
-export async function readAiConfig(): Promise<ConfigFileProvider[]> {
+/** 读取模型配置快照（旧版配置文件会在后端自动迁移） */
+export async function readAiConfig(): Promise<AiConfigSnapshot> {
   const raw = await invoke<string>('read_ai_config');
-  return JSON.parse(raw) as ConfigFileProvider[];
+  return JSON.parse(raw) as AiConfigSnapshot;
+}
+
+/** 新增或编辑模型配置，返回配置 id */
+export async function saveAiModel(draft: AiModelDraft): Promise<string> {
+  return invoke<string>('save_ai_model', { draft });
+}
+
+/** 删除模型配置 */
+export async function deleteAiModel(id: string): Promise<void> {
+  await invoke('delete_ai_model', { id });
+}
+
+/** 设置当前使用的模型 */
+export async function setCurrentAiModel(id: string): Promise<void> {
+  await invoke('set_current_ai_model', { id });
 }
 
 /** 用系统文件管理器打开 AI 配置文件所在目录 */
 export async function openAiConfig(): Promise<void> {
   await invoke('open_ai_config');
-}
-
-/** 设置默认服务商（将指定 Provider 的 isDefault 设为 true，其余设为 false） */
-export async function setDefaultProvider(providerId: string): Promise<void> {
-  await invoke('set_default_provider', { providerId });
-}
-
-/** 设置指定 Provider 的默认模型 */
-export async function setDefaultModel(providerId: string, modelId: string): Promise<void> {
-  await invoke('set_default_model', { providerId, modelId });
 }
 
 // ---------------------------------------------------------------------------
@@ -90,25 +58,29 @@ export interface TestConnectionResult {
   reply: string;
 }
 
-/** 非流式测试调用，用于"测试连接"按钮 */
-export async function testConnection(
-  providerId: AiProviderId,
-  model: string,
-  customBaseUrl?: string,
-): Promise<TestConnectionResult> {
-  return invoke<TestConnectionResult>('ai_test_connection', {
-    args: { providerId, model, customBaseUrl },
-  });
+/** 对指定模型配置发送一条非流式测试消息 */
+export async function testConnection(profileId: string): Promise<TestConnectionResult> {
+  return invoke<TestConnectionResult>('ai_test_connection', { args: { profileId } });
 }
 
 // ---------------------------------------------------------------------------
 // 流式聊天
 // ---------------------------------------------------------------------------
 
+/** 流式结束信息 */
+export interface StreamDoneInfo {
+  promptTokens?: number;
+  completionTokens?: number;
+  /** 为 `length` 时表示输出触达 maxTokens 上限被截断 */
+  finishReason?: string;
+}
+
 export interface StreamCallbacks {
   onDelta: (delta: string) => void;
-  onDone: (usage: { promptTokens?: number; completionTokens?: number }) => void;
+  onDone: (info: StreamDoneInfo) => void;
   onError: (err: { code: string; message: string }) => void;
+  /** 推理模型的思考过程增量（可选；不关心思考内容的调用方可不传） */
+  onReasoning?: (delta: string) => void;
 }
 
 /**
@@ -119,8 +91,8 @@ export interface StreamCallbacks {
  * - `cancel()`：中止请求（会触发 onError("canceled")）
  *
  * 实现要点：
- * 1. 先订阅 event（stream/done/error），再 invoke 命令，避免错过首包
- * 2. done / error 任意到达时自动清理所有监听
+ * 1. 先订阅 `ai:event:{requestId}`，再 invoke 命令，避免错过首包
+ * 2. done / error 任意到达时自动取消订阅
  * 3. 调用 `cancel()` 时通知后端中止
  */
 export async function startAiStream(
@@ -129,49 +101,50 @@ export async function startAiStream(
 ): Promise<{ requestId: string; cancel: () => Promise<void> }> {
   const requestId = crypto.randomUUID();
   let finished = false;
+  let unlisten: (() => void) | null = null;
 
-  const unlisten: UnlistenFn[] = [];
-  const cleanup = () => {
+  const finish = () => {
     finished = true;
-    for (const fn of unlisten.splice(0)) fn();
+    unlisten?.();
+    unlisten = null;
   };
 
-  // 先订阅，再发起
-  const [offDelta, offDone, offError] = await Promise.all([
-    listen<AiStreamChunk>(`ai:stream:${requestId}`, (e) => {
-      if (finished) return;
-      callbacks.onDelta(e.payload.delta);
-    }),
-    listen<AiStreamDone>(`ai:done:${requestId}`, (e) => {
-      if (finished) return;
-      cleanup();
-      callbacks.onDone({
-        promptTokens: e.payload.promptTokens,
-        completionTokens: e.payload.completionTokens,
-      });
-    }),
-    listen<AiStreamError>(`ai:error:${requestId}`, (e) => {
-      if (finished) return;
-      cleanup();
-      callbacks.onError({ code: e.payload.code, message: e.payload.message });
-    }),
-  ]);
-  unlisten.push(offDelta, offDone, offError);
+  unlisten = await listen<AiStreamEvent>(`ai:event:${requestId}`, ({ payload }) => {
+    if (finished) return;
+    switch (payload.kind) {
+      case 'delta':
+        callbacks.onDelta(payload.delta);
+        break;
+      case 'reasoning':
+        callbacks.onReasoning?.(payload.delta);
+        break;
+      case 'done':
+        finish();
+        callbacks.onDone({
+          promptTokens: payload.promptTokens,
+          completionTokens: payload.completionTokens,
+          finishReason: payload.finishReason,
+        });
+        break;
+      case 'error':
+        finish();
+        callbacks.onError({ code: payload.code, message: payload.message });
+        break;
+    }
+  });
 
   try {
     await invoke('ai_chat_stream', {
       request: {
         requestId,
-        providerId: params.providerId,
-        model: params.model,
+        profileId: params.profileId,
         messages: params.messages,
         temperature: params.temperature,
         maxTokens: params.maxTokens,
-        customBaseUrl: params.customBaseUrl,
       },
     });
   } catch (err) {
-    cleanup();
+    finish();
     throw err;
   }
 
@@ -182,7 +155,7 @@ export async function startAiStream(
       try {
         await invoke('cancel_ai_stream', { requestId });
       } catch {
-        // 忽略取消失败
+        // 后端找不到该请求（已结束）时忽略
       }
     },
   };

@@ -19,7 +19,7 @@ export interface ResizeHandleProps {
  * 通用的水平拖拽 resize 手柄组件。
  *
  * 渲染一个窄条区域，hover 时显示竖线指示器，支持跟随鼠标 Y 位置。
- * 用于 Sidebar 右边缘和 AiHistoryPanel 左边缘的宽度调整。
+ * 用于 Sidebar 右边缘和 AiChatPanel 左边缘的宽度调整。
  */
 export function ResizeHandle({
   elRef,

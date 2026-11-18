@@ -13,7 +13,7 @@ export interface UseResizableOptions {
   /**
    * 根据鼠标 clientX 计算原始宽度。
    * - Sidebar（右边缘拖拽）: clientX - iconBarWidth
-   * - AiHistoryPanel（左边缘拖拽）: containerRight - clientX
+   * - AiChatPanel（左边缘拖拽）: containerRight - clientX
    */
   calcWidth: (clientX: number) => number;
   /**
@@ -42,7 +42,7 @@ export interface UseResizableReturn {
  * 水平拖拽调整宽度的通用 Hook。
  *
  * 封装了拖拽状态管理、RAF 节流、吸附折叠、鼠标跟随 handle 等逻辑，
- * 消除 Sidebar 和 AiHistoryPanel 之间的重复代码。
+ * 消除 Sidebar 和 AiChatPanel 之间的重复代码。
  */
 export function useResizable(options: UseResizableOptions): UseResizableReturn {
   const { width, minWidth, maxWidth, calcWidth, onWidthChange, onCollapse, onCommit } = options;

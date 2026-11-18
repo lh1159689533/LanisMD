@@ -17,12 +17,14 @@ import { toggleMark } from '@milkdown/kit/prose/commands';
 import type { MarkType } from '@milkdown/kit/prose/model';
 
 import { open as tauriOpen } from '@tauri-apps/plugin-dialog';
+import { aiIconSvg } from '@/constants/ai-icon';
 import { useFileStore } from '@/stores/file-store';
 import { fileService } from '@/services/tauri';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
-import { AI_COMMANDS } from '@/services/ai/commands';
-import type { AiCommand } from '@/types/ai';
+import { AI_COMMANDS, POLISH_STYLES } from '@/services/ai/commands';
+import { buildCustomCommand, customPromptsFor } from '@/services/ai/custom-commands';
+import type { AiCommand, AiPromptInput } from '@/types/ai';
 import { withShortcut } from '@/utils/shortcut';
 
 import {
@@ -68,9 +70,8 @@ const icons = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   clearFormat:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-3.2-3.2a2 2 0 0 1 0-2.83L14.17 5.1a2 2 0 0 1 2.83 0l4.89 4.89a2 2 0 0 1 0 2.83L15.12 19.6"/><path d="m9.69 12.31 4.24 4.24"/></svg>',
-  // AI 入口图标：渐变文字 "AI"，与 slash-menu 中的 ai 图标保持一致
-  aiPolish:
-    '<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lanismd-ai-grad-tooltip" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#ec4899"/></linearGradient></defs><text x="12" y="13" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="url(#lanismd-ai-grad-tooltip)" letter-spacing="-0.5">AI</text></svg>',
+  // AI 入口图标：全局统一的 AI 图标（见 constants/ai-icon.ts）
+  aiPolish: aiIconSvg(16),
 };
 
 // ---------------------------------------------------------------------------
@@ -431,13 +432,20 @@ interface ToolbarButton {
   extraClass?: string;
   /** 动态显隐：返回 false 时按钮会被隐藏 */
   isVisible?: () => boolean;
-  /** 子菜单项（AI 按钮使用） */
-  submenuItems?: Array<{
-    id: string;
-    icon: string;
-    label: string;
-    action: (view: EditorView) => void;
-  }>;
+  /** 子菜单项（AI 按钮使用）；为函数时在每次展开时计算（自定义指令可能随设置变化） */
+  submenuItems?: () => SubmenuItem[];
+}
+
+/** AI 子菜单项 */
+interface SubmenuItem {
+  id: string;
+  icon: string;
+  label: string;
+  action: (view: EditorView) => void;
+  /** 在该项下方展开的选项（润色风格） */
+  options?: Array<{ id: string; label: string; action: (view: EditorView) => void }>;
+  /** 在该项之前插入分隔线 */
+  separatorBefore?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -539,36 +547,60 @@ class TooltipToolbarView {
     {
       id: 'ai-menu',
       icon: icons.aiPolish,
-      title: 'AI 助手',
+      title: withShortcut('AI 助手', 'aiAssistant'),
       markName: null,
       extraClass: 'milkdown-tooltip-btn-ai',
       isVisible: () => isAiToolbarEnabled(),
       action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
-      submenuItems: [
-        {
-          id: 'ai-polish',
-          icon: AI_COMMANDS.polish.icon,
-          label: '润色',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
-        },
-        {
-          id: 'ai-translate',
-          icon: AI_COMMANDS.translate.icon,
-          label: '翻译',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.translate),
-        },
-        {
-          id: 'ai-explain',
-          icon: AI_COMMANDS.explain.icon,
-          label: '解释',
-          action: (view) => this.handleAiCommand(view, AI_COMMANDS.explain),
-        },
-      ],
+      submenuItems: () => this.buildAiSubmenuItems(),
     },
   ];
 
   /** 当前显示的 AI 子菜单元素 */
   private aiSubmenu: HTMLElement | null = null;
+
+  /** AI 子菜单：润色（含风格选项）/ 翻译 / 解释 + 出现在浮层的自定义指令 */
+  private buildAiSubmenuItems(): SubmenuItem[] {
+    const items: SubmenuItem[] = [
+      {
+        id: 'ai-polish',
+        icon: AI_COMMANDS.polish.icon,
+        label: '润色',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.polish),
+        // 通用润色由主项触发，下方列出其余风格
+        options: POLISH_STYLES.filter((style) => style.id !== 'general').map((style) => ({
+          id: `ai-polish-${style.id}`,
+          label: style.label,
+          action: (view: EditorView) =>
+            this.handleAiCommand(view, AI_COMMANDS.polish, { options: { style: style.id } }),
+        })),
+      },
+      {
+        id: 'ai-translate',
+        icon: AI_COMMANDS.translate.icon,
+        label: '翻译',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.translate),
+      },
+      {
+        id: 'ai-explain',
+        icon: AI_COMMANDS.explain.icon,
+        label: '解释',
+        action: (view) => this.handleAiCommand(view, AI_COMMANDS.explain),
+      },
+    ];
+
+    customPromptsFor('tooltip').forEach((prompt, index) => {
+      const command = buildCustomCommand(prompt);
+      items.push({
+        id: `ai-custom-${prompt.id}`,
+        icon: command.icon,
+        label: prompt.label,
+        separatorBefore: index === 0,
+        action: (view) => this.handleAiCommand(view, command),
+      });
+    });
+    return items;
+  }
 
   constructor() {
     this.container = document.createElement('div');
@@ -606,7 +638,7 @@ class TooltipToolbarView {
       btn.type = 'button';
 
       // 有子菜单的按钮：添加下拉箭头，hover 展开
-      if (def.submenuItems && def.submenuItems.length > 0) {
+      if (def.submenuItems) {
         // 添加小三角指示有子菜单
         const arrow = document.createElement('span');
         arrow.className = 'milkdown-tooltip-btn-arrow';
@@ -675,7 +707,13 @@ class TooltipToolbarView {
     const submenu = document.createElement('div');
     submenu.className = 'milkdown-tooltip-ai-submenu';
 
-    def.submenuItems.forEach((item) => {
+    def.submenuItems().forEach((item) => {
+      if (item.separatorBefore) {
+        const sep = document.createElement('div');
+        sep.className = 'milkdown-tooltip-ai-submenu-separator';
+        submenu.appendChild(sep);
+      }
+
       const menuItem = document.createElement('button');
       menuItem.className = 'milkdown-tooltip-ai-submenu-item';
       menuItem.type = 'button';
@@ -690,6 +728,28 @@ class TooltipToolbarView {
       });
 
       submenu.appendChild(menuItem);
+
+      // 选项（润色风格）：以紧凑的标签形式排在该项下方
+      if (item.options && item.options.length > 0) {
+        const optionsRow = document.createElement('div');
+        optionsRow.className = 'milkdown-tooltip-ai-submenu-options';
+        item.options.forEach((option) => {
+          const optionBtn = document.createElement('button');
+          optionBtn.type = 'button';
+          optionBtn.className = 'milkdown-tooltip-ai-submenu-option';
+          optionBtn.textContent = option.label;
+          optionBtn.title = `${item.label}：${option.label}`;
+          optionBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!this.view) return;
+            option.action(this.view);
+            this.hideAiSubmenu();
+          });
+          optionsRow.appendChild(optionBtn);
+        });
+        submenu.appendChild(optionsRow);
+      }
     });
 
     submenu.addEventListener('mouseleave', () => {
@@ -776,11 +836,11 @@ class TooltipToolbarView {
    * 先隐藏 tooltip，让 AI 交互组件在原选区处显示；
    * 然后把当前选区交给 ai-edit 插件处理。
    */
-  private handleAiCommand(view: EditorView, command: AiCommand) {
+  private handleAiCommand(view: EditorView, command: AiCommand, extra?: Partial<AiPromptInput>) {
     this.provider?.hide();
     // 让 tooltip 隐藏后再异步启动，避免 DOM 遮挡
     requestAnimationFrame(() => {
-      void runAiCommand(view, command);
+      void runAiCommand(view, command, extra);
     });
   }
 

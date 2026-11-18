@@ -13,6 +13,7 @@ import { tags } from '@lezer/highlight';
 import { useFileStore } from '@/stores/file-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { sourceContextMenu } from '../plugins/context-menu/source-menu';
 import { typewriterScrollForSource } from '../plugins/typewriter-mode';
 
 // 统一的 CodeMirror 主题（消费 CSS 变量）
@@ -172,6 +173,9 @@ export function SourceEditor() {
 
       // 统一主题（使用 CSS 变量，自动跟随主题切换）
       editorTheme,
+
+      // 右键菜单：编辑操作 + 添加到 AI 对话
+      sourceContextMenu(),
 
       // 监听变更
       EditorView.updateListener.of((update) => {

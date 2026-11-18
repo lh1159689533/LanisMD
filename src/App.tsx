@@ -14,6 +14,7 @@ import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
 import { useAiStore } from './stores/ai-store';
 import { useGitAutomation } from './hooks/useGitAutomation';
+import { useMcpBridge } from './hooks/useMcpBridge';
 import { useSettingsStore } from './stores/settings-store';
 import { useSessionStore } from './stores/session-store';
 import { useFileStore } from './stores/file-store';
@@ -93,7 +94,7 @@ function TauriApp() {
     onToggleTypewriterMode: toggleTypewriterMode,
   });
 
-  // 启动时读取一次 AI 配置文件（同步默认服务商/模型到 settings）
+  // 启动时读取一次 AI 配置文件（旧版配置在此时自动迁移）
   const refreshConfig = useAiStore((s) => s.refreshConfig);
   useEffect(() => {
     void refreshConfig();
@@ -101,6 +102,9 @@ function TauriApp() {
 
   // Git：挂载仓库、自动同步、空闲自动提交
   useGitAutomation();
+
+  // MCP 联动：向 `lanismd mcp` 同步当前文件夹与编辑状态，响应外部 AI 的文档变更
+  useMcpBridge();
 
   // 启动时恢复上次会话（仅当 settings.restoreSession 为 true）
   // 使用 ref 守卫，确保 StrictMode/HMR 下也只执行一次

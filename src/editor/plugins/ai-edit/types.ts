@@ -4,7 +4,8 @@
 
 import type { EditorView } from '@milkdown/kit/prose/view';
 
-import type { AiCommand } from '@/types/ai';
+import type { AiRuntime } from '@/services/ai/runtime';
+import type { AiCommand, AiPromptInput } from '@/types/ai';
 
 /** 单次 AI 生成任务的运行上下文 */
 export interface AiRunContext {
@@ -16,8 +17,16 @@ export interface AiRunContext {
   from: number;
   /** 替换或插入的目标终点（ProseMirror 文档位置） */
   to: number;
-  /** 选中的原始文本（用于 buildPrompt） */
+  /** 选中内容（Markdown 形式，用于 buildPrompt） */
   selection: string;
-  /** 光标所在段落之前的上下文（留作续写等指令使用） */
+  /** 写作背景：标题/标签 + 标题路径 + 当前章节（已按预算裁剪） */
   context: string;
+}
+
+/** 各交互模式的统一入参 */
+export interface AiModeInput {
+  ctx: AiRunContext;
+  runtime: AiRuntime;
+  /** 构造 prompt 的输入（已合并选区、上下文与调用方额外参数） */
+  prompt: AiPromptInput;
 }

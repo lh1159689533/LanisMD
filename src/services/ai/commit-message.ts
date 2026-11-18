@@ -4,16 +4,19 @@
  * @changelog
  * | 版本   | 变更说明                  | 关联                            |
  * | v1.0.0 | 初始实现：AI 生成 commit message | REQ: Git 改造 TECH: 提交弹窗 AI |
+ * | v1.1.0 | 改用 resolveAiRuntime + generateOnce | REQ: AI 架构改造#1/2         |
+ * | v1.2.0 | 输出上限提高到 2048，兼容推理模型    | REQ: AI 设置页简化           |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import { startAiStream } from '@/services/ai-service';
 import { gitService } from '@/services/tauri/git-service';
-import { useAiStore } from '@/stores/ai-store';
-import { useSettingsStore } from '@/stores/settings-store';
 import type { FileEntryRequest } from '@/types/git';
+
+import { MIN_OUTPUT_TOKENS } from './generation';
+import { resolveAiRuntime } from './runtime';
+import { generateOnce } from './session';
 
 const SYSTEM_PROMPT = [
   '你是一名资深工程师，负责根据 git diff 撰写提交说明。',
@@ -26,12 +29,7 @@ const SYSTEM_PROMPT = [
 
 /** 当前是否可用 AI（已开启且当前服务商已配置 Key 与模型） */
 export async function isAiCommitAvailable(): Promise<boolean> {
-  const { config } = useSettingsStore.getState();
-  if (!config.ai?.enabled) return false;
-  await useAiStore.getState().refreshKeyStatus();
-  const providerId = config.ai.currentProvider;
-  const model = config.ai.selectedModels?.[providerId];
-  return Boolean(useAiStore.getState().keyStatus[providerId] && model);
+  return (await resolveAiRuntime()).ok;
 }
 
 /** 去掉模型可能附带的代码块包裹与首尾空白 */
@@ -51,34 +49,21 @@ export async function generateCommitMessage(
   files: FileEntryRequest[],
   onDelta?: (text: string) => void,
 ): Promise<string> {
-  const { config } = useSettingsStore.getState();
-  const providerId = config.ai.currentProvider;
-  const model = config.ai.selectedModels?.[providerId] ?? '';
+  const resolved = await resolveAiRuntime();
+  if (!resolved.ok) throw new Error('AI 助手不可用，请检查设置中的模型与密钥');
+
   const diff = await gitService.diffText(repoPath, files);
   const fileList = files.map((f) => `${f.status}\t${f.path}`).join('\n');
 
-  return new Promise<string>((resolve, reject) => {
-    let text = '';
-    startAiStream(
-      {
-        providerId,
-        model,
-        temperature: 0.3,
-        maxTokens: 300,
-        customBaseUrl: providerId === 'custom' ? config.ai.customBaseUrl : undefined,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `变更文件：\n${fileList}\n\nDiff：\n${diff}` },
-        ],
-      },
-      {
-        onDelta: (delta) => {
-          text += delta;
-          onDelta?.(cleanMessage(text));
-        },
-        onDone: () => resolve(cleanMessage(text)),
-        onError: (err) => reject(new Error(err.message)),
-      },
-    ).catch(reject);
-  });
+  const text = await generateOnce(
+    resolved.runtime,
+    [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: `变更文件：\n${fileList}\n\nDiff：\n${diff}` },
+    ],
+    // 提交说明很短，但推理模型的思考过程也消耗输出 token，上限不能过低
+    { temperature: 0.3, maxTokens: MIN_OUTPUT_TOKENS },
+    (full) => onDelta?.(cleanMessage(full)),
+  );
+  return cleanMessage(text);
 }
