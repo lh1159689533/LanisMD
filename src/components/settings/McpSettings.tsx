@@ -66,7 +66,7 @@ export function McpSettings() {
       <div className="settings-item-hint">
         <p>
           LanisMD 可作为 MCP 服务，让 Claude Desktop、Cursor 等 AI 客户端搜索、阅读和修改你的
-          Markdown 文档。复制下方配置粘贴到客户端，重启客户端后生效。
+          Markdown 文档。
         </p>
       </div>
 

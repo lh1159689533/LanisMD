@@ -52,8 +52,8 @@
           "markdown",
           "mdx"
         ],
-        "name": "Markdown 文档",
-        "description": "LanisMD Markdown 文档",
+        "name": "Markdown Document",
+        "description": "LanisMD Markdown Document",
         "mimeType": "text/markdown",
         "role": "Editor",
         "rank": "Default"

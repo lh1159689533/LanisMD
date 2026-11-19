@@ -514,16 +514,16 @@
    * AI 模块
    * =============================================== */
 
-  /* AI 强调色（默认 indigo 系列） */
-  --lanismd-ai-accent: #6366f1;
-  --lanismd-ai-accent-hover: #4f46e5;
-  --lanismd-ai-accent-light: #a5b4fc;
-  --lanismd-ai-accent-bg: rgba(99, 102, 241, 0.08);
-  --lanismd-ai-accent-bg-hover: rgba(99, 102, 241, 0.12);
+  /* AI 强调色（与 AI 图标同色系：主色 #00B96B，浅底 #C7F0DF） */
+  --lanismd-ai-accent: #00b96b;
+  --lanismd-ai-accent-hover: #00a05d;
+  --lanismd-ai-accent-light: #7fdcb5;
+  --lanismd-ai-accent-bg: rgba(0, 185, 107, 0.1);
+  --lanismd-ai-accent-bg-hover: rgba(0, 185, 107, 0.22);
 
   /* AI 行内生成 */
-  --lanismd-ai-inline-bg: rgba(99, 102, 241, 0.08);
-  --lanismd-ai-inline-color: #4f46e5;
+  --lanismd-ai-inline-bg: rgba(0, 185, 107, 0.1);
+  --lanismd-ai-inline-color: #00995a;
 
   /* AI diff 颜色 */
   --lanismd-ai-diff-deleted-color: #ef4444;
@@ -546,15 +546,11 @@
   --lanismd-ai-error-color: #ef4444;
 
   /* AI 引导图标渐变 */
-  --lanismd-ai-guide-icon-bg: linear-gradient(
-    135deg,
-    rgba(99, 102, 241, 0.12),
-    rgba(168, 85, 247, 0.12)
-  );
+  --lanismd-ai-guide-icon-bg: linear-gradient(135deg, rgba(0, 185, 107, 0.1), #c7f0df);
 
   /* AI focus-visible 阴影 */
-  --lanismd-ai-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
-  --lanismd-ai-input-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  --lanismd-ai-focus-shadow: 0 0 0 2px rgba(0, 185, 107, 0.3);
+  --lanismd-ai-input-focus-shadow: 0 0 0 2px rgba(0, 185, 107, 0.15);
 
   /* AI 暗色 hover 背景 */
   --lanismd-ai-dark-hover-bg: rgba(255, 255, 255, 0.06);
