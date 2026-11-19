@@ -15,7 +15,7 @@ import {
   RiAlertLine,
   RiCheckLine,
   RiFolderOpenLine,
-  RiGitRepositoryLine,
+  RiGitBranchLine,
   RiLoader4Line,
 } from 'react-icons/ri';
 import { homeDir, join } from '@tauri-apps/api/path';
@@ -243,7 +243,7 @@ function CloneDialogContent() {
       title="打开远程仓库"
       icon={
         <span className="git-dialog-header-icon clone">
-          <RiGitRepositoryLine size={16} />
+          <RiGitBranchLine size={16} />
         </span>
       }
       showCloseButton={!cloning}

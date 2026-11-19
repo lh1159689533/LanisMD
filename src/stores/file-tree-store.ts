@@ -19,6 +19,8 @@ interface FileTreeState {
   /** 最后一次用户发起的文件操作（创建/重命名/删除/复制）的时间戳
    *  用于文件监视器跳过冗余的树刷新 */
   lastUserOpTimestamp: number;
+  /** 文件树视图模式：tree 树视图 / list 列表视图（置于全局 store 以便切换侧边栏后保持） */
+  viewMode: 'tree' | 'list';
 
   /** 打开文件夹并加载树 */
   openFolder: (path: string) => Promise<void>;
@@ -36,6 +38,8 @@ interface FileTreeState {
   revealFile: (filePath: string) => void;
   /** 标记用户刚执行了文件操作，以便监视器可以跳过树刷新 */
   notifyUserOp: () => void;
+  /** 设置文件树视图模式 */
+  setViewMode: (mode: 'tree' | 'list') => void;
 }
 
 export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
@@ -46,6 +50,7 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
   selectedDir: null,
   isLoading: false,
   lastUserOpTimestamp: 0,
+  viewMode: 'tree',
 
   openFolder: async (path: string) => {
     set({ isLoading: true });
@@ -144,5 +149,9 @@ export const useFileTreeStore = create<FileTreeState>()((set, get) => ({
 
   notifyUserOp: () => {
     set({ lastUserOpTimestamp: Date.now() });
+  },
+
+  setViewMode: (mode) => {
+    set({ viewMode: mode });
   },
 }));

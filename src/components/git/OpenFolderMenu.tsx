@@ -1,5 +1,5 @@
 /**
- * 「打开文件夹」下拉菜单：打开本地文件夹 / 打开远程仓库（Git）
+ * 「打开文件夹」下拉菜单：打开本地文件夹 / 打开远程仓库
  *
  * @changelog
  * | 版本   | 变更说明                 | 关联                               |
@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { RiFolderOpenLine, RiGitRepositoryLine } from 'react-icons/ri';
+import { RiFolderOpenLine, RiGitBranchLine } from 'react-icons/ri';
 import { useOpenFolder } from '@/hooks/useOpenFolder';
 import { cn } from '@/utils/cn';
 
@@ -81,8 +81,8 @@ export function OpenFolderMenu({
             className="lanismd-open-folder-item"
             onClick={() => run(openRemoteFolder)}
           >
-            <RiGitRepositoryLine size={14} />
-            <span>打开远程仓库（Git）</span>
+            <RiGitBranchLine size={14} />
+            <span>打开远程仓库</span>
           </button>
         </div>
       )}

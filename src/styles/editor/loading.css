@@ -167,3 +167,87 @@
   flex-shrink: 0;
   margin-left: 0;
 }
+
+/* ===== 大文档切换骨架屏 ===== */
+/* 切换大文件时隐藏旧文件内容并显示骨架屏，避免点击后长时间停留在旧内容上（见 use-editor.ts） */
+.milkdown-editor-root[data-switching] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 骨架屏与编辑器根节点为兄弟节点，仅在根节点处于切换态时显示 */
+.lanismd-editor-skeleton {
+  display: none;
+  position: absolute;
+  /* 与 .editor-wrapper 的 py-6 / px-8 内边距对齐 */
+  top: 1.5rem;
+  left: 2rem;
+  right: 2rem;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  /* 骨架条使用文字色 + 低透明度，自动适配所有明暗主题 */
+  color: var(--lanismd-editor-text);
+}
+
+.milkdown-editor-root[data-switching] + .lanismd-editor-skeleton {
+  display: flex;
+}
+
+.lanismd-editor-skeleton__bar {
+  flex-shrink: 0;
+  height: 14px;
+  margin-top: 14px;
+  border-radius: var(--lanismd-radius-sm);
+  background: currentColor;
+  opacity: 0.07;
+}
+
+.lanismd-editor-skeleton__bar--title {
+  height: 30px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  border-radius: var(--lanismd-radius-md);
+  opacity: 0.1;
+}
+
+.lanismd-editor-skeleton__bar--heading {
+  height: 20px;
+  margin-top: 36px;
+  margin-bottom: 4px;
+  opacity: 0.09;
+}
+
+.lanismd-editor-skeleton__bar--list {
+  margin-left: 28px;
+}
+
+/* 流光：与编辑器背景同色的高光带扫过，空白处不可见，仅在骨架条上体现 */
+.lanismd-editor-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    var(--lanismd-editor-bg) 50%,
+    transparent 70%
+  );
+  opacity: 0.7;
+  transform: translateX(-100%);
+  animation: lanismd-editor-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes lanismd-editor-skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lanismd-editor-skeleton::after {
+    animation: none;
+    display: none;
+  }
+}

@@ -43,12 +43,17 @@ const BOTTOM_PAD = 0;
 /** 堆积地面距窗口底部的间距 */
 const GROUND_INSET = 12;
 
+/** 堆积时相邻两层粒子的垂直间距比例（相对 GRAIN_SIZE），越大粒子越不重叠 */
+const PILE_VERTICAL_GAP = 0.85;
+/** 落地时在邻域内搜索最低列的半径（px），粒子滚到空位摊平，避免堆成尖堆 */
+const PILE_SPREAD_RADIUS = 12;
+
 /** 物理参数 */
 const GRAVITY = 0.32;
 /** 水平阻尼：散落后横向速度衰减（值越小横向越克制） */
 const FRICTION = 0.9;
 /** 鼠标吹散影响半径（固定，不随速度放大，避免鼠标前方提前散落） */
-const INFLUENCE_RADIUS = 14;
+const INFLUENCE_RADIUS = 22;
 /** 鼠标移动矢量到沙粒初速度的放大系数 */
 const BLOW_STRENGTH = 1.1;
 
@@ -316,6 +321,9 @@ export function GravityLetters({
     let logicalH = 0;
     let groundY = 0;
     let offset = { x: 0, y: 0 };
+    // 标题静止态粒子的裁剪区域（相对画布逻辑坐标）：限制在编辑区（欢迎页容器）内，
+    // 避免标题字形越界遮挡侧边栏或 AI 对话栏
+    let idleClipRect = { x: 0, y: 0, w: 0, h: 0 };
     // 布局脏位：resize 时只标记，在 rAF 循环开头统一同步，避免清空画布与重绘跨帧造成闪烁
     let needsLayoutSync = false;
     // 自动掉落动画：空闲计时起点与下一次掉落间隔
@@ -337,6 +345,17 @@ export function GravityLetters({
       logicalW = canvasRect.width;
       logicalH = canvasRect.height;
       groundY = logicalH - GROUND_INSET;
+
+      // 缓存编辑区（欢迎页容器）相对画布逻辑坐标的裁剪矩形，用于限制静止态标题粒子
+      const clipSource = container?.getBoundingClientRect();
+      idleClipRect = clipSource
+        ? {
+            x: clipSource.left - canvasRect.left,
+            y: clipSource.top - canvasRect.top,
+            w: clipSource.width,
+            h: clipSource.height,
+          }
+        : { x: 0, y: 0, w: logicalW, h: logicalH };
 
       dpr = Math.max(1, window.devicePixelRatio || 1);
       canvas.width = Math.round(logicalW * dpr);
@@ -389,7 +408,8 @@ export function GravityLetters({
 
         g.state = 'scattered';
         g.returnAt = 0;
-        g.vx = dx * BLOW_STRENGTH + rand(-0.6, 0.6);
+        // 横向随机扰动放大，让粒子朝不同方向散开，避免落地时聚成一团
+        g.vx = dx * BLOW_STRENGTH + rand(-4, 4);
         g.vy = dy * BLOW_STRENGTH - rand(0, 2);
       }
     };
@@ -425,7 +445,25 @@ export function GravityLetters({
       }
     };
 
+    /**
+     * 判断当前是否有弹窗/遮罩层打开。
+     * 弹窗打开时禁用重力字母的鼠标吹散交互，避免在弹窗上移动鼠标触发散落动画。
+     */
+    const hasOpenOverlay = (): boolean => {
+      return Boolean(
+        document.querySelector(
+          '.lanismd-dialog-overlay, .settings-dialog-overlay, .lanismd-quick-open-overlay, .lanismd-ai-guide-overlay',
+        ),
+      );
+    };
+
     const onMouseMove = (e: MouseEvent): void => {
+      // 弹窗/遮罩打开时忽略鼠标交互，且重置上一次坐标，避免弹窗关闭后出现跳变
+      if (hasOpenOverlay()) {
+        prevMouseX = null;
+        prevMouseY = null;
+        return;
+      }
       const { x, y } = toLocal(e);
       if (prevMouseX === null || prevMouseY === null) {
         prevMouseX = x;
@@ -472,14 +510,25 @@ export function GravityLetters({
             g.x += g.vx;
             g.y += g.vy;
             if (g.y >= groundY) {
-              g.y = groundY;
-              g.state = 'settled';
-              const col = Math.min(pileHeights.length - 1, Math.max(0, Math.floor(g.x)));
+              // 落地时在邻域内搜索最低的列，让粒子滚到空位摊平成沙层，
+              // 避免大量粒子在同一列垂直叠成一柱、糊成一团
+              const rawCol = Math.min(pileHeights.length - 1, Math.max(0, Math.floor(g.x)));
+              let col = rawCol;
+              let bestH = pileHeights[col];
+              for (let dc = -PILE_SPREAD_RADIUS; dc <= PILE_SPREAD_RADIUS; dc++) {
+                const c = rawCol + dc;
+                if (c < 0 || c >= pileHeights.length) continue;
+                if (pileHeights[c] < bestH) {
+                  bestH = pileHeights[c];
+                  col = c;
+                }
+              }
+              g.x = col + 0.5;
               pileHeights[col] += 1;
               g.pileCol = col;
-              // 沙粒落在已堆积的沙丘顶部
-              g.y = groundY - pileHeights[col] * GRAIN_SIZE * 0.55;
-              // 落地后等待一段时间再返回（含随机错峰）
+              // 垂直间距按字符大小比例放大，减少上下重叠导致的发糊
+              g.y = groundY - pileHeights[col] * GRAIN_SIZE * PILE_VERTICAL_GAP;
+              g.state = 'settled';
               g.returnAt = now + SETTLE_DELAY + rand(0, RETURN_STAGGER_MAX);
             }
             break;
@@ -515,9 +564,23 @@ export function GravityLetters({
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.fillStyle = color;
+
+      // 先绘制散落/堆积/返回中的粒子：覆盖整个应用窗口（不裁剪）
       for (const g of grains) {
+        if (g.state === 'idle') continue;
         ctx.fillText(g.char, g.x, g.y);
       }
+
+      // 再绘制静止态标题粒子：裁剪到编辑区，避免标题字形遮挡侧栏或对话栏
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(idleClipRect.x, idleClipRect.y, idleClipRect.w, idleClipRect.h);
+      ctx.clip();
+      for (const g of grains) {
+        if (g.state !== 'idle') continue;
+        ctx.fillText(g.char, g.x, g.y);
+      }
+      ctx.restore();
 
       rafId = requestAnimationFrame(frame);
     };

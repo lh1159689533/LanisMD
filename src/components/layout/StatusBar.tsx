@@ -15,6 +15,7 @@ import { TbLeaf, TbSnowflake, TbFlower, TbBookOff, TbBook } from 'react-icons/tb
 import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useFileStore } from '@/stores/file-store';
+import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useAiChatStore } from '@/stores/ai-chat-store';
 import { themeLoader, type ThemeMetadata } from '@/services';
@@ -246,6 +247,9 @@ export function StatusBar() {
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const aiOn = config.ai?.enabled !== false;
+  // 未打开文件夹时不提供对话入口；面板若已经打开（如编辑器内发起）仍保留入口以便关闭
+  const hasFolder = useFileTreeStore((s) => s.rootPath !== null);
+  const showAiChatEntry = aiOn && (hasFolder || aiChatOpen);
 
   // 加载用户自定义主题列表
   useEffect(() => {
@@ -412,7 +416,7 @@ export function StatusBar() {
             </span>
           </>
         )}
-        {aiOn && (
+        {showAiChatEntry && (
           <div className="relative">
             <button
               onClick={toggleAiChat}
