@@ -1,6 +1,15 @@
-import { Editor, rootCtx, defaultValueCtx, editorViewCtx, parserCtx } from '@milkdown/kit/core';
+import {
+  Editor,
+  rootCtx,
+  defaultValueCtx,
+  editorViewCtx,
+  parserCtx,
+  serializerCtx,
+} from '@milkdown/kit/core';
+import type { Ctx } from '@milkdown/kit/ctx';
 import { EditorState } from '@milkdown/kit/prose/state';
-import { commonmark } from '@milkdown/kit/preset/commonmark';
+import { Fragment, type Node as ProseNode } from '@milkdown/kit/prose/model';
+import { commonmark, headingIdGenerator, headingSchema } from '@milkdown/kit/preset/commonmark';
 import {
   remarkGFMPlugin,
   schema as gfmSchema,
@@ -14,17 +23,15 @@ import {
 import { markRule } from '@milkdown/kit/prose';
 import { $inputRule } from '@milkdown/kit/utils';
 import { history } from '@milkdown/kit/plugin/history';
-import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
+import { listener, listenerCtx, key as listenerPluginKey } from '@milkdown/kit/plugin/listener';
 import { clipboard } from '@milkdown/kit/plugin/clipboard';
 import { cursor } from '@milkdown/kit/plugin/cursor';
 import { indent } from '@milkdown/kit/plugin/indent';
 import { trailing } from '@milkdown/kit/plugin/trailing';
 import { upload } from '@milkdown/plugin-upload';
-import {
-  listItemBlockComponent,
-  listItemBlockConfig,
-} from '@milkdown/kit/component/list-item-block';
+import { listItemBlockConfig } from '@milkdown/kit/component/list-item-block';
 import { imageInlineComponent } from '@milkdown/kit/component/image-inline';
+import { listItemBlockComponent } from './plugins/list-item-block';
 import { slash, configureSlash } from './plugins/slash-menu';
 import { block, configureBlock } from './plugins/block-handle';
 import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
@@ -152,7 +159,8 @@ const gfm = [
 
 export type EditorListener = {
   onMarkdownUpdated?: (markdown: string, prevMarkdown: string) => void;
-  onDocUpdated?: () => void;
+  /** 在同一次防抖回调中先于 onMarkdownUpdated 触发，doc 即本次将被序列化的文档 */
+  onDocUpdated?: (doc: ProseNode) => void;
   onFocus?: () => void;
   onBlur?: () => void;
 };
@@ -321,8 +329,9 @@ export function setupEditorListeners(
       .markdownUpdated((_ctx: any, markdown: string, prevMarkdown: string) => {
         listeners?.onMarkdownUpdated?.(markdown, prevMarkdown);
       })
-      .updated(() => {
-        listeners?.onDocUpdated?.();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .updated((_ctx: any, doc: ProseNode) => {
+        listeners?.onDocUpdated?.(doc);
       })
       .focus(() => {
         listeners?.onFocus?.();
@@ -334,33 +343,164 @@ export function setupEditorListeners(
 }
 
 /**
+ * 预先为文档中的标题写入 id 属性，返回新文档（无变化时返回原文档）
+ *
+ * 为什么需要：commonmark 预设的 syncHeadingIdPlugin 会在每次文档变化后遍历全文，
+ * 对 id 不一致的标题逐个 setNodeMarkup 再 dispatch。新解析出的文档所有标题 id 都为空，
+ * 大文档切换时这次额外 dispatch 会再做一轮完整 DOM diff + 强制布局（实测 400ms+）。
+ * 在建 State 之前一次性重建节点树写入 id，插件随后校验时发现一致便不会再 dispatch。
+ *
+ * 逻辑与 syncHeadingIdPlugin 保持一致：文档先序遍历、空标题跳过、重复 id 追加 `-#n`。
+ */
+function assignHeadingIds(ctx: Ctx, doc: ProseNode): ProseNode {
+  const getId = ctx.get(headingIdGenerator.key);
+  const headingType = headingSchema.type(ctx);
+  const idMap: Record<string, number> = {};
+
+  const visit = (node: ProseNode): ProseNode => {
+    if (node.type === headingType) {
+      if (node.textContent.trim().length === 0) return node;
+      let id = getId(node);
+      if (idMap[id]) {
+        idMap[id] += 1;
+        id += `-#${idMap[id]}`;
+      } else {
+        idMap[id] = 1;
+      }
+      if (node.attrs.id === id) return node;
+      return node.type.create({ ...node.attrs, id }, node.content, node.marks);
+    }
+    // 文本块内部不可能再嵌套标题，无需深入
+    if (node.isTextblock || node.isLeaf) return node;
+
+    let changed = false;
+    const children: ProseNode[] = [];
+    node.forEach((child) => {
+      const next = visit(child);
+      if (next !== child) changed = true;
+      children.push(next);
+    });
+    return changed ? node.copy(Fragment.fromArray(children)) : node;
+  };
+
+  return visit(doc);
+}
+
+/** 解析结果缓存容量：用户常在少数几个文件间来回切换 */
+const PARSED_DOC_CACHE_SIZE = 4;
+/** 小于该长度的文档解析很快，不值得占用缓存 */
+const PARSED_DOC_CACHE_MIN_LENGTH = 10_000;
+
+/**
+ * 按编辑器实例缓存 markdown -> ProseMirror doc 的解析结果（LRU）
+ *
+ * ProseMirror 节点不可变且与 schema 绑定，同一编辑器实例内可安全复用；
+ * 以完整内容字符串为键，内容一旦变化自然不会命中。编辑器销毁后随 WeakMap 回收。
+ */
+const parsedDocCache = new WeakMap<Editor, Map<string, ProseNode>>();
+
+function parseWithCache(editor: Editor, ctx: Ctx, markdown: string): ProseNode {
+  const parse = () => assignHeadingIds(ctx, ctx.get(parserCtx)(markdown));
+  if (markdown.length < PARSED_DOC_CACHE_MIN_LENGTH) return parse();
+
+  let cache = parsedDocCache.get(editor);
+  if (!cache) {
+    cache = new Map();
+    parsedDocCache.set(editor, cache);
+  }
+  const cached = cache.get(markdown);
+  if (cached) {
+    // 重新插入以刷新 LRU 顺序
+    cache.delete(markdown);
+    cache.set(markdown, cached);
+    return cached;
+  }
+  const doc = parse();
+  cache.set(markdown, doc);
+  if (cache.size > PARSED_DOC_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) cache.delete(oldestKey);
+  }
+  return doc;
+}
+
+/** switchDocument 的返回信息，供调用方处理 listener 相关的边界情况 */
+export interface SwitchDocumentResult {
+  /** 切换前（旧文件）的文档对象，用于识别旧文件遗留的防抖回调 */
+  previousDoc: ProseNode;
+  /** 新文件解析出的文档对象 */
+  nextDoc: ProseNode;
+  /**
+   * 是否跳过了 listener 插件的状态初始化。
+   * 为 true 时 listener 内部的 prevMarkdown 仍是旧文件的内容，
+   * 调用方需要自行以 nextDoc 的序列化结果作为“未修改”基线。
+   */
+  listenerInitSkipped: boolean;
+}
+
+/**
  * 切换文档内容（不销毁/重建编辑器实例）
  *
  * 原理：创建全新的 EditorState（含新文档 + 空 undo 历史），
  * 通过 view.updateState() 替换，ProseMirror 会 diff 新旧 DOM 做最小更新。
  *
+ * 性能处理：
+ * - 大文档解析结果按内容做 LRU 缓存，来回切换时免去 remark 解析
+ * - 预先写入标题 id，避免 syncHeadingIdPlugin 触发第二轮全量更新
+ * - 跳过 listener 插件 state.init 中对整篇文档的同步序列化（大文档 100~200ms），
+ *   基线序列化推迟到第一次 markdownUpdated 回调时再按需计算
+ *
  * @param editor Milkdown Editor 实例
  * @param newMarkdown 新文件的 markdown 内容
  */
-export function switchDocument(editor: Editor, newMarkdown: string): void {
+export function switchDocument(editor: Editor, newMarkdown: string): SwitchDocumentResult {
+  let result: SwitchDocumentResult | null = null;
+
   editor.action((ctx) => {
     const view = ctx.get(editorViewCtx);
-    const parser = ctx.get(parserCtx);
+    const previousDoc = view.state.doc;
 
-    // 1. 将 markdown 解析为 ProseMirror doc
-    const doc = parser(newMarkdown);
+    // 1. 将 markdown 解析为 ProseMirror doc（已预先写入标题 id，命中缓存时跳过解析）
+    const doc = parseWithCache(editor, ctx, newMarkdown);
 
     // 2. 创建全新的 EditorState（复用当前插件集，重置 history）
-    const newState = EditorState.create({
-      doc,
-      plugins: view.state.plugins,
-    });
+    //    创建期间临时替换 listener 插件的 state.init（其原实现只做全文序列化并缓存到闭包中）
+    const listenerStateSpec = view.state.plugins.find(
+      (plugin) => plugin.spec.key === listenerPluginKey,
+    )?.spec.state;
+    const originalInit = listenerStateSpec?.init;
+    const listenerInitSkipped = !!listenerStateSpec && !!originalInit;
+    if (listenerStateSpec && originalInit) {
+      listenerStateSpec.init = () => undefined;
+    }
+    let newState: EditorState;
+    try {
+      newState = EditorState.create({ doc, plugins: view.state.plugins });
+    } finally {
+      if (listenerStateSpec && originalInit) {
+        listenerStateSpec.init = originalInit;
+      }
+    }
 
     // 3. 替换 EditorView 的 State
     view.updateState(newState);
 
-    // 4. 触发一次空事务，让 listener 插件感知新文档
-    //    （updateState 不走 dispatchTransaction，listener 不会自动回调）
+    // 4. 触发一次空事务，让依赖 dispatch 的插件（如大纲、占位符）刷新一次
+    //    （updateState 不走 dispatchTransaction）
     view.dispatch(view.state.tr);
+
+    result = { previousDoc, nextDoc: doc, listenerInitSkipped };
   });
+
+  if (!result) throw new Error('switchDocument: editor is not ready');
+  return result;
+}
+
+/** 使用编辑器的序列化器把指定文档转为 markdown */
+export function serializeDoc(editor: Editor, doc: ProseNode): string {
+  let markdown = '';
+  editor.action((ctx) => {
+    markdown = ctx.get(serializerCtx)(doc);
+  });
+  return markdown;
 }

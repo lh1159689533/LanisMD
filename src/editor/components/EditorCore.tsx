@@ -11,6 +11,50 @@ import { SourceEditor } from './SourceEditor';
 import { searchHighlightPluginKey } from '../plugins/search-highlight';
 import '@/styles/editor/index.css';
 
+/** 骨架条类型：标题 / 小标题 / 正文行 / 列表行 */
+type SkeletonBarKind = 'title' | 'heading' | 'line' | 'list';
+
+/**
+ * 大文档切换时的骨架屏布局（模拟“标题 + 段落 + 小标题 + 列表”的常见文档结构）
+ * 静态常量，避免每次渲染重新创建
+ */
+const SKELETON_BARS: ReadonlyArray<{ kind: SkeletonBarKind; width: string }> = [
+  { kind: 'title', width: '42%' },
+  { kind: 'line', width: '100%' },
+  { kind: 'line', width: '96%' },
+  { kind: 'line', width: '88%' },
+  { kind: 'line', width: '64%' },
+  { kind: 'heading', width: '28%' },
+  { kind: 'line', width: '100%' },
+  { kind: 'line', width: '92%' },
+  { kind: 'list', width: '46%' },
+  { kind: 'list', width: '52%' },
+  { kind: 'list', width: '38%' },
+  { kind: 'heading', width: '34%' },
+  { kind: 'line', width: '100%' },
+  { kind: 'line', width: '95%' },
+  { kind: 'line', width: '72%' },
+];
+
+/**
+ * 编辑器骨架屏：常驻 DOM 但默认隐藏，
+ * 仅当前一个兄弟节点（编辑器根）带有 data-switching 时由 CSS 显示（见 loading.css）。
+ * 这样切换状态无需经过 React 渲染，可在同一帧内立即生效。
+ */
+function EditorSkeleton() {
+  return (
+    <div className="lanismd-editor-skeleton" aria-hidden="true">
+      {SKELETON_BARS.map((bar, index) => (
+        <div
+          key={index}
+          className={`lanismd-editor-skeleton__bar lanismd-editor-skeleton__bar--${bar.kind}`}
+          style={{ width: bar.width }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /**
  * 获取 Milkdown 编辑器内部的 ProseMirror EditorView
  */
@@ -332,6 +376,7 @@ export function EditorCore() {
           autoCorrect="off"
           autoCapitalize="off"
         />
+        <EditorSkeleton />
       </div>
     </>
   );

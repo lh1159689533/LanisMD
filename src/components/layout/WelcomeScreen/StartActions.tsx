@@ -5,7 +5,7 @@ import {
   RiCommandLine,
   RiHistoryLine,
   RiFileTextLine,
-  RiGitRepositoryLine,
+  RiGitBranchLine,
 } from 'react-icons/ri';
 import { useFile } from '@/hooks/useFile';
 import { useOpenFolder } from '@/hooks/useOpenFolder';
@@ -53,7 +53,7 @@ export function StartActions() {
       },
     },
     {
-      icon: <RiGitRepositoryLine size={16} />,
+      icon: <RiGitBranchLine size={16} />,
       label: '打开远程仓库',
       shortcut: '',
       onClick: openRemoteFolder,

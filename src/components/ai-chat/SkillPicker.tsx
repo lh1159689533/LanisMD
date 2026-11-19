@@ -8,12 +8,13 @@
  * @changelog
  * | 版本   | 变更说明                        | 关联         |
  * | v1.0.0 | 初始实现：技能下拉、斜杠选择与标签 | REQ: AI 技能 |
+ * | v1.0.1 | 修复技能下拉在窄面板中溢出窗口   | REQ: AI 技能 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { RiAddLine, RiCheckLine, RiCloseLine, RiFlashlightLine } from 'react-icons/ri';
 
 import { useSettingsStore } from '@/stores/settings-store';
@@ -44,6 +45,31 @@ export function filterSkills(skills: AiSkill[], query: string): AiSkill[] {
   return skills.filter(
     (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q),
   );
+}
+
+/** 弹出菜单与面板边缘保留的最小间距 */
+const MENU_EDGE_GAP = 8;
+
+/**
+ * 将绝对定位的下拉菜单水平收回到对话面板（无面板时为窗口）可视范围内。
+ * 先复位再测量，保证面板宽度变化后重新打开时位置正确。
+ */
+function clampMenuIntoPanel(menu: HTMLElement): void {
+  menu.style.left = '';
+  menu.style.maxWidth = '';
+  const panel = menu.closest('.lanismd-ai-chat-inner');
+  const bound = panel
+    ? panel.getBoundingClientRect()
+    : { left: 0, right: window.innerWidth, width: window.innerWidth };
+  const minLeft = bound.left + MENU_EDGE_GAP;
+  const maxRight = bound.right - MENU_EDGE_GAP;
+  menu.style.maxWidth = `${Math.max(0, maxRight - minLeft)}px`;
+
+  const rect = menu.getBoundingClientRect();
+  let shift = 0;
+  if (rect.right > maxRight) shift = maxRight - rect.right;
+  if (rect.left + shift < minLeft) shift = minLeft - rect.left;
+  if (shift !== 0) menu.style.left = `${shift}px`;
 }
 
 function SkillOption({
@@ -108,7 +134,13 @@ export function SkillButton({
   const skills = useSkills();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const count = selectedIds.filter((id) => skills.some((s) => s.id === id)).length;
+
+  // 菜单默认左对齐按钮，面板较窄时会溢出到窗口外，打开后按面板边界水平收回
+  useLayoutEffect(() => {
+    if (open && menuRef.current) clampMenuIntoPanel(menuRef.current);
+  }, [open, skills.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -143,7 +175,7 @@ export function SkillButton({
       </button>
 
       {open && (
-        <div className="lanismd-ai-chat-skill-menu">
+        <div ref={menuRef} className="lanismd-ai-chat-skill-menu">
           {skills.length === 0 ? (
             <div className="lanismd-ai-chat-skill-empty">
               还没有技能。技能可以为对话注入专业指令，例如审稿规范、写作风格、输出格式等。

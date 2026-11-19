@@ -15,7 +15,7 @@ import {
   RiClipboardLine,
   RiFolderOpenFill,
   RiHistoryLine,
-  RiGitRepositoryLine,
+  RiGitBranchLine,
 } from 'react-icons/ri';
 import { save as tauriSave } from '@tauri-apps/plugin-dialog';
 import { useFileTreeStore } from '@/stores/file-tree-store';
@@ -575,8 +575,6 @@ function FileTreeItem({
 
 // ─── Types ────────────────────────────────────────────────
 
-type ViewMode = 'tree' | 'list';
-
 /** Flat file entry used by the list view */
 interface FlatFileEntry {
   name: string;
@@ -720,11 +718,12 @@ export function FileTree() {
   const rootPath = useFileTreeStore((s) => s.rootPath);
   const tree = useFileTreeStore((s) => s.tree);
   const refreshTree = useFileTreeStore((s) => s.refreshTree);
+  const viewMode = useFileTreeStore((s) => s.viewMode);
+  const setViewMode = useFileTreeStore((s) => s.setViewMode);
   const { openFile } = useFileStore();
   const { openLocalFolder, openRemoteFolder } = useOpenFolder();
 
   const [showMenu, setShowMenu] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('tree');
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const fileTreeRootRef = useRef<HTMLDivElement>(null);
@@ -1362,7 +1361,7 @@ export function FileTree() {
             打开本地文件夹
           </button>
           <button onClick={openRemoteFolder} className="file-tree-empty-btn">
-            <RiGitRepositoryLine size={14} />
+            <RiGitBranchLine size={14} />
             打开远程仓库
           </button>
           <button
@@ -1374,7 +1373,6 @@ export function FileTree() {
             最近打开
           </button>
         </div>
-
       </div>
     );
   }

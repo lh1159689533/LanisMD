@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState } from 'react';
-import { RiFolderLine, RiCloseLine } from 'react-icons/ri';
+import { RiFolderLine, RiGitBranchLine, RiCloseLine } from 'react-icons/ri';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useUIStore } from '@/stores/ui-store';
+import { gitService } from '@/services/tauri/git-service';
 import { cn } from '@/utils/cn';
 import { ResizablePanel } from '@/components/common/ResizablePanel';
 
@@ -25,6 +26,33 @@ export function RecentFoldersPanel({
   const closeOnClickOutside = useSettingsStore(
     (s) => s.config.recentFolders?.closeOnClickOutside !== false,
   );
+
+  // 已确认为 Git 仓库的文件夹路径集合（异步检测，用于区分图标）
+  const [gitRepoPaths, setGitRepoPaths] = useState<Set<string>>(new Set());
+
+  // 异步检测每个最近文件夹是否为 Git 仓库
+  useEffect(() => {
+    let cancelled = false;
+    setGitRepoPaths(new Set());
+    for (const folder of recentFolders) {
+      void gitService
+        .repoInfo(folder.path)
+        .then((repo) => {
+          if (cancelled || !repo) return;
+          setGitRepoPaths((prev) => {
+            const next = new Set(prev);
+            next.add(folder.path);
+            return next;
+          });
+        })
+        .catch(() => {
+          // 检测失败按非仓库处理，静默忽略
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [recentFolders]);
 
   // Slide-in animation state
   const [visible, setVisible] = useState(false);
@@ -109,6 +137,7 @@ export function RecentFoldersPanel({
           ) : (
             recentFolders.map((folder) => {
               const isCurrent = folder.path === currentRootPath;
+              const isGitRepo = gitRepoPaths.has(folder.path);
               return (
                 <button
                   key={folder.path}
@@ -122,15 +151,27 @@ export function RecentFoldersPanel({
                   )}
                   title={folder.path}
                 >
-                  <RiFolderLine
-                    size={14}
-                    className="shrink-0"
-                    style={{
-                      color: isCurrent
-                        ? 'var(--lanismd-accent)'
-                        : 'var(--lanismd-file-tree-folder-icon-color)',
-                    }}
-                  />
+                  {isGitRepo ? (
+                    <RiGitBranchLine
+                      size={14}
+                      className="shrink-0"
+                      style={{
+                        color: isCurrent
+                          ? 'var(--lanismd-accent)'
+                          : 'var(--lanismd-file-tree-folder-icon-color)',
+                      }}
+                    />
+                  ) : (
+                    <RiFolderLine
+                      size={14}
+                      className="shrink-0"
+                      style={{
+                        color: isCurrent
+                          ? 'var(--lanismd-accent)'
+                          : 'var(--lanismd-file-tree-folder-icon-color)',
+                      }}
+                    />
+                  )}
                   <span className="truncate">{folder.name}</span>
                   {isCurrent && (
                     <span className="ml-auto shrink-0 text-[10px] opacity-60">当前</span>
