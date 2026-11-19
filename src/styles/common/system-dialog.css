@@ -1,0 +1,121 @@
+/**
+ * 系统集成弹窗样式（关于 / 自动更新）
+ *
+ * 基础弹窗布局由通用 Dialog 组件提供，本文件只定义内容区与按钮的个性化部分。
+ * 颜色统一使用主题 CSS 变量，浅色/深色由变量系统自动适配。
+ */
+
+.lanismd-system-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: var(--lanismd-font-size-base);
+  line-height: 1.6;
+  color: var(--lanismd-text-color);
+}
+
+.lanismd-system-about-name {
+  font-size: var(--lanismd-font-size-lg);
+  font-weight: 600;
+}
+
+.lanismd-system-version {
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.lanismd-system-version strong {
+  color: var(--lanismd-accent, #2563eb);
+  font-weight: 600;
+}
+
+.lanismd-system-description {
+  margin: 0;
+  color: var(--lanismd-text-secondary);
+  font-size: var(--lanismd-font-size-sm);
+}
+
+.lanismd-system-notes {
+  max-height: 180px;
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: 8px;
+  background: var(--lanismd-bg-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--lanismd-font-size-sm);
+  color: var(--lanismd-text-color);
+}
+
+.lanismd-system-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lanismd-system-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--lanismd-border-color);
+}
+
+.lanismd-system-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--lanismd-accent, #2563eb);
+  transition: width var(--lanismd-transition-medium);
+}
+
+.lanismd-system-error {
+  color: #dc2626;
+  font-size: var(--lanismd-font-size-sm);
+  word-break: break-word;
+}
+
+.lanismd-system-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lanismd-system-btn {
+  appearance: none;
+  padding: 6px 18px;
+  border: 1px solid var(--lanismd-border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--lanismd-text-color);
+  font-family: inherit;
+  font-size: var(--lanismd-font-size-sm);
+  cursor: pointer;
+  transition:
+    background var(--lanismd-transition-fast),
+    border-color var(--lanismd-transition-fast);
+}
+
+.lanismd-system-btn:hover:not(:disabled) {
+  background: var(--lanismd-bg-secondary);
+}
+
+.lanismd-system-btn-primary {
+  border-color: var(--lanismd-accent, #2563eb);
+  background: var(--lanismd-accent, #2563eb);
+  color: #ffffff;
+}
+
+.lanismd-system-btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  background: var(--lanismd-accent, #2563eb);
+}
+
+.lanismd-system-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lanismd-system-btn:focus-visible {
+  outline: 2px solid var(--lanismd-accent, #2563eb);
+  outline-offset: 2px;
+}

@@ -9,13 +9,14 @@
  * @changelog
  * | 版本   | 变更说明                         | 关联                                |
  * | v1.0.0 | 初始实现：状态同步与 MCP 事件响应 | REQ: MCP 界面联动 TECH: 本地 TCP 桥接 |
+ * | v1.1.0 | 打开文档复用公共入口，消除重复逻辑 | REQ: 系统集成-文件关联 TECH: 逻辑复用 |
  * /@changelog
  *
  * @author hhhuilli
  */
 
 import { useEffect } from 'react';
-import { configService, fileService } from '@/services/tauri';
+import { fileService } from '@/services/tauri';
 import {
   mcpService,
   type McpDocumentsChanged,
@@ -25,7 +26,7 @@ import { useFileStore } from '@/stores/file-store';
 import { useFileTreeStore } from '@/stores/file-tree-store';
 import { useRecentFoldersStore } from '@/stores/recent-folders-store';
 import { useUIStore } from '@/stores/ui-store';
-import { saveBeforeSwitchFolder } from './useOpenFolder';
+import { openDocumentByPath } from './useFile';
 
 const KIND_LABELS: Record<McpDocumentsChanged['kind'], string> = {
   created: '创建了',
@@ -99,18 +100,9 @@ async function handleDocumentsChanged(change: McpDocumentsChanged): Promise<void
 }
 
 async function handleOpenDocument(path: string): Promise<void> {
-  try {
-    await saveBeforeSwitchFolder();
-    const result = await fileService.readFile({ path });
-    useFileStore
-      .getState()
-      .openFile(path, result.content, result.encoding ?? 'utf-8', baseName(path));
-    if (isInsideRoot(path)) useFileTreeStore.getState().revealFile(path);
-    await configService.addRecentFile(path);
-  } catch (err) {
-    console.error('[useMcpBridge] 打开文档失败:', err);
-    useUIStore.getState().addToast({ type: 'error', message: `无法打开 ${baseName(path)}` });
-  }
+  // 读取、未保存保护、最近记录与失败提示统一由公共入口处理
+  const opened = await openDocumentByPath(path);
+  if (opened && isInsideRoot(path)) useFileTreeStore.getState().revealFile(path);
 }
 
 export function useMcpBridge() {

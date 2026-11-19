@@ -9,3 +9,4 @@ export { useAiStore } from './ai-store';
 export { useAiChatStore } from './ai-chat-store';
 export { useSessionStore } from './session-store';
 export { useGitStore } from './git-store';
+export { useSystemStore } from './system-store';

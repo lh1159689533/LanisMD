@@ -4,5 +4,7 @@ pub mod encoding_service;
 pub mod search_service;
 pub mod app_state;
 pub mod app_bridge;
+pub mod app_menu;
+pub mod file_open_service;
 pub mod ai;
 pub mod git;

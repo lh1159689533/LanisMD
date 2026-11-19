@@ -32,7 +32,7 @@ import { ChatView } from './ChatView';
 import '@/styles/layout/ai-chat.css';
 
 /** 面板最小宽度 */
-const MIN_WIDTH = 300;
+const MIN_WIDTH = 260;
 /** 面板宽度占窗口的最大比例 */
 const MAX_WIDTH_RATIO = 0.6;
 

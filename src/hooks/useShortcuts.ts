@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
-const modKey = isMac ? 'metaKey' : 'ctrlKey';
+export const IS_MAC =
+  typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
+const modKey = IS_MAC ? 'metaKey' : 'ctrlKey';
 
-export function useShortcuts(handlers?: {
-  onNewFile?: () => void;
-  onOpenFile?: () => void;
-  onSaveFile?: () => void;
-  onToggleSidebar?: () => void;
-  onToggleOutline?: () => void;
-  onOpenSettings?: () => void;
-  onToggleSearch?: () => void;
-  onToggleGlobalSearch?: () => void;
-  onQuickOpen?: () => void;
-  onToggleTypewriterMode?: () => void;
-}) {
+export function useShortcuts(
+  handlers?: {
+    onNewFile?: () => void;
+    onOpenFile?: () => void;
+    onSaveFile?: () => void;
+    onToggleSidebar?: () => void;
+    onToggleOutline?: () => void;
+    onOpenSettings?: () => void;
+    onToggleSearch?: () => void;
+    onToggleGlobalSearch?: () => void;
+    onQuickOpen?: () => void;
+    onToggleTypewriterMode?: () => void;
+  },
+  nativeMenuHandled = false,
+) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -92,7 +96,10 @@ export function useShortcuts(handlers?: {
   }, []);
 
   useEffect(() => {
+    // macOS 原生菜单已注册加速键，WebView 不再重复监听，避免同一动作触发两次；
+    // 其它平台（含浏览器模式）仍由 WebView 负责快捷键
+    if (nativeMenuHandled) return;
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [handleKeyDown, nativeMenuHandled]);
 }

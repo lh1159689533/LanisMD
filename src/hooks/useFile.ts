@@ -1,7 +1,48 @@
+/**
+ * 文件操作入口：对话框打开、新建与按路径打开
+ *
+ * @changelog
+ * | 版本   | 变更说明                             | 关联                                |
+ * | v1.0.0 | 初始实现：打开与新建                 | REQ: 文件编辑                       |
+ * | v1.1.0 | 抽取按绝对路径打开文档的公共入口     | REQ: 系统集成-文件关联 TECH: 逻辑复用 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
 import { useCallback } from 'react';
 import { open as tauriOpen, save as tauriSave } from '@tauri-apps/plugin-dialog';
 import { useFileStore } from '@/stores/file-store';
+import { useUIStore } from '@/stores/ui-store';
 import { fileService, configService } from '@/services/tauri';
+import { saveBeforeSwitchFolder } from './useOpenFolder';
+
+function baseName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+/**
+ * 按绝对路径打开文档（文件关联、MCP、系统事件共用）。
+ * 切换前保存未保存内容，成功后写入最近打开记录，返回是否打开成功。
+ */
+export async function openDocumentByPath(path: string): Promise<boolean> {
+  try {
+    await saveBeforeSwitchFolder();
+    const result = await fileService.readFile({ path });
+    useFileStore
+      .getState()
+      .openFile(path, result.content, result.encoding ?? 'utf-8', baseName(path));
+    await configService.addRecentFile(path);
+    return true;
+  } catch (err) {
+    console.error('[openDocumentByPath] 打开文档失败:', err);
+    useUIStore.getState().addToast({
+      type: 'error',
+      message: `无法打开 ${baseName(path)}`,
+    });
+    return false;
+  }
+}
 
 export function useFile() {
   const { openFile, createUntitledFile, getCurrentFile } = useFileStore();

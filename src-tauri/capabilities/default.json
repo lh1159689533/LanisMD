@@ -82,6 +82,8 @@
     "opener:allow-open-path",
     "opener:allow-open-url",
     "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-write-text"
+    "clipboard-manager:allow-write-text",
+    "updater:default",
+    "process:default"
   ]
 }

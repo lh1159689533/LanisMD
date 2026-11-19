@@ -38,7 +38,9 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          # 与本地及 pnpm-lock.yaml 的 lockfileVersion 6.0 保持一致，
+          # 避免 CI 里 frozen-lockfile 因锁文件版本升级而失败
+          version: 8.11.0
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -53,9 +55,14 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - uses: tauri-apps/tauri-action@v0
+      # v1 才完整支持 Tauri 2 的 updater：自动生成并合并多平台 latest.json
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 更新包签名私钥（内容，不是路径），需在仓库 Secrets 中配置。
+          # 当前密钥无密码，密码 Secret 未配置时会渲染为空字符串，等价于空密码。
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           # 提高 Node 堆上限，避免 vite build 在内存受限的 CI runner 上 OOM
           NODE_OPTIONS: --max-old-space-size=4096
         with:
@@ -65,4 +72,5 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: false
           prerelease: false
+          uploadUpdaterJson: true
           args: ${{ matrix.args }}

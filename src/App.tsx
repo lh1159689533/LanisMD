@@ -9,6 +9,8 @@ import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LinkConfirmDialog } from './components/common/LinkConfirmDialog';
 import { DeleteConfirmDialog } from './components/common/DeleteConfirmDialog';
+import { UpdateDialog } from './components/common/UpdateDialog';
+import { AboutDialog } from './components/common/AboutDialog';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
@@ -23,7 +25,9 @@ import { fileService } from './services/tauri';
 import { useTheme } from './hooks/useTheme';
 import { useFile } from './hooks/useFile';
 import { useAutoSave } from './hooks/useAutoSave';
-import { useShortcuts } from './hooks/useShortcuts';
+import { useShortcuts, IS_MAC } from './hooks/useShortcuts';
+import { useSystemIntegration, type SystemActions } from './hooks/useSystemIntegration';
+import { useOpenFolder } from './hooks/useOpenFolder';
 import { useFileWatcher } from './hooks/useFileWatcher';
 import { useBrowserFile } from './hooks/useBrowserFile';
 import { cn } from './utils/cn';
@@ -54,7 +58,9 @@ function TauriApp() {
   const setSidebarPanel = useUIStore((s) => s.setSidebarPanel);
   const openSettings = useUIStore((s) => s.openSettings);
   const openCommandPalette = useUIStore((s) => s.openCommandPalette);
+  const toggleImmersiveReading = useUIStore((s) => s.toggleImmersiveReading);
   const { openFileFromDisk, newFile } = useFile();
+  const { openLocalFolder } = useOpenFolder();
   const { notifySelfWrite } = useFileWatcher();
   const { saveNow } = useAutoSave({ onAfterSave: notifySelfWrite });
 
@@ -81,18 +87,25 @@ function TauriApp() {
     }
   }, [setSidebarPanel]);
 
-  useShortcuts({
+  // 键盘快捷键与原生菜单共用同一批界面动作。macOS 下加速键由原生菜单接管，
+  // WebView 不再重复监听；其它平台与浏览器模式仍走 WebView 快捷键。
+  const systemActions: SystemActions = {
     onNewFile: newFile,
     onOpenFile: openFileFromDisk,
+    onOpenFolder: openLocalFolder,
     onSaveFile: saveNow,
-    onToggleSidebar: toggleSidebar,
-    onToggleOutline: toggleOutline,
+    onQuickOpen: openCommandPalette,
     onOpenSettings: () => openSettings('general'),
     onToggleSearch: toggleSearch,
     onToggleGlobalSearch: toggleGlobalSearch,
-    onQuickOpen: openCommandPalette,
+    onToggleSidebar: toggleSidebar,
+    onToggleOutline: toggleOutline,
     onToggleTypewriterMode: toggleTypewriterMode,
-  });
+    onToggleImmersive: toggleImmersiveReading,
+  };
+
+  useShortcuts(systemActions, IS_TAURI && IS_MAC);
+  useSystemIntegration(systemActions);
 
   // 启动时读取一次 AI 配置文件（旧版配置在此时自动迁移）
   const refreshConfig = useAiStore((s) => s.refreshConfig);
@@ -163,7 +176,7 @@ function TauriApp() {
   }, []);
 
   return (
-    <div className='lanis-app flex h-screen flex-col'>
+    <div className="lanis-app flex h-screen flex-col">
       <TitleBar onNewFile={newFile} onOpenFile={openFileFromDisk} />
       <MainLayout />
       {settingsOpen && <SettingsDialog />}
@@ -171,6 +184,8 @@ function TauriApp() {
       <ToastContainer />
       <LinkConfirmDialog />
       <DeleteConfirmDialog />
+      <UpdateDialog />
+      <AboutDialog />
     </div>
   );
 }
@@ -210,7 +225,7 @@ export default function App() {
   return (
     <div
       className={cn(
-        'bg-white text-slate-900 overflow-hidden',
+        'overflow-hidden bg-white text-slate-900',
         'dark:bg-[#1a1b26] dark:text-slate-100',
       )}
     >

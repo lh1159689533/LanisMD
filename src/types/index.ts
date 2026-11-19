@@ -39,6 +39,7 @@ export {
   type AiStreamEvent,
   type AiConfig,
 } from './ai';
+export { type UpdateInfo, type UpdateStatus } from './system';
 export {
   type GitAvailability,
   type RepoInfo,
