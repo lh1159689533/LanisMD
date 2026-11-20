@@ -5,6 +5,7 @@ pub mod search_service;
 pub mod app_state;
 pub mod app_bridge;
 pub mod app_menu;
+pub mod about_panel;
 pub mod file_open_service;
 pub mod ai;
 pub mod git;

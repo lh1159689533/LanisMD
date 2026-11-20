@@ -3,6 +3,7 @@
 // @changelog
 // | 版本   | 变更说明                           | 关联                            |
 // | v1.0.0 | 初始实现：路径解析、越界与隐藏目录校验 | REQ: MCP Server TECH: 路径沙箱 |
+// | v1.1.0 | 支持用户指定的工作区外 Markdown 绝对路径；~ 展开 | REQ: MCP 指定写入路径 TECH: 外部路径校验 |
 // /@changelog
 //
 // @author hhhuilli
@@ -51,22 +52,7 @@ impl Workspace {
     /// 拒绝越界路径与隐藏路径段（如 .git），避免外部 AI 读到凭证等敏感文件。
     pub fn resolve(&self, input: &str) -> Result<PathBuf, String> {
         let input = input.trim();
-        let raw = if input.is_empty() || input == "." {
-            self.root.clone()
-        } else {
-            let p = Path::new(input);
-            if p.is_absolute() {
-                p.to_path_buf()
-            } else {
-                self.root.join(p)
-            }
-        };
-
-        let normalized = lexical_normalize(&raw);
-        // 先解析已存在的最深祖先的符号链接，再拼回不存在的尾部，
-        // 这样既能校验新建文件，也能识别指向工作区外的符号链接
-        let resolved = canonicalize_existing_prefix(&normalized);
-
+        let resolved = self.absolutize(input);
         let rel = resolved
             .strip_prefix(&self.root)
             .map_err(|_| format!("路径不在工作区内: {}", input))?;
@@ -77,6 +63,29 @@ impl Workspace {
             return Err(format!("不允许访问隐藏文件或目录: {}", input));
         }
         Ok(resolved)
+    }
+
+    /// 输入是否为指向工作区之外的绝对路径（含 ~ 开头）
+    pub fn is_outside(&self, input: &str) -> bool {
+        let input = input.trim();
+        expand_home(input).is_absolute() && !self.absolutize(input).starts_with(&self.root)
+    }
+
+    /// 输入路径转为绝对路径：相对路径基于工作区根目录；
+    /// 先解析已存在的最深祖先的符号链接，再拼回不存在的尾部，
+    /// 这样既能校验新建文件，也能识别指向工作区外的符号链接
+    fn absolutize(&self, input: &str) -> PathBuf {
+        let raw = if input.is_empty() || input == "." {
+            self.root.clone()
+        } else {
+            let p = expand_home(input);
+            if p.is_absolute() {
+                p
+            } else {
+                self.root.join(p)
+            }
+        };
+        canonicalize_existing_prefix(&lexical_normalize(&raw))
     }
 
     /// 用户在 MCP 中指定的工作区目录：必须是绝对路径，不存在则创建；
@@ -116,9 +125,11 @@ impl Workspace {
         Ok(path)
     }
 
-    /// 绝对路径转为相对工作区的展示路径，统一使用 '/'
+    /// 绝对路径转为相对工作区的展示路径，统一使用 '/'；工作区外的路径原样返回绝对路径
     pub fn relative(&self, path: &Path) -> String {
-        let rel = path.strip_prefix(&self.root).unwrap_or(path);
+        let Ok(rel) = path.strip_prefix(&self.root) else {
+            return path.to_string_lossy().to_string();
+        };
         let s = rel
             .components()
             .map(|c| c.as_os_str().to_string_lossy().to_string())
@@ -130,6 +141,38 @@ impl Workspace {
             s
         }
     }
+}
+
+/// 解析用户明确指定的工作区外 Markdown 绝对路径。
+/// 与 from_user_choice 采用同一套约束：拒绝隐藏路径段，
+/// 所在目录不能是根目录、用户主目录、系统目录，避免 AI 借此访问敏感位置
+pub fn resolve_external_markdown(input: &str) -> Result<PathBuf, String> {
+    let path = expand_home(input.trim());
+    if !path.is_absolute() {
+        return Err(format!("请提供绝对路径: {}", input));
+    }
+    let resolved = canonicalize_existing_prefix(&lexical_normalize(&path));
+    if !is_markdown(&resolved) {
+        return Err(format!(
+            "只允许操作 Markdown 文件（{}）: {}",
+            MD_EXTENSIONS.join(" / "),
+            input
+        ));
+    }
+    if resolved
+        .components()
+        .any(|c| c.as_os_str().to_string_lossy().starts_with('.'))
+    {
+        return Err(format!("不允许访问隐藏文件或目录: {}", input));
+    }
+    let parent = resolved.parent().ok_or_else(|| format!("路径无效: {}", input))?;
+    if is_forbidden_root(parent) {
+        return Err(format!(
+            "范围过大，不能直接在 {} 下读写文档，请指定具体的文件夹",
+            parent.display()
+        ));
+    }
+    Ok(resolved)
 }
 
 /// 展开 `~` 前缀（部分 MCP 客户端与用户输入不会做 shell 展开）
@@ -256,6 +299,29 @@ mod tests {
         assert!(Workspace::from_user_choice("~").is_err());
         assert!(Workspace::from_user_choice("/etc").is_err());
         assert!(Workspace::from_user_choice(&dir.path().join(".secret").to_string_lossy()).is_err());
+    }
+
+    #[test]
+    fn detects_outside_and_resolves_external_markdown() {
+        let (_dir, ws) = setup();
+        let other = tempfile::Builder::new().prefix("lanis").tempdir().unwrap();
+        let target = other.path().join("需求文档/a.md");
+        let target_str = target.to_string_lossy().to_string();
+
+        assert!(!ws.is_outside("notes/a.md"));
+        assert!(!ws.is_outside(&ws.root().join("notes/a.md").to_string_lossy()));
+        assert!(ws.is_outside(&target_str));
+
+        let p = resolve_external_markdown(&target_str).unwrap();
+        assert!(p.ends_with("需求文档/a.md"));
+        assert_eq!(ws.relative(&p), p.to_string_lossy());
+
+        assert!(resolve_external_markdown("relative/a.md").is_err());
+        assert!(resolve_external_markdown(&other.path().join("a.txt").to_string_lossy()).is_err());
+        assert!(resolve_external_markdown(&other.path().join(".hidden/a.md").to_string_lossy()).is_err());
+        assert!(resolve_external_markdown("/a.md").is_err());
+        assert!(resolve_external_markdown("~/a.md").is_err());
+        assert!(resolve_external_markdown("/etc/a.md").is_err());
     }
 
     #[cfg(unix)]

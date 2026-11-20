@@ -113,6 +113,10 @@ export interface AppConfig {
     defaultFocusMode: boolean;
     codeBlock: {
       showLineNumbers: boolean;
+      /** 代码块字体大小（px），独立于正文字号 */
+      fontSize: number;
+      /** 代码块行高（倍数），独立于正文行高 */
+      lineHeight: number;
     };
   };
   recentFiles: {

@@ -196,11 +196,23 @@ export function useTheme() {
     const overflowXValue = config.editor.wordWrap === 'off' ? 'auto' : 'clip';
     root.style.setProperty('--lanismd-editor-word-wrap', wordWrapValue);
     root.style.setProperty('--lanismd-editor-overflow-x', overflowXValue);
+
+    // 代码块字号与行高：写入 CodeMirror 相关变量，
+    // 代码块、懒加载占位、公式/Mermaid/Front Matter 源码区统一消费
+    const codeBlockConfig = config.editor.codeBlock;
+    if (codeBlockConfig?.fontSize) {
+      root.style.setProperty('--lanismd-cm-font-size', `${codeBlockConfig.fontSize}px`);
+    }
+    if (codeBlockConfig?.lineHeight) {
+      root.style.setProperty('--lanismd-cm-line-height', `${codeBlockConfig.lineHeight}`);
+    }
   }, [
     config.editor.maxWidth,
     config.editor.fontSize,
     config.editor.lineHeight,
     config.editor.fontFamily,
     config.editor.wordWrap,
+    config.editor.codeBlock?.fontSize,
+    config.editor.codeBlock?.lineHeight,
   ]);
 }

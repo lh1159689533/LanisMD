@@ -4,8 +4,10 @@ import { AiOutlineInfo } from 'react-icons/ai';
 import { PiExclamationMarkBold } from 'react-icons/pi';
 import { HiXMark } from 'react-icons/hi2';
 import { useUIStore } from '@/stores/ui-store';
+import { useSystemStore } from '@/stores/system-store';
 import { cn } from '@/utils/cn';
 import type { ToastAction } from '@/types';
+import { UpdateNotice } from './UpdateNotice';
 
 const ICON_MAP = {
   info: AiOutlineInfo,
@@ -138,8 +140,10 @@ function ToastItem({
 
 export function ToastContainer() {
   const toasts = useUIStore((s) => s.toasts);
+  // 更新通知与 Toast 共用右下角堆叠容器，避免互相遮挡
+  const updateNoticeVisible = useSystemStore((s) => s.noticeOpen && s.status !== 'idle');
 
-  if (toasts.length === 0) return null;
+  if (toasts.length === 0 && !updateNoticeVisible) return null;
 
   return (
     <div className="fixed bottom-8 right-4 z-[210] flex w-80 flex-col gap-2">
@@ -153,6 +157,7 @@ export function ToastContainer() {
           actions={toast.actions}
         />
       ))}
+      <UpdateNotice />
     </div>
   );
 }

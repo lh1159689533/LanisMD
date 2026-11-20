@@ -341,8 +341,9 @@
 /* ===== CodeMirror editor overrides ===== */
 .milkdown-editor-root .cm-editor {
   font-family: var(--lanismd-font-mono);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  /* 字号与行高由设置项「代码块」驱动（见 useTheme） */
+  font-size: var(--lanismd-cm-font-size, 0.875rem);
+  line-height: var(--lanismd-cm-line-height, 1.6);
 }
 
 .milkdown-editor-root .cm-editor.cm-focused {
@@ -354,8 +355,39 @@
   padding: var(--lanismd-spacing-lg) 0;
 }
 
+/*
+ * CodeMirror baseTheme 在 .cm-scroller 上写死了 line-height: 1.4 与 font-family: monospace，
+ * 会截断 .cm-editor 的继承，因此需要在 .cm-scroller 上显式改回继承。
+ */
+.milkdown-editor-root .cm-editor .cm-scroller {
+  font-family: inherit;
+  line-height: inherit;
+}
+
+/*
+ * 水平内边距需在 .cm-content 与 .cm-line 上保持一致：
+ * CodeMirror 绘制整行选区时，左右边界 = cm-content 外框 + cm-line 的 padding，
+ * 不计 cm-content 自身 padding；而当前行背景画在 cm-line 盒子上。
+ * 两者取同一值才能让选区背景与当前行背景左右对齐。
+ * 文本起始位置 = 两者之和，与调整前（spacing-xl + CM 默认 6px）保持一致。
+ */
+.milkdown-editor-root .cm-editor {
+  --lanismd-cm-line-inset: calc((var(--lanismd-spacing-xl) + 6px) / 2);
+}
+
 .milkdown-editor-root .cm-content {
-  padding: 0 var(--lanismd-spacing-xl);
+  padding-left: var(--lanismd-cm-line-inset);
+  padding-right: var(--lanismd-cm-line-inset);
+}
+
+.milkdown-editor-root .cm-editor .cm-line {
+  padding-left: var(--lanismd-cm-line-inset);
+  padding-right: var(--lanismd-cm-line-inset);
+}
+
+/* 有选区时隐藏当前行背景，避免盖住选区（cm-has-selection 由 code-block.ts 注入） */
+.milkdown-editor-root .cm-editor.cm-has-selection .cm-activeLine {
+  background-color: transparent;
 }
 
 .milkdown-editor-root .cm-gutters {
@@ -370,7 +402,8 @@
 .milkdown-editor-root .cm-lineNumbers .cm-gutterElement {
   padding: 0 var(--lanismd-spacing-md) 0 0;
   min-width: 32px;
-  font-size: 0.75rem;
+  /* 跟随代码字号等比缩放（默认 14px 代码对应约 12px 行号） */
+  font-size: 0.86em;
 }
 
 /* Scrollbar inside CodeMirror */
@@ -396,8 +429,8 @@
   /* margin: 1em 0; */
   overflow-x: auto;
   font-family: var(--lanismd-font-mono);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: var(--lanismd-cm-font-size, 0.875rem);
+  line-height: var(--lanismd-cm-line-height, 1.6);
 }
 
 .milkdown-editor-root .ProseMirror pre code {
@@ -469,8 +502,6 @@
   background: rgba(255, 255, 255, 0.6);
 }
 
-
-
 /* --- 当注入了真实圆点 DOM 时，隐藏 CSS 伪元素装饰 --- */
 .milkdown-editor-root .tools[data-fold-injected='true']::before {
   display: none !important;
@@ -491,7 +522,9 @@
 /* --- 折叠动画：代码区内容容器 --- */
 .milkdown-editor-root .lanismd-fold-content {
   overflow: hidden;
-  transition: max-height 250ms ease-in-out, opacity 200ms ease-in-out;
+  transition:
+    max-height 250ms ease-in-out,
+    opacity 200ms ease-in-out;
   opacity: 1;
 }
 
@@ -519,6 +552,17 @@
 .milkdown-editor-root [data-type='code_block'].is-folded .tools {
   border-bottom: none;
   transition: border-bottom-color 200ms ease-in-out;
+}
+
+.milkdown-editor-root .milkdown-code-block .tools {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom: none;
+}
+
+.milkdown-editor-root .milkdown-code-block .lanismd-fold-content {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 /* --- 折叠行数标签动画 --- */

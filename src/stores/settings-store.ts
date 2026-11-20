@@ -20,6 +20,9 @@ const DEFAULT_CONFIG: AppConfig = {
     defaultFocusMode: false,
     codeBlock: {
       showLineNumbers: true,
+      // 与原先硬编码的 0.875rem / 1.6 保持一致，升级后外观不变
+      fontSize: 14,
+      lineHeight: 1.6,
     },
   },
   recentFiles: { maxCount: 20 },

@@ -132,6 +132,20 @@ const highlightStyle = HighlightStyle.define([
 ]);
 
 // ---------------------------------------------------------------------------
+// 选区状态标记
+// ---------------------------------------------------------------------------
+
+/**
+ * 存在非空选区时给编辑器根节点加上 cm-has-selection 类。
+ * 当前行高亮背景绘制在 .cm-line 上，层级高于选区层，
+ * 部分主题的当前行背景为不透明色，会把选区完全盖住；
+ * CSS 借助该类在有选区时隐藏当前行背景。
+ */
+const selectionStateClass = EditorView.editorAttributes.compute(['selection'], (state) =>
+  state.selection.ranges.some((range) => !range.empty) ? { class: 'cm-has-selection' } : {},
+);
+
+// ---------------------------------------------------------------------------
 // Build extensions based on current settings
 // ---------------------------------------------------------------------------
 
@@ -150,6 +164,7 @@ function getCodeMirrorExtensions(): Extension[] {
     // 统一的主题和语法高亮（使用 CSS 变量，自动跟随主题切换）
     editorTheme,
     syntaxHighlighting(highlightStyle),
+    selectionStateClass,
   ];
 
   return extensions;

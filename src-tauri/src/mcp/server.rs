@@ -4,6 +4,7 @@
 // | 版本   | 变更说明                                             | 关联                                   |
 // | v1.0.0 | 初始实现：文档读写/大纲/搜索 + Git 只读查询工具       | REQ: MCP Server TECH: rmcp + stdio     |
 // | v1.1.0 | 工作区按调用动态解析；version 乐观锁；App 界面联动     | REQ: MCP 动态工作区 TECH: 桥接 + 询问 |
+// | v1.2.0 | 文档工具支持工作区外绝对路径；会话选择优先于 App       | REQ: MCP 指定写入路径 TECH: 外部路径校验 |
 // /@changelog
 //
 // @author hhhuilli
@@ -112,12 +113,13 @@ impl LanisMdServer {
     }
 
     /// 解析工作区后在阻塞线程池中执行同步逻辑，避免阻塞 stdio 事件循环
-    async fn run<T, F>(&self, rc: &RequestContext<RoleServer>, f: F) -> Result<T, String>
+    /// hint 为本次操作的目标路径，用于在尚无工作区时直接采用用户给出的绝对路径
+    async fn run<T, F>(&self, rc: &RequestContext<RoleServer>, hint: Option<&str>, f: F) -> Result<T, String>
     where
         T: Send + 'static,
         F: FnOnce(&ToolContext) -> Result<T, String> + Send + 'static,
     {
-        let cx = self.resolver.resolve(rc).await?;
+        let cx = self.resolver.resolve(rc, hint).await?;
         tokio::task::spawn_blocking(move || f(&cx))
             .await
             .map_err(|e| format!("工具执行失败: {}", e))?
@@ -144,28 +146,27 @@ impl LanisMdServer {
             "hint": if current.is_none() {
                 "尚未确定工作区：调用任意文档工具时会询问用户，也可在用户明确选择后调用 select_workspace"
             } else {
-                "LanisMD 打开文件夹时始终优先使用 App 中的文件夹"
+                "用户指定了其他目录时，直接给文档工具传绝对路径，或调用 select_workspace 切换"
             },
         }))
     }
 
-    /// 设定本次会话的工作区。只能使用用户明确选择或提供的文件夹，禁止自行挑选。LanisMD 打开了文件夹时以 App 为准
+    /// 设定本次会话的工作区，优先于 LanisMD 当前打开的文件夹。只能使用用户明确选择或提供的文件夹，禁止自行挑选。传空字符串恢复跟随 App
     #[tool(annotations(read_only_hint = false, destructive_hint = false))]
     async fn select_workspace(&self, Parameters(args): Parameters<SelectWorkspaceArgs>) -> ToolResult {
         if self.resolver.is_fixed() {
             return Err("工作区已由启动参数 --root 固定，不能切换".to_string());
+        }
+        if args.path.trim().is_empty() {
+            self.resolver.clear_session();
+            return Ok("已清除会话工作区，后续工具调用跟随 LanisMD 当前打开的文件夹".to_string());
         }
         let ws = tokio::task::spawn_blocking(move || Workspace::from_user_choice(&args.path))
             .await
             .map_err(|e| e.to_string())??;
         let root = ws.root_str();
         self.resolver.set_session(ws);
-        let app = resolver::query_app().await;
-        let note = match app.as_ref().and_then(|a| a.current_folder.as_deref()) {
-            Some(folder) => format!("注意：LanisMD 当前打开了 {}，在其关闭该文件夹前工具会使用 App 中的文件夹", folder),
-            None => "后续工具调用都会使用该文件夹".to_string(),
-        };
-        Ok(format!("已选择工作区 {}。{}", root, note))
+        Ok(format!("已选择工作区 {}，后续工具调用都会使用该文件夹", root))
     }
 
     /// 列出工作区内的 Markdown 文档（自动跳过隐藏目录）
@@ -175,7 +176,7 @@ impl LanisMdServer {
         Parameters(args): Parameters<ListDocumentsArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        self.run(&rc, None, move |cx| {
             let ws = &cx.ws;
             let dir = ws.resolve(args.dir.as_deref().unwrap_or("."))?;
             if !dir.is_dir() {
@@ -227,8 +228,9 @@ impl LanisMdServer {
         Parameters(args): Parameters<ReadDocumentArgs>,
         rc: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, String> {
-        self.run(&rc, move |cx| {
-            let path = cx.ws.resolve(&args.path)?;
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
+            let path = cx.resolve_readable(&args.path)?;
             let file = read_text(&path, &cx.ws)?;
             let (text, start, end, total) =
                 markdown::slice_lines(&file.content, args.start_line, args.end_line)?;
@@ -252,8 +254,9 @@ impl LanisMdServer {
     /// 获取文档的标题大纲（级别、标题文本、行号）与 version，适合在读取长文档前快速了解结构
     #[tool(annotations(read_only_hint = true))]
     async fn get_outline(&self, Parameters(args): Parameters<PathArgs>, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, move |cx| {
-            let path = cx.ws.resolve(&args.path)?;
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
+            let path = cx.resolve_readable(&args.path)?;
             let file = read_text(&path, &cx.ws)?;
             to_json(&json!({
                 "path": cx.ws.relative(&path),
@@ -272,7 +275,7 @@ impl LanisMdServer {
         Parameters(args): Parameters<SearchDocumentsArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        self.run(&rc, None, move |cx| {
             let ws = &cx.ws;
             let dir = ws.resolve(args.dir.as_deref().unwrap_or("."))?;
             let params = SearchParams {
@@ -320,9 +323,10 @@ impl LanisMdServer {
         Parameters(args): Parameters<WriteDocumentArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
             let ws = &cx.ws;
-            let path = ws.resolve_markdown(&args.path)?;
+            let path = cx.resolve_markdown(&args.path)?;
             if path.is_dir() {
                 return Err(format!("目标是目录: {}", args.path));
             }
@@ -365,9 +369,10 @@ impl LanisMdServer {
         Parameters(args): Parameters<EditDocumentArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
             let ws = &cx.ws;
-            let path = ws.resolve_markdown(&args.path)?;
+            let path = cx.resolve_markdown(&args.path)?;
             cx.ensure_not_editing(&path)?;
             let file = read_text(&path, ws)?;
             check_version(&file.version, args.expected_version.as_deref(), ws, &path)?;
@@ -396,9 +401,10 @@ impl LanisMdServer {
         Parameters(args): Parameters<AppendDocumentArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
             let ws = &cx.ws;
-            let path = ws.resolve_markdown(&args.path)?;
+            let path = cx.resolve_markdown(&args.path)?;
             let (content, encoding, kind) = if path.exists() {
                 cx.ensure_not_editing(&path)?;
                 let file = read_text(&path, ws)?;
@@ -431,10 +437,11 @@ impl LanisMdServer {
         Parameters(args): Parameters<MoveDocumentArgs>,
         rc: RequestContext<RoleServer>,
     ) -> ToolResult {
-        self.run(&rc, move |cx| {
+        let hint = args.to.clone();
+        self.run(&rc, Some(&hint), move |cx| {
             let ws = &cx.ws;
-            let from = ws.resolve_markdown(&args.from)?;
-            let to = ws.resolve_markdown(&args.to)?;
+            let from = cx.resolve_markdown(&args.from)?;
+            let to = cx.resolve_markdown(&args.to)?;
             if !from.is_file() {
                 return Err(format!("源文件不存在: {}", args.from));
             }
@@ -455,8 +462,9 @@ impl LanisMdServer {
     /// 把 Markdown 文档移到系统废纸篓（可在废纸篓中恢复，不会永久删除）
     #[tool(annotations(destructive_hint = true))]
     async fn trash_document(&self, Parameters(args): Parameters<PathArgs>, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, move |cx| {
-            let path = cx.ws.resolve_markdown(&args.path)?;
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
+            let path = cx.resolve_markdown(&args.path)?;
             if !path.is_file() {
                 return Err(format!("文件不存在: {}", args.path));
             }
@@ -471,8 +479,9 @@ impl LanisMdServer {
     /// 在 LanisMD 编辑器中打开文档，让用户看到 AI 创建或修改的内容（需要 LanisMD 正在运行）
     #[tool(annotations(read_only_hint = true))]
     async fn open_document(&self, Parameters(args): Parameters<PathArgs>, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, move |cx| {
-            let path = cx.ws.resolve_markdown(&args.path)?;
+        let hint = args.path.clone();
+        self.run(&rc, Some(&hint), move |cx| {
+            let path = cx.resolve_markdown(&args.path)?;
             if !path.is_file() {
                 return Err(format!("文件不存在: {}", args.path));
             }
@@ -488,7 +497,7 @@ impl LanisMdServer {
     /// 查看工作区的 Git 状态：当前分支、与远程的领先/落后数、未提交的改动文件
     #[tool(annotations(read_only_hint = true))]
     async fn git_status(&self, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, |cx| {
+        self.run(&rc, None, |cx| {
             let ws = &cx.ws;
             let git = git_context(ws)?;
             let files = repo::status(&git.root.to_string_lossy(), &git.info.scope).map_err(|e| e.to_string())?;
@@ -519,7 +528,7 @@ impl LanisMdServer {
     /// 查看提交历史，可限定某个文件或目录
     #[tool(annotations(read_only_hint = true))]
     async fn git_log(&self, Parameters(args): Parameters<GitLogArgs>, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, move |cx| {
+        self.run(&rc, None, move |cx| {
             let ws = &cx.ws;
             let git = git_context(ws)?;
             let scope = match &args.path {
@@ -551,7 +560,7 @@ impl LanisMdServer {
     /// 查看未提交改动的 diff 文本（相对 HEAD），可只看指定文件
     #[tool(annotations(read_only_hint = true))]
     async fn git_diff(&self, Parameters(args): Parameters<GitDiffArgs>, rc: RequestContext<RoleServer>) -> ToolResult {
-        self.run(&rc, move |cx| {
+        self.run(&rc, None, move |cx| {
             let ws = &cx.ws;
             let git = git_context(ws)?;
             let repo_root = git.root.to_string_lossy().to_string();
@@ -590,8 +599,10 @@ impl ServerHandler for LanisMdServer {
         };
         let instructions = format!(
             "LanisMD Markdown 工作区。{}\n\
-             工作区：LanisMD 打开了文件夹时使用该文件夹；否则会询问用户（列出最近打开的文件夹），\
-             可用 get_workspace 查看当前工作区。路径一律相对工作区根目录，隐藏目录（如 .git）不可访问。\n\
+             工作区：优先使用 select_workspace 选择的文件夹，其次是 LanisMD 当前打开的文件夹，\
+             都没有时会询问用户（列出最近打开的文件夹）；可用 get_workspace 查看当前工作区。\
+             相对路径基于工作区根目录；用户指定了具体目录或文件位置时，必须原样传入绝对路径\
+             （如 /Users/me/docs/需求.md，可在工作区之外），禁止改写成相对路径。隐藏目录（如 .git）不可访问。\n\
              修改流程：read_document 取得 version -> edit_document / write_document 带上 expected_version；\
              版本冲突或用户正在编辑时会拒绝写入，此时重新读取后再改。修改完成后可调用 open_document 让用户查看。",
             mode

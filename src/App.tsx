@@ -9,8 +9,6 @@ import { QuickOpen } from './components/quick-open/QuickOpen';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LinkConfirmDialog } from './components/common/LinkConfirmDialog';
 import { DeleteConfirmDialog } from './components/common/DeleteConfirmDialog';
-import { UpdateDialog } from './components/common/UpdateDialog';
-import { AboutDialog } from './components/common/AboutDialog';
 import { useUIStore } from './stores/ui-store';
 import { useSearchStore } from './stores/search-store';
 import { useEditorStore } from './stores/editor-store';
@@ -184,8 +182,6 @@ function TauriApp() {
       <ToastContainer />
       <LinkConfirmDialog />
       <DeleteConfirmDialog />
-      <UpdateDialog />
-      <AboutDialog />
     </div>
   );
 }

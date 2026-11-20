@@ -115,9 +115,6 @@ export function useSystemIntegration(actions: SystemActions) {
         case MENU_ACTION.CHECK_UPDATE:
           void useSystemStore.getState().checkForUpdate(false);
           break;
-        case MENU_ACTION.ABOUT:
-          useSystemStore.getState().openAbout();
-          break;
         default:
           break;
       }

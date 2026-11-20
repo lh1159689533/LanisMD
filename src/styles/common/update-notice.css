@@ -1,0 +1,152 @@
+/**
+ * 右下角更新通知面板样式
+ *
+ * 外观与 Toast 保持一致（同一堆叠容器、同一组主题变量），浅色 / 深色由变量系统自动适配。
+ */
+
+.lanismd-update-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: 6px;
+  background: var(--lanismd-editor-bg);
+  color: var(--lanismd-editor-text);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+}
+
+.lanismd-update-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lanismd-update-notice-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.lanismd-update-notice-icon.is-info {
+  color: var(--lanismd-accent);
+}
+
+.lanismd-update-notice-icon.is-success {
+  color: var(--lanismd-success);
+}
+
+.lanismd-update-notice-icon.is-error {
+  color: var(--lanismd-danger);
+}
+
+.lanismd-update-notice-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lanismd-update-notice-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--lanismd-editor-text);
+  cursor: pointer;
+  transition: background var(--lanismd-transition-fast);
+}
+
+.lanismd-update-notice-close:hover {
+  background: var(--lanismd-hover-bg);
+}
+
+.lanismd-update-notice-meta {
+  color: var(--lanismd-text-secondary);
+}
+
+.lanismd-update-notice-notes {
+  max-height: 120px;
+  overflow: auto;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--lanismd-hover-bg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lanismd-update-notice-error {
+  color: var(--lanismd-danger);
+  word-break: break-word;
+}
+
+.lanismd-update-notice-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lanismd-update-notice-progress-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--lanismd-hover-bg);
+}
+
+.lanismd-update-notice-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--lanismd-accent);
+  transition: width var(--lanismd-transition-medium);
+}
+
+.lanismd-update-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lanismd-update-notice-btn {
+  appearance: none;
+  padding: 3px 10px;
+  border: none;
+  border-radius: 4px;
+  background: var(--lanismd-hover-bg);
+  color: var(--lanismd-editor-text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    opacity var(--lanismd-transition-fast),
+    filter var(--lanismd-transition-fast);
+}
+
+.lanismd-update-notice-btn:hover {
+  filter: brightness(1.1);
+}
+
+.lanismd-update-notice-btn.is-primary {
+  background: var(--lanismd-accent);
+  color: var(--lanismd-accent-contrast);
+}
+
+.lanismd-update-notice-btn.is-primary:hover {
+  filter: none;
+  opacity: 0.9;
+}
+
+.lanismd-update-notice-btn:focus-visible {
+  outline: 2px solid var(--lanismd-accent);
+  outline-offset: 2px;
+}

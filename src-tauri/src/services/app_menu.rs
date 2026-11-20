@@ -8,14 +8,13 @@
  * @changelog
  * | 版本   | 变更说明                                     | 关联                                  |
  * | v1.0.0 | 初始实现：跨平台原生菜单与菜单动作事件转发   | REQ: 系统集成-原生菜单 TECH: tauri::menu |
+ * | v1.1.0 | 移除帮助菜单，关于统一使用系统原生面板       | REQ: 系统集成-菜单优化 TECH: tauri::menu |
+ * | v1.2.0 | macOS 关于改为自定义项，交由 about_panel 打开  | REQ: 系统集成-关于信息 TECH: AppKit 关于面板 |
  * /@changelog
  *
  * @author hhhuilli
  */
-
-use tauri::menu::{
-    IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu, HELP_SUBMENU_ID, WINDOW_SUBMENU_ID,
-};
+use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu, WINDOW_SUBMENU_ID};
 use tauri::{AppHandle, Emitter, Runtime};
 
 /// 原生菜单动作事件名，payload 为动作 ID 字符串
@@ -36,11 +35,12 @@ pub mod action {
     pub const TOGGLE_IMMERSIVE: &str = "toggle-immersive";
     pub const PREFERENCES: &str = "preferences";
     pub const CHECK_UPDATE: &str = "check-update";
+    /// 仅 macOS 使用，由 Rust 侧直接打开原生关于面板，不转发给前端
     pub const ABOUT: &str = "about";
 }
 
 /// 只有自定义动作需要转发给前端；预定义菜单项由系统自行处理
-const APP_ACTIONS: [&str; 14] = [
+const APP_ACTIONS: [&str; 13] = [
     action::NEW_FILE,
     action::OPEN_FILE,
     action::OPEN_FOLDER,
@@ -54,11 +54,15 @@ const APP_ACTIONS: [&str; 14] = [
     action::TOGGLE_IMMERSIVE,
     action::PREFERENCES,
     action::CHECK_UPDATE,
-    action::ABOUT,
 ];
 
-/// 把菜单点击转发给前端
+/// 处理菜单点击：关于面板由 Rust 侧直接打开，其余动作转发给前端
 pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
+    #[cfg(target_os = "macos")]
+    if id == action::ABOUT {
+        super::about_panel::show(app);
+        return;
+    }
     if APP_ACTIONS.contains(&id) {
         let _ = app.emit(MENU_ACTION_EVENT, id.to_string());
     }
@@ -95,7 +99,8 @@ fn action_item<R: Runtime>(
 /// macOS 应用子菜单：包含系统标准的关于、服务、隐藏与退出项
 #[cfg(target_os = "macos")]
 fn build_app_submenu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
-    let about = PredefinedMenuItem::about(app, Some("关于 LanisMD"), None)?;
+    // 不用预定义关于项：其 credits 只能传纯文本，无法控制信息区排版
+    let about = action_item(app, action::ABOUT, "关于 LanisMD", "")?;
     let check_update = action_item(app, action::CHECK_UPDATE, "检查更新…", "")?;
     let separator = PredefinedMenuItem::separator(app)?;
     let preferences = action_item(app, action::PREFERENCES, "偏好设置…", "CmdOrCtrl+,")?;
@@ -132,7 +137,11 @@ fn build_app_submenu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>
 /// Windows / Linux 应用子菜单：只保留跨平台可用的项
 #[cfg(not(target_os = "macos"))]
 fn build_app_submenu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Submenu<R>> {
-    let about = PredefinedMenuItem::about(app, Some("关于 LanisMD"), None)?;
+    let about = PredefinedMenuItem::about(
+        app,
+        Some("关于 LanisMD"),
+        Some(super::about_panel::about_metadata(app)),
+    )?;
     let check_update = action_item(app, action::CHECK_UPDATE, "检查更新…", "")?;
     let separator = PredefinedMenuItem::separator(app)?;
     let preferences = action_item(app, action::PREFERENCES, "偏好设置…", "")?;
@@ -184,12 +193,7 @@ pub fn create_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let select_all = PredefinedMenuItem::select_all(app, Some("全选"))?;
     let edit_separator2 = PredefinedMenuItem::separator(app)?;
     let find = action_item(app, action::FIND, "查找…", "CmdOrCtrl+F")?;
-    let global_search = action_item(
-        app,
-        action::GLOBAL_SEARCH,
-        "全局搜索…",
-        "CmdOrCtrl+Shift+F",
-    )?;
+    let global_search = action_item(app, action::GLOBAL_SEARCH, "全局搜索…", "CmdOrCtrl+Shift+F")?;
     let edit_submenu = Submenu::with_items(
         app,
         "编辑",
@@ -246,30 +250,13 @@ pub fn create_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let minimize = PredefinedMenuItem::minimize(app, Some("最小化"))?;
     let maximize = PredefinedMenuItem::maximize(app, Some("最大化"))?;
     let window_separator = PredefinedMenuItem::separator(app)?;
-    let mut window_items: Vec<&dyn IsMenuItem<R>> =
-        vec![&minimize, &maximize, &window_separator];
+    let mut window_items: Vec<&dyn IsMenuItem<R>> = vec![&minimize, &maximize, &window_separator];
     #[cfg(target_os = "macos")]
-    let bring_all_to_front =
-        PredefinedMenuItem::bring_all_to_front(app, Some("前置全部窗口"))?;
+    let bring_all_to_front = PredefinedMenuItem::bring_all_to_front(app, Some("前置全部窗口"))?;
     #[cfg(target_os = "macos")]
     window_items.push(&bring_all_to_front);
-    let window_submenu = Submenu::with_id_and_items(
-        app,
-        WINDOW_SUBMENU_ID,
-        "窗口",
-        true,
-        &window_items,
-    )?;
-
-    let about_app = action_item(app, action::ABOUT, "关于 LanisMD", "")?;
-    let help_check_update = action_item(app, action::CHECK_UPDATE, "检查更新…", "")?;
-    let help_submenu = Submenu::with_id_and_items(
-        app,
-        HELP_SUBMENU_ID,
-        "帮助",
-        true,
-        &[&about_app, &help_check_update],
-    )?;
+    let window_submenu =
+        Submenu::with_id_and_items(app, WINDOW_SUBMENU_ID, "窗口", true, &window_items)?;
 
     Menu::with_items(
         app,
@@ -279,7 +266,6 @@ pub fn create_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &edit_submenu,
             &view_submenu,
             &window_submenu,
-            &help_submenu,
         ],
     )
 }

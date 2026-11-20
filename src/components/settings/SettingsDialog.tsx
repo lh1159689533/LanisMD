@@ -581,6 +581,31 @@ export function SettingsDialog() {
                 {/* Code Block Settings */}
                 <div className="settings-section-title">代码块</div>
                 <div className="settings-item">
+                  <label className="settings-item-label">字体大小</label>
+                  <SettingsSlider
+                    value={config.editor.codeBlock?.fontSize ?? 14}
+                    min={10}
+                    max={24}
+                    step={1}
+                    suffix="px"
+                    onChange={(v) => setNestedConfig('editor.codeBlock.fontSize', v)}
+                  />
+                </div>
+                <div className="settings-item">
+                  <label className="settings-item-label">行高</label>
+                  <SettingsSlider
+                    value={config.editor.codeBlock?.lineHeight ?? 1.6}
+                    min={1.2}
+                    max={2.4}
+                    step={0.05}
+                    formatValue={(v) => v.toFixed(2)}
+                    onChange={(v) => setNestedConfig('editor.codeBlock.lineHeight', v)}
+                  />
+                </div>
+                <div className="settings-item-hint">
+                  <p>同时作用于数学公式、Mermaid、Front Matter 的源码编辑区。</p>
+                </div>
+                <div className="settings-item">
                   <label className="settings-item-label">显示行号</label>
                   <button
                     onClick={() =>

@@ -4,6 +4,7 @@
  * @changelog
  * | 版本   | 变更说明                     | 关联                                |
  * | v1.0.0 | 初始实现：更新信息与流程状态 | REQ: 系统集成-自动更新 TECH: 插件封装 |
+ * | v1.1.0 | 新增 up-to-date 状态         | REQ: 系统集成-更新通知 TECH: 状态机   |
  * /@changelog
  *
  * @author hhhuilli
@@ -21,5 +22,6 @@ export interface UpdateInfo {
   date?: string;
 }
 
-/** 更新流程状态 */
-export type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
+/** 更新流程状态；up-to-date 表示手动检查后确认已是最新版本 */
+export type UpdateStatus =
+  'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'ready' | 'error';

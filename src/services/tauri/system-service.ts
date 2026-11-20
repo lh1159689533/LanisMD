@@ -36,7 +36,6 @@ export const MENU_ACTION = {
   TOGGLE_IMMERSIVE: 'toggle-immersive',
   PREFERENCES: 'preferences',
   CHECK_UPDATE: 'check-update',
-  ABOUT: 'about',
 } as const;
 
 export type MenuAction = (typeof MENU_ACTION)[keyof typeof MENU_ACTION];

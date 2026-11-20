@@ -3,6 +3,7 @@
 // @changelog
 // | 版本   | 变更说明                                 | 关联                                |
 // | v1.0.0 | 从 server.rs 拆出参数；新增乐观锁与工作区参数 | REQ: MCP 乐观锁 TECH: version 校验 |
+// | v1.1.0 | 路径参数说明支持工作区外绝对路径           | REQ: MCP 指定写入路径 TECH: 外部路径校验 |
 // /@changelog
 //
 // @author hhhuilli
@@ -22,7 +23,7 @@ pub struct ListDocumentsArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ReadDocumentArgs {
-    /// 文档路径（相对工作区或工作区内的绝对路径）
+    /// 文档路径：相对工作区的路径，或绝对路径（用户指定了位置时原样传入绝对路径，可在工作区之外）
     pub path: String,
     /// 起始行号（从 1 开始，含），不传则从第一行开始
     #[serde(default)]
@@ -34,7 +35,7 @@ pub struct ReadDocumentArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct PathArgs {
-    /// 文档路径（相对工作区或工作区内的绝对路径）
+    /// 文档路径：相对工作区的路径，或绝对路径（用户指定了位置时原样传入绝对路径，可在工作区之外）
     pub path: String,
 }
 
@@ -61,7 +62,7 @@ pub struct SearchDocumentsArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct WriteDocumentArgs {
-    /// 目标 Markdown 文件路径，父目录不存在时会自动创建
+    /// 目标 Markdown 文件路径：相对工作区的路径，或绝对路径（用户指定了目录时必须原样传入绝对路径，可在工作区之外），父目录不存在时会自动创建
     pub path: String,
     /// 完整的文件内容
     pub content: String,
@@ -75,7 +76,7 @@ pub struct WriteDocumentArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct EditDocumentArgs {
-    /// 目标 Markdown 文件路径
+    /// 目标 Markdown 文件路径（相对工作区或绝对路径）
     pub path: String,
     /// 要被替换的原文，必须与文件内容逐字一致（含空白与换行）
     pub old_text: String,
@@ -91,7 +92,7 @@ pub struct EditDocumentArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct AppendDocumentArgs {
-    /// 目标 Markdown 文件路径，不存在时自动创建
+    /// 目标 Markdown 文件路径（相对工作区或绝对路径），不存在时自动创建
     pub path: String,
     /// 追加到文末的内容（会自动与原内容用换行分隔）
     pub content: String,
@@ -102,9 +103,9 @@ pub struct AppendDocumentArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct MoveDocumentArgs {
-    /// 源 Markdown 文件路径
+    /// 源 Markdown 文件路径（相对工作区或绝对路径）
     pub from: String,
-    /// 目标 Markdown 文件路径（不能已存在），可用于重命名或移动到其他目录
+    /// 目标 Markdown 文件路径（相对工作区或绝对路径，不能已存在），可用于重命名或移动到其他目录
     pub to: String,
 }
 
@@ -130,6 +131,6 @@ pub struct GitDiffArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct SelectWorkspaceArgs {
-    /// 用户明确选择的文件夹绝对路径（可以是最近打开的文件夹，也可以是用户指定的新目录，不存在会自动创建）
+    /// 用户明确选择的文件夹绝对路径（可以是最近打开的文件夹，也可以是用户指定的新目录，不存在会自动创建）；传空字符串恢复跟随 LanisMD 当前打开的文件夹
     pub path: String,
 }

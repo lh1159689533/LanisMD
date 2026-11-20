@@ -334,8 +334,8 @@
   --lanismd-codeblock-padding: 0;
 
   /* 工具栏 */
-  --lanismd-codeblock-toolbar-height: 36px;
-  --lanismd-codeblock-toolbar-padding: 6px 12px;
+  --lanismd-codeblock-toolbar-height: 28px;
+  --lanismd-codeblock-toolbar-padding: 2px 12px;
 
   /* 语言标签 */
   --lanismd-codeblock-lang-color: #64748b;
