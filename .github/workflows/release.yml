@@ -69,7 +69,9 @@ jobs:
           tauriScript: pnpm tauri
           tagName: v__VERSION__
           releaseName: 'LanisMD v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          # 发布说明会同步写入 latest.json 的 notes，并在应用内更新通知中展示；
+          # 留空则不展示，需要时可在此填写面向用户的更新内容
+          releaseBody: ''
           releaseDraft: false
           prerelease: false
           uploadUpdaterJson: true
