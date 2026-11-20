@@ -19,6 +19,7 @@ import {
   commands as gfmCommands,
   plugins as gfmPlugins,
   strikethroughSchema,
+  wrapInTaskListInputRule,
 } from '@milkdown/kit/preset/gfm';
 import { markRule } from '@milkdown/kit/prose';
 import { $inputRule } from '@milkdown/kit/utils';
@@ -32,6 +33,7 @@ import { upload } from '@milkdown/plugin-upload';
 import { listItemBlockConfig } from '@milkdown/kit/component/list-item-block';
 import { imageInlineComponent } from '@milkdown/kit/component/image-inline';
 import { listItemBlockComponent } from './plugins/list-item-block';
+import { taskListInputRule } from './plugins/task-list-input-rule';
 import { slash, configureSlash } from './plugins/slash-menu';
 import { block, configureBlock } from './plugins/block-handle';
 import { tooltip, configureTooltip } from './plugins/tooltip-toolbar';
@@ -146,12 +148,15 @@ const strikethroughDoubleTildeInputRule = $inputRule((ctx) => {
   return markRule(/(?<![\w:/])~~(.+?)~~$/, strikethroughSchema.type(ctx));
 });
 
-// 组合 GFM 插件（排除 markInputRules，用自定义版本替代）
+// 组合 GFM 插件：
+// - 排除 markInputRules，用仅匹配 ~~text~~ 的自定义版本替代
+// - 排除官方 wrapInTaskListInputRule：它只在已有列表项内生效，无法从普通段落一步生成任务列表
 const gfm = [
   gfmSchema,
-  gfmInputRules,
+  gfmInputRules.filter((rule) => rule !== wrapInTaskListInputRule),
   gfmPasteRules,
   [strikethroughDoubleTildeInputRule],
+  taskListInputRule,
   gfmKeymap,
   gfmCommands,
   gfmPlugins,
