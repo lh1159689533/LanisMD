@@ -121,10 +121,11 @@
   position: relative;
 }
 
-/* 右侧展开箭头 */
+/* 右侧展开箭头（内容为 12x12 的 SVG） */
 .lanismd-context-menu-arrow {
+  display: flex;
+  align-items: center;
   margin-left: auto;
-  font-size: 12px;
   line-height: 1;
   opacity: 0.6;
 }
@@ -147,4 +148,43 @@
 .lanismd-context-menu-item--submenu:hover .lanismd-context-menu-submenu,
 .lanismd-context-menu-item--submenu:focus-within .lanismd-context-menu-submenu {
   display: block;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 斜杠命令风格子菜单（块手柄「转为」）                                     */
+/* 菜单项直接复用 slash-menu.css 中的 .milkdown-slash-* 样式，这里只负责容器 */
+/* ---------------------------------------------------------------------- */
+
+.lanismd-context-menu-submenu--slash {
+  width: 280px;
+  min-width: 0;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--lanismd-spacing-sm);
+  background: var(--lanismd-editor-bg);
+  border: 1px solid var(--lanismd-editor-border);
+  border-radius: var(--lanismd-radius-lg);
+  box-shadow: var(--lanismd-shadow-md);
+}
+
+.lanismd-context-menu-submenu--slash::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lanismd-context-menu-submenu--slash::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lanismd-context-menu-submenu--slash::-webkit-scrollbar-thumb {
+  background: var(--lanismd-scrollbar-thumb);
+  border-radius: 2px;
+}
+
+/* 菜单项是 button，需抹掉浏览器默认按钮样式 */
+.lanismd-context-menu-slash-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
 }

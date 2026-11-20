@@ -1,6 +1,6 @@
 /**
  * LanisMD Editor - Block Handle
- * 块拖拽手柄样式
+ * 块手柄样式：六点抓手（点击出菜单 / 拖拽排序）与加号（插入并打开斜杠菜单）
  */
 
 /* ===== Block Handle ===== */
@@ -48,6 +48,8 @@
   color: var(--lanismd-sidebar-text);
   transition: all var(--lanismd-transition-normal);
   padding: 0;
+  /* 两个按钮并列时不允许被挤压，避免加号换行或变形 */
+  flex: 0 0 auto;
 }
 
 .milkdown-block-btn:hover {

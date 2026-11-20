@@ -19,8 +19,14 @@
   border-radius: var(--lanismd-radius-lg);
   box-shadow: var(--lanismd-shadow-md);
   padding: var(--lanismd-spacing-sm);
-  max-height: 360px;
+  max-height: 520px;
   overflow-y: auto;
+}
+
+/* 块手柄 ＋ 号弹出的悬浮菜单：挂在 body 下，按锚点视口坐标定位 */
+.milkdown-slash--floating {
+  position: fixed;
+  z-index: 1000;
 }
 
 /* SlashProvider 通过 data-show 属性控制显示/隐藏 */

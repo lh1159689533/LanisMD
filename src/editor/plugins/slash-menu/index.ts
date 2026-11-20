@@ -7,6 +7,14 @@
  * - 键盘导航（上下选择，Enter 执行，左右进/出子菜单，Esc 关闭）
  * - 输入过滤（输入 /h 只显示标题相关项）
  * - 最近使用区域（显示最近使用的 3 个命令，搜索时隐藏）
+ * - 悬浮入口（块手柄 ＋ 号）：不改动文档直接弹出同一份菜单，选中命令时才插入新块
+ *
+ * @changelog
+ * | 版本   | 变更说明                                       | 关联                                               |
+ * | v1.1.0 | 新增：悬浮入口，加号不再预先插入空行           | REQ: 20261120-block-handle-menu TECH: 块手柄操作菜单 |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 import { SlashProvider, slashFactory } from '@milkdown/plugin-slash';
@@ -21,6 +29,24 @@ import { createAiSlashCommand } from './commands-ai';
 import { onIconThemeChange } from './icons';
 import { createTableGrid, type TableGridController } from './table-grid';
 import type { SlashCommand } from './types';
+
+// ---------------------------------------------------------------------------
+// 菜单宿主
+// ---------------------------------------------------------------------------
+
+/**
+ * 菜单宿主：同一个 SlashMenuView 既服务于编辑器内键入 "/"，也服务于
+ * 块手柄 ＋ 号弹出的悬浮菜单，两者只在「如何关闭」「执行前落点」上不同。
+ */
+interface SlashMenuHost {
+  /** 关闭菜单 */
+  hide(): void;
+  /**
+   * 命令执行前准备落点（如在目标块下方插入空段落并放置光标）。
+   * 返回 false 表示落点失效，放弃执行。
+   */
+  prepare?(view: EditorView): boolean;
+}
 
 // ---------------------------------------------------------------------------
 // 最近使用记录管理
@@ -84,7 +110,6 @@ class SlashMenuView {
   private allCommands: SlashCommand[] = getCurrentCommands();
   private filteredCommands: SlashCommand[] = [...this.allCommands];
   private view: EditorView | null = null;
-  private provider: SlashProvider | null = null;
 
   /** 当前是否有搜索文本（有搜索时隐藏最近使用） */
   private isSearching = false;
@@ -109,6 +134,9 @@ class SlashMenuView {
 
   /** 取消主题变化订阅的句柄 */
   private themeUnsubscribe: (() => void) | null = null;
+
+  /** 菜单宿主，未设置时关闭/执行均为空操作 */
+  private host: SlashMenuHost | null = null;
 
   constructor() {
     this.container = document.createElement('div');
@@ -226,8 +254,7 @@ class SlashMenuView {
         e.preventDefault();
         e.stopPropagation();
         if (cmd.id) recordCommandUsage(cmd.id);
-        cmd.execute(this.view!);
-        this.provider?.hide();
+        this.run((view) => cmd.execute(view));
       });
 
       recentContainer.appendChild(tag);
@@ -429,12 +456,9 @@ class SlashMenuView {
 
   /** 按选中的行列插入表格并关闭菜单 */
   private pickTableSize(rows: number, cols: number) {
-    if (!this.view) return;
     const cmd = this.filteredCommands[this.tableGridParentIndex];
     if (cmd?.id) recordCommandUsage(cmd.id);
-    insertTableWithSize(this.view, Math.max(1, rows), Math.max(1, cols));
-    this.hideSubmenu();
-    this.provider?.hide();
+    this.run((view) => insertTableWithSize(view, Math.max(1, rows), Math.max(1, cols)));
   }
 
   private hideSubmenu() {
@@ -489,24 +513,35 @@ class SlashMenuView {
     });
   }
 
+  /**
+   * 所有命令执行的统一出口：先让宿主准备落点，再执行，最后关闭菜单。
+   * 悬浮菜单正是借助 prepare 做到「选中命令时才插入新块」。
+   */
+  private run(action: (view: EditorView) => void) {
+    const view = this.view;
+    if (!view) return;
+    if (this.host?.prepare && !this.host.prepare(view)) {
+      this.hideMenu();
+      return;
+    }
+    action(view);
+    this.hideMenu();
+  }
+
   private executeItem(index: number) {
     const cmd = this.filteredCommands[index];
-    if (!cmd || !this.view) return;
+    if (!cmd) return;
     // 记录最近使用
     if (cmd.id) recordCommandUsage(cmd.id);
-    cmd.execute(this.view);
-    this.hideSubmenu();
-    this.provider?.hide();
+    this.run((view) => cmd.execute(view));
   }
 
   private executeSubmenuItem(childIndex: number) {
     const parent = this.filteredCommands[this.submenuParentIndex];
-    if (!parent?.children || !this.view) return;
+    if (!parent?.children) return;
     const child = parent.children[childIndex];
     if (!child || child.label === '---') return; // 跳过分隔符
-    child.execute(this.view);
-    this.hideSubmenu();
-    this.provider?.hide();
+    this.run((view) => child.execute(view));
   }
 
   /** 基于搜索文本过滤命令 */
@@ -539,7 +574,7 @@ class SlashMenuView {
   handleKeyDown(event: KeyboardEvent): boolean {
     if (this.filteredCommands.length === 0) {
       if (event.key === 'Escape') {
-        this.provider?.hide();
+        this.hideMenu();
         return true;
       }
       return false;
@@ -683,8 +718,7 @@ class SlashMenuView {
         }
         return true;
       case 'Escape':
-        this.hideSubmenu();
-        this.provider?.hide();
+        this.hideMenu();
         return true;
       default:
         return false;
@@ -712,8 +746,14 @@ class SlashMenuView {
     this.view = view;
   }
 
-  setProvider(provider: SlashProvider) {
-    this.provider = provider;
+  setHost(host: SlashMenuHost) {
+    this.host = host;
+  }
+
+  /** 关闭菜单的统一出口：收起子面板后交给宿主隐藏 */
+  private hideMenu() {
+    this.hideSubmenu();
+    this.host?.hide();
   }
 
   /** 释放资源：取消主题订阅 */
@@ -748,6 +788,7 @@ export function configureSlash(ctx: Ctx) {
           if (state.selection.from !== state.selection.to) return false;
 
           const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, '\ufffc');
+
           // 只有行首第一个字符为 `/` 时才触发斜杠命令
           if (textBefore.charAt(0) !== '/') return false;
           const lastSlash = 0;
@@ -762,7 +803,7 @@ export function configureSlash(ctx: Ctx) {
         },
       });
 
-      menuView.setProvider(provider);
+      menuView.setHost({ hide: () => provider.hide() });
 
       return {
         update: (view: EditorView, prevState: EditorView['state']) => {
@@ -773,6 +814,7 @@ export function configureSlash(ctx: Ctx) {
           provider.destroy();
           menuView.destroy();
           menuView.element.remove();
+          closeFloatingSlashMenu();
         },
       };
     },
@@ -783,6 +825,118 @@ export function configureSlash(ctx: Ctx) {
       },
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// 悬浮入口（块手柄 ＋ 号）
+// ---------------------------------------------------------------------------
+
+/** 悬浮菜单与锚点之间的间距（像素） */
+const FLOATING_GAP = 6;
+/** 悬浮菜单与视口边缘的最小留白（像素） */
+const VIEWPORT_MARGIN = 8;
+/** 悬浮菜单打开期间不会关闭菜单的按键（修饰键与无子菜单时的左右方向键） */
+const FLOATING_PASSIVE_KEYS = new Set([
+  'Shift',
+  'Control',
+  'Alt',
+  'Meta',
+  'ArrowLeft',
+  'ArrowRight',
+]);
+
+/** 当前打开的悬浮菜单的关闭函数（全局唯一） */
+let floatingCleanup: (() => void) | null = null;
+
+/** 关闭块手柄 ＋ 号弹出的悬浮斜杠菜单 */
+export function closeFloatingSlashMenu(): void {
+  const cleanup = floatingCleanup;
+  floatingCleanup = null;
+  cleanup?.();
+}
+
+interface FloatingSlashOptions {
+  view: EditorView;
+  /** 锚点矩形（通常是 ＋ 号按钮），菜单在其下方展开，空间不足时翻到上方 */
+  anchor: DOMRect;
+  /** 命令执行前准备落点；返回 false 时放弃执行 */
+  prepare: (view: EditorView) => boolean;
+}
+
+/** 把悬浮菜单放到锚点下方，超出视口时翻到上方并做左右收拢 */
+function positionFloating(el: HTMLElement, anchor: DOMRect) {
+  el.style.left = `${anchor.left}px`;
+  el.style.top = `${anchor.bottom + FLOATING_GAP}px`;
+
+  requestAnimationFrame(() => {
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - VIEWPORT_MARGIN) {
+      const above = anchor.top - FLOATING_GAP - rect.height;
+      el.style.top = `${Math.max(VIEWPORT_MARGIN, above)}px`;
+    }
+    if (rect.right > window.innerWidth - VIEWPORT_MARGIN) {
+      el.style.left = `${Math.max(VIEWPORT_MARGIN, window.innerWidth - rect.width - VIEWPORT_MARGIN)}px`;
+    }
+  });
+}
+
+/**
+ * 在锚点旁弹出与斜杠命令完全相同的菜单，期间不修改文档。
+ *
+ * 只有用户真正选中命令时才通过 prepare 插入新块并执行命令；按 Esc、
+ * 点击别处、滚动或继续打字都会直接关闭，文档保持原样。
+ */
+export function openFloatingSlashMenu({ view, anchor, prepare }: FloatingSlashOptions): void {
+  closeFloatingSlashMenu();
+  if (useUIStore.getState().immersiveReading) return;
+
+  const menuView = new SlashMenuView();
+  menuView.setView(view);
+  menuView.setHost({ hide: closeFloatingSlashMenu, prepare });
+  menuView.refreshCommands();
+  menuView.filter('');
+
+  const el = menuView.element;
+  el.classList.add('milkdown-slash--floating');
+  el.dataset.show = 'true';
+  document.body.appendChild(el);
+  positionFloating(el, anchor);
+
+  // 键盘事件在捕获阶段拦截，抢在 ProseMirror 之前处理导航键
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.isComposing) return;
+    if (menuView.handleKeyDown(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (!FLOATING_PASSIVE_KEYS.has(e.key)) closeFloatingSlashMenu();
+  };
+  const onMouseDown = (e: MouseEvent) => {
+    if (!el.contains(e.target as Node)) closeFloatingSlashMenu();
+  };
+  const onScroll = (e: Event) => {
+    if (!el.contains(e.target as Node)) closeFloatingSlashMenu();
+  };
+  const onResize = () => closeFloatingSlashMenu();
+
+  document.addEventListener('keydown', onKeyDown, true);
+  // 打开动作本身可能发生在一次 mousedown 中，延迟一帧再监听外部点击
+  const frame = requestAnimationFrame(() => {
+    document.addEventListener('mousedown', onMouseDown, true);
+  });
+  document.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', onResize);
+
+  floatingCleanup = () => {
+    cancelAnimationFrame(frame);
+    document.removeEventListener('keydown', onKeyDown, true);
+    document.removeEventListener('mousedown', onMouseDown, true);
+    document.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', onResize);
+    menuView.destroy();
+    el.remove();
+  };
 }
 
 // 保留原有导出路径便于平滑迁移
