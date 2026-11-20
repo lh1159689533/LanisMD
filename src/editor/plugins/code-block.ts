@@ -16,7 +16,12 @@ import type { Ctx } from '@milkdown/kit/ctx';
 import { languages } from '@codemirror/language-data';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { keymap, lineNumbers, EditorView } from '@codemirror/view';
-import { HighlightStyle, syntaxHighlighting, bracketMatching, indentUnit } from '@codemirror/language';
+import {
+  HighlightStyle,
+  syntaxHighlighting,
+  bracketMatching,
+  indentUnit,
+} from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { basicSetup } from 'codemirror';
 import type { Extension } from '@codemirror/state';
@@ -141,8 +146,11 @@ const highlightStyle = HighlightStyle.define([
  * 部分主题的当前行背景为不透明色，会把选区完全盖住；
  * CSS 借助该类在有选区时隐藏当前行背景。
  */
-const selectionStateClass = EditorView.editorAttributes.compute(['selection'], (state) =>
-  state.selection.ranges.some((range) => !range.empty) ? { class: 'cm-has-selection' } : {},
+// 显式标注返回类型：否则两个分支会被推断为 `{ class?: undefined }` 联合类型，与 Attrs 不兼容
+const selectionStateClass = EditorView.editorAttributes.compute(
+  ['selection'],
+  (state): Record<string, string> =>
+    state.selection.ranges.some((range) => !range.empty) ? { class: 'cm-has-selection' } : {},
 );
 
 // ---------------------------------------------------------------------------
