@@ -74,6 +74,7 @@
     "core:window:allow-set-focus",
     "core:window:allow-set-decorations",
     "core:window:allow-set-title-bar-style",
+    "core:window:allow-set-theme",
     "core:window:allow-start-dragging",
     "store:default",
     "notification:default",

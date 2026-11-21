@@ -40,10 +40,15 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_updater::Builder::new().build())
             .plugin(tauri_plugin_process::init())
-            .menu(|app| services::app_menu::create_menu(app))
             .on_menu_event(|app, event| {
                 services::app_menu::handle_menu_event(app, event.id().as_ref());
             });
+    }
+
+    // Windows 的菜单在 setup 中挂到主窗口，避免被子窗口继承；其它平台使用应用级菜单
+    #[cfg(all(desktop, not(target_os = "windows")))]
+    {
+        builder = builder.menu(|app| services::app_menu::create_menu(app));
     }
 
     builder
@@ -69,6 +74,12 @@ pub fn run() {
                     cwd.as_deref(),
                 );
                 services::file_open_service::deliver_paths(app.handle(), paths);
+            }
+
+            // Windows：主窗口使用系统标题栏，菜单栏只挂在主窗口上
+            #[cfg(target_os = "windows")]
+            if let Err(err) = services::app_menu::attach_to_main_window(app.handle()) {
+                eprintln!("[app_menu] 挂载 Windows 菜单栏失败: {err}");
             }
 
             // macOS: 恢复窗口装饰（红绿灯）+ 设置 Overlay 标题栏样式

@@ -5,6 +5,7 @@ import {
 } from 'react-icons/ri';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
+import { useNativeWindowChrome } from '@/hooks/useNativeWindowChrome';
 import { useFileStore } from '@/stores/file-store';
 import { cn } from '@/utils/cn';
 
@@ -51,20 +52,33 @@ function WinCloseIcon() {
   );
 }
 
+/** 同步获取当前平台，首帧即可确定标题栏形态，避免闪烁 */
+function detectPlatform(): string {
+  try {
+    return platform();
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * 应用标题栏
+ * - macOS：自绘标题栏，为原生红绿灯预留空间
+ * - Windows：使用系统标题栏与原生菜单栏，本组件不渲染，仅同步窗口标题与主题
+ * - Linux：自绘标题栏 + 自绘窗口控制按钮
+ */
 export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
   const currentFile = useFileStore((s) => s.currentFile);
   const saveStatus = useFileStore((s) => s.saveStatus);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [isMac, setIsMac] = useState(false);
+  const [os] = useState(detectPlatform);
+  const isMac = os === 'macos';
+  const usesNativeTitleBar = os === 'windows';
+
+  useNativeWindowChrome(usesNativeTitleBar);
 
   useEffect(() => {
-    // 检测平台
-    try {
-      const os = platform();
-      setIsMac(os === 'macos');
-    } catch {
-      setIsMac(false);
-    }
+    if (usesNativeTitleBar) return;
 
     // 监听窗口大小变化以跟踪最大化状态
     const appWindow = getCurrentWindow();
@@ -82,7 +96,7 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
     return () => {
       unlisten?.();
     };
-  }, []);
+  }, [usesNativeTitleBar]);
 
   const handleMinimize = useCallback(async () => {
     await getCurrentWindow().minimize();
@@ -140,7 +154,11 @@ export function TitleBar({ onNewFile, onOpenFile }: TitleBarProps) {
     }
   };
 
-  // Windows/Linux 窗口控制按钮的通用样式
+  if (usesNativeTitleBar) {
+    return null;
+  }
+
+  // Linux 窗口控制按钮的通用样式
   const winBtnBase = cn(
     'flex h-full w-[46px] items-center justify-center',
     'transition-colors duration-100',
