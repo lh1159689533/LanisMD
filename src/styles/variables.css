@@ -291,7 +291,7 @@
    * =============================================== */
 
   /* 无序列表 */
-  --lanismd-ul-padding-left: 1.75em;
+  --lanismd-ul-padding-left: 0.5em;
   --lanismd-ul-margin: 0.5em 0;
   --lanismd-ul-marker-color: var(--lanismd-text-color);
   --lanismd-ul-marker-type: disc;
@@ -304,8 +304,8 @@
   --lanismd-ul-l3-marker-type: square;
 
   /* 有序列表 */
-  --lanismd-ol-padding-left: 1.75em;
-  --lanismd-ol-margin: 0.5em 0;
+  --lanismd-ol-padding-left: var(--lanismd-ul-padding-left);
+  --lanismd-ol-margin: var(--lanismd-ul-margin);
   --lanismd-ol-marker-color: var(--lanismd-text-color);
   --lanismd-ol-marker-type: decimal;
 

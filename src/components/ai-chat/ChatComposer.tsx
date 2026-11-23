@@ -11,6 +11,7 @@
  * | v1.3.0 | 标签行内显示，紧跟其后输入 | REQ: AI 技能 |
  * | v1.4.0 | 输入框支持拖动调整高度       | REQ: AI 对话框 |
  * | v1.5.0 | 粘贴还原引用；任意位置键入 / 触发技能 | REQ: AI 对话框 |
+ * | v1.6.0 | 输入区下方增加 AI 生成内容核实提示   | REQ: AI 对话框 |
  * /@changelog
  *
  * @author hhhuilli
@@ -494,6 +495,7 @@ export function ChatComposer({ conversationId, modelId, running, turns }: ChatCo
           </div>
         </div>
       </div>
+      <div className="lanismd-ai-chat-disclaimer">内容由 AI 生成，请核实重要信息</div>
     </div>
   );
 }

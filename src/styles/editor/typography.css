@@ -131,7 +131,7 @@
 
 /* ===== Paragraph ===== */
 .milkdown-editor-root .ProseMirror p {
-  margin-bottom: var(--lanismd-paragraph-margin);
+  /* margin-bottom: var(--lanismd-paragraph-margin); */
   text-indent: var(--lanismd-paragraph-text-indent);
 }
 

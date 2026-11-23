@@ -690,7 +690,17 @@
 
 .lanismd-ai-chat-composer {
   flex-shrink: 0;
-  padding: 6px 10px 10px;
+  padding: 6px 10px 8px;
+}
+
+/* 输入区下方的免责说明：弱化展示，避免干扰输入 */
+.lanismd-ai-chat-disclaimer {
+  margin-top: 6px;
+  font-size: var(--lanismd-font-size-xs);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--lanismd-text-muted);
+  user-select: none;
 }
 
 .lanismd-ai-chat-actions {
