@@ -3,8 +3,9 @@
  * 仅在打开的文件夹位于 Git 仓库中时显示。
  *
  * @changelog
- * | 版本   | 变更说明                | 关联                  |
- * | v1.0.0 | 初始实现：状态栏 Git 区  | REQ: Git 改造 第 7 点 |
+ * | 版本   | 变更说明                   | 关联                                    |
+ * | v1.0.0 | 初始实现：状态栏 Git 区     | REQ: Git 改造 第 7 点                   |
+ * | v1.1.0 | 分支列表展示末端提交摘要     | REQ: 分支列表详情展示 TECH: for-each-ref |
  * /@changelog
  *
  * @author hhhuilli
@@ -40,11 +41,13 @@ function Popover({
   anchor,
   open,
   onClose,
+  className,
   children,
 }: {
   anchor: ReactNode;
   open: boolean;
   onClose: () => void;
+  className?: string;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -64,8 +67,57 @@ function Popover({
   return (
     <div ref={ref} className="relative flex items-center">
       {anchor}
-      {open && <div className="lanismd-git-popover">{children}</div>}
+      {open && <div className={cn('lanismd-git-popover', className)}>{children}</div>}
     </div>
+  );
+}
+
+/** 分支条目：首行分支名与相对时间，次行作者、短哈希与末端提交标题 */
+function BranchRow({
+  branch,
+  disabled,
+  onSelect,
+}: {
+  branch: BranchInfo;
+  disabled: boolean;
+  onSelect: () => void;
+}) {
+  const meta = [
+    ...(branch.authorName ? [{ key: 'author', text: branch.authorName, mono: false }] : []),
+    ...(branch.shortHash ? [{ key: 'hash', text: branch.shortHash, mono: true }] : []),
+    ...(branch.subject ? [{ key: 'subject', text: branch.subject, mono: false }] : []),
+  ];
+  return (
+    <button
+      type="button"
+      className={cn('lanismd-git-branch-item', branch.current && 'active')}
+      disabled={disabled}
+      title={`${branch.name}${branch.subject ? `：${branch.subject}` : ''}`}
+      onClick={onSelect}
+    >
+      <span className="lanismd-git-branch-line">
+        <span className="lanismd-git-branch-mark">
+          {branch.current ? (
+            <RiCheckLine size={12} />
+          ) : branch.remote ? (
+            <RiCloudLine size={12} />
+          ) : null}
+        </span>
+        <span className="lanismd-git-branch-name">{branch.name}</span>
+        {branch.timestamp != null && (
+          <span className="lanismd-git-branch-time">{timeAgo(branch.timestamp * 1000)}</span>
+        )}
+      </span>
+      {meta.length > 0 && (
+        <span className="lanismd-git-branch-meta">
+          {meta.map((item) => (
+            <span key={item.key} className={cn(item.mono && 'lanismd-git-branch-hash')}>
+              {item.text}
+            </span>
+          ))}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -97,6 +149,7 @@ function BranchItem() {
     <Popover
       open={open}
       onClose={() => setOpen(false)}
+      className="is-branch"
       anchor={
         <button
           type="button"
@@ -121,40 +174,31 @@ function BranchItem() {
         </div>
       ) : (
         <div className="lanismd-git-popover-list">
+          {local.length === 0 && remote.length === 0 && (
+            <div className="lanismd-git-popover-empty">暂无分支</div>
+          )}
           {local.map((b) => (
-            <button
-              type="button"
+            <BranchRow
               key={b.name}
-              className={cn('lanismd-git-popover-item', b.current && 'active')}
+              branch={b}
               disabled={operation !== null}
-              onClick={() => {
+              onSelect={() => {
                 setOpen(false);
                 void checkout(b);
               }}
-            >
-              <span className="lanismd-git-popover-check">
-                {b.current && <RiCheckLine size={12} />}
-              </span>
-              <span className="truncate">{b.name}</span>
-            </button>
+            />
           ))}
           {remote.length > 0 && <div className="lanismd-git-popover-section">远程分支</div>}
           {remote.map((b) => (
-            <button
-              type="button"
+            <BranchRow
               key={b.name}
-              className="lanismd-git-popover-item"
+              branch={b}
               disabled={operation !== null}
-              onClick={() => {
+              onSelect={() => {
                 setOpen(false);
                 void checkout(b);
               }}
-            >
-              <span className="lanismd-git-popover-check">
-                <RiCloudLine size={12} />
-              </span>
-              <span className="truncate">{b.name}</span>
-            </button>
+            />
           ))}
         </div>
       )}

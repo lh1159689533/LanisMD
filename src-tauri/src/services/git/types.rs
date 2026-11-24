@@ -1,8 +1,9 @@
 // Git 模块公共类型定义（与前端 src/types/git.ts 字段对齐）
 //
 // @changelog
-// | 版本   | 变更说明                         | 关联                         |
-// | v1.0.0 | 初始实现：基于系统 git 的仓库能力 | REQ: Git 改造 TECH: 系统 git |
+// | 版本   | 变更说明                         | 关联                                    |
+// | v1.0.0 | 初始实现：基于系统 git 的仓库能力 | REQ: Git 改造 TECH: 系统 git            |
+// | v1.1.0 | 分支条目补充末端提交摘要字段      | REQ: 分支列表详情展示 TECH: for-each-ref |
 // /@changelog
 //
 // @author hhhuilli
@@ -135,6 +136,14 @@ pub struct BranchInfo {
     pub name: String,
     pub current: bool,
     pub remote: bool,
+    /// 末端提交短哈希，空字段时为 None
+    pub short_hash: Option<String>,
+    /// 末端提交作者
+    pub author_name: Option<String>,
+    /// 末端提交时间（Unix 秒）
+    pub timestamp: Option<i64>,
+    /// 末端提交标题
+    pub subject: Option<String>,
 }
 
 /// 远程仓库分支列表（克隆前查询）

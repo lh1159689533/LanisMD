@@ -2,6 +2,14 @@
  * Git 面板样式：侧边栏「更改」「历史」视图、状态栏弹出层、打开文件夹菜单、通用徽标
  *
  * 类名前缀：.lanismd-git-* / .lanismd-open-folder-*
+ *
+ * @changelog
+ * | 版本   | 变更说明                     | 关联                                    |
+ * | v1.0.0 | 初始实现：Git 面板样式         | REQ: Git 改造                           |
+ * | v1.1.0 | 新增分支列表两行式条目样式     | REQ: 分支列表详情展示 TECH: for-each-ref |
+ * /@changelog
+ *
+ * @author hhhuilli
  */
 
 /* ===== 通用：旋转 / 统计 / 状态徽标 ===== */
@@ -497,6 +505,87 @@
   display: inline-flex;
   width: 12px;
   flex-shrink: 0;
+}
+
+/* ===== 切换分支列表（两行式条目） ===== */
+.lanismd-git-popover.is-branch {
+  width: 380px;
+  max-width: calc(100vw - 24px);
+}
+
+.lanismd-git-branch-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px 7px;
+  border-bottom: 1px solid var(--lanismd-sidebar-border);
+  text-align: left;
+  transition: background-color var(--lanismd-transition-fast);
+}
+
+.lanismd-git-branch-item:last-child {
+  border-bottom: 0;
+}
+
+.lanismd-git-branch-item:hover:not(:disabled) {
+  background-color: var(--lanismd-sidebar-hover);
+}
+
+.lanismd-git-branch-item:disabled {
+  opacity: 0.55;
+}
+
+.lanismd-git-branch-item.active .lanismd-git-branch-name {
+  color: var(--lanismd-accent);
+  font-weight: 600;
+}
+
+.lanismd-git-branch-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lanismd-git-branch-mark {
+  display: inline-flex;
+  width: 12px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.lanismd-git-branch-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.lanismd-git-branch-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.lanismd-git-branch-meta {
+  display: block;
+  margin-top: 2px;
+  padding-left: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.lanismd-git-branch-meta > span + span::before {
+  content: '·';
+  margin: 0 5px;
+  opacity: 0.6;
+}
+
+.lanismd-git-branch-hash {
+  font-family: var(--lanismd-font-mono);
 }
 
 .lanismd-git-popover-row {

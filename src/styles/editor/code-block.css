@@ -376,12 +376,12 @@
 }
 
 .milkdown-editor-root .cm-content {
-  padding-left: var(--lanismd-cm-line-inset);
+  /* padding-left: var(--lanismd-cm-line-inset); */
   padding-right: var(--lanismd-cm-line-inset);
 }
 
 .milkdown-editor-root .cm-editor .cm-line {
-  padding-left: var(--lanismd-cm-line-inset);
+  /* padding-left: var(--lanismd-cm-line-inset); */
   padding-right: var(--lanismd-cm-line-inset);
 }
 
@@ -401,7 +401,7 @@
 
 .milkdown-editor-root .cm-lineNumbers .cm-gutterElement {
   padding: 0 var(--lanismd-spacing-md) 0 0;
-  min-width: 32px;
+  min-width: 30px;
   /* 跟随代码字号等比缩放（默认 14px 代码对应约 12px 行号） */
   font-size: 0.86em;
 }

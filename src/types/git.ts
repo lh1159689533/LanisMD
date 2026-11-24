@@ -2,8 +2,9 @@
  * Git 相关类型定义（与 src-tauri/src/services/git/types.rs 字段对齐）
  *
  * @changelog
- * | 版本   | 变更说明                 | 关联                         |
- * | v1.0.0 | 初始实现：替代旧 sync 类型 | REQ: Git 改造 TECH: 系统 git |
+ * | 版本   | 变更说明                   | 关联                                    |
+ * | v1.0.0 | 初始实现：替代旧 sync 类型   | REQ: Git 改造 TECH: 系统 git            |
+ * | v1.1.0 | 分支条目补充末端提交摘要字段 | REQ: 分支列表详情展示 TECH: for-each-ref |
  * /@changelog
  *
  * @author hhhuilli
@@ -96,6 +97,14 @@ export interface BranchInfo {
   name: string;
   current: boolean;
   remote: boolean;
+  /** 末端提交短哈希，字段缺失时为 null */
+  shortHash: string | null;
+  /** 末端提交作者 */
+  authorName: string | null;
+  /** 末端提交时间（Unix 秒） */
+  timestamp: number | null;
+  /** 末端提交标题 */
+  subject: string | null;
 }
 
 export interface RemoteBranches {

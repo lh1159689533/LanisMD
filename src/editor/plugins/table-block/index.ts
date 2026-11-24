@@ -1,4 +1,13 @@
 /**
+ * @changelog
+ * | 版本   | 变更说明                                             | 关联                                                  |
+ * | v1.1.0 | 适配表格外层滚动容器，并在横滚时重算手柄位置          | REQ: 表格列宽与表头排版优化 TECH: 内容驱动列宽方案 §2 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
+/**
  * Table Handle Plugin
  *
  * 自定义表格增强插件，实现 Notion 风格的表格操作：
@@ -47,6 +56,7 @@ import {
   updateInsertRowAboveButtonVisibility,
   updateDeleteRowButtonState,
   updateMenuVisibility,
+  resolveTableElement,
   type HandleCallbacks,
   type MenuCallbacks,
   type AddLineCallbacks,
@@ -61,9 +71,10 @@ import {
 
 import { TableOperations } from './row-col-operations';
 import { DragDropManager } from './drag-drop';
+import { TABLE_WRAP_CLASS } from './schema-extend';
 
 // Re-export schema extension
-export { extendedTableSchema } from './schema-extend';
+export { extendedTableSchema, TABLE_WRAP_CLASS } from './schema-extend';
 
 // ---------------------------------------------------------------------------
 // Plugin Context Class
@@ -258,8 +269,9 @@ class TableHandlePluginContext {
           if (node.type.name === 'table') {
             const pos = $from.before(d);
             const dom = this.currentView.nodeDOM(pos) as HTMLElement;
-            if (dom && dom.tagName === 'TABLE') {
-              tableNode = dom as HTMLTableElement;
+            const tableElement = resolveTableElement(dom);
+            if (tableElement) {
+              tableNode = tableElement;
             }
             break;
           }
@@ -429,8 +441,9 @@ class TableHandlePluginContext {
     if (!this.currentView || tablePos < 0) return;
 
     const dom = this.currentView.nodeDOM(tablePos) as HTMLElement;
-    if (dom && dom.tagName === 'TABLE') {
-      this.stateContext.tableElement = dom as HTMLTableElement;
+    const tableElement = resolveTableElement(dom);
+    if (tableElement) {
+      this.stateContext.tableElement = tableElement;
     }
   }
 
@@ -561,8 +574,9 @@ class TableHandlePluginContext {
       if (node.type.name === 'table') {
         const pos = $from.before(d);
         const dom = view.nodeDOM(pos) as HTMLElement;
-        if (dom && dom.tagName === 'TABLE') {
-          tableNode = dom as HTMLTableElement;
+        const tableElement = resolveTableElement(dom);
+        if (tableElement) {
+          tableNode = tableElement;
           inTable = true;
         }
         break;
@@ -732,6 +746,29 @@ class TableHandlePluginContext {
 
     tryAppendWithRetry();
 
+    // 手柄挂在编辑器根上，表格容器横向滚动时不会自动跟随，需要重算位置
+    const handleTableScroll = (event: Event): void => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !target.classList.contains(TABLE_WRAP_CLASS)) {
+        return;
+      }
+
+      const table = this.stateContext.tableElement;
+      const cell = this.currentFocusedCell;
+      if (!table || !cell || !target.contains(table) || !document.contains(cell)) return;
+
+      this.positionHandles(cell, table);
+
+      // 单元格滚出容器可视区时隐藏手柄，避免手柄浮到相邻内容上
+      const wrapRect = target.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      const visible = cellRect.right > wrapRect.left && cellRect.left < wrapRect.right;
+      const visibility = visible ? '' : 'hidden';
+      if (this.elements.colHandle) this.elements.colHandle.style.visibility = visibility;
+      if (this.elements.rowHandle) this.elements.rowHandle.style.visibility = visibility;
+    };
+    document.addEventListener('scroll', handleTableScroll, true);
+
     return {
       update: (view: EditorView) => {
         // 确保手柄元素已添加到容器
@@ -742,6 +779,7 @@ class TableHandlePluginContext {
         this.handleSelectionChange(view);
       },
       destroy: () => {
+        document.removeEventListener('scroll', handleTableScroll, true);
         colHandle?.remove();
         rowHandle?.remove();
         colAddLine?.remove();

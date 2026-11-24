@@ -1,3 +1,12 @@
+/**
+ * @changelog
+ * | 版本   | 变更说明                             | 关联                                                  |
+ * | v1.1.0 | HTML 与 PDF 导出模板同步表格排版规则 | REQ: 表格列宽与表头排版优化 TECH: 内容驱动列宽方案 §4 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ */
+
 import { useCallback } from 'react';
 
 export function useExport() {
@@ -100,10 +109,12 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
     a { color: #2563eb; }
     mark { background: rgba(255, 235, 59, 0.5); padding: 0.1em 0.2em; border-radius: 2px; }
     img { max-width: 100%; border-radius: 8px; }
+    .lanismd-table-wrap { max-width: 100%; overflow-x: auto; }
     table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
-    th { background: #f8fafc; font-weight: 600; }
-    @media print { body { margin: 0; } }
+    th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; vertical-align: middle; }
+    td { overflow-wrap: anywhere; }
+    th { background: #f8fafc; font-weight: 600; white-space: nowrap; }
+    @media print { body { margin: 0; } .lanismd-table-wrap { overflow-x: visible; } th { white-space: normal; text-wrap: balance; } }
   </style>
 </head>
 <body>
@@ -124,8 +135,11 @@ function markdownToHtml(markdown: string, title: string, standalone = false): st
   blockquote { border-left: 4px solid #2563eb; padding-left: 16px; }
   a { color: #2563eb; }
   mark { background: rgba(255, 235, 59, 0.5); padding: 0.1em 0.2em; border-radius: 2px; }
-  img { max-width: 100%; }
-  @media print { body { margin: 0; } }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
+    th { background: #f8fafc; font-weight: 600; white-space: normal; text-wrap: balance; }
+    img { max-width: 100%; }
+    @media print { body { margin: 0; } }
 </style>
 </head>
 <body>${html}</body>

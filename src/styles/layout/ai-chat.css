@@ -535,6 +535,7 @@
   background-color: var(--lanismd-inline-code-bg);
 }
 
+/* AI 侧栏较窄，保留自身的横滚机制；表头采用允许折行并均衡断行的策略 */
 .lanismd-ai-chat-markdown table {
   display: block;
   max-width: 100%;
@@ -547,11 +548,15 @@
 .lanismd-ai-chat-markdown td {
   padding: 4px 8px;
   border: 1px solid var(--lanismd-editor-border);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .lanismd-ai-chat-markdown th {
   font-weight: 600;
   background-color: var(--lanismd-hover-bg);
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* 代码块 */

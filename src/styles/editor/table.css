@@ -1,13 +1,27 @@
 /**
+ * @changelog
+ * | 版本   | 变更说明                                             | 关联                                                  |
+ * | v1.1.0 | 改为内容驱动列宽，横滚交给外层容器，表头只做下限约束 | REQ: 表格列宽与表头排版优化 TECH: 内容驱动列宽方案 §3 |
+ * /@changelog
+ *
+ * @author hhhuilli
+ *
  * LanisMD Editor - Table Base Styles
  * 表格基础样式
  */
 
+/* 外层容器独立承担横向滚动，table 保持原生表格语义与列宽拖拽能力 */
+.milkdown-editor-root .ProseMirror .lanismd-table-wrap {
+  max-width: 100%;
+  margin: 1em 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* 不使用 table-layout: fixed：未声明宽度的列会被等分，与内容量脱节 */
 .milkdown-editor-root .ProseMirror table {
   border-collapse: collapse;
   width: 100%;
-  margin: 1em 0;
-  overflow: hidden;
   border: 1px solid var(--lanismd-table-border);
 }
 
@@ -17,11 +31,18 @@
   text-align: left;
   padding: 10px 14px;
   border: 1px solid var(--lanismd-table-border);
+  /* nowrap 是列宽下限约束而非列宽分配，剩余空间仍由 auto 布局按内容分配 */
+  white-space: nowrap;
+  /* 万一发生折行，所有表头一起居中，避免只有一列留白 */
+  vertical-align: middle;
+  min-width: 100px;
 }
 
 .milkdown-editor-root .ProseMirror td {
   padding: 10px 14px;
   border: 1px solid var(--lanismd-table-border);
+  /* 参与 min-content 计算，长英文标识符不再把整列撑宽 */
+  overflow-wrap: anywhere;
 }
 
 .milkdown-editor-root .ProseMirror tr:hover td {

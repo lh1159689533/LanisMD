@@ -52,6 +52,16 @@
     page-break-inside: avoid !important;
   }
 
+  /* 纸张不能横向滚动：放开表头折行并均衡断行，让超宽表格收敛到页宽而不被裁切 */
+  .milkdown-editor-root .ProseMirror .lanismd-table-wrap {
+    overflow-x: visible !important;
+  }
+
+  .milkdown-editor-root .ProseMirror th {
+    white-space: normal !important;
+    text-wrap: balance !important;
+  }
+
   .milkdown-editor-root .ProseMirror h1,
   .milkdown-editor-root .ProseMirror h2,
   .milkdown-editor-root .ProseMirror h3 {

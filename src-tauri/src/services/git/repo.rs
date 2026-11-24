@@ -1,8 +1,9 @@
 // 仓库只读查询：仓库信息、工作区状态、提交历史、文件版本、分支
 //
 // @changelog
-// | 版本   | 变更说明                 | 关联                         |
-// | v1.0.0 | 初始实现：仓库只读查询能力 | REQ: Git 改造 TECH: 系统 git |
+// | 版本   | 变更说明                    | 关联                                    |
+// | v1.0.0 | 初始实现：仓库只读查询能力    | REQ: Git 改造 TECH: 系统 git            |
+// | v1.1.0 | 分支列表附带末端提交摘要      | REQ: 分支列表详情展示 TECH: for-each-ref |
 // /@changelog
 //
 // @author hhhuilli
@@ -438,14 +439,23 @@ pub fn diff_text(repo: &str, files: &[FileEntryRequest], max_bytes: usize) -> Ap
     Ok(text)
 }
 
-/// 分支列表：本地分支 + 尚无本地对应的远程分支
+/// 将 for-each-ref 输出的空字段视为缺失
+fn optional_ref_field(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+}
+
+/// 分支列表：本地分支 + 尚无本地对应的远程分支，同时返回末端提交摘要
 pub fn branches(repo: &str) -> AppResult<Vec<BranchInfo>> {
     let dir = Path::new(repo);
+    // 用控制字符分隔字段，避免提交标题中的空格或制表符破坏解析
     let out = GitRunner::run(
         dir,
         &[
             "for-each-ref",
-            "--format=%(refname)%09%(HEAD)",
+            "--format=%(refname)%1f%(HEAD)%1f%(objectname:short)%1f%(authorname)%1f%(authordate:unix)%1f%(contents:subject)",
             "refs/heads",
             "refs/remotes",
         ],
@@ -453,24 +463,36 @@ pub fn branches(repo: &str) -> AppResult<Vec<BranchInfo>> {
     let mut local: Vec<BranchInfo> = Vec::new();
     let mut remote: Vec<BranchInfo> = Vec::new();
     for line in out.lines() {
-        let mut cols = line.split('\t');
+        let mut cols = line.splitn(6, '\x1f');
         let refname = cols.next().unwrap_or("");
         let current = cols.next().map(|s| s.trim() == "*").unwrap_or(false);
-        if let Some(name) = refname.strip_prefix("refs/heads/") {
-            local.push(BranchInfo {
-                name: name.to_string(),
-                current,
-                remote: false,
-            });
+        let short_hash = optional_ref_field(cols.next());
+        let author_name = optional_ref_field(cols.next());
+        let timestamp = cols.next().and_then(|s| s.trim().parse::<i64>().ok());
+        let subject = optional_ref_field(cols.next());
+        let (name, is_remote) = if let Some(name) = refname.strip_prefix("refs/heads/") {
+            (name, false)
         } else if let Some(name) = refname.strip_prefix("refs/remotes/") {
             if name.ends_with("/HEAD") {
                 continue;
             }
-            remote.push(BranchInfo {
-                name: name.to_string(),
-                current: false,
-                remote: true,
-            });
+            (name, true)
+        } else {
+            continue;
+        };
+        let info = BranchInfo {
+            name: name.to_string(),
+            current: current && !is_remote,
+            remote: is_remote,
+            short_hash,
+            author_name,
+            timestamp,
+            subject,
+        };
+        if is_remote {
+            remote.push(info);
+        } else {
+            local.push(info);
         }
     }
     let local_names: HashSet<String> = local.iter().map(|b| b.name.clone()).collect();
@@ -478,6 +500,15 @@ pub fn branches(repo: &str) -> AppResult<Vec<BranchInfo>> {
         let short = b.name.split_once('/').map(|(_, n)| n).unwrap_or(&b.name);
         !local_names.contains(short)
     });
+    // 当前分支置顶，其余按末端提交时间倒序，便于定位近期活跃的分支
+    let by_recency = |a: &BranchInfo, b: &BranchInfo| {
+        b.current
+            .cmp(&a.current)
+            .then_with(|| b.timestamp.unwrap_or(0).cmp(&a.timestamp.unwrap_or(0)))
+            .then_with(|| a.name.cmp(&b.name))
+    };
+    local.sort_by(|a, b| by_recency(a, b));
+    remote.sort_by(|a, b| by_recency(a, b));
     local.extend(remote);
     Ok(local)
 }

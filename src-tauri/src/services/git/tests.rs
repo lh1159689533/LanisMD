@@ -200,9 +200,13 @@ fn full_flow() {
     assert_eq!(v.modified.as_deref(), Some("line1\nline2 changed\n"));
     assert_eq!(repo::log(b_s, "docs", 0, 50).unwrap().len(), 1);
 
-    // 7. 分支列表
+    // 7. 分支列表（含末端提交摘要）
     let branches = repo::branches(b_s).unwrap();
-    assert!(branches.iter().any(|br| br.current && !br.remote));
+    let current = branches.iter().find(|br| br.current && !br.remote).unwrap();
+    assert!(current.short_hash.is_some());
+    assert!(current.author_name.is_some());
+    assert!(current.timestamp.is_some());
+    assert!(current.subject.is_some());
 }
 
 /// 首次提交推送失败（远程不可达）：回到未出生分支，文件恢复为未跟踪

@@ -33,6 +33,22 @@ export interface AddLineCallbacks {
 }
 
 // ---------------------------------------------------------------------------
+// DOM Resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * 从 nodeDOM 的返回值中解析出真实的 table 元素
+ *
+ * 表格节点的 toDOM 现在输出外层滚动容器，nodeDOM 可能返回容器而非 table；
+ * 保留裸 table 的分支，兼容没有容器时的旧 DOM 与外部粘贴场景。
+ */
+export function resolveTableElement(dom: HTMLElement | null): HTMLTableElement | null {
+  if (!dom) return null;
+  if (dom.tagName === 'TABLE') return dom as HTMLTableElement;
+  return dom.querySelector('table') as HTMLTableElement | null;
+}
+
+// ---------------------------------------------------------------------------
 // DOM Creation Functions
 // ---------------------------------------------------------------------------
 
